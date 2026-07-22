@@ -1,0 +1,56 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Libro diario{% endblock %}
+
+{% block extrahead %}<style>
+body{background-color:#f5f5f7 !important;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:url('{% static "patterns/allpetcr-logo.png" %}');background-repeat:repeat;background-attachment:fixed;background-size:120px 120px;opacity:.05;pointer-events:none;z-index:-1}
+.ld-link{font-size:14px;color:#0B3161;font-weight:500;padding:8px 15px;border-radius:980px;background:rgba(11,49,97,.08);display:inline-block;margin:12px 0 22px;transition:background .2s}
+.ld-link:hover{background:rgba(11,49,97,.15)}
+.ld-asiento{background:#fff;border:.5px solid rgba(0,0,0,.05);border-radius:18px;margin-bottom:16px;max-width:760px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04),0 6px 18px rgba(0,0,0,.05)}
+.ld-head{padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #f0f0f2;flex-wrap:wrap}
+.ld-head .meta{font-size:14px;color:#1d1d1f}
+.ld-head .meta b{font-weight:700}
+.ld-head .num{color:#0B3161;font-weight:700}
+.ld-badge{font-size:12px;font-weight:600;padding:5px 12px;border-radius:980px;white-space:nowrap}
+.ld-badge.ok{background:rgba(52,199,89,.14);color:#248a3d}
+.ld-badge.bad{background:rgba(255,59,48,.12);color:#d1242f}
+.ld-table{width:100%;border-collapse:collapse;font-size:14.5px}
+.ld-table th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:#86868b;padding:10px 20px;font-weight:600}
+.ld-table td{padding:11px 20px;border-top:1px solid #f5f5f7;font-variant-numeric:tabular-nums}
+.ld-table .tot td{border-top:2px solid #e8e8ed;font-weight:700}
+.ld-empty{color:#86868b;max-width:760px}
+</style>{% endblock %}
+
+{% block content %}
+<h1>Libro diario</h1>
+<p style="color:#555;max-width:760px">Asientos generados automáticamente por las operaciones. Nadie los digita.</p>
+<a class="ld-link" href="{% url 'contabilidad:balance' %}">Ver balance de comprobación →</a>
+
+{% for a in asientos %}
+  <div class="ld-asiento">
+    <div class="ld-head">
+      <span class="meta"><span class="num">{{ a.numero }}</span> · {{ a.fecha|date:"d/m/Y" }} · {{ a.get_origen_display }} — {{ a.descripcion }}</span>
+      {% if a.cuadra %}<span class="ld-badge ok">✔ Cuadrado</span>{% else %}<span class="ld-badge bad">⚠ Descuadre</span>{% endif %}
+    </div>
+    <table class="ld-table">
+      <thead><tr><th>Cuenta</th><th style="text-align:right">Debe</th><th style="text-align:right">Haber</th></tr></thead>
+      <tbody>
+      {% for l in a.lineas.all %}
+        <tr>
+          <td><span style="color:#86868b">{{ l.cuenta.codigo }}</span> {{ l.cuenta.nombre }}</td>
+          <td style="text-align:right">{% if l.debe %}₡{{ l.debe|crc:0 }}{% endif %}</td>
+          <td style="text-align:right">{% if l.haber %}₡{{ l.haber|crc:0 }}{% endif %}</td>
+        </tr>
+      {% endfor %}
+        <tr class="tot"><td style="text-align:right;color:#86868b">Totales</td>
+          <td style="text-align:right">₡{{ a.total_debe|crc:0 }}</td>
+          <td style="text-align:right">₡{{ a.total_haber|crc:0 }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+{% empty %}
+  <p class="ld-empty">Aún no hay asientos. Registre una venta en el POS y vuelva aquí.</p>
+{% endfor %}
+{% endblock %}

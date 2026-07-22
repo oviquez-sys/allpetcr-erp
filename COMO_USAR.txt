@@ -1,0 +1,292 @@
+========================================================
+   ALLPETCR ERP  —  CÓMO ENCENDER Y APAGAR EL SISTEMA
+========================================================
+
+-------------------------------------------------
+PARA ENCENDER EL SISTEMA (cada vez que lo quieras usar)
+-------------------------------------------------
+
+1. Abrí el "Símbolo del sistema" (buscá "cmd" en el menú de inicio).
+
+2. Copiá y pegá esta línea, y dale Enter:
+
+   cd "C:\Users\oviqu\OneDrive\Desktop\GRUPO VAYRU\AllPet\CLAUDE\allpetcr-erp"
+
+3. Copiá y pegá esta línea, y dale Enter (activa el entorno):
+
+   .venv\Scripts\activate
+
+   -> Tiene que aparecer (.venv) al inicio de la línea.
+
+4. Copiá y pegá esta línea, y dale Enter (enciende el sistema):
+
+   python manage.py runserver
+
+   -> Cuando veas "Starting development server at http://127.0.0.1:8000/"
+      el sistema está encendido. NO cierres esta ventana negra.
+
+5. Abrí Chrome y entrá a esta dirección:
+
+   127.0.0.1:8000
+
+6. Ingresá con tu usuario y contraseña.
+      Usuario: ALLPETCR
+      Contraseña: (la que creaste)
+
+
+-------------------------------------------------
+PARA APAGAR EL SISTEMA
+-------------------------------------------------
+
+- Andá a la ventana negra (la que dejaste abierta) y apretá:
+
+   Ctrl + C
+
+- Ya podés cerrar la ventana. El sistema queda apagado
+  (tus datos NO se borran, quedan guardados).
+
+
+-------------------------------------------------
+SI OLVIDÁS LA CONTRASEÑA
+-------------------------------------------------
+
+Con el sistema APAGADO, en la ventana negra (pasos 1, 2 y 3 de arriba),
+escribí:
+
+   python manage.py changepassword ALLPETCR
+
+Te pedirá una contraseña nueva (no se ve al escribir, es normal).
+
+
+-------------------------------------------------
+DIRECCIONES ÚTILES DENTRO DEL SISTEMA
+-------------------------------------------------
+
+   127.0.0.1:8000                    -> Dashboard (inicio)
+   127.0.0.1:8000/pos/               -> Punto de venta
+   127.0.0.1:8000/caja/abrir/        -> Abrir caja
+   127.0.0.1:8000/compras/           -> Recibir mercadería nueva
+   127.0.0.1:8000/actividad/         -> Anular errores y ver historial
+   127.0.0.1:8000/inventario/etiquetas/ -> Imprimir códigos de barras
+   127.0.0.1:8000/admin/             -> Administración (productos, clientes, etc.)
+
+
+-------------------------------------------------
+RECIBIR MERCADERÍA NUEVA (lo que le comprás al proveedor)
+-------------------------------------------------
+
+Encendé el sistema y entrá a:
+
+   127.0.0.1:8000/compras/
+
+  (o desde el Inicio, tocá la tarjeta "Recibir mercadería")
+
+1. Buscá o escaneá cada producto que llegó y tocalo para agregarlo a la lista.
+   Si es un producto totalmente nuevo (que nunca compraste antes):
+   a. Tocá el botón "➕ Producto nuevo" (arriba a la derecha del buscador).
+   b. Ponele nombre, categoría, precio de venta. La foto es opcional pero
+      recomendada (así lo ves en las tarjetas del POS).
+   c. Tocá "Agregar y sumar a la compra". Queda listo y se agrega a la lista.
+
+2. Ajustá la cantidad y el costo de cada producto (el costo al que te lo
+   vendió el proveedor, NO el precio de venta al público).
+
+3. Elegí el proveedor (o escribí uno nuevo si no está en la lista) y si
+   la compra es de contado o a crédito.
+
+4. Tocá "Registrar compra". En un solo paso: sube el stock, recalcula el
+   costo promedio del producto, y queda registrado en la contabilidad.
+   No hay que hacer nada más ni pasar por ninguna otra pantalla.
+
+
+-------------------------------------------------
+CÓDIGOS DE BARRAS (escanear con pistola)
+-------------------------------------------------
+
+Instalar la librería (una sola vez, con el (.venv) activado):
+
+   pip install python-barcode
+
+Asignar código de barras a los productos que no tengan (cuando agregues
+productos nuevos, corré esto de nuevo; no toca los que ya tienen):
+
+   python manage.py asignar_codigos_barras
+
+Imprimir las etiquetas:
+  1. Encendé el sistema (runserver) y entrá a:
+        127.0.0.1:8000/inventario/etiquetas/
+  2. Elegí la familia y las copias (o "una por unidad en stock").
+  3. Clic en "Imprimir" (o Ctrl+P) sobre hojas de etiquetas adhesivas.
+  4. Pegá cada etiqueta en su producto.
+
+Vender escaneando: en el Punto de venta, con el cursor en el buscador,
+disparás la pistola sobre el código y el producto se agrega solo al carrito.
+(La pistola funciona como un teclado: "escribe" el código y da Enter.)
+
+
+-------------------------------------------------
+DESCUENTOS Y REGALÍAS (en el Punto de venta)
+-------------------------------------------------
+
+Debajo de cada producto agregado a la venta hay dos opciones:
+
+- DESCUENTO: escribí el porcentaje (0-100) que querés descontar de esa línea.
+  El sistema calcula automáticamente el monto en colones. Ejemplo: si el
+  producto cuesta ₡5000 y ponés 10%, se descuentan ₡500 automáticamente.
+  El descuento queda registrado separadamente en la contabilidad.
+
+- 🎁 REGALO: tocá el botón para marcar el producto como regalía. Sale
+  gratis (no se cobra), PERO igual descuenta del inventario y su costo se
+  registra como gasto de promoción. Así la contabilidad siempre refleja
+  la salida real de mercadería.
+
+
+-------------------------------------------------
+FOTOS DE LOS PRODUCTOS (para verlos en el POS)
+-------------------------------------------------
+
+Las fotos vienen dentro del Excel. Para cargarlas al sistema, con el
+(.venv) activado y el sistema apagado:
+
+   python manage.py importar_imagenes "data\INVENTARIO REAL AL 6-7-2026   2.0.xlsx"
+
+Aparecerá "Listo: 174 imágenes...". Las fotos se muestran solas en las
+tarjetas del Punto de venta. Si agregás productos nuevos con foto en el
+Excel, volvé a correr el comando.
+
+
+-------------------------------------------------
+CORREGIR ERRORES (anular ventas y compras)
+-------------------------------------------------
+
+Entrá a 127.0.0.1:8000/actividad/ (o desde el Inicio, tarjeta
+"Actividad y reversas").
+
+- Pestaña VENTAS: lista las ventas. Si una está mal, tocá "Anular",
+  escribí el motivo, y listo: el inventario y la caja se devuelven solos.
+
+- Pestaña COMPRAS: igual para compras registradas por error. Se saca del
+  inventario lo que había entrado. (No se puede anular si ya vendiste esa
+  mercadería; primero tendrías que ajustar el inventario.)
+
+- Pestaña HISTORIAL DE ANULACIONES: muestra TODA anulación con quién la
+  hizo, cuándo y por qué. Este historial no se borra: sirve para revisar
+  si alguien anula ventas para quedarse con el efectivo.
+
+Nada se borra nunca: los documentos quedan marcados como "Anulados",
+con su firma. Así siempre hay rastro de lo que pasó.
+
+
+-------------------------------------------------
+DEVOLUCIÓN DE UN CLIENTE (días después, solo parte de lo comprado)
+-------------------------------------------------
+
+"Anular" (arriba) es para corregir un error tuyo: revierte TODO el tiquete.
+Para cuando un CLIENTE devuelve un producto días después —y no
+necesariamente todo lo que compró— usá "Devolver" en su lugar:
+
+1. Entrá a 127.0.0.1:8000/actividad/, pestaña Ventas.
+2. Buscá el tiquete de esa venta y tocá "Devolver".
+3. Vas a ver cada producto de esa venta, con lo comprado, lo ya devuelto
+   (si aplica) y lo disponible para devolver. Escribí cuántas unidades
+   devuelve el cliente (podés dejar en blanco lo que no se devuelve).
+4. Escribí el motivo (obligatorio) y tocá "Registrar devolución".
+
+El sistema hace todo solo:
+- El producto vuelve al inventario.
+- Si pagó en EFECTIVO: el reembolso sale de la caja abierta de HOY (no de
+  la sesión vieja, que ya puede estar cerrada). Necesitás tener la caja
+  abierta ese día.
+- Si pagó con TARJETA o SINPE: no se toca la caja física (ese reembolso
+  se hace aparte, por el datáfono); solo se ajusta la contabilidad.
+- Si fue FIADO (crédito): primero se reduce lo que el cliente debía. Si ya
+  había pagado más de lo que ahora debe, el resto se le devuelve en
+  efectivo de la caja de hoy.
+
+El sistema no te deja devolver más de lo que se compró (ni sumando varias
+devoluciones de la misma venta), ni devolver sobre una venta ya anulada.
+Cada devolución queda registrada en el Historial con quién, cuándo,
+cuánto y por qué — igual que las anulaciones.
+
+
+-------------------------------------------------
+ROLES: GERENTE, CAJERO, CONTADOR
+-------------------------------------------------
+
+El sistema tiene tres roles. Cada empleado se asigna a UNO:
+
+- GERENTE: control total. Vende, anula, devuelve, recibe mercadería, ve la
+  contabilidad y la bitácora de reversas, y autoriza ventas bajo costo.
+  (Tu usuario ALLPETCR ya es gerente.)
+
+- CAJERO: solo vende en el POS, maneja su caja e imprime etiquetas. NO puede
+  anular ni devolver ventas, NO puede recibir mercadería, NO ve la
+  contabilidad ni las ganancias. Este límite es la defensa contra el robo:
+  el truco típico (hacer una venta, cobrar y después anularla para quedarse
+  el efectivo) le queda cerrado — solo un gerente puede anular.
+
+- CONTADOR: ve reportes y contabilidad; no vende ni mueve inventario.
+
+PARA CREAR UN CAJERO (con el (.venv) activado, sistema apagado):
+
+   python manage.py asignar_rol maria Cajero --crear --password "unaclave"
+
+   (cambiá "maria" y la clave). Para un usuario que ya existe, sin --crear:
+
+   python manage.py asignar_rol maria Cajero
+
+También podés cambiar roles desde 127.0.0.1:8000/admin/ (Usuarios y Grupos),
+pero el comando es más rápido.
+
+VENTA BAJO COSTO: si un cajero intenta vender un producto por debajo de su
+costo (por un descuento muy alto), el sistema lo bloquea. Solo un gerente
+puede autorizar vender bajo costo (entrando con su propio usuario).
+
+
+PRECIOS E HISTORIAL (solo gerente):
+
+   En el inicio, tocá "Precios". Buscás un producto y ahí ves su costo, su
+   precio, su margen y TODO el historial de cambios de precio (quién lo
+   cambió, cuándo, de cuánto a cuánto y por qué). También ves el historial
+   del costo, que se recalcula solo cada vez que entra mercadería.
+   Cambiar un precio siempre queda registrado: nadie mueve precios a escondidas.
+
+
+CIERRE DE PERÍODO (solo gerente):
+
+   Cuando ya declaraste un período a Hacienda (por ejemplo el trimestre de
+   IVA), entrá a "Cierre de período" desde el inicio y cerrá "hasta" esa
+   fecha. A partir de ahí NADIE puede registrar ventas, compras ni ajustes
+   con esa fecha o anterior: lo que declaraste queda blindado y nadie lo
+   puede alterar.
+
+   Si de verdad hay un error que corregir, un gerente puede reabrir el
+   período escribiendo el motivo; queda registrado quién lo reabrió y por
+   qué. (Anular una venta vieja SÍ funciona aunque su período esté cerrado:
+   la reversa se registra con la fecha de hoy, que está abierta.)
+
+
+-------------------------------------------------
+IMPORTANTE (antes de usarlo en la tienda de verdad)
+-------------------------------------------------
+
+Este montaje es para PROBAR el sistema en tu computadora. Antes de usarlo
+en el día a día del negocio, quedan pendientes (ver el archivo README.md):
+  1. Completar el inventario que falta (plantilla en la carpeta data).
+  2. Corregir los nombres de productos repetidos.
+  3. Instalarlo en un servidor (VPS) para que funcione siempre y desde
+     cualquier lugar.
+
+
+-------------------------------------------------
+RESPALDOS (COPIAS DE SEGURIDAD) — ¡IMPORTANTE!
+-------------------------------------------------
+Para no perder nunca la información del negocio, hay un sistema de respaldos.
+Lo más fácil: doble clic al archivo "respaldar.bat" cuando quieras una copia.
+
+Mejor todavía: agendarlo para que corra solo cada noche. El paso a paso
+completo (agendar y también cómo RECUPERAR un respaldo si algo se daña)
+está en el archivo:  RESPALDOS.txt
+
+Cualquier duda, escribime y seguimos.
+========================================================

@@ -1,0 +1,80 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}IVA trimestral (RTS){% endblock %}
+
+{% block extrahead %}<style>
+body { background-color: #f5f5f7 !important; position: relative; }
+body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: url('{% static "patterns/allpetcr-logo.png" %}'); background-repeat: repeat; background-attachment: fixed; background-size: 120px 120px; opacity: 0.06; pointer-events: none; z-index: -1; }
+.q-table{width:100%;border-collapse:collapse;max-width:720px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.05)}
+.q-table th{background:#0B3161;color:#fff;text-align:right;padding:12px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+.q-table th.l{text-align:left}
+.q-table td{padding:12px 14px;border-bottom:1px solid #eee;text-align:right;font-variant-numeric:tabular-nums}
+.q-table td.l{text-align:left;font-weight:600}
+.q-table tr:last-child td{border-bottom:none}
+.q-table tfoot td{font-weight:800;background:#f7f9fa;border-top:2px solid #0B3161}
+.q-imp{color:#0b7c6c;font-weight:700}
+.aviso{background:#fff8e6;border:1px solid #f0e0b0;border-radius:12px;padding:14px 18px;max-width:720px;margin:16px 0;font-size:13.5px;color:#7a5c00;line-height:1.5}
+.info{background:#eef4f6;border:1px solid #cfe0e6;border-radius:12px;padding:14px 18px;max-width:720px;margin:16px 0;font-size:13.5px;color:#255;line-height:1.5}
+</style>{% endblock %}
+
+{% block content %}
+<h1>IVA trimestral — Régimen Simplificado</h1>
+<p style="color:#555;max-width:720px">En el régimen simplificado el impuesto se estima aplicando el <b>factor de tu actividad</b>
+   (que fija Hacienda) sobre las <b>compras</b> de cada trimestre. Aquí ves las compras recibidas
+   por trimestre; las ventas se muestran solo como referencia.</p>
+
+<form method="get" style="margin:14px 0;display:flex;gap:10px;align-items:end">
+  <div>
+    <label style="display:block;font-size:12px;color:#666;margin-bottom:3px">Año</label>
+    <select name="anio" onchange="this.form.submit()" style="padding:9px 12px;border:1px solid #ccc;border-radius:9px">
+      {% for a in anios %}<option value="{{ a }}" {% if a == anio %}selected{% endif %}>{{ a }}</option>{% endfor %}
+    </select>
+  </div>
+  <noscript><button type="submit" style="padding:9px 18px;border:none;border-radius:9px;background:#0B3161;color:#fff;font-weight:600">Ver</button></noscript>
+</form>
+
+{% if hay_factor %}
+  <div class="info">Factor RTS cargado: <b>{{ factor }}</b> (≈ {{ factor|crc:2 }} × las compras). El impuesto estimado usa este valor.
+     Se cambia en <a href="/admin/core/empresa/">Empresa</a>.</div>
+{% else %}
+  <div class="aviso">⚠ No has cargado el <b>factor RTS</b> de tu actividad, así que la columna de impuesto va en blanco.
+     Cuando tu contador te lo confirme, ponelo en <a href="/admin/core/empresa/">Empresa → factor RTS</a> y el impuesto se calcula solo.</div>
+{% endif %}
+
+<table class="q-table">
+  <thead>
+    <tr>
+      <th class="l">Trimestre {{ anio }}</th>
+      <th>Compras</th>
+      <th>Impuesto estimado</th>
+      <th>Ventas (ref.)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in trimestres %}
+      <tr>
+        <td class="l">{{ t.n }}º · {{ t.rango }}</td>
+        <td>₡{{ t.compras|crc:0 }}</td>
+        <td>{% if hay_factor %}<span class="q-imp">₡{{ t.impuesto|crc:0 }}</span>{% else %}<span style="color:#bbb">—</span>{% endif %}</td>
+        <td style="color:#888">₡{{ t.ventas|crc:0 }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td class="l">Total {{ anio }}</td>
+      <td>₡{{ total_compras|crc:0 }}</td>
+      <td>{% if hay_factor %}<span class="q-imp">₡{{ total_impuesto|crc:0 }}</span>{% else %}—{% endif %}</td>
+      <td style="color:#888">₡{{ total_ventas|crc:0 }}</td>
+    </tr>
+  </tfoot>
+</table>
+
+<div class="aviso" style="margin-top:18px">
+  <b>Importante.</b> Este reporte es una <b>ayuda</b>, no la declaración oficial. La declaración trimestral
+  del régimen simplificado se presenta en <b>TRIBU-CR</b>. El factor y las actividades permitidas los define
+  Hacienda por decreto (vigente en 2026: Decreto 43881-H reformado por el 45209-H) y pueden cambiar.
+  Confirmá siempre el monto con tu contador antes de pagar.
+</div>
+{% endblock %}

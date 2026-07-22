@@ -1,0 +1,61 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Estado de cuenta — {{ cliente.nombre }}{% endblock %}
+
+{% block content %}
+<h1>Estado de cuenta — {{ cliente.nombre }}</h1>
+
+{% if messages %}{% for m in messages %}
+  <p style="padding:10px;border:1px solid #b6d7c9;background:#eaf6f0;border-radius:6px">{{ m }}</p>
+{% endfor %}{% endif %}
+
+<div style="display:flex;gap:26px;margin:14px 0">
+  <div><b>Límite de crédito:</b> ₡{{ cliente.limite_credito }}</div>
+  <div><b>Saldo pendiente:</b> ₡{{ cliente.saldo }}</div>
+  <div><b>Crédito disponible:</b> ₡{{ cliente.credito_disponible }}</div>
+</div>
+
+<table style="width:100%">
+  <thead><tr>
+    <th>Factura</th><th>Fecha</th><th style="text-align:right">Original</th>
+    <th style="text-align:right">Saldo</th><th>Estado</th><th>Abonar</th>
+  </tr></thead>
+  <tbody>
+  {% for d in documentos %}
+    <tr>
+      <td>{{ d.factura.numero }}</td>
+      <td>{{ d.creado_en|date:"d/m/Y" }}</td>
+      <td style="text-align:right">₡{{ d.monto_original }}</td>
+      <td style="text-align:right"><b>₡{{ d.saldo }}</b></td>
+      <td>{{ d.get_estado_display }}</td>
+      <td>
+        {% if d.estado == "PEN" %}
+        <form method="post" action="{% url 'ventas:abonar' d.pk %}" style="display:flex;gap:6px;align-items:center">
+          {% csrf_token %}
+          <input type="number" name="monto" step="0.01" min="0.01" max="{{ d.saldo }}" placeholder="Monto" required style="width:100px">
+          <select name="medio">
+            <option value="EFE">Efectivo</option>
+            <option value="SIN">SINPE</option>
+            <option value="TAR">Tarjeta</option>
+            <option value="TRA">Transferencia</option>
+          </select>
+          <input type="text" name="referencia" placeholder="Ref. (opcional)" style="width:120px">
+          <button type="submit" class="default">Abonar</button>
+        </form>
+        {% else %}—{% endif %}
+      </td>
+    </tr>
+    {% for a in d.abonos.all %}
+      <tr style="font-size:12px;color:#555">
+        <td colspan="2" style="padding-left:22px">↳ Abono {{ a.fecha|date:"d/m/Y H:i" }} ({{ a.get_medio_display }}) {{ a.referencia }}</td>
+        <td></td><td style="text-align:right">−₡{{ a.monto }}</td><td colspan="2"></td>
+      </tr>
+    {% endfor %}
+  {% empty %}
+    <tr><td colspan="6" style="color:#777">Este cliente no tiene ventas a crédito.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<p style="margin-top:16px"><a href="{% url 'ventas:pos' %}">← Volver al POS</a></p>
+{% endblock %}

@@ -1,0 +1,8 @@
+# Versión probada y verificada (150 pruebas en verde). Django 6.0 aún no está
+# validado; use 5.2 para garantizar el comportamiento probado.
+Django>=5.2,<5.3
+openpyxl>=3.1
+python-barcode>=0.15   # etiquetas con código de barras (Code128)
+psycopg2-binary>=2.9   # PostgreSQL en producción (VPS)
+gunicorn>=21.0         # servidor de aplicación en producción
+django-axes>=6.0       # bloqueo de login por fuerza bruta (activar con DJANGO_ENABLE_AXES=1)

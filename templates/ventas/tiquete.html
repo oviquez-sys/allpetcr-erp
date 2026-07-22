@@ -1,0 +1,55 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>{{ f.numero }}</title>
+<style>
+body{font-family:'Courier New',monospace;font-size:12px;max-width:300px;margin:10px auto;color:#000}
+h1{font-size:15px;text-align:center;margin:4px 0}
+.c{text-align:center}
+.logo{width:120px;display:block;margin:0 auto 4px}
+hr{border:none;border-top:1px dashed #000;margin:7px 0}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+td{padding:2px 0;vertical-align:top}
+.n{text-align:right;white-space:nowrap}
+.tot{font-size:14px;font-weight:bold}
+.anulada{color:#b00;border:2px solid #b00;text-align:center;font-weight:bold;padding:4px;margin:6px 0}
+@media print {.no-print{display:none}}
+</style>
+</head>
+<body>
+<img class="logo" src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetcr.com">
+<h1>{{ f.empresa.nombre }}</h1>
+<p class="c">{{ f.sucursal.nombre }}<br>{{ f.creado_en|date:"d/m/Y h:i A" }}</p>
+<p class="c"><b>{{ f.numero }}</b> · {{ f.get_medio_pago_display }}</p>
+{% if f.estado == "ANU" %}<div class="anulada">★ ANULADA ★<br>{{ f.motivo_anulacion }}</div>{% endif %}
+<hr>
+<table>
+{% for l in f.lineas.all %}
+  <tr><td colspan="2">{{ l.producto.nombre }}{% if l.es_regalia %} 🎁{% endif %}</td></tr>
+  {% if l.es_regalia %}
+  <tr><td>{{ l.cantidad }} × REGALO</td><td class="n">₡0</td></tr>
+  {% else %}
+  <tr><td>{{ l.cantidad }} × ₡{{ l.precio_unitario }}</td><td class="n">₡{{ l.total }}</td></tr>
+  {% if l.descuento_pct > 0 %}<tr><td style="padding-left:8px">descuento {{ l.descuento_pct }}%</td><td class="n">− ₡{{ l.descuento_monto }}</td></tr>{% endif %}
+  {% endif %}
+{% endfor %}
+</table>
+<hr>
+<table>
+  {% if f.impuesto > 0 %}
+  <tr><td>Subtotal</td><td class="n">₡{{ f.subtotal }}</td></tr>
+  <tr><td>IVA</td><td class="n">₡{{ f.impuesto }}</td></tr>
+  {% endif %}
+  {% if f.descuento > 0 %}<tr><td>Descuentos</td><td class="n">− ₡{{ f.descuento }}</td></tr>{% endif %}
+  <tr class="tot"><td>TOTAL</td><td class="n">₡{{ f.total }}</td></tr>
+</table>
+<hr>
+<p class="c">¡Gracias por su compra! 🐾<br>www.allpetcr.com</p>
+<p class="c" style="font-size:9.5px">Documento interno de control.<br>
+Régimen de Tributación Simplificada —<br>no constituye comprobante electrónico.</p>
+<p class="c no-print" style="margin-top:12px">
+  <button onclick="window.print()" style="padding:8px 22px;font-size:13px">🖨️ Imprimir</button>
+</p>
+</body>
+</html>

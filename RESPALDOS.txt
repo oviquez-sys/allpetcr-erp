@@ -1,0 +1,107 @@
+========================================================
+   ALLPETCR ERP  —  RESPALDOS (COPIAS DE SEGURIDAD)
+========================================================
+
+¿POR QUÉ IMPORTA?
+-------------------------------------------------
+Toda la información del negocio (ventas, inventario, contabilidad,
+clientes, fotos de productos) vive en un solo archivo de base de datos.
+Si el disco de la computadora se daña, se moja, se lo roban o el archivo
+se corrompe, se pierde TODO. Un respaldo es una copia guardada aparte para
+poder recuperar el negocio si eso pasa.
+
+
+¿QUÉ SE RESPALDA?
+-------------------------------------------------
+En un solo archivo .zip con la fecha en el nombre, por ejemplo
+"respaldo_allpetcr_20260721_2000.zip", se guarda:
+  - La base de datos completa (ventas, inventario, contabilidad, clientes).
+  - Las fotos de los productos.
+
+Los respaldos quedan en la carpeta "respaldos" dentro del sistema. Como esa
+carpeta está en OneDrive, además se suben solos a la nube: si la computadora
+desaparece, los respaldos siguen en tu cuenta de OneDrive.
+
+El sistema conserva los últimos 30 respaldos y borra los más viejos solo,
+para no llenar el disco.
+
+
+-------------------------------------------------
+RESPALDAR AHORA (a mano, cuando quieras)
+-------------------------------------------------
+Opción fácil:
+  Doble clic al archivo "respaldar.bat" (está en la carpeta del sistema).
+  Se abre una ventana, hace el respaldo y se cierra sola. Listo.
+
+Opción por comando (si ya tenés el cmd abierto con (.venv)):
+  python manage.py respaldar
+
+
+-------------------------------------------------
+QUE CORRA SOLO CADA DÍA (recomendado)
+-------------------------------------------------
+Así no dependés de acordarte. Se agenda una vez y corre solo.
+
+1. Abrí el menú de inicio y escribí:  Programador de tareas
+   (en inglés: "Task Scheduler"). Abrilo.
+
+2. A la derecha, clic en "Crear tarea básica...".
+
+3. Nombre:  Respaldo AllPetcr
+   Clic en Siguiente.
+
+4. Cuándo:  Diariamente.  Siguiente.
+   Elegí una hora en que la computadora esté encendida pero el negocio
+   tranquilo, por ejemplo 8:00 p. m.  Siguiente.
+
+5. Acción:  "Iniciar un programa".  Siguiente.
+
+6. En "Programa o script", clic en Examinar y buscá el archivo:
+   respaldar.bat
+   (dentro de la carpeta del sistema allpetcr-erp).
+   Clic en Siguiente y luego en Finalizar.
+
+Con eso, todas las noches se crea un respaldo solo. Para probar que quedó
+bien: en el Programador, clic derecho sobre "Respaldo AllPetcr" y "Ejecutar".
+Debería aparecer un zip nuevo en la carpeta "respaldos".
+
+
+-------------------------------------------------
+RECUPERAR (RESTAURAR) UN RESPALDO
+-------------------------------------------------
+Esto se hace SOLO si se dañó o perdió la información y querés volver a un
+respaldo. Reemplaza los datos actuales por los del respaldo elegido.
+
+IMPORTANTE: antes de restaurar, APAGÁ el sistema (en la ventana negra
+donde corre, apretá Ctrl + C). No se puede restaurar con el sistema
+encendido.
+
+1. Abrí el cmd en la carpeta del sistema y activá el entorno:
+     cd "C:\Users\oviqu\OneDrive\Desktop\GRUPO VAYRU\AllPet\CLAUDE\allpetcr-erp"
+     .venv\Scripts\activate
+
+2. Mirá la lista de respaldos disponibles:
+     python manage.py restaurar
+
+   Te muestra los respaldos con su fecha. Copiá el nombre del que querés.
+
+3. Restaurá ese respaldo (poné el nombre real que copiaste):
+     python manage.py restaurar --archivo respaldo_allpetcr_20260721_2000.zip --confirmar
+
+   El sistema, ANTES de cambiar nada, guarda una copia del estado actual en
+   una carpeta "antes_de_restaurar_...". O sea: aunque restaures el respaldo
+   equivocado, no perdés lo de ahora, siempre hay marcha atrás.
+
+4. Encendé el sistema de nuevo:
+     python manage.py runserver
+
+
+-------------------------------------------------
+CONSEJOS
+-------------------------------------------------
+- De vez en cuando, revisá que en la carpeta "respaldos" haya zips recientes.
+  Si el más nuevo es de hace semanas, algo falló y hay que revisar la tarea.
+- Un respaldo dentro de la misma computadora protege contra errores y borrados,
+  pero no contra que se dañe el disco. OneDrive cubre eso al subirlos a la nube.
+  Para máxima tranquilidad, de vez en cuando copiá algún zip a una llave USB.
+- Guardá SIEMPRE al menos un respaldo del cierre de cada mes, aparte.

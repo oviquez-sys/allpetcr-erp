@@ -1,0 +1,13 @@
+{% extends "admin/change_form.html" %}
+{% load admin_urls %}
+
+{% block object-tools-items %}
+  {% if original %}
+  <li>
+    <a href="{% url 'admin:catalogo_producto_entrada' original.pk %}" style="background:#0B3161">
+      + Registrar entrada / compra
+    </a>
+  </li>
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

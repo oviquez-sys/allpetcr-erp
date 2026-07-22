@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Etiquetas con código de barras — ALLPETCR</title>
+<style>
+:root{--acc:#0B3161;--line:#e3e9ec;--ink:#17272e;--ink2:#5b6b73}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;color:var(--ink);background:#fff}
+.barra{background:var(--acc);color:#fff;padding:12px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.barra b{font-size:15px}
+.barra form{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px}
+.barra select,.barra input{padding:5px 8px;border-radius:6px;border:none;font-size:13px}
+.barra label{color:#cfe0e6;display:flex;gap:5px;align-items:center}
+.barra button{background:#fff;color:var(--acc);border:none;border-radius:7px;padding:6px 14px;font-weight:600;cursor:pointer}
+.barra a{color:#cfe0e6;text-decoration:none;font-size:13px}
+.aviso{padding:10px 20px;background:#fdf3e2;color:#8a5a08;font-size:13px}
+.info{padding:8px 20px;color:var(--ink2);font-size:12.5px}
+.hoja{display:flex;flex-wrap:wrap;gap:6px;padding:12px 20px}
+.et{width:58mm;height:32mm;border:1px dashed #ccc;border-radius:4px;padding:4px 6px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;text-align:center;overflow:hidden}
+.et .nm{font-size:9px;font-weight:600;line-height:1.15;max-height:22px;overflow:hidden}
+.et .bc{flex:1;display:flex;align-items:center;justify-content:center;width:100%}
+.et .bc svg{max-width:100%;height:auto}
+.et .pr{font-size:12px;font-weight:700}
+@media print{
+  .barra,.aviso,.info{display:none}
+  .hoja{padding:0;gap:0}
+  .et{border:none;page-break-inside:avoid}
+  @page{margin:6mm}
+}
+</style>
+</head>
+<body>
+<div class="barra">
+  <b>🏷️ Etiquetas con código de barras</b>
+  <form method="get">
+    <label>Familia:
+      <select name="categoria">
+        <option value="">Todas</option>
+        {% for c in categorias %}
+          <option value="{{ c.id }}" {% if cat_actual == c.id|stringformat:'s' %}selected{% endif %}>{{ c.nombre }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Copias:
+      <input type="number" name="copias" min="1" max="50" value="{{ copias }}" style="width:60px">
+    </label>
+    <label><input type="checkbox" name="segun_stock" value="1" {% if segun_stock %}checked{% endif %}> una por unidad en stock</label>
+    <label><input type="checkbox" name="solo_faltantes" value="1" {% if solo_faltantes %}checked{% endif %}> solo faltantes</label>
+    <button type="submit">Aplicar</button>
+  </form>
+  <a href="javascript:window.print()">🖨️ Imprimir</a>
+  <a href="/">← Inicio</a>
+</div>
+
+{% if faltan_codigo %}
+  <div class="aviso">⚠ {{ faltan_codigo }} producto(s) no tienen código de barras y se omitieron.
+  Corré el comando <code>python manage.py asignar_codigos_barras</code> para asignárselo.</div>
+{% endif %}
+<div class="info">{{ total }} etiqueta(s). Ajustá los filtros y usá <b>Imprimir</b> (o Ctrl+P) sobre hojas de etiquetas adhesivas.</div>
+
+<div class="hoja">
+  {% for e in etiquetas %}
+    <div class="et">
+      <div class="nm">{{ e.nombre }}</div>
+      <div class="bc">{{ e.svg }}</div>
+      <div class="pr">₡{{ e.precio|crc:0 }}</div>
+    </div>
+  {% empty %}
+    <p style="padding:20px;color:var(--ink2)">No hay productos para mostrar con estos filtros.</p>
+  {% endfor %}
+</div>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="500" height="500">
+  <defs>
+    <style>
+      .gato-fuerte { fill: #1a3a3f; }
+      .perro-fuerte { fill: #0d2b3d; }
+      .ojos { fill: #ffd700; }
+      .pupila-fuerte { fill: #000; }
+    </style>
+    <pattern id="animals" patternUnits="userSpaceOnUse" width="500" height="500">
+      <!-- GATO 1 (ARRIBA IZQUIERDA) - Gris Oscuro Fuerte -->
+      <g opacity="0.15">
+        <!-- Cabeza gato robusta -->
+        <circle cx="70" cy="80" r="32" class="gato-fuerte" stroke="#0a1f23" stroke-width="2"/>
+        <!-- Orejas puntiagudas y fuertes -->
+        <polygon points="40,45 30,10 50,50" class="gato-fuerte"/>
+        <polygon points="100,45 110,10 90,50" class="gato-fuerte"/>
+        <!-- Ojos intensos -->
+        <circle cx="55" cy="70" r="6" class="ojos"/>
+        <circle cx="85" cy="70" r="6" class="ojos"/>
+        <circle cx="56" cy="72" r="4" class="pupila-fuerte"/>
+        <circle cx="86" cy="72" r="4" class="pupila-fuerte"/>
+        <!-- Cejas fuertes -->
+        <line x1="48" y1="62" x2="62" y2="58" stroke="#0a1f23" stroke-width="2" stroke-linecap="round"/>
+        <line x1="78" y1="58" x2="92" y2="62" stroke="#0a1f23" stroke-width="2" stroke-linecap="round"/>
+        <!-- Nariz fuerte -->
+        <polygon points="70,85 68,94 72,94" fill="#ff4444"/>
+        <!-- Mandíbula -->
+        <path d="M 55 95 L 70 105 L 85 95" stroke="#0a1f23" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- Bigotes agresivos -->
+        <line x1="42" y1="80" x2="15" y2="78" stroke="#0a1f23" stroke-width="2" stroke-linecap="round"/>
+        <line x1="42" y1="90" x2="15" y2="95" stroke="#0a1f23" stroke-width="2" stroke-linecap="round"/>
+        <line x1="98" y1="80" x2="125" y2="78" stroke="#0a1f23" stroke-width="2" stroke-linecap="round"/>
+        <line x1="98" y1="90" x2="125" y2="95" stroke="#0a1f23" stroke-width="2" stroke-linecap="round"/>
+      </g>
+
+      <!-- PERRO 1 (ARRIBA DERECHA) - Azul Muy Oscuro -->
+      <g opacity="0.14">
+        <!-- Cabeza perro robusta -->
+        <circle cx="430" cy="95" r="36" class="perro-fuerte" stroke="#051a26" stroke-width="2"/>
+        <!-- Orejas puntiagudas (no colgantes) -->
+        <polygon points="405,55 390,15 415,60" class="perro-fuerte"/>
+        <polygon points="455,55 470,15 445,60" class="perro-fuerte"/>
+        <!-- Hocico fuerte -->
+        <ellipse cx="430" cy="115" rx="20" ry="16" fill="#0a2a38" stroke="#051a26" stroke-width="2"/>
+        <!-- Ojos intensos -->
+        <circle cx="418" cy="85" r="7" class="ojos"/>
+        <circle cx="442" cy="85" r="7" class="ojos"/>
+        <circle cx="419" cy="88" r="4" class="pupila-fuerte"/>
+        <circle cx="443" cy="88" r="4" class="pupila-fuerte"/>
+        <!-- Cejas de perro -->
+        <line x1="410" y1="75" x2="425" y2="70" stroke="#051a26" stroke-width="2" stroke-linecap="round"/>
+        <line x1="435" y1="70" x2="450" y2="75" stroke="#051a26" stroke-width="2" stroke-linecap="round"/>
+        <!-- Nariz grande -->
+        <ellipse cx="430" cy="120" rx="7" ry="6" fill="#000"/>
+        <!-- Mandíbula -->
+        <path d="M 415 130 L 430 140 L 445 130" stroke="#051a26" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </g>
+
+      <!-- GATO 2 (CENTRO) - Gris Acero -->
+      <g opacity="0.13">
+        <circle cx="250" cy="250" r="35" fill="#2a4a52" stroke="#1a2a32" stroke-width="2"/>
+        <!-- Orejas triangulares agresivas -->
+        <polygon points="220,210 205,160 235,215" fill="#2a4a52"/>
+        <polygon points="280,210 295,160 265,215" fill="#2a4a52"/>
+        <!-- Ojos felinos intensos -->
+        <ellipse cx="238" cy="245" rx="7" ry="11" class="ojos"/>
+        <ellipse cx="262" cy="245" rx="7" ry="11" class="ojos"/>
+        <!-- Pupilas felinas verticales -->
+        <ellipse cx="238" cy="250" rx="3" ry="7" class="pupila-fuerte"/>
+        <ellipse cx="262" cy="250" rx="3" ry="7" class="pupila-fuerte"/>
+        <!-- Cejas intensas -->
+        <line x1="230" y1="233" x2="246" y2="228" stroke="#1a2a32" stroke-width="2" stroke-linecap="round"/>
+        <line x1="254" y1="228" x2="270" y2="233" stroke="#1a2a32" stroke-width="2" stroke-linecap="round"/>
+        <!-- Nariz agresiva -->
+        <polygon points="250,265 248,272 252,272" fill="#ff5555"/>
+        <!-- Mandíbula fuerte -->
+        <path d="M 238 280 Q 250 290 262 280" stroke="#1a2a32" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- Bigotes militares -->
+        <line x1="220" y1="250" x2="195" y2="247" stroke="#1a2a32" stroke-width="2" stroke-linecap="round"/>
+        <line x1="220" y1="258" x2="195" y2="263" stroke="#1a2a32" stroke-width="2" stroke-linecap="round"/>
+        <line x1="280" y1="250" x2="305" y2="247" stroke="#1a2a32" stroke-width="2" stroke-linecap="round"/>
+        <line x1="280" y1="258" x2="305" y2="263" stroke="#1a2a32" stroke-width="2" stroke-linecap="round"/>
+      </g>
+
+      <!-- PERRO 2 (ABAJO IZQUIERDA) - Negro Profundo -->
+      <g opacity="0.14">
+        <!-- Cabeza perro muscular -->
+        <circle cx="80" cy="330" r="35" fill="#0f1f2e" stroke="#000" stroke-width="2"/>
+        <!-- Orejas puntiagudas hacia arriba -->
+        <polygon points="55,295 40,250 70,300" fill="#0f1f2e"/>
+        <polygon points="105,295 120,250 90,300" fill="#0f1f2e"/>
+        <!-- Hocico potente -->
+        <ellipse cx="80" cy="350" rx="22" ry="18" fill="#1a2a3a"/>
+        <!-- Ojos penetrantes -->
+        <circle cx="68" cy="320" r="8" class="ojos"/>
+        <circle cx="92" cy="320" r="8" class="ojos"/>
+        <circle cx="69" cy="323" r="5" class="pupila-fuerte"/>
+        <circle cx="93" cy="323" r="5" class="pupila-fuerte"/>
+        <!-- Cejas gruesas y amenazantes -->
+        <line x1="60" y1="308" x2="76" y2="302" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+        <line x1="84" y1="302" x2="100" y2="308" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+        <!-- Nariz grande -->
+        <ellipse cx="80" cy="355" rx="8" ry="7" fill="#000"/>
+        <!-- Mandíbula agresiva -->
+        <path d="M 65 370 L 80 382 L 95 370" stroke="#000" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- Cuerpo muscular -->
+        <ellipse cx="80" cy="400" rx="28" ry="35" fill="#0f1f2e"/>
+        <!-- Cuello fuerte -->
+        <rect x="65" y="360" width="30" height="18" fill="#0f1f2e" stroke="#000" stroke-width="1"/>
+      </g>
+
+      <!-- GATO 3 (ABAJO DERECHA) - Gris Carbón -->
+      <g opacity="0.15">
+        <!-- Cabeza gato musculoso -->
+        <circle cx="420" cy="410" r="33" fill="#1f3a45" stroke="#0f1a20" stroke-width="2"/>
+        <!-- Orejas triangulares fuertes -->
+        <polygon points="395,370 375,320 410,375" fill="#1f3a45"/>
+        <polygon points="445,370 465,320 430,375" fill="#1f3a45"/>
+        <!-- Ojos felinos amarillos -->
+        <ellipse cx="408" cy="405" rx="7" ry="10" class="ojos"/>
+        <ellipse cx="432" cy="405" rx="7" ry="10" class="ojos"/>
+        <!-- Pupilas verticales -->
+        <ellipse cx="408" cy="410" rx="3" ry="6" class="pupila-fuerte"/>
+        <ellipse cx="432" cy="410" rx="3" ry="6" class="pupila-fuerte"/>
+        <!-- Cejas marcadas -->
+        <line x1="400" y1="392" x2="416" y2="387" stroke="#0f1a20" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="424" y1="387" x2="440" y2="392" stroke="#0f1a20" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Nariz rojo vivo -->
+        <polygon points="420,425 418,432 422,432" fill="#ff3333"/>
+        <!-- Mandíbula -->
+        <path d="M 408 440 L 420 450 L 432 440" stroke="#0f1a20" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- Bigotes de combate -->
+        <line x1="395" y1="410" x2="370" y2="407" stroke="#0f1a20" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="395" y1="420" x2="370" y2="428" stroke="#0f1a20" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="445" y1="410" x2="470" y2="407" stroke="#0f1a20" stroke-width="2.5" stroke-linecap="round"/>
+        <line x1="445" y1="420" x2="470" y2="428" stroke="#0f1a20" stroke-width="2.5" stroke-linecap="round"/>
+        <!-- Cuerpo musculoso -->
+        <ellipse cx="420" cy="460" rx="26" ry="32" fill="#1f3a45"/>
+      </g>
+
+      <!-- CICATRICES Y DETALLES VIRILES -->
+      <!-- Cicatriz gato 1 -->
+      <line x1="35" y1="75" x2="45" y2="85" stroke="#0a1f23" stroke-width="1.5" opacity="0.2"/>
+
+      <!-- Cicatriz perro 1 -->
+      <line x1="395" y1="90" x2="405" y2="110" stroke="#051a26" stroke-width="1.5" opacity="0.2"/>
+
+      <!-- Músculos gato 2 -->
+      <line x1="225" y1="280" x2="235" y2="295" stroke="#1a2a32" stroke-width="1" opacity="0.15"/>
+      <line x1="265" y1="280" x2="275" y2="295" stroke="#1a2a32" stroke-width="1" opacity="0.15"/>
+    </pattern>
+  </defs>
+  <rect width="500" height="500" fill="url(#animals)"/>
+</svg>

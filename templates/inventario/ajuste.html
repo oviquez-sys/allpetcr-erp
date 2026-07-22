@@ -1,0 +1,30 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Ajuste de inventario{% endblock %}
+
+{% block content %}
+<h1>Ajuste de inventario</h1>
+<p>
+  Registra sobrantes o faltantes contra el kardex. El movimiento es
+  <strong>inmutable</strong>: si se equivoca, registre un ajuste inverso.
+  Todo queda auditado con su usuario, IP y motivo.
+</p>
+
+{% if messages %}
+  {% for message in messages %}
+    <p style="padding:10px;border:1px solid #b6d7c9;background:#eaf6f0;border-radius:6px">{{ message }}</p>
+  {% endfor %}
+{% endif %}
+
+<form method="post" style="max-width:560px">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <table>
+    {{ form.as_table }}
+  </table>
+  <div style="margin-top:14px">
+    <input type="submit" value="Registrar ajuste" class="default">
+    <a href="{% url 'admin:inventario_movimientoinventario_changelist' %}" style="margin-left:12px">Ver kardex</a>
+  </div>
+</form>
+{% endblock %}

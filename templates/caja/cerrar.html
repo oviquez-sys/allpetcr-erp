@@ -1,0 +1,38 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Cerrar caja{% endblock %}
+
+{% block content %}
+<h1>Cierre de caja #{{ sesion.pk }} — arqueo</h1>
+<p>
+  <strong>Cuente el efectivo físico ANTES de continuar.</strong> El sistema
+  calculará el monto esperado y la diferencia al confirmar (arqueo ciego:
+  así el conteo no se acomoda al número esperado).
+</p>
+
+<form method="post" style="max-width:480px">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <table>{{ form.as_table }}</table>
+  <div style="margin-top:14px">
+    <input type="submit" value="Cerrar caja" class="default"
+           onclick="return confirm('¿Confirma el cierre? La sesión quedará inmutable.');">
+    <a href="{% url 'ventas:pos' %}" style="margin-left:12px">Volver al POS</a>
+  </div>
+</form>
+
+<h2 style="margin-top:26px">Movimientos de la sesión</h2>
+<table>
+  <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th style="text-align:right">Monto</th></tr></thead>
+  <tbody>
+  {% for m in movimientos %}
+    <tr>
+      <td>{{ m.fecha|date:"d/m H:i" }}</td>
+      <td>{{ m.get_tipo_display }}</td>
+      <td>{{ m.descripcion }} {{ m.referencia }}</td>
+      <td style="text-align:right">₡{{ m.monto }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

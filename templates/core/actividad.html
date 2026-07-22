@@ -1,0 +1,232 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Actividad y reversas · ALLPETCR</title>
+<style>
+:root{
+  --bg:#f5f5f7;--card:#fff;--ink:#1d1d1f;--ink2:#6e6e73;--line:#e5e5ea;
+  --brand:#0B3161;--brand2:#072244;--green:#34c759;--red:#ff3b30;--blue:#0B3161;--amber:#ff9500;
+  --shadow:0 4px 20px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);letter-spacing:-.01em}
+a{text-decoration:none;color:inherit}
+.nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:12px 26px;
+  background:rgba(255,255,255,.72);backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,.06)}
+.nav .logo{height:52px;object-fit:contain;display:block}
+.nav b{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.nav .sp{flex:1}
+.nav a.home{font-size:13.5px;color:var(--ink2);padding:7px 13px;border-radius:9px}
+.nav a.home:hover{background:rgba(0,0,0,.05)}
+.wrap{max-width:1040px;margin:0 auto;padding:26px 26px 70px}
+.msg{border-radius:14px;padding:13px 18px;font-size:14.5px;margin-bottom:16px}
+.msg.ok{background:#e7f9ee;color:#1a7f42}
+.msg.err{background:#ffeceb;color:#c4362c}
+.tabs{display:flex;gap:8px;margin-bottom:18px}
+.tab{font-size:14px;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:#fff;
+  color:var(--ink2);cursor:pointer;font-weight:600}
+.tab.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.sec{display:none}
+.sec.on{display:block}
+.card{background:var(--card);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
+.card h3{font-size:16px;font-weight:700;padding:18px 22px 6px}
+.card .sub{font-size:13px;color:var(--ink2);padding:0 22px 12px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink2);padding:10px 14px;border-bottom:1px solid var(--line)}
+td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.n{text-align:right}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.badge.ok{background:#e7f9ee;color:#1a7f42}
+.badge.anu{background:#ffeceb;color:#c4362c}
+.btn-anu{padding:7px 14px;border:1px solid var(--red);background:#fff;color:var(--red);border-radius:10px;
+  font-size:13px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-anu:hover{background:#fff2f1}
+.btn-dev{padding:7px 14px;border:1px solid var(--brand2);background:#fff;color:var(--brand2);border-radius:10px;
+  font-size:13px;font-weight:600;cursor:pointer;transition:background .15s;margin-left:6px}
+.btn-dev:hover{background:#f2f7f8}
+.acciones{white-space:nowrap}
+.muted{color:var(--ink2);font-size:13.5px;padding:22px}
+.who{font-size:12.5px;color:var(--ink2)}
+.motivo{font-size:12.5px;color:var(--ink2);font-style:italic}
+</style>
+</head>
+<body>
+<div class="nav">
+  <img class="logo" src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetcr.com">
+  <b>Actividad y reversas</b>
+  <span class="sp"></span>
+  <a class="home" href="/">← Inicio</a>
+</div>
+
+<div class="wrap">
+  {% if messages %}{% for m in messages %}
+    <div class="msg {% if 'success' in m.tags %}ok{% else %}err{% endif %}">{{ m }}</div>
+  {% endfor %}{% endif %}
+
+  <div class="tabs">
+    <button class="tab on" onclick="tab('v')">Ventas</button>
+    <button class="tab" onclick="tab('c')">Compras</button>
+    <button class="tab" onclick="tab('h')">Historial de anulaciones</button>
+  </div>
+
+  <!-- VENTAS -->
+  <div class="sec on" id="sec-v">
+    <div class="card">
+      <h3>Ventas recientes</h3>
+      <div class="sub">Para corregir un error, tocá "Anular". El inventario, la caja y el crédito se revierten solos. La venta nunca se borra: queda marcada como anulada.</div>
+      <table>
+        <thead><tr><th>Factura</th><th>Fecha</th><th>Cajero</th><th>Pago</th><th class="n">Total</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+        {% for f in ventas %}
+          <tr>
+            <td><b>{{ f.numero }}</b></td>
+            <td>{{ f.creado_en|date:"d/m/Y H:i" }}</td>
+            <td>{{ f.usuario.username|default:"—" }}</td>
+            <td>{{ f.get_medio_pago_display }}</td>
+            <td class="n">₡{{ f.total|crc:0 }}</td>
+            <td>
+              {% if f.estado == "ANU" %}
+                <span class="badge anu">Anulada</span>
+                <div class="who">por {{ f.anulada_por.username|default:"—" }} · {{ f.anulada_en|date:"d/m H:i" }}</div>
+                {% if f.motivo_anulacion %}<div class="motivo">"{{ f.motivo_anulacion }}"</div>{% endif %}
+              {% else %}
+                <span class="badge ok">Emitida</span>
+              {% endif %}
+            </td>
+            <td class="n acciones">
+              {% if f.estado != "ANU" %}
+                <a class="btn-dev" href="{% url 'ventas:devolver' f.id %}">Devolver</a>
+                <button class="btn-anu" onclick="anular('venta', {{ f.id }}, '{{ f.numero }}')">Anular</button>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="muted">Todavía no hay ventas.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- COMPRAS -->
+  <div class="sec" id="sec-c">
+    <div class="card">
+      <h3>Compras recientes</h3>
+      <div class="sub">Si registraste una compra por error, tocá "Anular": se saca del inventario lo que había entrado y se deshace la contabilidad. Ojo: no se puede anular si ya vendiste esa mercadería.</div>
+      <table>
+        <thead><tr><th>N.º</th><th>Fecha</th><th>Proveedor</th><th>Pago</th><th class="n">Total</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+        {% for c in compras %}
+          <tr>
+            <td><b>{{ c.numero }}</b></td>
+            <td>{{ c.creado_en|date:"d/m/Y H:i" }}</td>
+            <td>{{ c.proveedor.nombre }}</td>
+            <td>{{ c.get_forma_pago_display }}</td>
+            <td class="n">₡{{ c.total|crc:0 }}</td>
+            <td>
+              {% if c.estado == "ANU" %}
+                <span class="badge anu">Anulada</span>
+                <div class="who">por {{ c.anulada_por.username|default:"—" }} · {{ c.anulada_en|date:"d/m H:i" }}</div>
+                {% if c.motivo_anulacion %}<div class="motivo">"{{ c.motivo_anulacion }}"</div>{% endif %}
+              {% elif c.estado == "REC" %}
+                <span class="badge ok">Recibida</span>
+              {% else %}
+                <span class="badge">{{ c.get_estado_display }}</span>
+              {% endif %}
+            </td>
+            <td class="n">{% if c.estado == "REC" %}<button class="btn-anu" onclick="anular('compra', {{ c.id }}, '{{ c.numero }}')">Anular</button>{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="muted">Todavía no hay compras.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- HISTORIAL DE ANULACIONES -->
+  <div class="sec" id="sec-h">
+    <div class="card">
+      <h3>Anulaciones registradas</h3>
+      <div class="sub">Toda anulación queda firmada con quién la hizo, cuándo y por qué. Esta bitácora no se puede borrar: sirve para revisar si alguien anula ventas para quedarse con el dinero.</div>
+      <table>
+        <thead><tr><th>Documento</th><th>Tipo</th><th class="n">Monto</th><th>Anulada por</th><th>Fecha</th><th>Motivo</th></tr></thead>
+        <tbody>
+        {% for f in ventas_anuladas %}
+          <tr>
+            <td><b>{{ f.numero }}</b></td>
+            <td>Venta</td>
+            <td class="n">₡{{ f.total|crc:0 }}</td>
+            <td>{{ f.anulada_por.username|default:"—" }}</td>
+            <td>{{ f.anulada_en|date:"d/m/Y H:i" }}</td>
+            <td class="motivo">{{ f.motivo_anulacion }}</td>
+          </tr>
+        {% endfor %}
+        {% for c in compras_anuladas %}
+          <tr>
+            <td><b>{{ c.numero }}</b></td>
+            <td>Compra</td>
+            <td class="n">₡{{ c.total|crc:0 }}</td>
+            <td>{{ c.anulada_por.username|default:"—" }}</td>
+            <td>{{ c.anulada_en|date:"d/m/Y H:i" }}</td>
+            <td class="motivo">{{ c.motivo_anulacion }}</td>
+          </tr>
+        {% endfor %}
+        {% if not ventas_anuladas and not compras_anuladas %}
+          <tr><td colspan="6" class="muted">Sin anulaciones. 👍</td></tr>
+        {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Devoluciones parciales registradas</h3>
+      <div class="sub">Devolver un producto no anula el tiquete original: queda como un documento propio, ligado a la venta.</div>
+      <table>
+        <thead><tr><th>N.º</th><th>Venta</th><th class="n">Monto</th><th>Hecha por</th><th>Fecha</th><th>Motivo</th></tr></thead>
+        <tbody>
+        {% for d in devoluciones %}
+          <tr>
+            <td><b>{{ d.numero }}</b></td>
+            <td>{{ d.factura.numero }}</td>
+            <td class="n">₡{{ d.total|crc:0 }}</td>
+            <td>{{ d.usuario.username|default:"—" }}</td>
+            <td>{{ d.creado_en|date:"d/m/Y H:i" }}</td>
+            <td class="motivo">{{ d.motivo }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="muted">Sin devoluciones. 👍</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<form id="frm" method="post" style="display:none">{% csrf_token %}<input type="hidden" name="motivo" id="frm-motivo"></form>
+
+<script>
+function tab(k){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelector(`.tab[onclick="tab('${k}')"]`).classList.add('on');
+  document.getElementById('sec-'+k).classList.add('on');
+}
+function anular(tipo, id, numero){
+  const motivo = prompt(`Vas a ANULAR ${tipo} ${numero}.\n\nEscribí el motivo (queda registrado con tu nombre):`);
+  if (motivo === null) return;                 // canceló
+  if (!motivo.trim()){ alert("El motivo es obligatorio."); return; }
+  const frm = document.getElementById('frm');
+  frm.action = (tipo === 'venta') ? `/pos/${id}/anular/` : `/compras/${id}/anular/`;
+  document.getElementById('frm-motivo').value = motivo.trim();
+  frm.submit();
+}
+</script>
+</body>
+</html>

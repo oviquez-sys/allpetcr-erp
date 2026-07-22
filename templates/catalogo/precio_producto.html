@@ -1,0 +1,114 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ producto.nombre }} · Precio{% endblock %}
+
+{% block extrahead %}<style>
+body { background-color: #f5f5f7 !important; position: relative; }
+body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: url('{% static "patterns/allpetcr-logo.png" %}'); background-repeat: repeat; background-attachment: fixed; background-size: 120px 120px; opacity: 0.06; pointer-events: none; z-index: -1; }
+</style>{% endblock %}
+
+{% block content %}
+<p><a href="{% url 'catalogo:precios' %}" style="color:#0B3161">← Volver a precios</a></p>
+
+<div style="display:flex;align-items:center;gap:16px;margin:14px 0">
+  {% if producto.imagen %}
+    <img src="{{ MEDIA_URL }}{{ producto.imagen }}" alt="" class="clickable-product-img" style="width:72px;height:72px;border-radius:14px;object-fit:cover;flex-shrink:0;background:#f2f5f6">
+  {% else %}
+    <div style="width:72px;height:72px;border-radius:14px;background:#f2f5f6;display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0">🐾</div>
+  {% endif %}
+  <div>
+    <h1 style="margin:0">{{ producto.nombre }}</h1>
+    <p style="color:#999;margin:2px 0 0">{{ producto.sku }}{% if producto.presentacion %} · {{ producto.presentacion }}{% endif %}</p>
+  </div>
+</div>
+
+{% if messages %}
+  {% for m in messages %}
+    <div style="padding:10px 14px;border-radius:8px;margin:8px 0;background:{% if m.tags == 'error' %}#ffe9e6;color:#b03a2e{% else %}#e6f6ef;color:#0b7c6c{% endif %}">{{ m }}</div>
+  {% endfor %}
+{% endif %}
+
+<div style="display:flex;gap:14px;flex-wrap:wrap;margin:14px 0">
+  <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
+    <div style="font-size:12px;color:#777">Costo promedio</div>
+    <div style="font-size:22px;font-weight:700">₡{{ producto.costo_promedio|crc:0 }}</div>
+  </div>
+  <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
+    <div style="font-size:12px;color:#777">Precio de venta</div>
+    <div style="font-size:22px;font-weight:700">₡{{ producto.precio_venta|crc:0 }}</div>
+  </div>
+  <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
+    <div style="font-size:12px;color:#777">Margen</div>
+    <div style="font-size:22px;font-weight:700;color:{% if margen and margen < 0 %}#b03a2e{% else %}#0b7c6c{% endif %}">
+      {% if margen is not None %}{{ margen|crc:1 }}%{% else %}—{% endif %}</div>
+  </div>
+</div>
+
+<div style="background:#fff;border:1px solid #e5e5ea;border-radius:14px;padding:20px;max-width:460px;margin:18px 0">
+  <h3 style="margin:0 0 12px">Cambiar precio de venta</h3>
+  <form method="post">
+    {% csrf_token %}
+    <label style="display:block;font-size:13px;color:#555;margin-bottom:4px">Nuevo precio (₡)</label>
+    <input type="number" name="nuevo_precio" step="1" min="0" required
+           style="padding:10px 14px;width:100%;border:1px solid #ccc;border-radius:10px;margin-bottom:12px">
+    <label style="display:block;font-size:13px;color:#555;margin-bottom:4px">Motivo (opcional)</label>
+    <input type="text" name="motivo" placeholder="Ej. subió el costo del proveedor"
+           style="padding:10px 14px;width:100%;border:1px solid #ccc;border-radius:10px;margin-bottom:14px">
+    <button type="submit" style="padding:11px 22px;border:none;border-radius:10px;background:#0B3161;color:#fff;font-weight:600;cursor:pointer">Guardar nuevo precio</button>
+  </form>
+</div>
+
+<h3>Historial de precios</h3>
+<table style="width:100%;border-collapse:collapse;margin-bottom:28px">
+  <thead><tr>
+    <th style="text-align:left;border-bottom:2px solid #ddd;padding:8px">Fecha</th>
+    <th style="text-align:right;border-bottom:2px solid #ddd;padding:8px">Antes</th>
+    <th style="text-align:right;border-bottom:2px solid #ddd;padding:8px">Después</th>
+    <th style="text-align:left;border-bottom:2px solid #ddd;padding:8px">Motivo</th>
+    <th style="text-align:left;border-bottom:2px solid #ddd;padding:8px">Quién</th>
+  </tr></thead>
+  <tbody>
+  {% for c in cambios %}
+    <tr>
+      <td style="padding:9px 8px;border-bottom:1px solid #eee">{{ c.fecha|date:"d/m/Y H:i" }}</td>
+      <td style="padding:9px 8px;border-bottom:1px solid #eee;text-align:right">₡{{ c.valor_anterior|crc:0 }}</td>
+      <td style="padding:9px 8px;border-bottom:1px solid #eee;text-align:right">
+        ₡{{ c.valor_nuevo|crc:0 }}
+        <span style="color:{% if c.variacion < 0 %}#b03a2e{% else %}#0b7c6c{% endif %};font-size:12px">
+          ({% if c.variacion > 0 %}+{% endif %}{{ c.variacion|crc:0 }})</span>
+      </td>
+      <td style="padding:9px 8px;border-bottom:1px solid #eee;color:#555">{{ c.motivo|default:"—" }}</td>
+      <td style="padding:9px 8px;border-bottom:1px solid #eee">{{ c.usuario.username|default:"—" }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5" style="padding:14px;color:#999">Todavía no hay cambios de precio registrados.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h3>Historial de costo (kardex)</h3>
+<p style="color:#777;font-size:13px">El costo promedio se recalcula solo cuando entra mercadería. Cada movimiento deja el costo resultante.</p>
+<table style="width:100%;border-collapse:collapse">
+  <thead><tr>
+    <th style="text-align:left;border-bottom:2px solid #ddd;padding:8px">Fecha</th>
+    <th style="text-align:left;border-bottom:2px solid #ddd;padding:8px">Movimiento</th>
+    <th style="text-align:right;border-bottom:2px solid #ddd;padding:8px">Cantidad</th>
+    <th style="text-align:right;border-bottom:2px solid #ddd;padding:8px">Costo unit.</th>
+    <th style="text-align:right;border-bottom:2px solid #ddd;padding:8px">Costo prom. resultante</th>
+  </tr></thead>
+  <tbody>
+  {% for mv in movimientos_costo %}
+    <tr>
+      <td style="padding:9px 8px;border-bottom:1px solid #eee">{{ mv.fecha|date:"d/m/Y H:i" }}</td>
+      <td style="padding:9px 8px;border-bottom:1px solid #eee">{{ mv.get_tipo_display }}{% if mv.referencia %} · {{ mv.referencia }}{% endif %}</td>
+      <td style="padding:9px 8px;border-bottom:1px solid #eee;text-align:right">{{ mv.cantidad|crc:0 }}</td>
+      <td style="padding:9px 8px;border-bottom:1px solid #eee;text-align:right">{% if mv.costo_unitario %}₡{{ mv.costo_unitario|crc:0 }}{% else %}—{% endif %}</td>
+      <td style="padding:9px 8px;border-bottom:1px solid #eee;text-align:right">₡{{ mv.costo_promedio_resultante|crc:0 }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5" style="padding:14px;color:#999">Sin movimientos en el kardex.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,135 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devolver · {{ factura.numero }}</title>
+<style>
+:root{
+  --bg:#f5f5f7;--card:#fff;--ink:#1d1d1f;--ink2:#6e6e73;--line:#e5e5ea;
+  --brand:#0B3161;--brand2:#072244;--red:#ff3b30;--blue:#0B3161;
+  --shadow:0 4px 20px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);letter-spacing:-.01em}
+a{text-decoration:none;color:inherit}
+.nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:12px 26px;
+  background:rgba(255,255,255,.72);backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,.06)}
+.nav .logo{height:52px;object-fit:contain;display:block}
+.nav b{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.nav .sp{flex:1}
+.nav a.home{font-size:13.5px;color:var(--ink2);padding:7px 13px;border-radius:9px}
+.wrap{max-width:760px;margin:0 auto;padding:26px 26px 70px}
+.msg{border-radius:14px;padding:13px 18px;font-size:14.5px;margin-bottom:16px}
+.msg.ok{background:#e7f9ee;color:#1a7f42}
+.msg.err{background:#ffeceb;color:#c4362c}
+.card{background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:22px 24px;margin-bottom:18px}
+.card h2{font-size:19px;font-weight:700;margin-bottom:4px}
+.card .sub{font-size:13.5px;color:var(--ink2);margin-bottom:16px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink2);padding:9px 8px;border-bottom:1px solid var(--line)}
+td{padding:12px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.n{text-align:right}
+.disp{font-weight:700}
+.disp.cero{color:var(--ink2);font-weight:400}
+input.cant{width:74px;padding:8px 9px;border:1px solid var(--line);border-radius:9px;font-size:14px;text-align:right}
+input.cant:disabled{background:#f2f2f5;color:#c7c7cc}
+textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-size:14.5px;
+  min-height:70px;font-family:inherit;resize:vertical}
+.btn{margin-top:16px;width:100%;padding:16px;border:none;border-radius:14px;background:linear-gradient(135deg,#c4362c,#a12a21);
+  color:#fff;font-size:16px;font-weight:600;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.nota{font-size:12.5px;color:var(--ink2);margin-top:10px;line-height:1.5}
+.regtag{font-size:11px;color:#8a5cf6;font-weight:600}
+.img-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:100;align-items:center;justify-content:center;padding:20px}
+.img-modal.open{display:flex}
+.img-modal img{max-width:96vw;max-height:92vh;min-width:min(480px,90vw);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.img-modal-close{position:absolute;top:20px;right:30px;font-size:40px;color:#fff;cursor:pointer;background:none;border:none;padding:0}
+.img-modal-close:hover{opacity:.7}
+.clickable-product-img{cursor:pointer;transition:opacity .2s}
+.clickable-product-img:hover{opacity:.8}
+</style>
+</head>
+<body>
+<div class="nav">
+  <img class="logo" src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetcr.com">
+  <b>Devolver productos</b>
+  <span class="sp"></span>
+  <a class="home" href="{% url 'core:actividad' %}">← Actividad</a>
+</div>
+
+<div class="wrap">
+  {% if messages %}{% for m in messages %}
+    <div class="msg {% if 'success' in m.tags %}ok{% else %}err{% endif %}">{{ m }}</div>
+  {% endfor %}{% endif %}
+
+  <div class="card">
+    <h2>Venta {{ factura.numero }}</h2>
+    <div class="sub">{{ factura.creado_en|date:"d/m/Y H:i" }} · {{ factura.cliente.nombre|default:"Consumidor final" }} · {{ factura.get_medio_pago_display }} · Total ₡{{ factura.total|crc:0 }}</div>
+
+    <form method="post">
+      {% csrf_token %}
+      <table>
+        <thead><tr><th>Producto</th><th class="n">Comprado</th><th class="n">Ya devuelto</th><th class="n">Disponible</th><th class="n">Devolver ahora</th></tr></thead>
+        <tbody>
+        {% for f in filas %}
+          <tr>
+            <td style="display:flex;align-items:center;gap:9px">
+              {% if f.linea.producto.imagen %}
+                <img src="{{ MEDIA_URL }}{{ f.linea.producto.imagen }}" alt="" class="clickable-product-img" style="width:30px;height:30px;border-radius:6px;object-fit:cover;flex-shrink:0;background:#f2f5f6">
+              {% else %}
+                <div style="width:30px;height:30px;border-radius:6px;background:#f2f5f6;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🐾</div>
+              {% endif %}
+              {{ f.linea.producto.nombre }}{% if f.linea.es_regalia %} <span class="regtag">🎁 REGALO</span>{% endif %}
+            </td>
+            <td class="n">{{ f.linea.cantidad|crc:0 }}</td>
+            <td class="n">{{ f.ya_devuelta|crc:0 }}</td>
+            <td class="n disp {% if f.disponible <= 0 %}cero{% endif %}">{{ f.disponible|crc:0 }}</td>
+            <td class="n">
+              {% if f.disponible > 0 %}
+                <input class="cant" type="number" name="cant_{{ f.linea.id }}" min="0" max="{{ f.disponible|crc:0 }}" step="1" placeholder="0">
+              {% else %}
+                <input class="cant" type="number" disabled placeholder="—">
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+
+      <div style="margin-top:18px">
+        <label style="font-size:13px;color:var(--ink2);display:block;margin-bottom:6px">Motivo de la devolución (obligatorio)</label>
+        <textarea name="motivo" placeholder="Ej. el cliente no lo necesitaba, venía dañado, talla incorrecta…" required></textarea>
+      </div>
+
+      <button class="btn" type="submit">Registrar devolución</button>
+      <p class="nota">
+        Se devuelve solo lo que marqués arriba (podés dejar en blanco lo que no se devuelve).
+        El inventario sube automáticamente. Si pagó en efectivo, el reembolso sale de la caja
+        abierta de HOY (necesitás tenerla abierta). Si fue tarjeta o SINPE, solo se ajusta la
+        contabilidad. Si fue fiado, primero se reduce lo que debe; si ya había pagado de más,
+        el resto se reembolsa en efectivo.
+      </p>
+    </form>
+  </div>
+</div>
+
+<div class="img-modal" id="imgModal" onclick="if(event.target === this) this.classList.remove('open')">
+  <button class="img-modal-close" onclick="document.getElementById('imgModal').classList.remove('open')">×</button>
+  <img id="imgModalContent" alt="">
+</div>
+
+<script>
+document.addEventListener('click', function(e){
+  if(e.target && e.target.classList && e.target.classList.contains('clickable-product-img')){
+    document.getElementById('imgModalContent').src = e.target.src;
+    document.getElementById('imgModal').classList.add('open');
+  }
+});
+</script>
+</body>
+</html>

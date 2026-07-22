@@ -1,0 +1,417 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recibir mercadería · ALLPETCR</title>
+<style>
+:root{
+  --bg:#f5f5f7;--card:#fff;--ink:#1d1d1f;--ink2:#6e6e73;--line:#e5e5ea;
+  --brand:#0B3161;--brand2:#072244;--green:#34c759;--red:#ff3b30;--blue:#0B3161;
+  --shadow:0 4px 20px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);height:100vh;display:flex;flex-direction:column;letter-spacing:-.01em}
+a{text-decoration:none}
+
+.nav{display:flex;gap:16px;align-items:center;padding:11px 22px;
+  background:rgba(255,255,255,.72);backdrop-filter:saturate(180%) blur(20px);
+  -webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(0,0,0,.06)}
+.nav .logo{height:52px;object-fit:contain;display:block}
+.nav b{font-size:19px;font-weight:700;letter-spacing:-.02em}
+.nav .sp{flex:1}
+.nav a{font-size:13.5px;color:var(--blue);padding:7px 13px;border-radius:9px;transition:background .2s}
+.nav a:hover{background:rgba(11,49,97,.08)}
+.nav a.home{color:var(--ink2)}
+
+.steps{display:flex;gap:8px;padding:10px 22px 0;flex-wrap:wrap}
+.steps span{font-size:12.5px;color:var(--ink2);background:#fff;border:1px solid var(--line);
+  padding:5px 12px;border-radius:20px}
+.steps b{color:var(--brand)}
+
+main{flex:1;display:grid;grid-template-columns:1fr 400px;gap:16px;padding:14px 22px 20px;overflow:hidden}
+.col{background:var(--card);border-radius:20px;padding:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow)}
+
+.buscarfila{display:flex;gap:10px}
+#buscar{flex:1;padding:15px 18px;border:1px solid var(--line);border-radius:14px;font-size:16px;
+  outline:none;transition:border .2s,box-shadow .2s;background:#fbfbfd}
+#buscar:focus{border-color:var(--brand2);box-shadow:0 0 0 4px rgba(46,110,126,.12);background:#fff}
+.btn-nuevo{white-space:nowrap;padding:0 20px;border:1px dashed var(--brand2);border-radius:14px;background:#fff;
+  color:var(--brand2);font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-nuevo:hover{background:#f2f7f8}
+.campo2{margin-bottom:14px}
+.campo2 label{font-size:12.5px;color:var(--ink2);display:block;margin-bottom:6px}
+.campo2 input{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:12px;font-size:14.5px;background:#fbfbfd;outline:none}
+.campo2 input:focus{border-color:var(--brand2)}
+.fila2{display:flex;gap:10px}
+.fila2 .campo2{flex:1}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chip-f{font-size:13px;padding:7px 15px;border-radius:20px;border:1px solid var(--line);background:#fff;
+  color:var(--ink2);cursor:pointer;transition:all .15s;white-space:nowrap}
+.chip-f:hover{border-color:var(--brand2);color:var(--brand)}
+.chip-f.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+#grid{overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:11px;align-content:start;margin-top:14px;padding-right:4px}
+.pcard{border:1px solid var(--line);border-radius:16px;padding:10px;cursor:pointer;background:#fff;
+  transition:transform .15s ease,box-shadow .15s ease,border-color .15s;display:flex;flex-direction:column}
+.pcard:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.09);border-color:transparent}
+.pcard:active{transform:scale(.97)}
+.pcard .foto{width:100%;aspect-ratio:1/1;border-radius:11px;background:#f2f2f5 center/cover no-repeat;
+  margin-bottom:9px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#c7c7cc}
+.pcard .n{font-size:13px;font-weight:600;line-height:1.3;padding:0 4px}
+.pcard .cat{font-size:11px;color:#fff;background:var(--brand2);border-radius:6px;padding:2px 7px;
+  display:inline-block;margin-top:7px;align-self:flex-start}
+.pcard .pres{font-size:11px;color:var(--ink2);margin-top:5px}
+.pcard .p{font-size:14px;font-weight:700;color:var(--brand);margin-top:8px;letter-spacing:-.02em}
+.pcard .s{font-size:11px;color:var(--ink2);margin-top:2px}
+
+.col.cart h2{font-size:17px;font-weight:600;margin-bottom:12px}
+.campo{margin-bottom:10px}
+.campo label{font-size:12px;color:var(--ink2);display:block;margin-bottom:5px}
+select, .txt-in{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:#fbfbfd;outline:none}
+select:focus, .txt-in:focus{border-color:var(--brand2)}
+.fp{display:flex;gap:8px}
+.fp button{flex:1;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink2);
+  font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s}
+.fp button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+
+#lineas{flex:1;overflow-y:auto;margin:8px -4px 0;padding:0 4px;border-top:1px solid var(--line)}
+.linea{display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
+.linea .nm{flex:1;font-weight:600;font-size:13px;line-height:1.25}
+.linea input[type=number]{width:56px;text-align:center;padding:7px 4px;border:1px solid var(--line);border-radius:8px;font-size:13px}
+.linea .x{width:26px;height:26px;border:none;background:none;color:var(--red);font-size:18px;cursor:pointer}
+.linea .mt{width:78px;text-align:right;font-weight:700;font-size:13px}
+.linea .lbl{font-size:10.5px;color:var(--ink2);display:block;text-align:center;margin-bottom:2px}
+.empty{color:var(--ink2);padding:40px 10px;text-align:center;font-size:14px}
+.empty .big{font-size:34px;display:block;margin-bottom:8px}
+#totales{border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+.tot.g{display:flex;justify-content:space-between;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.btn-reg{margin-top:12px;width:100%;padding:16px;border:none;border-radius:14px;
+  background:linear-gradient(135deg,#072244,#0B3161);color:#fff;font-size:15px;font-weight:600;cursor:pointer;
+  transition:transform .15s,filter .2s}
+.btn-reg:hover{filter:brightness(1.1)}
+.btn-reg:active{transform:scale(.98)}
+.btn-reg:disabled{opacity:.4;cursor:not-allowed}
+.nota{font-size:11.5px;color:var(--ink2);margin-top:10px;line-height:1.45}
+
+#msg{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(29,29,31,.92);color:#fff;padding:14px 22px;border-radius:14px;font-size:14px;
+  opacity:0;transition:.3s cubic-bezier(.2,.9,.3,1.2);max-width:440px;z-index:50;backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+#msg.err{background:rgba(211,51,42,.95)}
+#msg.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.help-fab{position:fixed;right:22px;bottom:22px;width:52px;height:52px;border-radius:50%;
+  background:var(--brand);color:#fff;font-size:24px;font-weight:600;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 24px rgba(31,78,95,.4);cursor:pointer;z-index:40;transition:transform .18s}
+.help-fab:hover{transform:scale(1.08)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.32);backdrop-filter:blur(3px);display:none;
+  align-items:center;justify-content:center;z-index:60;padding:20px}
+.overlay.on{display:flex}
+.sheet{background:#fff;border-radius:24px;max-width:440px;width:100%;padding:30px;box-shadow:0 20px 60px rgba(0,0,0,.3);
+  animation:pop .25s cubic-bezier(.2,.9,.3,1.2)}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.sheet h2{font-size:20px;font-weight:700;margin-bottom:16px}
+.step2{display:flex;gap:13px;padding:10px 0;border-bottom:1px solid var(--line)}
+.step2:last-of-type{border-bottom:none}
+.step2 .n{width:27px;height:27px;border-radius:50%;background:var(--brand);color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step2 .st{font-size:14px}
+.sheet .close{margin-top:18px;width:100%;padding:14px;border:none;border-radius:14px;background:var(--brand);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="nav">
+  <img class="logo" src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetcr.com">
+  <b>Recibir mercadería</b>
+  <span class="sp"></span>
+  <a class="home" href="/">Inicio</a>
+</div>
+<div class="steps">
+  <span><b>1.</b> Buscá el producto que llegó</span>
+  <span><b>2.</b> Poné cantidad y costo</span>
+  <span><b>3.</b> Elegí el proveedor y registrá</span>
+</div>
+
+<main>
+  <div class="col">
+    <div class="buscarfila">
+      <input id="buscar" placeholder="🔎 Escaneá el código de barras, o escribí el nombre del producto…" autofocus>
+      <button type="button" class="btn-nuevo" onclick="abrirNuevoProducto()">➕ Producto nuevo</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div id="grid"></div>
+  </div>
+  <div class="col cart">
+    <h2>Mercadería recibida</h2>
+
+    <div class="campo">
+      <label>Proveedor</label>
+      <select id="proveedor" onchange="onProveedorChange()">
+        <option value="">Elegí un proveedor…</option>
+        {% for pr in proveedores %}<option value="{{ pr.id }}">{{ pr.nombre }}</option>{% endfor %}
+        <option value="__nuevo__">+ Nuevo proveedor…</option>
+      </select>
+      <input class="txt-in" id="proveedorNuevo" placeholder="Nombre del proveedor nuevo" style="display:none;margin-top:8px">
+    </div>
+
+    <div class="campo">
+      <label>Forma de pago</label>
+      <div class="fp">
+        <button type="button" id="fpCon" class="on" onclick="setFp('CON')">Contado</button>
+        <button type="button" id="fpCre" onclick="setFp('CRE')">Crédito del proveedor</button>
+      </div>
+    </div>
+
+    <div class="campo">
+      <label>N.º de factura del proveedor (opcional)</label>
+      <input class="txt-in" id="factura" placeholder="Ej. 00123">
+    </div>
+
+    <div id="lineas"></div>
+    <div id="totales"></div>
+    <button class="btn-reg" onclick="registrar()">✅ Registrar compra</button>
+    <p class="nota">Al registrar, el stock sube, se recalcula el costo promedio de cada producto y se genera la contabilidad sola. No hay pasos extra.</p>
+  </div>
+</main>
+<div id="msg"></div>
+
+<div class="help-fab" onclick="document.getElementById('ayuda').classList.add('on')">?</div>
+<div class="overlay" id="ayuda" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="sheet">
+    <h2>Cómo recibir mercadería</h2>
+    <div class="step2"><div class="n">1</div><div class="st">Escaneá o buscá cada producto que llegó y tocalo para agregarlo a la lista de la derecha. Si es un producto que nunca habías comprado, tocá "➕ Producto nuevo" para crearlo al vuelo.</div></div>
+    <div class="step2"><div class="n">2</div><div class="st">Ajustá la <b>cantidad</b> y el <b>costo</b> con el que te lo vendió el proveedor (no el precio de venta).</div></div>
+    <div class="step2"><div class="n">3</div><div class="st">Elegí el proveedor (o escribí uno nuevo si no está en la lista) y si es de contado o a crédito.</div></div>
+    <div class="step2"><div class="n">4</div><div class="st">Tocá <b>Registrar compra</b>. El stock y la contabilidad se actualizan solos, no hay que hacer nada más.</div></div>
+    <button class="close" onclick="document.getElementById('ayuda').classList.remove('on')">Entendido</button>
+  </div>
+</div>
+
+<div class="overlay" id="modalProducto" onclick="if(event.target===this)cerrarNuevoProducto()">
+  <div class="sheet">
+    <h2>Producto nuevo</h2>
+    <div class="campo2">
+      <label>Nombre del producto *</label>
+      <input id="npNombre" placeholder="Ej. Correa retráctil 5m">
+    </div>
+    <div class="fila2">
+      <div class="campo2">
+        <label>Categoría</label>
+        <input id="npCategoria" list="catlist" placeholder="Ej. Collares, correas y arneses">
+        <datalist id="catlist"></datalist>
+      </div>
+      <div class="campo2">
+        <label>Presentación (opcional)</label>
+        <input id="npPresentacion" placeholder="Ej. Talla M">
+      </div>
+    </div>
+    <div class="fila2">
+      <div class="campo2">
+        <label>Precio de venta *</label>
+        <input id="npPrecio" type="number" min="0" step="any" placeholder="₡">
+      </div>
+      <div class="campo2">
+        <label>Costo de esta compra</label>
+        <input id="npCosto" type="number" min="0" step="any" placeholder="₡">
+      </div>
+    </div>
+    <div class="campo2">
+      <label>Foto del producto (opcional)</label>
+      <input id="npFoto" type="file" accept="image/*" style="padding:8px 12px">
+    </div>
+    <button class="close" onclick="guardarProductoNuevo()">Agregar y sumar a la compra</button>
+    <button class="close" style="background:#fff;color:var(--ink2);border:1px solid var(--line);margin-top:8px" onclick="cerrarNuevoProducto()">Cancelar</button>
+  </div>
+</div>
+
+{{ productos|json_script:"datos-productos" }}
+<script>
+const productos = JSON.parse(document.getElementById('datos-productos').textContent);
+const porId = Object.fromEntries(productos.map(p=>[p.id,p]));
+let carrito = {}; // id -> {cantidad, costo}
+let formaPago = 'CON';
+
+const fmt = n => "₡" + n.toLocaleString("es-ES",{maximumFractionDigits:2});
+const msg = (t, err) => { const m=document.getElementById('msg'); m.innerHTML=t;
+  m.className = err ? 'err show':'show'; clearTimeout(m._h); m._h=setTimeout(()=>m.className='',3800); };
+
+function setFp(v){
+  formaPago = v;
+  document.getElementById('fpCon').classList.toggle('on', v==='CON');
+  document.getElementById('fpCre').classList.toggle('on', v==='CRE');
+}
+function onProveedorChange(){
+  const v = document.getElementById('proveedor').value;
+  document.getElementById('proveedorNuevo').style.display = (v === '__nuevo__') ? 'block' : 'none';
+}
+
+let catActiva = "Todas";
+let cats = ["Todas", ...Array.from(new Set(productos.map(p=>p.categoria))).sort()];
+function pintarChips(){
+  document.getElementById('chips').innerHTML = cats.map(c =>
+    `<button class="chip-f ${c===catActiva?'on':''}" onclick="setCat('${c.replace(/'/g,"\\'")}')">${c}</button>`
+  ).join('');
+  document.getElementById('catlist').innerHTML = cats
+    .filter(c => c !== 'Todas' && c !== 'Sin categoría')
+    .map(c => `<option value="${c}">`).join('');
+}
+function setCat(c){ catActiva = c; pintarChips(); pintarGrid(); }
+
+function abrirNuevoProducto(){
+  document.getElementById('npNombre').value = document.getElementById('buscar').value.trim();
+  document.getElementById('npCategoria').value = '';
+  document.getElementById('npPresentacion').value = '';
+  document.getElementById('npPrecio').value = '';
+  document.getElementById('npCosto').value = '';
+  document.getElementById('npFoto').value = '';
+  document.getElementById('modalProducto').classList.add('on');
+}
+function cerrarNuevoProducto(){ document.getElementById('modalProducto').classList.remove('on'); }
+async function guardarProductoNuevo(){
+  const nombre = document.getElementById('npNombre').value.trim();
+  const precio_venta = document.getElementById('npPrecio').value;
+  if (!nombre){ msg("Ponele un nombre al producto.", true); return; }
+  if (!precio_venta || +precio_venta <= 0){ msg("Poné un precio de venta válido.", true); return; }
+
+  let foto_base64 = null;
+  const fotoFile = document.getElementById('npFoto').files[0];
+  if (fotoFile){
+    foto_base64 = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(fotoFile);
+    });
+  }
+
+  try {
+    const r = await fetch("{% url 'compras:producto_nuevo' %}", {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
+      body: JSON.stringify({
+        nombre, precio_venta,
+        categoria: document.getElementById('npCategoria').value.trim(),
+        presentacion: document.getElementById('npPresentacion').value.trim(),
+        foto_base64,
+      })
+    });
+    const d = await r.json();
+    if (!d.ok){ msg("⛔ " + d.error, true); return; }
+    const p = d.producto;
+    productos.push(p);
+    porId[p.id] = p;
+    if (!cats.includes(p.categoria)) { cats.push(p.categoria); cats.sort((a,b)=> a==='Todas'?-1:b==='Todas'?1:a.localeCompare(b)); }
+    const costo = +(document.getElementById('npCosto').value || 0);
+    carrito[p.id] = { cantidad: 1, costo };
+    cerrarNuevoProducto();
+    pintarChips(); pintarGrid(); pintarLineas();
+    msg(`✅ "${p.nombre}" creado y agregado a la compra.`);
+  } catch(e){ msg("⛔ No se pudo conectar con el servidor.", true); }
+}
+
+function filtrar(){
+  const q = document.getElementById('buscar').value.toLowerCase().trim();
+  return productos.filter(p => {
+    if (catActiva !== "Todas" && p.categoria !== catActiva) return false;
+    if (!q) return true;
+    return p.nombre.toLowerCase().includes(q) || p.sku.includes(q) || (p.codigo_barras||'').includes(q)
+        || (p.presentacion||'').toLowerCase().includes(q);
+  });
+}
+function pintarGrid(){
+  const vivos = filtrar().slice(0, 150);
+  document.getElementById('grid').innerHTML = vivos.map(p => {
+    const pres = p.presentacion ? `<div class="pres">${p.presentacion}</div>` : '';
+    const foto = p.imagen
+      ? `<div class="foto" style="background-image:url('${p.imagen}')"></div>`
+      : `<div class="foto">🐾</div>`;
+    return `<div class="pcard" onclick="agregar(${p.id})" title="${p.nombre}">
+      ${foto}
+      <div class="n">${p.nombre}</div>
+      <div class="cat">${p.categoria}</div>${pres}
+      <div class="p">costo prom. ${fmt(p.costo_promedio)}</div>
+      <div class="s">hay ${p.stock_actual}</div></div>`;
+  }).join('') || '<p class="empty">No hay productos con ese filtro. Probá otra categoría o borrá la búsqueda.</p>';
+}
+function agregar(id){
+  const p = porId[id];
+  if (!carrito[id]) carrito[id] = { cantidad: 1, costo: p.costo_promedio || 0 };
+  else carrito[id].cantidad += 1;
+  pintarLineas();
+}
+function quitarLinea(id){ delete carrito[id]; pintarLineas(); }
+function cambiarCantidad(id, v){
+  const n = parseFloat(v);
+  carrito[id].cantidad = (n > 0) ? n : 1;
+  pintarLineas();
+}
+function cambiarCosto(id, v){
+  const n = parseFloat(v);
+  carrito[id].costo = (n >= 0 && !isNaN(n)) ? n : 0;
+  pintarLineas();
+}
+function pintarLineas(){
+  const ids = Object.keys(carrito);
+  document.getElementById('lineas').innerHTML = ids.length ? ids.map(id=>{
+    const p = porId[id], l = carrito[id];
+    return `<div class="linea">
+      <span class="nm">${p.nombre}</span>
+      <span><span class="lbl">cant.</span><input type="number" min="0.01" step="any" value="${l.cantidad}" onchange="cambiarCantidad(${id}, this.value)"></span>
+      <span><span class="lbl">costo</span><input type="number" min="0" step="any" value="${l.costo}" onchange="cambiarCosto(${id}, this.value)"></span>
+      <span class="mt">${fmt(l.cantidad*l.costo)}</span>
+      <button class="x" onclick="quitarLinea(${id})">✕</button></div>`;
+  }).join('') : '<div class="empty"><span class="big">📦</span>Buscá o tocá un producto<br>para empezar a recibir</div>';
+  const total = ids.reduce((a,id)=>a + carrito[id].cantidad*carrito[id].costo, 0);
+  document.getElementById('totales').innerHTML = `<div class="tot g"><span>Total</span><span>${fmt(total)}</span></div>`;
+}
+async function registrar(){
+  const lineas = Object.entries(carrito).map(([id,l])=>({producto_id:+id, cantidad:l.cantidad, costo_unitario:l.costo}));
+  if (!lineas.length){ msg("Todavía no agregaste productos.", true); return; }
+  const provSel = document.getElementById('proveedor').value;
+  let proveedor_id = null, proveedor_nuevo = "";
+  if (provSel === '__nuevo__'){
+    proveedor_nuevo = document.getElementById('proveedorNuevo').value.trim();
+    if (!proveedor_nuevo){ msg("Escribí el nombre del proveedor nuevo.", true); return; }
+  } else if (provSel){
+    proveedor_id = provSel;
+  } else {
+    msg("Elegí un proveedor (o agregá uno nuevo).", true); return;
+  }
+  document.querySelector('.btn-reg').disabled = true;
+  try {
+    const r = await fetch("{% url 'compras:registrar' %}", {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
+      body: JSON.stringify({
+        proveedor_id, proveedor_nuevo,
+        forma_pago: formaPago,
+        factura_proveedor: document.getElementById('factura').value.trim(),
+        lineas,
+      })
+    });
+    const d = await r.json();
+    if (d.ok){
+      msg(`✅ Compra ${d.numero} registrada por ${fmt(d.total)}. Stock actualizado.`);
+      carrito = {}; pintarLineas();
+      document.getElementById('factura').value = '';
+    } else { msg("⛔ " + d.error, true); }
+  } catch(e){ msg("⛔ No se pudo conectar con el servidor.", true); }
+  document.querySelector('.btn-reg').disabled = false;
+}
+document.getElementById('buscar').addEventListener('input', pintarGrid);
+document.getElementById('buscar').addEventListener('keydown', e=>{
+  if (e.key !== 'Enter') return;
+  const q = e.target.value.trim();
+  if (!q) return;
+  let prod = productos.find(p => p.codigo_barras === q || p.sku === q);
+  if (!prod){ const r = filtrar(); if (r.length === 1) prod = r[0]; }
+  if (prod){ agregar(prod.id); e.target.value=''; pintarGrid(); }
+  else { msg("No encontré ese producto: " + q, true); }
+});
+document.getElementById('buscar').focus();
+pintarChips();
+pintarGrid();
+pintarLineas();
+</script>
+</body>
+</html>

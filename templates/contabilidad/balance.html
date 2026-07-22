@@ -1,0 +1,60 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Balance de comprobación{% endblock %}
+
+{% block extrahead %}<style>
+body{background-color:#f5f5f7 !important;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:url('{% static "patterns/allpetcr-logo.png" %}');background-repeat:repeat;background-attachment:fixed;background-size:120px 120px;opacity:.05;pointer-events:none;z-index:-1}
+.bal-links{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 20px}
+.bal-links a{font-size:14px;color:#0B3161;font-weight:500;padding:8px 15px;border-radius:980px;background:rgba(11,49,97,.08);transition:background .2s}
+.bal-links a:hover{background:rgba(11,49,97,.15)}
+.bal-card{background:#fff;border:.5px solid rgba(0,0,0,.05);border-radius:20px;padding:12px 8px;max-width:720px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);overflow:hidden}
+.bal-table{width:100%;border-collapse:collapse;font-size:15px}
+.bal-table th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:#86868b;padding:12px 16px;border-bottom:1.5px solid #e8e8ed;font-weight:600}
+.bal-table td{padding:13px 16px;border-bottom:1px solid #f0f0f2;font-variant-numeric:tabular-nums}
+.bal-table tbody tr:hover{background:#f9fafb}
+.bal-table .tot td{border-top:2px solid #1d1d1f;border-bottom:none;font-weight:800;font-size:16px;padding-top:14px}
+.bal-msg{max-width:720px;margin-top:16px;padding:14px 18px;border-radius:14px;font-size:14px;line-height:1.5;display:flex;gap:10px;align-items:flex-start}
+.bal-msg.ok{background:rgba(52,199,89,.12);color:#248a3d}
+.bal-msg.bad{background:rgba(255,59,48,.1);color:#d1242f}
+</style>{% endblock %}
+
+{% block content %}
+<h1>Balance de comprobación</h1>
+<p style="color:#555;max-width:720px">Suma de débitos y créditos por cuenta. Por partida doble, el total de débitos siempre iguala al de créditos: es la prueba de que la contabilidad, generada sola, está cuadrada.</p>
+
+<div class="bal-links">
+  <a href="{% url 'contabilidad:libro_diario' %}">← Libro diario</a>
+  <a href="{% url 'contabilidad:estado_resultados' %}">Estado de resultados</a>
+  <a href="{% url 'contabilidad:iva_trimestral' %}">IVA trimestral</a>
+</div>
+
+<div class="bal-card">
+  <table class="bal-table">
+    <thead><tr><th>Código</th><th>Cuenta</th><th style="text-align:right">Debe</th><th style="text-align:right">Haber</th></tr></thead>
+    <tbody>
+    {% for f in filas %}
+      <tr>
+        <td style="color:#86868b">{{ f.cuenta__codigo }}</td>
+        <td style="font-weight:500">{{ f.cuenta__nombre }}</td>
+        <td style="text-align:right">₡{{ f.debe|default:0|crc:0 }}</td>
+        <td style="text-align:right">₡{{ f.haber|default:0|crc:0 }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" style="color:#86868b">Sin movimientos contables aún.</td></tr>
+    {% endfor %}
+      <tr class="tot">
+        <td colspan="2">TOTALES</td>
+        <td style="text-align:right">₡{{ total_debe|crc:0 }}</td>
+        <td style="text-align:right">₡{{ total_haber|crc:0 }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="bal-msg {% if cuadra %}ok{% else %}bad{% endif %}">
+  {% if cuadra %}<span>✔</span><span>El balance cuadra: total débitos = total créditos. La contabilidad, generada automáticamente, es consistente.</span>
+  {% else %}<span>⚠</span><span>El balance NO cuadra. Esto no debería ocurrir: revise los asientos.</span>{% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Abrir caja{% endblock %}
+
+{% block content %}
+<h1>Abrir caja</h1>
+<p>Cuente el efectivo inicial del turno. Todo movimiento posterior quedará ligado a esta sesión.</p>
+
+{% if messages %}{% for message in messages %}
+  <p style="padding:10px;border:1px solid #b6d7c9;background:#eaf6f0;border-radius:6px">{{ message }}</p>
+{% endfor %}{% endif %}
+
+<form method="post" style="max-width:480px">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <table>{{ form.as_table }}</table>
+  <div style="margin-top:14px">
+    <input type="submit" value="Abrir caja e ir al POS" class="default">
+  </div>
+</form>
+{% endblock %}

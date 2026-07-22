@@ -1,0 +1,117 @@
+========================================================
+   ALLPETCR ERP — GUÍA PARA SUBIRLO A LA NUBE (SERVIDOR)
+========================================================
+
+Esta guía es para cuando pases el sistema de tu computadora a un servidor en
+internet (un VPS: DigitalOcean, Hetzner, AWS Lightsail, etc.), para que funcione
+siempre y desde cualquier lado. Aclaración: NO se corre "sobre OneDrive" —
+OneDrive es solo para guardar archivos. El sistema corre en un servidor.
+
+Todas las mejoras de seguridad YA están en el código. Se activan poniendo las
+variables de entorno correctas (ver el archivo .env.example). No hay que
+reprogramar nada.
+
+
+-------------------------------------------------
+0) LO ÚNICO URGENTE DE HOY (antes de la nube)
+-------------------------------------------------
+Mientras probás en tu computadora, la base de datos (db.sqlite3) está dentro de
+OneDrive. Esa combinación (SQLite + OneDrive) puede CORROMPER la base: OneDrive
+sube el archivo a medio escribir o lo bloquea al sincronizar.
+
+Recomendación inmediata (5 minutos), aunque todavía no vayas a la nube:
+  1. Creá una carpeta FUERA de OneDrive, por ejemplo:  C:\allpetcr-datos\
+  2. Apagá el sistema (Ctrl+C en la ventana negra).
+  3. Mové el archivo db.sqlite3 a esa carpeta nueva.
+  4. Antes de encender, definí la variable (una sola vez, en esa ventana):
+        set DJANGO_DB_PATH=C:\allpetcr-datos\db.sqlite3
+     (o dejala fija en un .env / en las variables del sistema de Windows).
+  5. Encendé normal. Los RESPALDOS sí pueden seguir yendo a OneDrive: los .zip
+     son seguros de sincronizar; el que no debe estar ahí es la base viva.
+
+
+-------------------------------------------------
+1) PREPARAR EL SERVIDOR (una vez)
+-------------------------------------------------
+- Un VPS con Ubuntu.
+- Instalar: Python 3.12, PostgreSQL, nginx, y un certificado HTTPS gratis
+  (Let's Encrypt / certbot).
+- Crear la base en PostgreSQL (usuario y clave fuerte).
+
+
+-------------------------------------------------
+2) VARIABLES DE ENTORNO (el interruptor de seguridad)
+-------------------------------------------------
+Copiá .env.example como .env y completá los valores reales. Lo clave:
+
+  DJANGO_PRODUCTION=1          -> activa TODO el blindaje y apaga DEBUG
+  DJANGO_SECRET_KEY=...        -> llave larga y aleatoria (obligatoria)
+  DJANGO_ALLOWED_HOSTS=tudominio.com
+  DJANGO_CSRF_ORIGINS=https://tudominio.com
+  POSTGRES_HOST=... (y las demás POSTGRES_*)
+  DJANGO_ENABLE_AXES=1         -> bloqueo de login por fuerza bruta
+
+Generar la llave secreta:
+  python -c "import secrets; print(secrets.token_urlsafe(64))"
+
+Con DJANGO_PRODUCTION=1, el sistema por sí solo:
+  - Apaga DEBUG (no muestra errores internos a nadie).
+  - Obliga HTTPS y cookies seguras (sesión y CSRF cifradas).
+  - Activa HSTS.
+  - Escribe logs a archivo con rotación (carpeta logs/ o DJANGO_LOG_DIR).
+  - Si olvidás la llave secreta, NO ARRANCA (a propósito, para protegerte).
+
+
+-------------------------------------------------
+3) INSTALAR Y ARRANCAR
+-------------------------------------------------
+  pip install -r requirements.txt
+  python manage.py migrate
+  python manage.py collectstatic --noinput
+  python manage.py createsuperuser        (tu cuenta de dueño)
+
+Servir con gunicorn detrás de nginx (nginx hace el HTTPS y sirve /static y /media).
+
+
+-------------------------------------------------
+4) USUARIOS Y PERMISOS (mínimo privilegio)
+-------------------------------------------------
+IMPORTANTE cambio de seguridad: ahora SOLO el dueño es superusuario.
+
+  - Tu cuenta (dueño), acceso total:
+        python manage.py asignar_rol TU_USUARIO Gerente --dueno
+
+  - Otros gerentes (pueden gestionar productos/clientes/proveedores, pero NO
+    borrar la base ni tocar usuarios ni configuración):
+        python manage.py asignar_rol juan Gerente
+
+  - Cajero (solo POS y su caja; ya no puede ni asomarse al panel /admin):
+        python manage.py asignar_rol maria Cajero --crear --password "ClaveFuerte#2026"
+
+Al crear usuarios ahora es OBLIGATORIO poner una contraseña fuerte (se acabó la
+clave por defecto). Sumá doble factor (2FA) para las cuentas con más poder cuando
+puedas: es la siguiente capa recomendada.
+
+
+-------------------------------------------------
+5) RESPALDOS EN LA NUBE (regla 3-2-1)
+-------------------------------------------------
+El sistema ya hace respaldos con rotación. En el servidor:
+  - Agendá el respaldo diario (cron).
+  - Guardá una copia en un lugar INDEPENDIENTE del servidor (otro bucket/nube,
+    o descargarlos periódicamente). Si el servidor se pierde, los respaldos no
+    deben perderse con él.
+  - Conservá aparte el respaldo del cierre de cada mes.
+
+
+-------------------------------------------------
+6) VERIFICACIÓN FINAL DE SEGURIDAD
+-------------------------------------------------
+Con las variables de producción puestas, corré:
+        python manage.py check --deploy
+Debe salir SIN advertencias (o solo las que decidas aceptar conscientemente).
+
+
+-------------------------------------------------
+RESUMEN DE VARIABLES  ->  ver el archivo .env.example
+========================================================

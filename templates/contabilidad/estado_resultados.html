@@ -1,0 +1,72 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Estado de resultados{% endblock %}
+
+{% block extrahead %}<style>
+body { background-color: #f5f5f7 !important; position: relative; }
+body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: url('{% static "patterns/allpetcr-logo.png" %}'); background-repeat: repeat; background-attachment: fixed; background-size: 120px 120px; opacity: 0.06; pointer-events: none; z-index: -1; }
+.er-card{background:#fff;border:1px solid #e5e5ea;border-radius:16px;padding:22px 26px;max-width:640px;box-shadow:0 4px 20px rgba(0,0,0,.05)}
+.er-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f0f0f2}
+.er-row .lbl{color:#333}
+.er-row .num{font-variant-numeric:tabular-nums;font-weight:600}
+.er-sub{color:#999;font-size:12px;padding-left:14px}
+.er-total{display:flex;justify-content:space-between;padding:12px 0;border-top:2px solid #333;margin-top:4px;font-weight:800;font-size:16px}
+.er-neg{color:#b03a2e}
+.er-pos{color:#0b7c6c}
+</style>{% endblock %}
+
+{% block content %}
+<h1>Estado de resultados</h1>
+<p style="color:#555;max-width:640px">Cuánto ganó (o perdió) el negocio en el período: ventas netas, menos el costo
+   de lo vendido, menos los gastos. Se arma solo con la contabilidad ya registrada.</p>
+
+<form method="get" style="margin:14px 0;display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+  <div>
+    <label style="display:block;font-size:12px;color:#666;margin-bottom:3px">Desde</label>
+    <input type="date" name="desde" value="{{ desde|date:'Y-m-d' }}" style="padding:9px 12px;border:1px solid #ccc;border-radius:9px">
+  </div>
+  <div>
+    <label style="display:block;font-size:12px;color:#666;margin-bottom:3px">Hasta</label>
+    <input type="date" name="hasta" value="{{ hasta|date:'Y-m-d' }}" style="padding:9px 12px;border:1px solid #ccc;border-radius:9px">
+  </div>
+  <button type="submit" style="padding:9px 18px;border:none;border-radius:9px;background:#0B3161;color:#fff;font-weight:600;cursor:pointer">Ver</button>
+</form>
+
+<p style="color:#777;font-size:13px;margin:6px 0 16px">Período: <b>{{ desde|date:"d/m/Y" }}</b> a <b>{{ hasta|date:"d/m/Y" }}</b></p>
+
+<div class="er-card">
+  <div style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#999;margin-bottom:6px">Ingresos</div>
+  {% for i in ingresos %}
+    <div class="er-row"><span class="lbl">{{ i.nombre }}</span><span class="num">₡{{ i.monto|crc:0 }}</span></div>
+  {% empty %}
+    <div class="er-row"><span class="lbl" style="color:#999">Sin ingresos en el período</span><span class="num">₡0</span></div>
+  {% endfor %}
+  <div class="er-row" style="font-weight:700"><span class="lbl">Ventas netas</span><span class="num">₡{{ total_ingresos|crc:0 }}</span></div>
+
+  <div style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#999;margin:16px 0 6px">Costo de lo vendido</div>
+  <div class="er-row"><span class="lbl">Costo de ventas</span><span class="num er-neg">−₡{{ costo_ventas|crc:0 }}</span></div>
+
+  <div class="er-total"><span>Utilidad bruta</span><span class="{% if utilidad_bruta < 0 %}er-neg{% else %}er-pos{% endif %}">₡{{ utilidad_bruta|crc:0 }}</span></div>
+
+  {% if hay_gastos_oper %}
+    <div style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#999;margin:16px 0 6px">Gastos operativos</div>
+    {% for g in gastos %}
+      {% if not g.es_costo %}
+        <div class="er-row"><span class="lbl">{{ g.nombre }}</span><span class="num er-neg">−₡{{ g.monto|crc:0 }}</span></div>
+      {% endif %}
+    {% endfor %}
+    <div class="er-row" style="font-weight:700"><span class="lbl">Total gastos operativos</span><span class="num er-neg">−₡{{ total_gastos_oper|crc:0 }}</span></div>
+  {% endif %}
+
+  <div class="er-total" style="font-size:18px"><span>Utilidad neta</span><span class="{% if utilidad_neta < 0 %}er-neg{% else %}er-pos{% endif %}">₡{{ utilidad_neta|crc:0 }}</span></div>
+  {% if margen_neto is not None %}
+    <div style="text-align:right;color:#777;font-size:13px;margin-top:6px">Margen neto: {{ margen_neto|crc:1 }}%</div>
+  {% endif %}
+</div>
+
+<p style="color:#999;font-size:12px;max-width:640px;margin-top:14px">
+  Nota: la utilidad neta es contable (ventas − costo − gastos registrados). No incluye
+  impuestos ni retiros del dueño. Para el pago del régimen simplificado, ver el reporte de IVA trimestral.
+</p>
+{% endblock %}

@@ -1,0 +1,97 @@
+from decimal import Decimal
+
+from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.shortcuts import redirect, render
+from django.utils import timezone
+from django.utils.safestring import mark_safe
+
+from catalogo.models import Categoria, Producto
+from core.roles import CAJERO, GERENTE, rol_requerido
+
+from .etiquetas import svg_barcode
+from .forms import AjusteInventarioForm
+from .services import registrar_movimiento
+
+
+@rol_requerido(GERENTE)
+def ajuste_inventario(request):
+    """Único camino de ajuste manual: pasa por el servicio de dominio,
+    exige motivo y queda auditado con usuario e IP."""
+    form = AjusteInventarioForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        datos = form.cleaned_data
+        referencia = f"AJ-{timezone.now():%Y%m%d-%H%M%S}"
+        try:
+            mov = registrar_movimiento(
+                producto=datos["producto"],
+                bodega=datos["bodega"],
+                tipo="AJU",
+                cantidad=datos["cantidad"],
+                costo_unitario=datos["costo_unitario"] or 0,
+                referencia=referencia,
+                motivo=datos["motivo"],
+                usuario=request.user,
+            )
+            messages.success(
+                request,
+                f"Ajuste {referencia} registrado: {mov.cantidad:+} × {mov.producto.nombre}. "
+                f"Stock resultante: {mov.stock_resultante}.",
+            )
+            return redirect("inventario:ajuste")
+        except ValidationError as e:
+            form.add_error(None, e)
+    return render(request, "inventario/ajuste.html", {"form": form, "title": "Ajuste de inventario"})
+
+
+@rol_requerido(CAJERO, GERENTE)
+def etiquetas(request):
+    """Genera etiquetas imprimibles con código de barras.
+
+    Filtros por querystring:
+      ?categoria=<id>   solo esa familia (por defecto: todas)
+      ?copias=<n>       n etiquetas por producto (por defecto 1)
+      ?segun_stock=1    una etiqueta por unidad en existencia
+      ?solo_faltantes=1 solo productos en/ bajo el mínimo
+    """
+    productos = Producto.objects.filter(activo=True).select_related("categoria").order_by("nombre")
+
+    cat_id = request.GET.get("categoria")
+    if cat_id:
+        productos = productos.filter(categoria_id=cat_id)
+    if request.GET.get("solo_faltantes"):
+        productos = [p for p in productos if p.stock_actual <= p.stock_minimo]
+
+    segun_stock = request.GET.get("segun_stock") == "1"
+    try:
+        copias = max(1, min(50, int(request.GET.get("copias", "1"))))
+    except ValueError:
+        copias = 1
+
+    etiquetas_render = []
+    faltan_codigo = 0
+    for p in productos:
+        if not p.codigo_barras:
+            faltan_codigo += 1
+            continue
+        n = int(p.stock_actual) if segun_stock else copias
+        n = max(1, n)
+        svg = mark_safe(svg_barcode(p.codigo_barras))
+        for _ in range(n):
+            etiquetas_render.append({
+                "nombre": p.nombre,
+                "precio": p.precio_venta,
+                "sku": p.sku,
+                "svg": svg,
+            })
+
+    return render(request, "inventario/etiquetas.html", {
+        "etiquetas": etiquetas_render,
+        "total": len(etiquetas_render),
+        "faltan_codigo": faltan_codigo,
+        "categorias": Categoria.objects.all().order_by("nombre"),
+        "cat_actual": cat_id or "",
+        "copias": copias,
+        "segun_stock": segun_stock,
+        "solo_faltantes": bool(request.GET.get("solo_faltantes")),
+    })

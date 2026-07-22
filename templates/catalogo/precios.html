@@ -1,0 +1,59 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Precios{% endblock %}
+
+{% block extrahead %}<style>
+body { background-color: #f5f5f7 !important; position: relative; }
+body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: url('{% static "patterns/allpetcr-logo.png" %}'); background-repeat: repeat; background-attachment: fixed; background-size: 120px 120px; opacity: 0.06; pointer-events: none; z-index: -1; }
+</style>{% endblock %}
+
+{% block content %}
+<h1>Precios</h1>
+<p style="color:#555">Buscá un producto para revisar su precio, su margen y su historial de cambios.
+   Cambiar un precio queda siempre registrado (quién y cuándo).</p>
+
+{% if messages %}
+  {% for m in messages %}
+    <div style="padding:10px 14px;border-radius:8px;margin:8px 0;background:{% if m.tags == 'error' %}#ffe9e6;color:#b03a2e{% else %}#e6f6ef;color:#0b7c6c{% endif %}">{{ m }}</div>
+  {% endfor %}
+{% endif %}
+
+<form method="get" style="margin:14px 0">
+  <input type="text" name="q" value="{{ q }}" placeholder="Nombre, código (REF) o código de barras"
+         autofocus style="padding:10px 14px;width:340px;max-width:100%;border:1px solid #ccc;border-radius:10px">
+  <button type="submit" style="padding:10px 18px;border:none;border-radius:10px;background:#0B3161;color:#fff;font-weight:600;cursor:pointer">Buscar</button>
+</form>
+
+<table style="width:100%;border-collapse:collapse">
+  <thead><tr>
+    <th style="text-align:left;border-bottom:2px solid #ddd;padding:8px">Producto</th>
+    <th style="text-align:right;border-bottom:2px solid #ddd;padding:8px">Costo prom.</th>
+    <th style="text-align:right;border-bottom:2px solid #ddd;padding:8px">Precio</th>
+    <th style="border-bottom:2px solid #ddd;padding:8px"></th>
+  </tr></thead>
+  <tbody>
+  {% for p in productos %}
+    <tr>
+      <td style="padding:10px 8px;border-bottom:1px solid #eee">
+        <div style="display:flex;align-items:center;gap:10px">
+          {% if p.imagen %}
+            <img src="{{ MEDIA_URL }}{{ p.imagen }}" alt="" class="clickable-product-img" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#f2f5f6">
+          {% else %}
+            <div style="width:40px;height:40px;border-radius:8px;background:#f2f5f6;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🐾</div>
+          {% endif %}
+          <div><b>{{ p.nombre }}</b><br><span style="color:#999;font-size:12px">{{ p.sku }}</span></div>
+        </div>
+      </td>
+      <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:right">₡{{ p.costo_promedio|crc:0 }}</td>
+      <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:right">₡{{ p.precio_venta|crc:0 }}</td>
+      <td style="padding:10px 8px;border-bottom:1px solid #eee;text-align:right">
+        <a href="{% url 'catalogo:precio_producto' p.pk %}" style="color:#0B3161;font-weight:600">Ver / cambiar →</a>
+      </td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="4" style="padding:16px;color:#999">{% if q %}No se encontró nada con "{{ q }}".{% else %}Escribí algo para buscar.{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
