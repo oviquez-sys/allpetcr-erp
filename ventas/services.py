@@ -67,6 +67,13 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
         numero=numero, cliente=cliente, medio_pago=medio_pago, usuario=usuario,
     )
 
+    # Orden estable de bloqueo: al recorrer las líneas se toma un lock de fila
+    # sobre cada producto (en registrar_movimiento). Si dos cajas venden los
+    # mismos productos en distinto orden, adquirir los locks siempre en el
+    # mismo orden (por id de producto) evita interbloqueos (deadlock) en
+    # PostgreSQL. El orden no afecta los totales (la suma es conmutativa).
+    lineas = sorted(lineas, key=lambda l: l["producto_id"])
+
     subtotal = impuesto = total = descuento_total = Decimal("0")
     for linea in lineas:
         producto = Producto.objects.get(pk=linea["producto_id"], activo=True)
