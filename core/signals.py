@@ -45,8 +45,12 @@ def _snapshot(instance):
 
 
 @receiver(pre_save)
-def _capturar_estado_previo(sender, instance, **kwargs):
-    if _label(sender) not in AUDITED or instance.pk is None:
+def _capturar_estado_previo(sender, instance, raw=False, **kwargs):
+    # raw=True significa que el objeto viene de un fixture (loaddata). Cargar un
+    # respaldo no es una acción de usuario y no debe generar auditoría: además de
+    # ensuciar el historial, colisiona con los AuditLog que trae el propio
+    # respaldo, porque los id se pisan.
+    if raw or _label(sender) not in AUDITED or instance.pk is None:
         return
     try:
         anterior = sender.objects.get(pk=instance.pk)
@@ -56,8 +60,8 @@ def _capturar_estado_previo(sender, instance, **kwargs):
 
 
 @receiver(post_save)
-def _auditar_guardado(sender, instance, created, **kwargs):
-    if _label(sender) not in AUDITED:
+def _auditar_guardado(sender, instance, created, raw=False, **kwargs):
+    if raw or _label(sender) not in AUDITED:
         return
     from core.models import AuditLog
 
