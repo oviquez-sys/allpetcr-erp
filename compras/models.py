@@ -58,6 +58,12 @@ class Compra(models.Model):
         verbose_name = "compra"
         verbose_name_plural = "compras"
         ordering = ["-id"]
+        indexes = [
+            # El monitor del RTS suma las compras recibidas del año en curso;
+            # es la consulta del dashboard que más crece con el tiempo.
+            models.Index(fields=["recibida_en"], name="compra_recibida_idx"),
+            models.Index(fields=["empresa", "estado", "recibida_en"], name="compra_emp_est_rec_idx"),
+        ]
 
     def __str__(self):
         return f"{self.numero} — {self.proveedor.nombre} ({self.get_estado_display()})"

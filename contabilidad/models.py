@@ -57,6 +57,11 @@ class Asiento(models.Model):
 
     class Meta:
         ordering = ["-id"]
+        indexes = [
+            # El libro diario y el balance filtran por rango de fechas.
+            models.Index(fields=["fecha"], name="asiento_fecha_idx"),
+            models.Index(fields=["empresa", "fecha"], name="asiento_emp_fecha_idx"),
+        ]
 
     def __str__(self):
         return f"{self.numero} — {self.descripcion}"

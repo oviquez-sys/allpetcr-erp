@@ -1,61 +1,112 @@
 {% extends "admin/base_site.html" %}
+{% load static %}
 
 {% block title %}Estado de cuenta — {{ cliente.nombre }}{% endblock %}
 
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:url('{% static "patterns/allpetcr-logo.png" %}');background-repeat:repeat;background-size:120px 120px;opacity:.045;pointer-events:none;z-index:-1}
+.ec-wrap{max-width:920px;margin:0 auto}
+.ec-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.ec-sub{font-size:14px;color:#86868b;margin-bottom:22px}
+.ec-msg{padding:13px 18px;border-radius:14px;font-size:14.5px;margin-bottom:18px}
+.ec-msg.success{background:rgba(52,199,89,.12);color:#1c6b30}
+.ec-msg.error{background:rgba(255,59,48,.1);color:#b5231a}
+.ec-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:26px}
+.ec-metric{background:#fff;border-radius:18px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);border:.5px solid rgba(0,0,0,.04)}
+.ec-metric .l{font-size:12.5px;color:#86868b;font-weight:500;text-transform:uppercase;letter-spacing:.03em}
+.ec-metric .v{font-size:24px;font-weight:700;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums}
+.ec-metric.warn .v{color:#b5231a}
+.ec-metric.good .v{color:#1c6b30}
+.ec-card{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);border:.5px solid rgba(0,0,0,.04)}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:#86868b;padding:12px 18px;border-bottom:1.5px solid #e8e8ed;font-weight:600}
+td{padding:14px 18px;border-bottom:1px solid #f0f0f2;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:4px 12px;border-radius:980px;font-size:12.5px;font-weight:600}
+.badge.PEN{background:rgba(255,159,10,.16);color:#8a5700}
+.badge.PAG{background:rgba(52,199,89,.14);color:#1c6b30}
+.badge.ANU{background:rgba(255,59,48,.1);color:#b5231a}
+.ec-abono-row td{background:#fafafa;font-size:13px;color:#6e6e73}
+.ec-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ec-form input[type=number],.ec-form input[type=text]{padding:9px 11px;border:1px solid #e0e0e6;border-radius:10px;font-size:13.5px;background:#fbfbfd}
+.ec-form input[type=number]{width:100px}
+.ec-form input[type=text]{width:120px}
+.ec-form select{padding:9px 11px;border:1px solid #e0e0e6;border-radius:10px;font-size:13.5px;background:#fbfbfd}
+.ec-form button{padding:9px 18px;border:none;border-radius:var(--radius-pill);background:var(--brand);color:#fff;font-size:13.5px;font-weight:600;cursor:pointer;transition:filter .2s}
+.ec-form button:hover{filter:brightness(1.1)}
+.ec-back{display:inline-block;margin-top:20px;color:#86868b;font-size:14px}
+.ec-back:hover{color:var(--brand)}
+</style>{% endblock %}
+
 {% block content %}
-<h1>Estado de cuenta — {{ cliente.nombre }}</h1>
+<div class="ec-wrap">
+  <div class="ec-title">Estado de cuenta</div>
+  <div class="ec-sub">{{ cliente.nombre }}</div>
 
-{% if messages %}{% for m in messages %}
-  <p style="padding:10px;border:1px solid #b6d7c9;background:#eaf6f0;border-radius:6px">{{ m }}</p>
-{% endfor %}{% endif %}
+  {% if messages %}{% for m in messages %}
+    <div class="ec-msg {{ m.tags }}">{{ m }}</div>
+  {% endfor %}{% endif %}
 
-<div style="display:flex;gap:26px;margin:14px 0">
-  <div><b>Límite de crédito:</b> ₡{{ cliente.limite_credito }}</div>
-  <div><b>Saldo pendiente:</b> ₡{{ cliente.saldo }}</div>
-  <div><b>Crédito disponible:</b> ₡{{ cliente.credito_disponible }}</div>
+  <div class="ec-metrics">
+    <div class="ec-metric">
+      <div class="l">Límite de crédito</div>
+      <div class="v">₡{{ cliente.limite_credito|crc:0 }}</div>
+    </div>
+    <div class="ec-metric {% if cliente.saldo > 0 %}warn{% endif %}">
+      <div class="l">Saldo pendiente</div>
+      <div class="v">₡{{ cliente.saldo|crc:0 }}</div>
+    </div>
+    <div class="ec-metric good">
+      <div class="l">Crédito disponible</div>
+      <div class="v">₡{{ cliente.credito_disponible|crc:0 }}</div>
+    </div>
+  </div>
+
+  <div class="ec-card">
+    <table>
+      <thead><tr>
+        <th>Factura</th><th>Fecha</th><th style="text-align:right">Original</th>
+        <th style="text-align:right">Saldo</th><th>Estado</th><th>Abonar</th>
+      </tr></thead>
+      <tbody>
+      {% for d in documentos %}
+        <tr>
+          <td style="font-weight:600">{{ d.factura.numero }}</td>
+          <td>{{ d.creado_en|date:"d/m/Y" }}</td>
+          <td style="text-align:right;font-variant-numeric:tabular-nums">₡{{ d.monto_original|crc:0 }}</td>
+          <td style="text-align:right;font-variant-numeric:tabular-nums;font-weight:700">₡{{ d.saldo|crc:0 }}</td>
+          <td><span class="badge {{ d.estado }}">{{ d.get_estado_display }}</span></td>
+          <td>
+            {% if d.estado == "PEN" %}
+            <form method="post" action="{% url 'ventas:abonar' d.pk %}" class="ec-form">
+              {% csrf_token %}
+              <input type="number" name="monto" step="0.01" min="0.01" max="{{ d.saldo }}" placeholder="Monto" required>
+              <select name="medio">
+                <option value="EFE">Efectivo</option>
+                <option value="SIN">SINPE</option>
+                <option value="TAR">Tarjeta</option>
+                <option value="TRA">Transferencia</option>
+              </select>
+              <input type="text" name="referencia" placeholder="Ref. (opcional)">
+              <button type="submit">Abonar</button>
+            </form>
+            {% else %}<span style="color:#c7c7cc">—</span>{% endif %}
+          </td>
+        </tr>
+        {% for a in d.abonos.all %}
+        <tr class="ec-abono-row">
+          <td colspan="3" style="padding-left:32px">↳ Abono {{ a.fecha|date:"d/m/Y H:i" }} ({{ a.get_medio_display }}) {{ a.referencia }}</td>
+          <td style="text-align:right">−₡{{ a.monto|crc:0 }}</td><td colspan="2"></td>
+        </tr>
+        {% endfor %}
+      {% empty %}
+        <tr><td colspan="6" style="color:#86868b;padding:24px 18px">Este cliente no tiene ventas a crédito.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <a class="ec-back" href="{% url 'ventas:pos' %}">← Volver al POS</a>
 </div>
-
-<table style="width:100%">
-  <thead><tr>
-    <th>Factura</th><th>Fecha</th><th style="text-align:right">Original</th>
-    <th style="text-align:right">Saldo</th><th>Estado</th><th>Abonar</th>
-  </tr></thead>
-  <tbody>
-  {% for d in documentos %}
-    <tr>
-      <td>{{ d.factura.numero }}</td>
-      <td>{{ d.creado_en|date:"d/m/Y" }}</td>
-      <td style="text-align:right">₡{{ d.monto_original }}</td>
-      <td style="text-align:right"><b>₡{{ d.saldo }}</b></td>
-      <td>{{ d.get_estado_display }}</td>
-      <td>
-        {% if d.estado == "PEN" %}
-        <form method="post" action="{% url 'ventas:abonar' d.pk %}" style="display:flex;gap:6px;align-items:center">
-          {% csrf_token %}
-          <input type="number" name="monto" step="0.01" min="0.01" max="{{ d.saldo }}" placeholder="Monto" required style="width:100px">
-          <select name="medio">
-            <option value="EFE">Efectivo</option>
-            <option value="SIN">SINPE</option>
-            <option value="TAR">Tarjeta</option>
-            <option value="TRA">Transferencia</option>
-          </select>
-          <input type="text" name="referencia" placeholder="Ref. (opcional)" style="width:120px">
-          <button type="submit" class="default">Abonar</button>
-        </form>
-        {% else %}—{% endif %}
-      </td>
-    </tr>
-    {% for a in d.abonos.all %}
-      <tr style="font-size:12px;color:#555">
-        <td colspan="2" style="padding-left:22px">↳ Abono {{ a.fecha|date:"d/m/Y H:i" }} ({{ a.get_medio_display }}) {{ a.referencia }}</td>
-        <td></td><td style="text-align:right">−₡{{ a.monto }}</td><td colspan="2"></td>
-      </tr>
-    {% endfor %}
-  {% empty %}
-    <tr><td colspan="6" style="color:#777">Este cliente no tiene ventas a crédito.</td></tr>
-  {% endfor %}
-  </tbody>
-</table>
-
-<p style="margin-top:16px"><a href="{% url 'ventas:pos' %}">← Volver al POS</a></p>
 {% endblock %}

@@ -24,7 +24,7 @@ class ImpuestoAdmin(admin.ModelAdmin):
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    list_display = ("foto", "sku", "nombre", "categoria", "stock_fmt", "minimo_fmt", "costo_fmt", "precio_fmt", "activo")
+    list_display = ("foto", "sku", "nombre", "categoria", "stock_fmt", "minimo_fmt", "costo_fmt", "precio_fmt", "margen_fmt", "markup_fmt", "activo")
 
     @admin.display(description="Stock actual", ordering="stock_actual")
     def stock_fmt(self, obj):
@@ -41,6 +41,19 @@ class ProductoAdmin(admin.ModelAdmin):
     @admin.display(description="Precio venta", ordering="precio_venta")
     def precio_fmt(self, obj):
         return f"₡{_crc(obj.precio_venta, 2)}"
+
+    @admin.display(description="Margen %")
+    def margen_fmt(self, obj):
+        if obj.margen_pct is None:
+            return "—"
+        return f"{obj.margen_pct}%"
+
+    @admin.display(description="Markup %")
+    def markup_fmt(self, obj):
+        if obj.markup_pct is None:
+            return "—"
+        return f"{obj.markup_pct}%"
+
     list_display_links = ("sku", "nombre")
     list_filter = ("categoria", "activo")
     search_fields = ("sku", "nombre", "codigo_barras", "categoria_original")

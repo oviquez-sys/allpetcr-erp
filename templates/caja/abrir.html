@@ -1,21 +1,66 @@
 {% extends "admin/base_site.html" %}
+{% load static %}
 
 {% block title %}Abrir caja{% endblock %}
 
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:url('{% static "patterns/allpetcr-logo.png" %}');background-repeat:repeat;background-size:120px 120px;opacity:.045;pointer-events:none;z-index:-1}
+.oc-wrap{max-width:520px;margin:0 auto}
+.oc-icon{width:64px;height:64px;border-radius:20px;background:linear-gradient(140deg,#30d158,#248a3d);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 8px 22px rgba(52,199,89,.3)}
+.oc-icon svg{width:32px;height:32px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.oc-title{font-size:26px;font-weight:700;letter-spacing:-.02em;text-align:center;margin-bottom:6px}
+.oc-sub{font-size:15px;color:#6e6e73;text-align:center;max-width:400px;margin:0 auto 28px;line-height:1.5}
+.oc-card{background:#fff;border:.5px solid rgba(0,0,0,.06);border-radius:22px;padding:30px 32px;
+  box-shadow:var(--shadow)}
+.oc-row{margin-bottom:20px}
+.oc-row:last-of-type{margin-bottom:0}
+.oc-row label{display:block;font-size:13px;font-weight:600;color:#6e6e73;margin-bottom:8px}
+.oc-row select,.oc-row input{width:100%;padding:14px 16px;border:1px solid #e0e0e6;border-radius:14px;font-size:17px;
+  font-family:inherit;background:#fbfbfd;outline:none;transition:border .2s,box-shadow .2s;box-sizing:border-box}
+.oc-row select:focus,.oc-row input:focus{border-color:var(--brand);box-shadow:0 0 0 4px rgba(11,49,97,.12);background:#fff}
+.oc-help{font-size:12.5px;color:#86868b;margin-top:6px}
+.oc-errors{background:rgba(255,59,48,.1);color:#b5231a;border-radius:12px;padding:12px 16px;font-size:14px;margin-bottom:18px}
+.oc-btn{width:100%;margin-top:26px;padding:16px;border:none;border-radius:980px;background:linear-gradient(135deg,#14498f,#072244);
+  color:#fff;font-size:17px;font-weight:600;cursor:pointer;transition:filter .2s,transform .15s;
+  box-shadow:0 8px 22px rgba(11,49,97,.3)}
+.oc-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.oc-msg{max-width:520px;margin:0 auto 18px;padding:13px 18px;border-radius:14px;font-size:14.5px}
+.oc-msg.success{background:rgba(52,199,89,.12);color:#1c6b30}
+.oc-msg.info{background:rgba(11,49,97,.1);color:var(--brand)}
+</style>{% endblock %}
+
 {% block content %}
-<h1>Abrir caja</h1>
-<p>Cuente el efectivo inicial del turno. Todo movimiento posterior quedará ligado a esta sesión.</p>
+<div class="oc-wrap">
+  {% if messages %}{% for m in messages %}
+    <div class="oc-msg {{ m.tags }}">{{ m }}</div>
+  {% endfor %}{% endif %}
 
-{% if messages %}{% for message in messages %}
-  <p style="padding:10px;border:1px solid #b6d7c9;background:#eaf6f0;border-radius:6px">{{ message }}</p>
-{% endfor %}{% endif %}
+  <div class="oc-icon"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/></svg></div>
+  <div class="oc-title">Abrir caja</div>
+  <div class="oc-sub">Contá el efectivo inicial del turno. Todo movimiento posterior quedará ligado a esta sesión.</div>
 
-<form method="post" style="max-width:480px">
-  {% csrf_token %}
-  {{ form.non_field_errors }}
-  <table>{{ form.as_table }}</table>
-  <div style="margin-top:14px">
-    <input type="submit" value="Abrir caja e ir al POS" class="default">
+  <div class="oc-card">
+    <form method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="oc-errors">{{ form.non_field_errors }}</div>{% endif %}
+
+      <div class="oc-row">
+        <label for="{{ form.sucursal.id_for_label }}">{{ form.sucursal.label }}</label>
+        {{ form.sucursal }}
+        {% if form.sucursal.errors %}<div class="oc-help" style="color:#b5231a">{{ form.sucursal.errors|join:", " }}</div>{% endif %}
+      </div>
+
+      <div class="oc-row">
+        <label for="{{ form.monto_apertura.id_for_label }}">{{ form.monto_apertura.label }}</label>
+        {{ form.monto_apertura }}
+        <div class="oc-help">{{ form.monto_apertura.help_text }}</div>
+        {% if form.monto_apertura.errors %}<div class="oc-help" style="color:#b5231a">{{ form.monto_apertura.errors|join:", " }}</div>{% endif %}
+      </div>
+
+      <button type="submit" class="oc-btn">Abrir caja e ir al POS</button>
+    </form>
   </div>
-</form>
+</div>
 {% endblock %}

@@ -15,29 +15,101 @@
 {% block nav-global %}{% endblock %}
 
 {% block extrahead %}
+<link rel="stylesheet" href="{% static 'css/allpetcr.css' %}">
 <style>
-/* --- Tema ALLPETCR sobre el admin de Django: barra blanca, acentos azules --- */
+/* --- Tema ALLPETCR sobre el admin de Django: barra blanca, acentos azules.
+   Los colores/sombras/radios NO se redeclaran acá: vienen de allpetcr.css
+   (linkeado arriba), que es la única fuente de verdad del sistema. Si mañana
+   cambia el azul de marca, se cambia en un solo lugar (allpetcr.css) y se
+   propaga a todo el admin y a las pantallas de reportes/formularios. --- */
 :root{
-  --primary:#0B3161; --secondary:#0B3161; --accent:#0B3161;
-  --link-fg:#0B3161; --link-hover-color:#072244; --link-selected-fg:#072244;
-  --button-bg:#0B3161; --button-hover-bg:#072244;
-  --default-button-bg:#0B3161; --default-button-hover-bg:#072244;
-  --object-tools-bg:#072244; --object-tools-hover-bg:#003f80;
-  --font-family-primary:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --primary:var(--brand); --secondary:var(--brand); --accent:var(--brand);
+  --link-fg:var(--brand); --link-hover-color:var(--brand-d); --link-selected-fg:var(--brand-d);
+  --button-bg:var(--brand); --button-hover-bg:var(--brand-d);
+  --default-button-bg:var(--brand); --default-button-hover-bg:var(--brand-d);
+  --object-tools-bg:var(--brand-d); --object-tools-hover-bg:#003f80;
+  --font-family-primary:var(--font);
 }
-#header{background:#fff;color:#1d1d1f;border-bottom:1px solid rgba(0,0,0,.08);box-shadow:0 1px 3px rgba(0,0,0,.04)}
-#branding a:link,#branding a:visited,#site-name a{color:#1d1d1f !important}
-#user-tools{color:#86868b}
-#user-tools a:link,#user-tools a:visited{color:#0B3161;border-bottom:none}
-#user-tools a:hover{color:#072244;border-bottom:none}
-div.breadcrumbs{background:#f5f5f7;color:#86868b;border:none}
-div.breadcrumbs a{color:#0B3161}
-a:link,a:visited{color:#0B3161}
-.module h2,.module caption,.inline-group h2{background:#0B3161}
-.button,input[type=submit],input[type=button],.submit-row input,a.button{background:#0B3161;border-radius:8px}
-.button:hover,input[type=submit]:hover{background:#072244}
-.button.default,input[type=submit].default,.submit-row input.default{background:#072244}
-.object-tools a{border-radius:980px}
+#header{background:#fff;color:var(--ink);border-bottom:1px solid rgba(0,0,0,.08);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+#branding a:link,#branding a:visited,#site-name a{color:var(--ink) !important}
+#user-tools{color:var(--ink2)}
+#user-tools a:link,#user-tools a:visited{color:var(--brand);border-bottom:none}
+#user-tools a:hover{color:var(--brand-d);border-bottom:none}
+div.breadcrumbs{background:var(--bg);color:var(--ink2);border:none}
+div.breadcrumbs a{color:var(--brand)}
+a:link,a:visited{color:var(--brand)}
+.module h2,.module caption,.inline-group h2{background:var(--brand)}
+.button,input[type=submit],input[type=button],.submit-row input,a.button{background:var(--brand);border-radius:10px !important;padding:9px 20px;font-weight:600;border:none}
+.button:hover,input[type=submit]:hover{background:var(--brand-d)}
+.button.default,input[type=submit].default,.submit-row input.default{background:var(--brand-d)}
+.object-tools a{border-radius:var(--radius-pill)}
+
+body{background:var(--bg) !important}
+#content{padding:24px 32px 48px}
+div.breadcrumbs{padding:12px 32px;margin:0}
+
+/* Tarjetas: módulos del índice, fieldsets de formularios, panel lateral.
+   Mismo componente visual que .apx-panel/.apx-card del resto del sistema:
+   mismo fondo, radio y sombra, definidos una sola vez en allpetcr.css. */
+div.module,fieldset.module,#changelist,#content-related .module,#changelist-filter{
+  background:var(--card);border-radius:var(--radius-lg);box-shadow:var(--shadow);
+  border:.5px solid rgba(0,0,0,.04);overflow:hidden;margin-bottom:22px
+}
+div.module table,fieldset.module table{background:transparent}
+
+/* Encabezado de cada tarjeta (antes: barra plana pegada al borde) */
+div.module caption,div.module>h2,fieldset.module h2,#content-related .module h2,#changelist-filter h2{
+  background:var(--brand) !important;color:#fff !important;padding:14px 20px;font-size:13px;font-weight:600;
+  letter-spacing:.04em;text-transform:uppercase;border:none
+}
+div.module caption a.section{color:#fff !important}
+
+/* Filas de modelos dentro de cada tarjeta del índice */
+div.module table tr{border-bottom:1px solid var(--line)}
+div.module table tr:last-child{border-bottom:none}
+div.module table th,div.module table td{padding:13px 20px;border:none}
+div.module table th a{font-size:15px;font-weight:500}
+div.module table th a:hover{color:var(--brand)}
+
+/* Add/Change/Vista como chips en vez de texto pelado */
+.addlink,.changelink,.viewlink{
+  display:inline-flex;align-items:center;font-size:12.5px;font-weight:600;
+  padding:5px 12px;border-radius:var(--radius-pill);
+  background:var(--bg);color:var(--ink3) !important;border:1px solid var(--line)
+}
+.addlink:hover,.changelink:hover,.viewlink:hover{background:var(--brand);color:#fff !important;border-color:var(--brand)}
+
+/* Grilla tipo bento para el índice de administración (como el Inicio).
+   Django fija ".dashboard #content{width:600px}" (un ancho viejo y angosto
+   pensado para 1 sola columna); lo liberamos para usar todo el ancho
+   disponible y que la grilla pueda armar varias columnas. */
+.dashboard #content{width:auto !important;max-width:1680px}
+body.dashboard #content-main{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;align-content:start}
+body.dashboard #content-main .module{margin-bottom:0}
+#content-related{width:280px}
+#content-related .module{position:sticky;top:20px}
+
+/* Listas (changelist): tabla y filtros con el mismo aire */
+#changelist-filter h3{padding:0 18px;color:var(--ink3)}
+#changelist-filter ul{padding:6px 18px 14px}
+#changelist .results{border-radius:var(--radius-lg);overflow:hidden}
+#changelist table thead th{background:#fafafa;border-bottom:1.5px solid var(--line)}
+#changelist table tbody tr:hover{background:var(--bg)}
+.paginator{background:transparent;border:none;padding:16px 4px}
+
+/* Formularios: inputs más suaves, foco con halo azul */
+.form-row{border-bottom:1px solid var(--line)}
+input[type=text],input[type=number],input[type=email],input[type=password],input[type=url],textarea,select{
+  border:1px solid var(--line) !important;border-radius:10px !important;padding:9px 12px !important
+}
+input:focus,textarea:focus,select:focus{border-color:var(--brand) !important;box-shadow:0 0 0 3px rgba(11,49,97,.12)}
+.submit-row{background:transparent;border:none;padding:18px 0 0}
+
+/* Mensajes (éxito/error) con el mismo estilo que el resto del sistema */
+ul.messagelist li{border-radius:12px;padding:14px 18px;box-shadow:var(--shadow);border:none}
+ul.messagelist li.success{background:rgba(52,199,89,.12);color:#1c6b30}
+ul.messagelist li.warning{background:rgba(255,159,10,.14);color:#8a5700}
+ul.messagelist li.error{background:rgba(255,59,48,.1);color:#b5231a}
 
 .product-img-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;padding:20px}
 .product-img-modal.open{display:flex}
@@ -74,4 +146,7 @@ a:link,a:visited{color:#0B3161}
   });
 })();
 </script>
+
+{% include "core/includes/chat_widget.html" %}
+
 {% endblock extrabody %}

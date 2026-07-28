@@ -4,23 +4,23 @@
 {% block title %}Libro diario{% endblock %}
 
 {% block extrahead %}<style>
-body{background-color:#f5f5f7 !important;position:relative}
+body{background-color:var(--bg) !important;position:relative}
 body::before{content:'';position:fixed;inset:0;background-image:url('{% static "patterns/allpetcr-logo.png" %}');background-repeat:repeat;background-attachment:fixed;background-size:120px 120px;opacity:.05;pointer-events:none;z-index:-1}
-.ld-link{font-size:14px;color:#0B3161;font-weight:500;padding:8px 15px;border-radius:980px;background:rgba(11,49,97,.08);display:inline-block;margin:12px 0 22px;transition:background .2s}
+.ld-link{font-size:14px;color:var(--brand);font-weight:500;padding:8px 15px;border-radius:var(--radius-pill);background:rgba(11,49,97,.08);display:inline-block;margin:12px 0 22px;transition:background .2s}
 .ld-link:hover{background:rgba(11,49,97,.15)}
-.ld-asiento{background:#fff;border:.5px solid rgba(0,0,0,.05);border-radius:18px;margin-bottom:16px;max-width:760px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04),0 6px 18px rgba(0,0,0,.05)}
+.ld-asiento{background:var(--card);border:.5px solid rgba(0,0,0,.05);border-radius:var(--radius-lg);margin-bottom:16px;max-width:760px;overflow:hidden;box-shadow:var(--shadow)}
 .ld-head{padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #f0f0f2;flex-wrap:wrap}
-.ld-head .meta{font-size:14px;color:#1d1d1f}
+.ld-head .meta{font-size:14px;color:var(--ink)}
 .ld-head .meta b{font-weight:700}
-.ld-head .num{color:#0B3161;font-weight:700}
-.ld-badge{font-size:12px;font-weight:600;padding:5px 12px;border-radius:980px;white-space:nowrap}
-.ld-badge.ok{background:rgba(52,199,89,.14);color:#248a3d}
+.ld-head .num{color:var(--brand);font-weight:700}
+.ld-badge{font-size:12px;font-weight:600;padding:5px 12px;border-radius:var(--radius-pill);white-space:nowrap}
+.ld-badge.ok{background:rgba(52,199,89,.14);color:var(--green-d)}
 .ld-badge.bad{background:rgba(255,59,48,.12);color:#d1242f}
 .ld-table{width:100%;border-collapse:collapse;font-size:14.5px}
-.ld-table th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:#86868b;padding:10px 20px;font-weight:600}
+.ld-table th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink2);padding:10px 20px;font-weight:600}
 .ld-table td{padding:11px 20px;border-top:1px solid #f5f5f7;font-variant-numeric:tabular-nums}
-.ld-table .tot td{border-top:2px solid #e8e8ed;font-weight:700}
-.ld-empty{color:#86868b;max-width:760px}
+.ld-table .tot td{border-top:2px solid var(--line);font-weight:700}
+.ld-empty{color:var(--ink2);max-width:760px}
 </style>{% endblock %}
 
 {% block content %}

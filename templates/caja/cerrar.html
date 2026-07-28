@@ -1,38 +1,93 @@
 {% extends "admin/base_site.html" %}
+{% load static %}
 
 {% block title %}Cerrar caja{% endblock %}
 
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:url('{% static "patterns/allpetcr-logo.png" %}');background-repeat:repeat;background-size:120px 120px;opacity:.045;pointer-events:none;z-index:-1}
+.cc-wrap{max-width:640px;margin:0 auto}
+.cc-icon{width:64px;height:64px;border-radius:20px;background:linear-gradient(140deg,#ff9f0a,#f2760a);
+  display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 8px 22px rgba(255,159,10,.3)}
+.cc-icon svg{width:32px;height:32px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.cc-title{font-size:26px;font-weight:700;letter-spacing:-.02em;text-align:center;margin-bottom:6px}
+.cc-sub{font-size:15px;color:#6e6e73;text-align:center;max-width:460px;margin:0 auto 28px;line-height:1.5}
+.cc-sub b{color:#1d1d1f}
+.cc-card{background:#fff;border:.5px solid rgba(0,0,0,.06);border-radius:22px;padding:30px 32px;
+  box-shadow:var(--shadow);margin-bottom:24px}
+.cc-row label{display:block;font-size:13px;font-weight:600;color:#6e6e73;margin-bottom:8px}
+.cc-row input{width:100%;padding:14px 16px;border:1px solid #e0e0e6;border-radius:14px;font-size:17px;
+  font-family:inherit;background:#fbfbfd;outline:none;transition:border .2s,box-shadow .2s;box-sizing:border-box}
+.cc-row input:focus{border-color:var(--brand);box-shadow:0 0 0 4px rgba(11,49,97,.12);background:#fff}
+.cc-help{font-size:12.5px;color:#86868b;margin-top:6px}
+.cc-errors{background:rgba(255,59,48,.1);color:#b5231a;border-radius:12px;padding:12px 16px;font-size:14px;margin-bottom:18px}
+.cc-actions{display:flex;gap:12px;align-items:center;margin-top:24px}
+.cc-btn{padding:15px 28px;border:none;border-radius:980px;background:linear-gradient(135deg,#14498f,#072244);
+  color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:filter .2s,transform .15s;
+  box-shadow:0 8px 22px rgba(11,49,97,.3)}
+.cc-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.cc-back{color:#86868b;font-size:14px}
+.cc-back:hover{color:var(--brand)}
+.cc-msg{padding:13px 18px;border-radius:14px;font-size:14.5px;margin-bottom:18px}
+.cc-msg.success{background:rgba(52,199,89,.12);color:#1c6b30}
+.cc-msg.info{background:rgba(11,49,97,.1);color:var(--brand)}
+.cc-movtitle{font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#6e6e73;margin:0 0 14px 4px}
+.cc-movcard{background:#fff;border:.5px solid rgba(0,0,0,.06);border-radius:20px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05)}
+.cc-movcard table{width:100%;border-collapse:collapse;font-size:14.5px}
+.cc-movcard th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:#86868b;
+  padding:12px 18px;border-bottom:1.5px solid #e8e8ed;font-weight:600}
+.cc-movcard td{padding:13px 18px;border-bottom:1px solid #f0f0f2}
+.cc-movcard tr:last-child td{border-bottom:none}
+.cc-movcard tbody tr:hover{background:#f9fafb}
+</style>{% endblock %}
+
 {% block content %}
-<h1>Cierre de caja #{{ sesion.pk }} — arqueo</h1>
-<p>
-  <strong>Cuente el efectivo físico ANTES de continuar.</strong> El sistema
-  calculará el monto esperado y la diferencia al confirmar (arqueo ciego:
-  así el conteo no se acomoda al número esperado).
-</p>
+<div class="cc-wrap">
+  <div class="cc-icon"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5h.01M18 14.5h.01"/></svg></div>
+  <div class="cc-title">Cierre de caja #{{ sesion.pk }}</div>
+  <div class="cc-sub"><b>Contá el efectivo físico ANTES de continuar.</b> El sistema calcula el monto esperado y la diferencia al confirmar (arqueo ciego: así el conteo no se acomoda al número esperado).</div>
 
-<form method="post" style="max-width:480px">
-  {% csrf_token %}
-  {{ form.non_field_errors }}
-  <table>{{ form.as_table }}</table>
-  <div style="margin-top:14px">
-    <input type="submit" value="Cerrar caja" class="default"
-           onclick="return confirm('¿Confirma el cierre? La sesión quedará inmutable.');">
-    <a href="{% url 'ventas:pos' %}" style="margin-left:12px">Volver al POS</a>
+  {% if messages %}{% for m in messages %}
+    <div class="cc-msg {{ m.tags }}">{{ m }}</div>
+  {% endfor %}{% endif %}
+
+  <div class="cc-card">
+    <form method="post">
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="cc-errors">{{ form.non_field_errors }}</div>{% endif %}
+
+      <div class="cc-row">
+        <label for="{{ form.monto_contado.id_for_label }}">{{ form.monto_contado.label }}</label>
+        {{ form.monto_contado }}
+        <div class="cc-help">{{ form.monto_contado.help_text }}</div>
+        {% if form.monto_contado.errors %}<div class="cc-help" style="color:#b5231a">{{ form.monto_contado.errors|join:", " }}</div>{% endif %}
+      </div>
+
+      <div class="cc-actions">
+        <button type="submit" class="cc-btn" onclick="return confirm('¿Confirma el cierre? La sesión quedará inmutable.');">Cerrar caja</button>
+        <a class="cc-back" href="{% url 'ventas:pos' %}">← Volver al POS</a>
+      </div>
+    </form>
   </div>
-</form>
 
-<h2 style="margin-top:26px">Movimientos de la sesión</h2>
-<table>
-  <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th style="text-align:right">Monto</th></tr></thead>
-  <tbody>
-  {% for m in movimientos %}
-    <tr>
-      <td>{{ m.fecha|date:"d/m H:i" }}</td>
-      <td>{{ m.get_tipo_display }}</td>
-      <td>{{ m.descripcion }} {{ m.referencia }}</td>
-      <td style="text-align:right">₡{{ m.monto }}</td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
+  <div class="cc-movtitle">Movimientos de la sesión</div>
+  <div class="cc-movcard">
+    <table>
+      <thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th style="text-align:right">Monto</th></tr></thead>
+      <tbody>
+      {% for m in movimientos %}
+        <tr>
+          <td>{{ m.fecha|date:"d/m H:i" }}</td>
+          <td>{{ m.get_tipo_display }}</td>
+          <td>{{ m.descripcion }} {{ m.referencia }}</td>
+          <td style="text-align:right;font-variant-numeric:tabular-nums">₡{{ m.monto|crc:2 }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" style="color:#86868b;padding:20px 18px">Todavía no hay movimientos en esta sesión.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 {% endblock %}

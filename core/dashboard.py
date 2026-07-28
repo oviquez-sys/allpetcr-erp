@@ -8,7 +8,8 @@ import os
 from datetime import date, timedelta
 from decimal import Decimal
 
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum, Count, Q, F, DecimalField
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 # Salario base: cambia cada año (decreto del Poder Judicial). Se puede
@@ -42,30 +43,42 @@ def indicadores(empresa):
     lineas_mes = LineaVenta.objects.filter(
         factura__empresa=empresa, factura__estado="EMI", factura__creado_en__date__gte=inicio_mes
     )
-    costo_mes = sum((l.costo_unitario * l.cantidad for l in lineas_mes), Decimal("0"))
+    # El costo se suma EN LA BASE (no trayendo cada línea a memoria): a miles
+    # de líneas de venta al mes, iterar en Python vuelve lenta la página.
+    costo_mes = lineas_mes.aggregate(
+        t=Sum(
+            F("costo_unitario") * F("cantidad"),
+            output_field=DecimalField(max_digits=14, decimal_places=2),
+        )
+    )["t"] or Decimal("0")
     utilidad_mes = ventas_mes - costo_mes
     margen = (utilidad_mes / ventas_mes * 100) if ventas_mes else Decimal("0")
 
-    # Tendencia últimos 7 días
-    ventas_ultimos_7 = []
-    for i in range(7, -1, -1):
-        fecha = hoy - timedelta(days=i)
-        v = ventas_emitidas.filter(creado_en__date=fecha).aggregate(t=Sum("total"))["t"] or Decimal("0")
-        ventas_ultimos_7.append(float(v))
-
-    # Top 5 productos más vendidos del mes
-    top_productos = LineaVenta.objects.filter(
-        factura__empresa=empresa, factura__estado="EMI", factura__creado_en__date__gte=inicio_mes
-    ).values('producto__nombre').annotate(cant=Sum('cantidad')).order_by('-cant')[:5]
+    # Tendencia últimos 7 días: UNA consulta agrupada por día, no ocho
+    # consultas en un bucle (una por fecha).
+    totales_por_dia = dict(
+        ventas_emitidas.filter(creado_en__date__gte=hace_7_dias)
+        .annotate(dia=TruncDate("creado_en"))
+        .values("dia")
+        .annotate(t=Sum("total"))
+        .values_list("dia", "t")
+    )
+    ventas_ultimos_7 = [
+        float(totales_por_dia.get(hoy - timedelta(days=i)) or 0) for i in range(7, -1, -1)
+    ]
 
     caja_abierta = SesionCaja.objects.filter(empresa_sucursal(empresa), estado="ABI").first()
     saldo_caja = monto_esperado(caja_abierta) if caja_abierta else Decimal("0")
 
     cxc_total = Cliente.objects.filter(empresa=empresa).aggregate(t=Sum("saldo"))["t"] or Decimal("0")
 
-    productos = Producto.objects.filter(empresa=empresa, activo=True)
-    stock_bajo = [p for p in productos if p.stock_actual <= p.stock_minimo]
-    valor_inventario = sum((p.stock_actual * p.costo_promedio for p in productos), Decimal("0"))
+    # Stock bajo contado EN LA BASE: antes se cargaban todos los productos a
+    # memoria para compararlos uno por uno.
+    num_stock_bajo = (
+        Producto.objects.filter(empresa=empresa, activo=True)
+        .filter(stock_actual__lte=F("stock_minimo"))
+        .count()
+    )
 
     # Monitor RTS
     limite = SALARIO_BASE * LIMITE_RTS_SALARIOS
@@ -74,9 +87,6 @@ def indicadores(empresa):
     ).aggregate(t=Sum("total"))["t"] or Decimal("0")
     pct_rts = (compras_anio / limite * 100) if limite else Decimal("0")
 
-    # Conteo de transacciones de hoy
-    num_transacciones_hoy = ventas_emitidas.filter(creado_en__date=hoy).count()
-
     # Variación de ventas mes vs mes anterior
     variacion_mes = ((ventas_mes - ventas_mes_anterior) / ventas_mes_anterior * 100) if ventas_mes_anterior else Decimal("0")
 
@@ -84,22 +94,18 @@ def indicadores(empresa):
         "ventas_hoy": ventas_hoy,
         "ventas_mes": ventas_mes,
         "ventas_ultimos_7": ventas_ultimos_7,
-        "top_productos": top_productos,
         "utilidad_mes": utilidad_mes,
         "margen": margen,
         "variacion_mes": variacion_mes,
         "saldo_caja": saldo_caja,
         "caja_abierta": caja_abierta is not None,
         "cxc_total": cxc_total,
-        "stock_bajo": stock_bajo,
-        "num_stock_bajo": len(stock_bajo),
-        "valor_inventario": valor_inventario,
+        "num_stock_bajo": num_stock_bajo,
         "compras_anio": compras_anio,
         "limite_rts": limite,
         "pct_rts": pct_rts,
         "alerta_rts": pct_rts >= UMBRAL_ALERTA,
         "es_rts": empresa.regimen == empresa.Regimen.SIMPLIFICADO,
-        "num_transacciones_hoy": num_transacciones_hoy,
     }
 
 

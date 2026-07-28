@@ -4,11 +4,12 @@ from decimal import Decimal
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models import Sum
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from core.models import Empresa
 from core.roles import CONTADOR, GERENTE, rol_requerido
+from core.tenancy import documento_de_empresa
 
 from .models import Asiento, CierrePeriodo, CuentaContable, LineaAsiento
 from .services import cerrar_periodo, fecha_bloqueo, reabrir_periodo
@@ -68,7 +69,9 @@ def cierres(request):
                 )
                 messages.success(request, f"Período cerrado hasta el {fecha:%d/%m/%Y}.")
             elif accion == "reabrir":
-                cierre = get_object_or_404(CierrePeriodo, pk=request.POST.get("cierre_id"))
+                cierre = documento_de_empresa(
+                    CierrePeriodo, request, pk=request.POST.get("cierre_id")
+                )
                 reabrir_periodo(
                     cierre=cierre, usuario=request.user,
                     motivo=request.POST.get("motivo") or "",

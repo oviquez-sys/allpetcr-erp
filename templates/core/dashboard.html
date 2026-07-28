@@ -7,230 +7,147 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <style>
 :root{
-  --bg:#f5f5f7; --card:#ffffff; --ink:#1d1d1f; --ink2:#86868b; --ink3:#6e6e73; --line:#e8e8ed;
-  --brand:#0B3161; --brand-d:#072244;
-  --green:#34c759; --green-d:#248a3d; --amber:#ff9f0a; --red:#ff3b30; --purple:#af52de; --teal:#30b0c7; --indigo:#5e5ce6;
-  --shadow:0 1px 3px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.05);
-  --shadow-h:0 4px 12px rgba(0,0,0,.08), 0 16px 40px rgba(0,0,0,.10);
+  --bg:#ffffff; --card:#ffffff; --ink:#1d1d1f; --ink2:#86868b; --ink3:#6e6e73; --line:#e5e5ea;
+  --brand:#0B3161; --brand-d:#072244; --brand-l:#1f5a8f;
+  --green:#34c759; --green-d:#248a3d; --amber:#ff9f0a; --red:#ff3b30; --gray:#a1a1a6;
+  --shadow:0 1px 2px rgba(0,0,0,.02), 0 4px 12px rgba(0,0,0,.035);
+  --shadow-h:0 2px 8px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.065);
+  --r:24px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;scroll-behavior:smooth}
 body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  background:var(--bg);color:var(--ink);line-height:1.47;letter-spacing:-.01em;position:relative}
+  background:#ffffff;color:var(--ink);line-height:1.47;letter-spacing:-.01em;position:relative}
 body::before{content:'';position:fixed;inset:0;background-image:url('{% static "patterns/allpetcr-logo.png" %}');
-  background-repeat:repeat;background-size:130px 130px;background-position:center;
-  opacity:.045;pointer-events:none;z-index:-1}
+  background-repeat:repeat;background-size:140px 140px;background-position:center;
+  opacity:.04;pointer-events:none;z-index:-1}
 a{text-decoration:none;color:inherit}
 
 /* ===== NAV ===== */
 .nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:16px;
-  padding:10px 40px;background:rgba(245,245,247,.78);backdrop-filter:saturate(180%) blur(22px);
-  -webkit-backdrop-filter:saturate(180%) blur(22px);border-bottom:1px solid rgba(0,0,0,.06)}
-.nav .logo{height:64px;width:auto;object-fit:contain;display:block}
+  padding:10px 40px;background:rgba(245,245,247,.72);backdrop-filter:saturate(180%) blur(22px);
+  -webkit-backdrop-filter:saturate(180%) blur(22px);border-bottom:1px solid rgba(0,0,0,.05)}
+.nav .logo{height:60px;width:auto;object-fit:contain;display:block}
 .nav .sp{flex:1}
 .nav .userchip{display:flex;align-items:center;gap:11px}
-.nav .userchip .av{width:42px;height:42px;border-radius:50%;background:linear-gradient(140deg,#14498f,#072244);color:#fff;
-  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;flex-shrink:0;letter-spacing:.02em}
+.nav .userchip .av{width:40px;height:40px;border-radius:50%;background:linear-gradient(140deg,#14498f,#072244);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0;letter-spacing:.02em}
 .nav .userchip .m{line-height:1.2}
 .nav .userchip .m .n{font-size:15px;font-weight:600;color:var(--ink)}
 .nav .userchip .m .r{font-size:12.5px;color:var(--ink2)}
 .nav .out{font-size:14px;color:var(--brand);font-weight:500;padding:8px 14px;border-radius:980px;transition:background .2s}
-.nav .out:hover{background:rgba(11,49,97,.1)}
+.nav .out:hover{background:rgba(11,49,97,.09)}
 
-.wrap{max-width:1720px;margin:0 auto;padding:44px 48px 80px}
+.wrap{max-width:1240px;margin:0 auto;padding:48px 48px 96px;background:#ffffff}
 
 /* ===== GREETING ===== */
-.greeting{margin-bottom:36px}
-.greeting h1{font-size:44px;font-weight:700;letter-spacing:-.035em;line-height:1.05}
-.greeting .subtitle{font-size:19px;color:var(--ink2);margin-top:8px;font-weight:400}
+.greeting{margin-bottom:30px}
+.greeting h1{font-size:42px;font-weight:700;letter-spacing:-.035em;line-height:1.05}
+.greeting .subtitle{font-size:18px;color:var(--ink2);margin-top:8px;font-weight:400}
 
-/* ===== HERO CTA ===== */
-.hero{display:block;border-radius:28px;padding:40px 44px;margin-bottom:44px;color:#fff;
-  position:relative;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.14);transition:transform .25s ease, box-shadow .25s ease}
-.hero:hover{transform:translateY(-3px);box-shadow:0 20px 56px rgba(0,0,0,.20)}
-.hero.ready{background:linear-gradient(135deg,#14498f 0%,#0B3161 55%,#072244 100%)}
-.hero.start{background:linear-gradient(135deg,#14498f 0%,#0B3161 55%,#072244 100%)}
-.hero .glow.gold{background:radial-gradient(circle,rgba(205,150,58,.28) 0%,transparent 70%);top:auto;bottom:-200px;right:auto;left:-120px;width:360px;height:360px}
-.hero-stats{display:flex;gap:36px;margin-top:22px}
-.hero-stats .l{font-size:13px;color:rgba(255,255,255,.82);font-weight:500}
-.hero-stats .v{font-size:28px;font-weight:800;letter-spacing:-.02em;margin-top:2px;color:#fff}
-.hero .eyebrow .gk{color:#E0B24E;font-weight:800}
+/* ===== HERO ===== */
+.hero{position:relative;overflow:hidden;border-radius:28px;padding:40px 44px;color:#fff;
+  background:linear-gradient(135deg,#0B3161 0%,#1a4a7a 100%);
+  box-shadow:0 8px 24px rgba(11,49,97,.18);
+  display:flex;justify-content:space-between;align-items:center;gap:32px;flex-wrap:wrap;
+  transition:transform .25s ease,box-shadow .25s ease}
+.hero:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(11,49,97,.24)}
 .hero .glow{position:absolute;width:420px;height:420px;border-radius:50%;
-  background:radial-gradient(circle,rgba(255,255,255,.22) 0%,transparent 70%);top:-180px;right:-120px;pointer-events:none}
-.hero .row{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:28px;flex-wrap:wrap}
-.hero .info{flex:1;min-width:260px}
-.hero .eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:600;
-  background:rgba(255,255,255,.2);padding:6px 14px;border-radius:980px;margin-bottom:16px}
-.hero h2{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.15}
-.hero p{font-size:17px;opacity:.92;margin-top:8px;max-width:440px}
-.hero .cta{display:inline-flex;align-items:center;gap:8px;background:#fff;font-weight:600;font-size:17px;
-  padding:16px 30px;border-radius:980px;white-space:nowrap;transition:transform .2s, box-shadow .2s}
-.hero.ready .cta{color:var(--brand)}
-.hero.start .cta{color:var(--brand)}
-.hero .cta:hover{transform:scale(1.05);box-shadow:0 10px 28px rgba(0,0,0,.22)}
-.hero .cta svg{width:19px;height:19px}
+  background:radial-gradient(circle,rgba(205,150,58,.26),transparent 70%);bottom:-220px;left:-120px;pointer-events:none}
+.hero .left{position:relative;z-index:1;min-width:240px}
+.hero .pill{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;
+  background:rgba(255,255,255,.16);padding:6px 14px;border-radius:980px}
+.hero .pill .gk{color:#E0B24E;font-size:10px}
+.hero h2{font-size:32px;font-weight:800;letter-spacing:-.03em;line-height:1.1;margin:16px 0 24px}
+.hero .cta{display:inline-flex;align-items:center;gap:9px;background:#fff;color:var(--brand);
+  font-weight:700;font-size:16px;padding:15px 30px;border-radius:980px;transition:transform .2s,box-shadow .2s}
+.hero .cta:hover{transform:scale(1.04);box-shadow:0 10px 26px rgba(0,0,0,.22)}
+.hero .cta svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.hero .today{position:relative;z-index:1;text-align:right}
+.hero .today .l{font-size:14px;color:rgba(255,255,255,.72);font-weight:500}
+.hero .today .v{font-size:52px;font-weight:800;letter-spacing:-.035em;line-height:1;margin-top:6px;font-variant-numeric:tabular-nums}
 
 /* ===== SECTION TITLE ===== */
-.sec-title{font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
-  color:var(--ink2);margin:52px 4px 22px}
-.sec-title:first-of-type{margin-top:0}
+.sec{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink2);margin:46px 4px 18px}
 
-/* ===== TILES ===== */
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px}
-.tile{background:var(--card);border-radius:22px;padding:30px 22px;box-shadow:var(--shadow);
-  display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;cursor:pointer;
-  transition:transform .22s ease,box-shadow .22s ease;border:.5px solid rgba(0,0,0,.04)}
-.tile:hover{transform:translateY(-5px);box-shadow:var(--shadow-h)}
-.tile:active{transform:translateY(-2px) scale(.99)}
-.tile .icon{width:60px;height:60px;border-radius:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.tile .icon svg{width:32px;height:32px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.tile .label{font-size:18px;font-weight:600;letter-spacing:-.02em}
-.tile .desc{font-size:14px;color:var(--ink2);margin-top:-8px}
-.i-sell{background:linear-gradient(140deg,#14498f,#072244)}
-.i-cash{background:linear-gradient(140deg,#30d158,#248a3d)}
-.i-tag{background:linear-gradient(140deg,#2d6bb0,#0B3161)}
-.i-box{background:linear-gradient(140deg,#ff9f0a,#f2760a)}
-.i-prod{background:linear-gradient(140deg,#ffb340,#e08600)}
-.i-people{background:linear-gradient(140deg,#bf5af2,#8944ab)}
-.i-chart{background:linear-gradient(140deg,#30b0c7,#1a7d90)}
-.i-iva{background:linear-gradient(140deg,#32d74b,#1a8a30)}
-.i-book{background:linear-gradient(140deg,#8e8e93,#5a5a5e)}
-.i-price{background:linear-gradient(140deg,#E0B24E,#CD963A)}
-.i-lock{background:linear-gradient(140deg,#78788c,#48484e)}
-.i-admin{background:linear-gradient(140deg,#5e5ce6,#3634a3)}
-.i-revert{background:linear-gradient(140deg,#ff6961,#d70015)}
+/* ===== KPIs ===== */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.kpi{background:var(--card);border-radius:var(--r);padding:26px 28px;box-shadow:var(--shadow);
+  transition:transform .2s ease,box-shadow .2s ease}
+.kpi:hover{transform:translateY(-4px);box-shadow:var(--shadow-h)}
+.kpi .l{font-size:14px;color:var(--ink2);font-weight:500}
+.kpi .v{font-size:34px;font-weight:700;letter-spacing:-.035em;line-height:1;margin-top:14px;font-variant-numeric:tabular-nums}
+.kpi .d{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:980px;margin-top:16px}
+.kpi .d.up{color:var(--green-d);background:rgba(52,199,89,.13)}
+.kpi .d.down{color:var(--red);background:rgba(255,59,48,.11)}
+.kpi .s{font-size:13px;color:var(--ink2);margin-top:16px;font-weight:500}
+.kpi .s .dot{color:var(--green);font-size:10px}
 
-/* ===== METRICS ===== */
-.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
-.metric{background:var(--card);border-radius:22px;padding:26px 28px;box-shadow:var(--shadow);border:.5px solid rgba(0,0,0,.04)}
-.metric .top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.metric .dot{width:12px;height:12px;border-radius:50%}
-.metric .mi{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.metric .mi svg{width:19px;height:19px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.metric .label{font-size:15px;color:var(--ink3);font-weight:500}
-.metric .value{font-size:36px;font-weight:700;letter-spacing:-.03em;line-height:1}
-.metric .detail{font-size:14px;color:var(--ink2);margin-top:10px}
-.metric .trend{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:980px;
-  font-size:13px;font-weight:600;margin-top:14px}
-.metric .trend.up{background:rgba(52,199,89,.14);color:var(--green-d)}
-.metric .trend.down{background:rgba(255,59,48,.12);color:var(--red)}
+/* ===== CHART PANEL ===== */
+.panel{background:var(--card);border-radius:var(--r);padding:26px 30px;box-shadow:var(--shadow)}
+.panel h3{font-size:16px;font-weight:600;letter-spacing:-.01em;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.panel h3 .sub{font-size:13px;color:var(--ink2);font-weight:600}
+.chart-box{position:relative;height:210px;margin-top:12px}
+.chart-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  color:var(--ink2);font-size:14px;text-align:center}
+.chart-empty svg{width:36px;height:36px;stroke:var(--line);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 
-/* ===== BENTO (tablero del Inicio) ===== */
-.bento{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:40px}
-.bento .cell{background:var(--card);border-radius:22px;box-shadow:var(--shadow);border:.5px solid rgba(0,0,0,.04)}
-.b-hero{grid-column:span 2;grid-row:span 2;position:relative;overflow:hidden;border-radius:24px;padding:32px;color:#fff;
-  display:flex;flex-direction:column;justify-content:space-between;min-height:290px;
-  background:linear-gradient(140deg,#14498f,#0B3161 55%,#072244);box-shadow:0 12px 34px rgba(11,49,97,.3);
-  transition:transform .25s ease,box-shadow .25s ease}
-.b-hero.full{grid-column:span 4;grid-row:span 1;min-height:210px}
-.b-hero:hover{transform:translateY(-3px);box-shadow:0 20px 50px rgba(11,49,97,.4)}
-.b-hero .glow{position:absolute;width:320px;height:320px;border-radius:50%;
-  background:radial-gradient(circle,rgba(205,150,58,.28),transparent 70%);bottom:-140px;left:-80px;pointer-events:none}
-.b-hero .pill{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;
-  background:rgba(255,255,255,.18);padding:6px 14px;border-radius:980px}
-.b-hero .pill .gk{color:#E0B24E;font-size:11px}
-.b-hero h2{font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1.15;margin-top:14px}
-.b-hero .htoday{font-size:13px;color:rgba(255,255,255,.82)}
-.b-hero .hbig{font-size:38px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
-.b-hero .hcta{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;background:#fff;color:var(--brand);
-  font-weight:700;font-size:15px;padding:12px 24px;border-radius:980px;margin-top:14px;transition:transform .2s,box-shadow .2s}
-.b-hero .hcta:hover{transform:scale(1.04);box-shadow:0 8px 20px rgba(0,0,0,.22)}
-.b-hero .hcta svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.b-metric{padding:20px 22px;display:flex;flex-direction:column;justify-content:center}
-.b-metric .mi{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:12px}
-.b-metric .mi svg{width:19px;height:19px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.b-metric .ml{font-size:13px;color:var(--ink2);font-weight:500}
-.b-metric .mv{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:3px}
-.b-metric .mt{display:inline-block;font-size:12px;font-weight:600;margin-top:8px}
-.b-metric .mt.up{color:var(--green-d)}.b-metric .mt.down{color:var(--red)}
-.b-metric .ms{font-size:12px;color:var(--ink2);margin-top:8px}
-.b-wide{grid-column:span 2;padding:22px 24px;min-width:0}
-.b-wide h3{font-size:17px;font-weight:700;letter-spacing:-.01em;margin-bottom:16px;display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.b-wide h3 .sub{font-size:13px;color:var(--ink2);font-weight:500}
-.b-chart-box{position:relative;height:158px}
-.b-actions{grid-column:span 4;padding:22px 26px}
-.b-actions .atitle2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2);margin-bottom:18px}
-.b-actrow{display:flex;gap:14px;flex-wrap:wrap}
-.b-act{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;width:82px;transition:transform .18s ease}
-.b-act:hover{transform:translateY(-4px)}
-.b-act .ic{width:54px;height:54px;border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.1)}
-.b-act .ic svg{width:26px;height:26px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.b-act .lb{font-size:12.5px;font-weight:500;color:var(--ink);line-height:1.2}
-@media(max-width:1100px){.bento{grid-template-columns:repeat(2,1fr)}.b-hero,.b-hero.full,.b-wide,.b-actions{grid-column:span 2}.b-hero{grid-row:span 1;min-height:200px}}
-@media(max-width:560px){.bento{grid-template-columns:1fr}.b-hero,.b-hero.full,.b-wide,.b-actions{grid-column:span 1}}
+/* ===== QUICK ACCESS ===== */
+.qa{background:var(--card);border-radius:var(--r);padding:22px;box-shadow:var(--shadow)}
+.qa-row{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:16px}
+.qa-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  padding:30px 12px;border-radius:22px;background:#f5f5f7;transition:transform .18s ease,background .2s ease;border:1px solid rgba(0,0,0,.04)}
+.qa-item:hover{transform:translateY(-5px);background:#ececf0;border-color:rgba(0,0,0,.08)}
+.qa-ic{width:82px;height:82px;border-radius:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(0,0,0,.12)}
+.qa-ic svg{width:40px;height:40px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.qa-item .lb{font-size:15px;color:var(--ink);font-weight:600;line-height:1.2;text-align:center;letter-spacing:-.01em}
+@media(max-width:760px){.qa-row{grid-auto-flow:row;grid-template-columns:repeat(3,1fr)}.qa-ic{width:64px;height:64px;border-radius:20px}.qa-ic svg{width:32px;height:32px}}
+.i-sell{background:linear-gradient(140deg,#0B3161,#1f5a8f)}
+.i-cash{background:linear-gradient(140deg,#34c759,#248a3d)}
+.i-tag{background:linear-gradient(140deg,#0B3161,#1f5a8f)}
+.i-box{background:linear-gradient(140deg,#9ca3af,#6b7280)}
+.i-chart{background:linear-gradient(140deg,#ff9f0a,#f59e0b)}
+.i-admin{background:linear-gradient(140deg,#0B3161,#1f5a8f)}
+.i-revert{background:linear-gradient(140deg,#ff3b30,#d70015)}
 
-/* ===== PANELS ===== */
-.panel{background:var(--card);border-radius:24px;padding:30px 32px;box-shadow:var(--shadow);
-  margin-bottom:24px;border:.5px solid rgba(0,0,0,.04)}
-.panel h3{font-size:22px;font-weight:600;letter-spacing:-.02em;margin-bottom:22px}
-.chart-box{position:relative;height:320px}
-.chart-note{background:#f5f5f7;border-radius:16px;padding:18px 20px;font-size:15px;color:var(--ink3);
-  line-height:1.6;margin-top:20px}
-.chart-note b{color:var(--ink);font-weight:600}
-
-/* ===== TOP PRODUCTS ===== */
-.plist{display:flex;flex-direction:column;gap:12px}
-.pitem{display:flex;align-items:center;gap:16px;padding:16px 18px;background:#f5f5f7;border-radius:16px;transition:background .2s}
-.pitem:hover{background:#ececf0}
-.prank{width:36px;height:36px;border-radius:50%;color:#fff;font-weight:700;font-size:16px;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.prank.r1{background:linear-gradient(140deg,#E0B24E,#CD963A)}
-.prank.r2{background:linear-gradient(140deg,#c7c7cc,#8e8e93)}
-.prank.r3{background:linear-gradient(140deg,#e0a06a,#b87333)}
-.prank.rx{background:linear-gradient(140deg,#14498f,#072244)}
-.pname{flex:1;font-size:17px;font-weight:500}
-.pqty{font-size:16px;font-weight:700;color:var(--brand)}
-
-/* ===== ADVICE ===== */
-.advice{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
-.acard{border-radius:22px;padding:26px;box-shadow:var(--shadow);border:.5px solid rgba(0,0,0,.04);background:var(--card)}
-.acard .aicon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:16px}
-.acard .aicon svg{width:26px;height:26px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.acard .atitle{font-size:18px;font-weight:600;letter-spacing:-.01em;margin-bottom:6px}
-.acard .atext{font-size:15px;color:var(--ink3);line-height:1.55}
-.a-warn .aicon{background:rgba(255,159,10,.14)}.a-warn .aicon svg{stroke:var(--amber)}
-.a-good .aicon{background:rgba(52,199,89,.14)}.a-good .aicon svg{stroke:var(--green-d)}
-.a-info .aicon{background:rgba(11,49,97,.12)}.a-info .aicon svg{stroke:var(--brand)}
-.a-danger .aicon{background:rgba(255,59,48,.12)}.a-danger .aicon svg{stroke:var(--red)}
+/* ===== ADVICE (una tarjeta, filas) ===== */
+.adv{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.adv-row{display:flex;gap:16px;align-items:flex-start;padding:20px 28px;border-bottom:1px solid var(--line)}
+.adv-row:last-child{border-bottom:none}
+.adv-ic{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.adv-ic svg{width:21px;height:21px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.adv-tx{padding-top:1px}
+.adv-tx .t{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
+.adv-tx .d{font-size:14px;color:var(--ink3);line-height:1.5;margin-top:2px}
+.adv-tx .d a{color:var(--amber);font-weight:600;white-space:nowrap}
+.adv-ic.warn{background:rgba(255,159,10,.14)}.adv-ic.warn svg{stroke:var(--amber)}
+.adv-ic.good{background:rgba(52,199,89,.14)}.adv-ic.good svg{stroke:var(--green-d)}
+.adv-ic.info{background:rgba(11,49,97,.1)}.adv-ic.info svg{stroke:var(--brand)}
+.adv-ic.danger{background:rgba(255,59,48,.12)}.adv-ic.danger svg{stroke:var(--red)}
 
 /* ===== RTS MONITOR ===== */
-.rts{background:var(--card);border-radius:24px;padding:30px 32px;box-shadow:var(--shadow);margin-bottom:24px;border:.5px solid rgba(0,0,0,.04)}
-.rts h3{font-size:22px;font-weight:600;letter-spacing:-.02em;margin-bottom:6px}
-.rts .rsub{font-size:15px;color:var(--ink2);margin-bottom:20px}
-.rbar{height:14px;background:#e8e8ed;border-radius:980px;overflow:hidden;margin:16px 0}
-.rbar>div{height:100%;border-radius:980px;background:linear-gradient(90deg,#30d158,#248a3d);transition:width .8s cubic-bezier(.34,.69,.61,.96)}
-.rbar.warn>div{background:linear-gradient(90deg,#ff9f0a,#ff6961)}
-.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-top:20px}
+.rts{background:var(--card);border-radius:var(--r);padding:28px 30px;box-shadow:var(--shadow)}
+.rts h3{font-size:18px;font-weight:600;letter-spacing:-.02em;margin-bottom:4px}
+.rts .rsub{font-size:14px;color:var(--ink2);margin-bottom:20px}
+.rbar{height:12px;background:#ececf0;border-radius:980px;overflow:hidden;margin:14px 0}
+.rbar>div{height:100%;border-radius:980px;background:linear-gradient(90deg,#0B3161,#1f5a8f);transition:width .8s cubic-bezier(.34,.69,.61,.96)}
+.rbar.warn>div{background:linear-gradient(90deg,#ff9f0a,#f59e0b)}
+.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-top:20px}
 .rgrid .ri .rl{font-size:13px;color:var(--ink2)}
-.rgrid .ri .rv{font-size:20px;font-weight:700;letter-spacing:-.02em;margin-top:4px}
-
-/* ===== STOCK TABLE ===== */
-table{width:100%;border-collapse:collapse;font-size:16px}
-th{text-align:left;font-size:13px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink2);
-  padding:12px 14px;border-bottom:1.5px solid var(--line);font-weight:600}
-td{padding:16px 14px;border-bottom:1px solid var(--line)}
-tr:last-child td{border-bottom:none}
-tbody tr{cursor:pointer;transition:background .18s}
-tbody tr:hover{background:#f5f5f7}
-.pcell{display:flex;align-items:center;gap:14px}
-.pimg{width:48px;height:48px;border-radius:12px;object-fit:cover;background:#f0f0f2;flex-shrink:0}
-.pimg.ph{display:flex;align-items:center;justify-content:center;font-size:22px}
-.pn{font-weight:500;font-size:16px}
-.chip{display:inline-block;padding:5px 13px;border-radius:980px;font-size:14px;font-weight:700;
-  background:rgba(255,59,48,.12);color:var(--red)}
+.rgrid .ri .rv{font-size:21px;font-weight:700;letter-spacing:-.02em;margin-top:4px;font-variant-numeric:tabular-nums}
 
 /* ===== HELP FAB ===== */
-.fab{position:fixed;right:32px;bottom:32px;width:60px;height:60px;border-radius:50%;
-  background:var(--brand);color:#fff;font-size:27px;font-weight:500;display:flex;align-items:center;justify-content:center;
-  box-shadow:0 10px 30px rgba(11,49,97,.45);cursor:pointer;z-index:30;transition:transform .2s}
+.fab{position:fixed;right:32px;bottom:32px;width:56px;height:56px;border-radius:50%;
+  background:var(--brand);color:#fff;font-size:25px;font-weight:500;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 20px rgba(11,49,97,.22);cursor:pointer;z-index:30;transition:transform .2s}
 .fab:hover{transform:scale(1.1)}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.38);backdrop-filter:blur(6px);display:none;
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.36);backdrop-filter:blur(6px);display:none;
   align-items:center;justify-content:center;z-index:40;padding:20px}
 .overlay.on{display:flex}
-.sheet{background:#fff;border-radius:28px;max-width:520px;width:100%;padding:38px;box-shadow:0 24px 70px rgba(0,0,0,.32);
+.sheet{background:#fff;border-radius:28px;max-width:520px;width:100%;padding:38px;box-shadow:0 24px 70px rgba(0,0,0,.3);
   animation:pop .3s cubic-bezier(.2,.9,.3,1.2)}
 @keyframes pop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
-.sheet h2{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
+.sheet h2{font-size:25px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px}
 .sheet .ssub{color:var(--ink2);font-size:16px;margin-bottom:24px}
 .step{display:flex;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
 .step:last-of-type{border-bottom:none}
@@ -241,20 +158,16 @@ tbody tr:hover{background:#f5f5f7}
   color:#fff;font-size:17px;font-weight:600;cursor:pointer;transition:filter .2s}
 .sheet .close:hover{filter:brightness(1.08)}
 
-/* Modal imágenes */
-.img-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:100;align-items:center;justify-content:center;padding:20px}
-.img-modal.open{display:flex}
-.img-modal img{max-width:90vw;max-height:90vh;border-radius:16px;box-shadow:0 16px 50px rgba(0,0,0,.5)}
-.img-modal-close{position:absolute;top:24px;right:34px;font-size:42px;color:#fff;cursor:pointer;background:none;border:none}
-.img-modal-close:hover{opacity:.8}
-
-@media(max-width:768px){
-  .nav{padding:14px 20px}
+@media(max-width:900px){
   .wrap{padding:32px 20px 60px}
   .greeting h1{font-size:34px}
-  .hero{padding:30px}.hero h2{font-size:24px}
-  .tiles{grid-template-columns:repeat(2,1fr);gap:14px}
+  .hero{padding:30px;flex-direction:column;align-items:flex-start;gap:24px}
+  .hero .today{text-align:left}
+  .hero .today .v{font-size:44px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .nav{padding:12px 20px}
 }
+@media(max-width:520px){.kpis{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -279,170 +192,145 @@ tbody tr:hover{background:#f5f5f7}
     <div class="subtitle" id="fecha"></div>
   </div>
 
-  <div class="bento">
+  <!-- HERO -->
   {% if caja_abierta %}
-    <a href="/pos/" class="b-hero {% if not es_gerente %}full{% endif %}">
-      <div class="glow"></div>
-      <div>
-        <span class="pill"><span class="gk">●</span> Caja abierta</span>
-        <h2>Todo listo para vender</h2>
-      </div>
-      <div>
-        {% if es_gerente %}<div class="htoday">Ventas de hoy</div><div class="hbig">₡{{ ventas_hoy|crc:0 }}</div>{% endif %}
-        <span class="hcta">Ir a vender <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-      </div>
-    </a>
+  <a href="/pos/" class="hero">
+    <div class="glow"></div>
+    <div class="left">
+      <span class="pill"><span class="gk">●</span> Caja abierta</span>
+      <h2>Todo listo para vender</h2>
+      <span class="cta">Ir a vender <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </div>
+    {% if es_gerente %}
+    <div class="today">
+      <div class="l">Ventas de hoy</div>
+      <div class="v">₡{{ ventas_hoy|crc:0 }}</div>
+    </div>
+    {% endif %}
+  </a>
   {% else %}
-    <a href="/caja/abrir/" class="b-hero {% if not es_gerente %}full{% endif %}">
-      <div class="glow"></div>
-      <div>
-        <span class="pill">Buen día</span>
-        <h2>Comenzá tu jornada</h2>
-      </div>
-      <div>
-        <span class="hcta">Abrir caja <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-      </div>
-    </a>
+  <a href="/caja/abrir/" class="hero">
+    <div class="glow"></div>
+    <div class="left">
+      <span class="pill">Buen día</span>
+      <h2>Comenzá tu jornada</h2>
+      <span class="cta">Abrir caja <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </div>
+  </a>
   {% endif %}
 
   {% if es_gerente %}
-  <div class="cell b-metric">
-    <div class="mi" style="background:rgba(52,199,89,.14);color:var(--green-d)"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg></div>
-    <div class="ml">Ganancia del mes</div>
-    <div class="mv">₡{{ utilidad_mes|crc:0 }}</div>
-    <div class="mt {% if margen >= 35 %}up{% else %}down{% endif %}">{% if margen >= 35 %}▲{% else %}▼{% endif %} {{ margen|crc:1 }}% margen</div>
-  </div>
-  <div class="cell b-metric">
-    <div class="mi" style="background:rgba(11,49,97,.1);color:var(--brand)"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg></div>
-    <div class="ml">Ventas este mes</div>
-    <div class="mv">₡{{ ventas_mes|crc:0 }}</div>
-    <div class="mt {% if variacion_mes >= 0 %}up{% else %}down{% endif %}">{% if variacion_mes >= 0 %}▲{% else %}▼{% endif %} {{ variacion_mes|crc:1 }}% vs anterior</div>
-  </div>
-  <div class="cell b-metric">
-    <div class="mi" style="background:rgba(48,176,199,.14);color:#1a7d90"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.5"/></svg></div>
-    <div class="ml">Efectivo en caja</div>
-    <div class="mv">₡{{ saldo_caja|crc:0 }}</div>
-    <div class="ms">{% if caja_abierta %}Caja abierta ahora{% else %}Sin caja abierta{% endif %}</div>
-  </div>
-  <div class="cell b-metric">
-    <div class="mi" style="background:rgba(205,150,58,.16);color:#A8791F"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
-    <div class="ml">Por cobrar (crédito)</div>
-    <div class="mv">₡{{ cxc_total|crc:0 }}</div>
-    <div class="ms">Total de clientes fiados</div>
-  </div>
-
-  <div class="cell b-wide">
-    <h3>Ventas · últimos 7 días <span class="sub">Hoy ₡{{ ventas_hoy|crc:0 }}</span></h3>
-    <div class="b-chart-box"><canvas id="chartTendencias"></canvas></div>
-  </div>
-
-  <div class="cell b-wide">
-    <h3>Más vendidos del mes</h3>
-    <div class="plist">
-      {% for prod in top_productos %}
-      <div class="pitem">
-        <div class="prank {% if forloop.counter == 1 %}r1{% elif forloop.counter == 2 %}r2{% elif forloop.counter == 3 %}r3{% else %}rx{% endif %}">{{ forloop.counter }}</div>
-        <div class="pname">{{ prod.producto__nombre }}</div>
-        <div class="pqty">{{ prod.cant|crc:0 }} u.</div>
-      </div>
-      {% empty %}
-      <div style="color:var(--ink2);font-size:14px;padding:8px 2px">Todavía no hay ventas registradas este mes.</div>
-      {% endfor %}
+  <!-- KPIs -->
+  <div class="sec">Resumen del mes</div>
+  <div class="kpis">
+    <div class="kpi">
+      <div class="l">Ganancia del mes</div>
+      <div class="v">₡{{ utilidad_mes|crc:0 }}</div>
+      <div class="d {% if margen >= 35 %}up{% else %}down{% endif %}">{% if margen >= 35 %}▲{% else %}▼{% endif %} {{ margen|crc:1 }}% margen</div>
+    </div>
+    <div class="kpi">
+      <div class="l">Ventas este mes</div>
+      <div class="v">₡{{ ventas_mes|crc:0 }}</div>
+      <div class="d {% if variacion_mes >= 0 %}up{% else %}down{% endif %}">{% if variacion_mes >= 0 %}▲{% else %}▼{% endif %} {{ variacion_mes|crc:1 }}% vs mes anterior</div>
+    </div>
+    <div class="kpi">
+      <div class="l">Efectivo en caja</div>
+      <div class="v">₡{{ saldo_caja|crc:0 }}</div>
+      <div class="s">{% if caja_abierta %}<span class="dot">●</span> Caja abierta ahora{% else %}Sin caja abierta{% endif %}</div>
+    </div>
+    <div class="kpi">
+      <div class="l">Por cobrar (crédito)</div>
+      <div class="v">₡{{ cxc_total|crc:0 }}</div>
+      <div class="s">Total de clientes fiados</div>
     </div>
   </div>
+
   {% endif %}
 
-  <div class="cell b-actions">
-    <div class="atitle2">Acceso rápido</div>
-    <div class="b-actrow">
-      <a class="b-act" href="/pos/"><div class="ic i-sell"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg></div><div class="lb">Vender</div></a>
+  <!-- QUICK ACCESS -->
+  <div class="sec">Acceso rápido</div>
+  <div class="qa">
+    <div class="qa-row">
+      <a class="qa-item" href="/pos/"><div class="qa-ic i-sell"><svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.7 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg></div><div class="lb">Vender</div></a>
       {% if caja_abierta %}
-      <a class="b-act" href="/caja/cerrar/"><div class="ic i-cash"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/></svg></div><div class="lb">Cerrar caja</div></a>
+      <a class="qa-item" href="/caja/cerrar/"><div class="qa-ic i-cash"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/></svg></div><div class="lb">Cerrar caja</div></a>
       {% else %}
-      <a class="b-act" href="/caja/abrir/"><div class="ic i-cash"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/></svg></div><div class="lb">Abrir caja</div></a>
+      <a class="qa-item" href="/caja/abrir/"><div class="qa-ic i-cash"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/></svg></div><div class="lb">Abrir caja</div></a>
       {% endif %}
-      <a class="b-act" href="/inventario/etiquetas/"><div class="ic i-tag"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></div><div class="lb">Códigos</div></a>
+      <a class="qa-item" href="/inventario/etiquetas/"><div class="qa-ic i-tag"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></div><div class="lb">Códigos</div></a>
       {% if es_gerente %}
-      <a class="b-act" href="/compras/"><div class="ic i-box"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div><div class="lb">Recibir</div></a>
-      <a class="b-act" href="/admin/catalogo/producto/"><div class="ic i-prod"><svg viewBox="0 0 24 24"><path d="M20 7h-4V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2H4a1 1 0 0 0-1 1v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a1 1 0 0 0-1-1z"/><path d="M9 7V5h6v2"/></svg></div><div class="lb">Productos</div></a>
-      <a class="b-act" href="/admin/ventas/cliente/"><div class="ic i-people"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.9"/></svg></div><div class="lb">Clientes</div></a>
-      <a class="b-act" href="/contabilidad/estado-resultados/"><div class="ic i-chart"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 9l-5 5-3-3-4 4"/></svg></div><div class="lb">Resultados</div></a>
-      <a class="b-act" href="/contabilidad/iva-trimestral/"><div class="ic i-iva"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="lb">IVA RTS</div></a>
-      <a class="b-act" href="/contabilidad/libro-diario/"><div class="ic i-book"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><div class="lb">Libro</div></a>
-      <a class="b-act" href="/precios/"><div class="ic i-price"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/><path d="M9.5 9.5l5 5"/></svg></div><div class="lb">Precios</div></a>
-      <a class="b-act" href="/contabilidad/cierres/"><div class="ic i-lock"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div><div class="lb">Cierre</div></a>
-      <a class="b-act" href="/admin/"><div class="ic i-admin"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><div class="lb">Admin</div></a>
-      <a class="b-act" href="/actividad/"><div class="ic i-revert"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg></div><div class="lb">Reversas</div></a>
+      <a class="qa-item" href="/compras/"><div class="qa-ic i-box"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div><div class="lb">Recibir</div></a>
+      <a class="qa-item" href="/reportes/"><div class="qa-ic i-chart"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 9l-5 5-3-3-4 4"/></svg></div><div class="lb">Reportes</div></a>
+      <a class="qa-item" href="/admin/"><div class="qa-ic i-admin"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><div class="lb">Admin</div></a>
+      <a class="qa-item" href="/actividad/"><div class="qa-ic i-revert"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg></div><div class="lb">Reversas</div></a>
       {% endif %}
     </div>
   </div>
-  </div>
 
   {% if es_gerente %}
+  <!-- CHART -->
+  <div class="sec">Tendencia</div>
+  <div class="panel">
+    <h3>Ventas · últimos 7 días <span class="sub">Hoy ₡{{ ventas_hoy|crc:0 }}</span></h3>
+    <div class="chart-box">
+      <canvas id="chartTendencias"></canvas>
+      <div class="chart-empty" id="chartEmpty" style="display:none">
+        <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 4-5"/></svg>
+        <span>Todavía no hay ventas registradas en los últimos 7 días.</span>
+      </div>
+    </div>
+  </div>
 
-  <!-- CONSEJOS -->
-  <div class="sec-title">Sugerencias</div>
-  <div class="advice">
+  <!-- SUGERENCIAS -->
+  <div class="sec">Sugerencias</div>
+  <div class="adv">
     {% if margen < 30 %}
-    <div class="acard a-warn">
-      <div class="aicon"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
-      <div class="atitle">Margen bajo</div>
-      <div class="atext">Tu margen está en {{ margen|crc:1 }}%. Revisá si conviene ajustar precios de venta o negociar mejores costos con proveedores.</div>
+    <div class="adv-row">
+      <div class="adv-ic warn"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+      <div class="adv-tx"><div class="t">Margen bajo</div><div class="d">Tu margen está en {{ margen|crc:1 }}%. Revisá si conviene ajustar precios de venta o negociar mejores costos con proveedores.</div></div>
     </div>
     {% elif margen >= 40 %}
-    <div class="acard a-good">
-      <div class="aicon"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.6L5.7 21 8 14 2 9.4h7.6z"/></svg></div>
-      <div class="atitle">Margen excelente</div>
-      <div class="atext">{{ margen|crc:1 }}% de margen. Muy buena gestión de precios y control de costos. Seguí así.</div>
+    <div class="adv-row">
+      <div class="adv-ic good"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.6L5.7 21 8 14 2 9.4h7.6z"/></svg></div>
+      <div class="adv-tx"><div class="t">Margen excelente</div><div class="d">{{ margen|crc:1 }}% de margen. Muy buena gestión de precios y control de costos. Seguí así.</div></div>
     </div>
     {% endif %}
 
     {% if cxc_total > ventas_mes and ventas_mes > 0 %}
-    <div class="acard a-warn">
-      <div class="aicon"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg></div>
-      <div class="atitle">Fiados elevados</div>
-      <div class="atext">Tenés ₡{{ cxc_total|crc:0 }} en crédito, más que las ventas del mes. Considerá cobrar antes de dar más fiado.</div>
+    <div class="adv-row">
+      <div class="adv-ic warn"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></svg></div>
+      <div class="adv-tx"><div class="t">Fiados elevados</div><div class="d">Tenés ₡{{ cxc_total|crc:0 }} en crédito, más que las ventas del mes. Considerá cobrar antes de dar más fiado.</div></div>
     </div>
     {% endif %}
 
     {% if num_stock_bajo > 0 %}
-    <div class="acard a-warn">
-      <div class="aicon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17l-5-5-3 3-4-4"/></svg></div>
-      <div class="atitle">Stock bajo</div>
-      <div class="atext">{{ num_stock_bajo }} producto{{ num_stock_bajo|pluralize }} necesita{{ num_stock_bajo|pluralize:"n" }} reposición. Contactá a tu proveedor. Ver detalle abajo.</div>
+    <div class="adv-row">
+      <div class="adv-ic warn"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17l-5-5-3 3-4-4"/></svg></div>
+      <div class="adv-tx"><div class="t">Stock bajo</div><div class="d">{{ num_stock_bajo }} producto{{ num_stock_bajo|pluralize }} necesita{{ num_stock_bajo|pluralize:"n" }} reposición. Contactá a tu proveedor. <a href="/reportes/stock/">Ver detalle →</a></div></div>
     </div>
     {% else %}
-    <div class="acard a-good">
-      <div class="aicon"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div>
-      <div class="atitle">Inventario saludable</div>
-      <div class="atext">Todos los productos tienen buen stock. Buena planificación de compras.</div>
+    <div class="adv-row">
+      <div class="adv-ic good"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div>
+      <div class="adv-tx"><div class="t">Inventario saludable</div><div class="d">Todos los productos tienen buen stock. Buena planificación de compras.</div></div>
     </div>
     {% endif %}
 
     {% if alerta_rts %}
-    <div class="acard a-danger">
-      <div class="aicon"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
-      <div class="atitle">Alerta régimen simplificado</div>
-      <div class="atext">Estás al {{ pct_rts|crc:1 }}% del límite anual de compras. Consultá con tu contador antes de superarlo.</div>
+    <div class="adv-row">
+      <div class="adv-ic danger"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+      <div class="adv-tx"><div class="t">Alerta régimen simplificado</div><div class="d">Estás al {{ pct_rts|crc:1 }}% del límite anual de compras. Consultá con tu contador antes de superarlo.</div></div>
     </div>
     {% else %}
-    <div class="acard a-info">
-      <div class="aicon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
-      <div class="atitle">Régimen simplificado</div>
-      <div class="atext">Vas al {{ pct_rts|crc:1 }}% del límite anual. Tenés amplio margen todavía.</div>
+    <div class="adv-row">
+      <div class="adv-ic info"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
+      <div class="adv-tx"><div class="t">Régimen simplificado</div><div class="d">Vas al {{ pct_rts|crc:1 }}% del límite anual. Tenés amplio margen todavía.</div></div>
     </div>
     {% endif %}
-
-    <div class="acard a-info">
-      <div class="aicon"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
-      <div class="atitle">Buenas prácticas</div>
-      <div class="atext">Cerrá la caja cada día, hacé respaldos regulares y revisá tus reportes cada viernes para tomar mejores decisiones.</div>
-    </div>
   </div>
 
   <!-- MONITOR RTS -->
   {% if es_rts %}
-  <div class="sec-title">Régimen simplificado</div>
+  <div class="sec">Régimen simplificado</div>
   <div class="rts">
     <h3>Monitor de compras del año</h3>
     <div class="rsub">Al superar el límite de 186 salarios base, salís del régimen simplificado.</div>
@@ -455,42 +343,8 @@ tbody tr:hover{background:#f5f5f7}
   </div>
   {% endif %}
 
-  <!-- STOCK BAJO -->
-  {% if stock_bajo %}
-  <div class="panel">
-    <h3>Productos con stock bajo ({{ num_stock_bajo }})</h3>
-    <table>
-      <thead><tr><th>Producto</th><th style="text-align:right">Quedan</th><th style="text-align:right">Mínimo</th></tr></thead>
-      <tbody>
-        {% for p in stock_bajo %}
-        <tr onclick="window.location='/admin/catalogo/producto/{{ p.pk }}/change/'">
-          <td>
-            <div class="pcell">
-              {% if p.imagen %}
-                <img src="{{ MEDIA_URL }}{{ p.imagen }}" alt="" class="pimg clickable-product-img" onclick="event.stopPropagation(); document.getElementById('imgModalContent').src=this.src; document.getElementById('imgModal').classList.add('open')">
-              {% else %}
-                <div class="pimg ph">🐾</div>
-              {% endif %}
-              <span class="pn">{{ p.nombre }}</span>
-            </div>
-          </td>
-          <td style="text-align:right"><span class="chip">{{ p.stock_actual|crc:0 }}</span></td>
-          <td style="text-align:right;color:var(--ink3)">{{ p.stock_minimo|crc:0 }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% endif %}
-
   {% endif %}
 {% endif %}
-</div>
-
-<!-- MODAL IMÁGENES -->
-<div class="img-modal" id="imgModal" onclick="if(event.target === this) this.classList.remove('open')">
-  <button class="img-modal-close" onclick="document.getElementById('imgModal').classList.remove('open')">×</button>
-  <img id="imgModalContent" alt="">
 </div>
 
 <!-- HELP -->
@@ -519,6 +373,9 @@ tbody tr:hover{background:#f5f5f7}
 const ctx = document.getElementById('chartTendencias');
 if(ctx){
   const data = {{ ventas_ultimos_7|safe }};
+  const vacio = data.every(v => !v);
+  const emptyBox = document.getElementById('chartEmpty');
+  if(vacio && emptyBox){ ctx.style.display='none'; emptyBox.style.display='flex'; }
   const g = ctx.getContext('2d').createLinearGradient(0,0,0,320);
   g.addColorStop(0,'rgba(11,49,97,.18)'); g.addColorStop(1,'rgba(11,49,97,0)');
   new Chart(ctx,{
@@ -539,13 +396,9 @@ if(ctx){
       }}
   });
 }
-
-document.addEventListener('click', function(e){
-  if(e.target && e.target.classList && e.target.classList.contains('clickable-product-img')){
-    document.getElementById('imgModalContent').src = e.target.src;
-    document.getElementById('imgModal').classList.add('open');
-  }
-});
 </script>
+
+{% include "core/includes/chat_widget.html" %}
+
 </body>
 </html>

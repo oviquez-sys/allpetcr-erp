@@ -95,6 +95,12 @@ class FacturaVenta(models.Model):
         verbose_name = "factura de venta"
         verbose_name_plural = "facturas de venta"
         ordering = ["-id"]
+        indexes = [
+            # Todos los reportes de ventas filtran por fecha; sin índice, a
+            # muchas filas cada reporte barre la tabla completa.
+            models.Index(fields=["creado_en"], name="fv_creado_en_idx"),
+            models.Index(fields=["empresa", "estado", "creado_en"], name="fv_emp_est_fecha_idx"),
+        ]
 
     def __str__(self):
         return f"{self.numero} ({self.get_estado_display()}) ₡{self.total}"

@@ -1,0 +1,76 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Valor de inventario{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:var(--bg) !important;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:url('{% static "patterns/allpetcr-logo.png" %}');background-repeat:repeat;background-size:120px 120px;opacity:.045;pointer-events:none;z-index:-1}
+.iv-wrap{max-width:820px;margin:0 auto}
+.iv-title{font-size:28px;font-weight:700;letter-spacing:-.03em;margin-bottom:6px}
+.iv-sub{font-size:15px;color:var(--ink2);margin-bottom:22px;max-width:620px;line-height:1.5}
+.iv-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:26px}
+.iv-metric{background:var(--card);border:.5px solid rgba(0,0,0,.04);border-radius:var(--radius-lg);padding:20px 22px;box-shadow:var(--shadow)}
+.iv-metric.hero{background:linear-gradient(140deg,#14498f,#0B3161 55%,#072244);color:#fff;border:none}
+.iv-metric .l{font-size:12.5px;font-weight:500;text-transform:uppercase;letter-spacing:.03em;color:var(--ink2)}
+.iv-metric.hero .l{color:rgba(255,255,255,.8)}
+.iv-metric .v{font-size:27px;font-weight:800;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums}
+.iv-card{background:var(--card);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow);border:.5px solid rgba(0,0,0,.04)}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink2);padding:12px 18px;border-bottom:1.5px solid var(--line);font-weight:600}
+td{padding:13px 18px;border-bottom:1px solid #f0f0f2}
+tbody tr:hover{background:#f9fafb}
+.iv-num{text-align:right;font-variant-numeric:tabular-nums}
+.iv-bar{height:8px;background:#eef0f2;border-radius:var(--radius-pill);overflow:hidden;margin-top:6px;max-width:220px}
+.iv-bar>div{height:100%;border-radius:var(--radius-pill);background:linear-gradient(90deg,#2d6bb0,#0B3161)}
+.iv-tot td{border-top:2px solid var(--ink);border-bottom:none;font-weight:800;font-size:16px;padding-top:14px}
+.iv-back{display:inline-block;margin-top:22px;color:var(--ink2);font-size:14px}
+.iv-back:hover{color:var(--brand)}
+</style>{% endblock %}
+
+{% block content %}
+<div class="iv-wrap">
+  <div class="iv-title">Valor de inventario</div>
+  <div class="iv-sub">Capital inmovilizado en bodega, valuado a costo promedio. Es cuánto dinero tenés convertido en mercadería esperando venderse.</div>
+
+  <div class="iv-metrics">
+    <div class="iv-metric hero"><div class="l">Valor total a costo</div><div class="v">₡{{ total_valor|crc:0 }}</div></div>
+    <div class="iv-metric"><div class="l">Productos activos</div><div class="v">{{ num_productos|crc:0 }}</div></div>
+    <div class="iv-metric"><div class="l">Unidades en bodega</div><div class="v">{{ total_unidades|crc:0 }}</div></div>
+  </div>
+
+  <div class="iv-card">
+    <table>
+      <thead><tr>
+        <th>Categoría</th>
+        <th class="iv-num">Productos</th>
+        <th class="iv-num">Unidades</th>
+        <th class="iv-num">Valor a costo</th>
+      </tr></thead>
+      <tbody>
+      {% for f in filas %}
+        <tr>
+          <td>
+            <div style="font-weight:500">{{ f.categoria }}</div>
+            {% if total_valor %}<div class="iv-bar"><div style="width:{% widthratio f.valor total_valor 100 %}%"></div></div>{% endif %}
+          </td>
+          <td class="iv-num" style="color:var(--ink3)">{{ f.items|crc:0 }}</td>
+          <td class="iv-num" style="color:var(--ink3)">{{ f.unidades|crc:0 }}</td>
+          <td class="iv-num" style="font-weight:700">₡{{ f.valor|crc:0 }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" style="color:var(--ink2);padding:24px 18px">No hay productos con existencias.</td></tr>
+      {% endfor %}
+        <tr class="iv-tot">
+          <td>TOTAL</td>
+          <td class="iv-num">{{ num_productos|crc:0 }}</td>
+          <td class="iv-num">{{ total_unidades|crc:0 }}</td>
+          <td class="iv-num">₡{{ total_valor|crc:0 }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <a class="iv-back" href="{% url 'core:reportes' %}">← Centro de reportes</a>
+</div>
+{% endblock %}

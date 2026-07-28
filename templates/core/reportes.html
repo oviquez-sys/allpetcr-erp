@@ -1,0 +1,95 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Centro de reportes{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:var(--bg) !important;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:url('{% static "patterns/allpetcr-logo.png" %}');background-repeat:repeat;background-size:120px 120px;opacity:.045;pointer-events:none;z-index:-1}
+.rc-wrap{max-width:1080px;margin:0 auto}
+.rc-title{font-size:30px;font-weight:700;letter-spacing:-.03em;margin-bottom:6px}
+.rc-sub{font-size:15px;color:var(--ink2);max-width:640px;line-height:1.5;margin-bottom:12px}
+.rc-sec{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);margin:34px 2px 16px}
+.rc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.rc-card{display:flex;align-items:flex-start;gap:15px;background:var(--card);border:.5px solid rgba(0,0,0,.05);
+  border-radius:var(--radius-lg);padding:22px 22px;box-shadow:var(--shadow);
+  transition:transform .2s ease,box-shadow .2s ease}
+.rc-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-h)}
+.rc-ic{width:48px;height:48px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.rc-ic svg{width:25px;height:25px;stroke:#fff;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.rc-tx .h{font-size:17px;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
+.rc-tx .d{font-size:13.5px;color:var(--ink3);line-height:1.45;margin-top:3px}
+.i-sell{background:linear-gradient(140deg,#14498f,#072244)}
+.i-list{background:linear-gradient(140deg,#5e5ce6,#3634a3)}
+.i-box{background:linear-gradient(140deg,#ff9f0a,#f2760a)}
+.i-vault{background:linear-gradient(140deg,#30b0c7,#1a7d90)}
+.i-price{background:linear-gradient(140deg,#E0B24E,#CD963A)}
+.i-chart{background:linear-gradient(140deg,#34c759,#248a3d)}
+.i-iva{background:linear-gradient(140deg,#32d74b,#1a8a30)}
+.i-book{background:linear-gradient(140deg,#8e8e93,#5a5a5e)}
+.i-scale{background:linear-gradient(140deg,#2d6bb0,#0B3161)}
+.i-lock{background:linear-gradient(140deg,#78788c,#48484e)}
+.rc-back{display:inline-block;margin-top:30px;color:var(--ink2);font-size:14px}
+.rc-back:hover{color:var(--brand)}
+</style>{% endblock %}
+
+{% block content %}
+<div class="rc-wrap">
+  <div class="rc-title">Centro de reportes</div>
+  <div class="rc-sub">Todo lo que el negocio genera solo, en un solo lugar. Elegí un reporte para revisarlo.</div>
+
+  <div class="rc-sec">Ventas</div>
+  <div class="rc-grid">
+    <a class="rc-card" href="{% url 'core:reporte_mas_vendidos' %}">
+      <div class="rc-ic i-sell"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div>
+      <div class="rc-tx"><div class="h">Más vendidos</div><div class="d">Ranking de productos por unidades e ingreso, en el rango de fechas que elijás.</div></div>
+    </a>
+    <a class="rc-card" href="{% url 'core:actividad' %}">
+      <div class="rc-ic i-list"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg></div>
+      <div class="rc-tx"><div class="h">Actividad y reversas</div><div class="d">Bitácora de ventas y compras recientes, anulaciones y devoluciones (quién, cuándo y por qué).</div></div>
+    </a>
+  </div>
+
+  <div class="rc-sec">Inventario</div>
+  <div class="rc-grid">
+    <a class="rc-card" href="{% url 'core:reporte_stock' %}">
+      <div class="rc-ic i-box"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div>
+      <div class="rc-tx"><div class="h">Stock y reposición</div><div class="d">Qué productos están en o bajo el mínimo y hay que reordenar ya.</div></div>
+    </a>
+    <a class="rc-card" href="{% url 'core:reporte_inventario' %}">
+      <div class="rc-ic i-vault"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M12 8.5V6M12 18v-2.5"/></svg></div>
+      <div class="rc-tx"><div class="h">Valor de inventario</div><div class="d">Cuánto capital tenés dormido en bodega, a costo, agrupado por categoría.</div></div>
+    </a>
+    <a class="rc-card" href="{% url 'catalogo:precios' %}">
+      <div class="rc-ic i-price"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/><path d="M9.5 9.5l5 5"/></svg></div>
+      <div class="rc-tx"><div class="h">Precios y márgenes</div><div class="d">Precio, costo promedio y margen de cada producto, con su historial de cambios.</div></div>
+    </a>
+  </div>
+
+  <div class="rc-sec">Contabilidad y fiscal</div>
+  <div class="rc-grid">
+    <a class="rc-card" href="{% url 'contabilidad:estado_resultados' %}">
+      <div class="rc-ic i-chart"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 9l-5 5-3-3-4 4"/></svg></div>
+      <div class="rc-tx"><div class="h">Estado de resultados</div><div class="d">Ingresos, costos y utilidad del período. La foto de si el negocio gana o no.</div></div>
+    </a>
+    <a class="rc-card" href="{% url 'contabilidad:iva_trimestral' %}">
+      <div class="rc-ic i-iva"><svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+      <div class="rc-tx"><div class="h">IVA trimestral (RTS)</div><div class="d">Lo que corresponde declarar cada trimestre bajo el régimen simplificado.</div></div>
+    </a>
+    <a class="rc-card" href="{% url 'contabilidad:libro_diario' %}">
+      <div class="rc-ic i-book"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+      <div class="rc-tx"><div class="h">Libro diario</div><div class="d">Todos los asientos contables que el sistema genera solo, en orden.</div></div>
+    </a>
+    <a class="rc-card" href="{% url 'contabilidad:balance' %}">
+      <div class="rc-ic i-scale"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M7 7l-3 6a3 3 0 0 0 6 0zM17 7l-3 6a3 3 0 0 0 6 0z"/></svg></div>
+      <div class="rc-tx"><div class="h">Balance de comprobación</div><div class="d">Débitos y créditos por cuenta. La prueba de que la contabilidad cuadra.</div></div>
+    </a>
+    <a class="rc-card" href="{% url 'contabilidad:cierres' %}">
+      <div class="rc-ic i-lock"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+      <div class="rc-tx"><div class="h">Cierre de período</div><div class="d">Blindá un período ya declarado a Hacienda para que nadie lo altere.</div></div>
+    </a>
+  </div>
+
+  <a class="rc-back" href="{% url 'core:dashboard' %}">← Volver al inicio</a>
+</div>
+{% endblock %}

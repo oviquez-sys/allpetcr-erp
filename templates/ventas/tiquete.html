@@ -20,6 +20,7 @@ td{padding:2px 0;vertical-align:top}
 <body>
 <img class="logo" src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetcr.com">
 <h1>{{ f.empresa.nombre }}</h1>
+{% if f.empresa.identificacion %}<p class="c">Cédula: {{ f.empresa.identificacion }}</p>{% endif %}
 <p class="c">{{ f.sucursal.nombre }}<br>{{ f.creado_en|date:"d/m/Y h:i A" }}</p>
 <p class="c"><b>{{ f.numero }}</b> · {{ f.get_medio_pago_display }}</p>
 {% if f.estado == "ANU" %}<div class="anulada">★ ANULADA ★<br>{{ f.motivo_anulacion }}</div>{% endif %}
@@ -50,6 +51,9 @@ td{padding:2px 0;vertical-align:top}
 Régimen de Tributación Simplificada —<br>no constituye comprobante electrónico.</p>
 <p class="c no-print" style="margin-top:12px">
   <button onclick="window.print()" style="padding:8px 22px;font-size:13px">🖨️ Imprimir</button>
+</p>
+<p class="c no-print" style="margin-top:8px">
+  <a href="{% url 'ventas:factura' f.pk %}" style="font-size:11px;color:#0B3161">Ver factura a color (hoja completa) →</a>
 </p>
 </body>
 </html>

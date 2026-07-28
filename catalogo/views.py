@@ -3,9 +3,10 @@ historial de cambios de precio y de costo (este último, desde el kardex)."""
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 
 from core.roles import GERENTE, rol_requerido
+from core.tenancy import documento_de_empresa
 
 from .models import Producto
 from .services import cambiar_precio
@@ -20,14 +21,14 @@ def precios(request):
         productos = productos.filter(
             Q(nombre__icontains=q) | Q(sku__icontains=q) | Q(codigo_barras__icontains=q)
         )
-    productos = productos.order_by("nombre")[:60]
+    productos = list(productos.order_by("nombre")[:60])
     return render(request, "catalogo/precios.html", {"productos": productos, "q": q})
 
 
 @rol_requerido(GERENTE)
 def precio_producto(request, pk):
     """Detalle de un producto: cambiar el precio (POST) y ver ambos historiales."""
-    producto = get_object_or_404(Producto, pk=pk)
+    producto = documento_de_empresa(Producto, request, pk=pk)
 
     if request.method == "POST":
         try:
@@ -51,12 +52,8 @@ def precio_producto(request, pk):
         producto.kardex.select_related("usuario")
         .order_by("-fecha", "-id")[:50]
     )
-    margen = None
-    if producto.precio_venta:
-        margen = (producto.precio_venta - producto.costo_promedio) / producto.precio_venta * 100
     return render(request, "catalogo/precio_producto.html", {
         "producto": producto,
         "cambios": cambios,
         "movimientos_costo": movimientos_costo,
-        "margen": margen,
     })

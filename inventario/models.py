@@ -47,6 +47,13 @@ class MovimientoInventario(models.Model):
         verbose_name = "movimiento de inventario"
         verbose_name_plural = "movimientos de inventario"
         ordering = ["-fecha", "-id"]
+        indexes = [
+            # El kardex será la tabla más grande del sistema. El índice
+            # compuesto (producto, fecha) es exactamente el patrón de "ver el
+            # historial de este producto", la consulta más frecuente a futuro.
+            models.Index(fields=["producto", "fecha"], name="kardex_prod_fecha_idx"),
+            models.Index(fields=["fecha"], name="kardex_fecha_idx"),
+        ]
         constraints = [
             models.CheckConstraint(condition=~models.Q(cantidad=0), name="cantidad_distinta_de_cero"),
             models.CheckConstraint(condition=models.Q(stock_resultante__gte=0), name="kardex_stock_no_negativo"),

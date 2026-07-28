@@ -126,6 +126,33 @@ main{flex:1;display:grid;grid-template-columns:1fr 440px;gap:16px;padding:14px 2
 .step2 .n{width:27px;height:27px;border-radius:50%;background:var(--brand);color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .step2 .st{font-size:14px}
 .sheet .close{margin-top:18px;width:100%;padding:14px;border:none;border-radius:14px;background:var(--brand);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+
+/* ===== MÓVIL / TABLET ANGOSTA =====
+   Layout original: 2 columnas fijas (catálogo + carrito de 440px) que no
+   caben en un celular. Abajo de 900px se apilan en 1 columna: primero el
+   catálogo, después el carrito, y la página scrollea normal en vez de que
+   cada columna scrollee por separado. */
+@media(max-width:900px){
+  body{height:auto;min-height:100vh;overflow:visible}
+  main{grid-template-columns:1fr;overflow:visible;padding:12px 14px 16px}
+  .col{overflow:visible}
+  #grid{max-height:52vh}
+  .col.cart{order:2}
+  #lineas{max-height:none}
+  .nav{padding:10px 14px;flex-wrap:wrap}
+  .nav .info{display:none}
+  .steps{padding:8px 14px 0}
+  .steps span{font-size:11.5px;padding:4px 10px}
+  #grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+  .pcard .n{font-size:14.5px}
+  .pcard .p{font-size:22px}
+  .pagos{grid-template-columns:1fr 1fr}
+  .pagos button:nth-child(3){grid-column:span 2}
+}
+@media(max-width:420px){
+  .pagos{grid-template-columns:1fr}
+  .pagos button:nth-child(3){grid-column:span 1}
+}
 </style>
 </head>
 <body>
@@ -345,5 +372,8 @@ document.getElementById('buscar').focus();
 pintarChips();
 pintar();
 </script>
+
+{% include "core/includes/chat_widget.html" %}
+
 </body>
 </html>

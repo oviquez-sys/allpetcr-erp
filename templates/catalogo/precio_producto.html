@@ -6,6 +6,11 @@
 {% block extrahead %}<style>
 body { background-color: #f5f5f7 !important; position: relative; }
 body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: url('{% static "patterns/allpetcr-logo.png" %}'); background-repeat: repeat; background-attachment: fixed; background-size: 120px 120px; opacity: 0.06; pointer-events: none; z-index: -1; }
+.tooltip-wrapper{position:relative;display:inline-flex;align-items:center;gap:4px}
+.tooltip-icon{width:16px;height:16px;border-radius:50%;background:#d0d0d5;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:help;flex-shrink:0}
+.tooltip-box{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#1d1d1f;color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.4;white-space:nowrap;margin-bottom:8px;opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;pointer-events:none;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.tooltip-wrapper:hover .tooltip-box{opacity:1;visibility:visible}
+.tooltip-box::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#1d1d1f}
 </style>{% endblock %}
 
 {% block content %}
@@ -31,17 +36,55 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 
 
 <div style="display:flex;gap:14px;flex-wrap:wrap;margin:14px 0">
   <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
-    <div style="font-size:12px;color:#777">Costo promedio</div>
+    <div style="font-size:12px;color:#777">
+      <span class="tooltip-wrapper">
+        Costo promedio
+        <span class="tooltip-icon">?</span>
+        <div class="tooltip-box">Costo unitario promedio ponderado por cantidad según kardex</div>
+      </span>
+    </div>
     <div style="font-size:22px;font-weight:700">₡{{ producto.costo_promedio|crc:0 }}</div>
   </div>
   <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
-    <div style="font-size:12px;color:#777">Precio de venta</div>
+    <div style="font-size:12px;color:#777">
+      <span class="tooltip-wrapper">
+        Precio de venta
+        <span class="tooltip-icon">?</span>
+        <div class="tooltip-box">Precio de venta actual al público. Cambios quedan registrados</div>
+      </span>
+    </div>
     <div style="font-size:22px;font-weight:700">₡{{ producto.precio_venta|crc:0 }}</div>
   </div>
   <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
-    <div style="font-size:12px;color:#777">Margen</div>
-    <div style="font-size:22px;font-weight:700;color:{% if margen and margen < 0 %}#b03a2e{% else %}#0b7c6c{% endif %}">
-      {% if margen is not None %}{{ margen|crc:1 }}%{% else %}—{% endif %}</div>
+    <div style="font-size:12px;color:#777">
+      <span class="tooltip-wrapper">
+        Ganancia
+        <span class="tooltip-icon">?</span>
+        <div class="tooltip-box">Precio - Costo. Ganancia por unidad vendida</div>
+      </span>
+    </div>
+    <div style="font-size:22px;font-weight:700">₡{{ producto.precio_venta|add:0|add:producto.costo_promedio|add:-1|floatformat:0|crc:0 }}</div>
+  </div>
+  <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
+    <div style="font-size:12px;color:#777">
+      <span class="tooltip-wrapper">
+        Margen %
+        <span class="tooltip-icon">?</span>
+        <div class="tooltip-box">Ganancia como % del precio. Fórmula: (Precio-Costo)/Precio×100</div>
+      </span>
+    </div>
+    <div style="font-size:22px;font-weight:700;color:{% if producto.margen_pct and producto.margen_pct < 0 %}#b03a2e{% else %}#0b7c6c{% endif %}">
+      {% if producto.margen_pct is not None %}{{ producto.margen_pct|crc:1 }}%{% else %}—{% endif %}</div>
+  </div>
+  <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
+    <div style="font-size:12px;color:#777">
+      <span class="tooltip-wrapper">
+        Markup %
+        <span class="tooltip-icon">?</span>
+        <div class="tooltip-box">Recargo sobre el costo. Fórmula: (Precio-Costo)/Costo×100</div>
+      </span>
+    </div>
+    <div style="font-size:22px;font-weight:700">{% if producto.markup_pct is not None %}{{ producto.markup_pct|crc:1 }}%{% else %}—{% endif %}</div>
   </div>
 </div>
 

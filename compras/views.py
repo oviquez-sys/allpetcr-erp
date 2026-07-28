@@ -7,13 +7,14 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from catalogo.models import Categoria, Producto
 from core.models import Empresa, Sucursal
 from core.roles import GERENTE, rol_requerido
+from core.tenancy import documento_de_empresa
 
 from . import services
 from .models import Compra, Proveedor
@@ -120,7 +121,7 @@ def registrar(request):
 @require_POST
 def anular(request, compra_id):
     """Anula (reversa) una compra recibida por error."""
-    compra = get_object_or_404(Compra, pk=compra_id)
+    compra = documento_de_empresa(Compra, request, pk=compra_id)
     try:
         services.anular_compra(compra=compra, motivo=request.POST.get("motivo", ""), usuario=request.user)
         messages.success(request, f"Compra {compra.numero} anulada: el inventario y la contabilidad se revirtieron.")

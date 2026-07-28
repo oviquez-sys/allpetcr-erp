@@ -4,18 +4,18 @@
 {% block title %}IVA trimestral (RTS){% endblock %}
 
 {% block extrahead %}<style>
-body { background-color: #f5f5f7 !important; position: relative; }
+body { background-color: var(--bg) !important; position: relative; }
 body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: url('{% static "patterns/allpetcr-logo.png" %}'); background-repeat: repeat; background-attachment: fixed; background-size: 120px 120px; opacity: 0.06; pointer-events: none; z-index: -1; }
-.q-table{width:100%;border-collapse:collapse;max-width:720px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.05)}
-.q-table th{background:#0B3161;color:#fff;text-align:right;padding:12px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+.q-table{width:100%;border-collapse:collapse;max-width:720px;background:var(--card);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
+.q-table th{background:var(--brand);color:#fff;text-align:right;padding:12px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
 .q-table th.l{text-align:left}
 .q-table td{padding:12px 14px;border-bottom:1px solid #eee;text-align:right;font-variant-numeric:tabular-nums}
 .q-table td.l{text-align:left;font-weight:600}
 .q-table tr:last-child td{border-bottom:none}
-.q-table tfoot td{font-weight:800;background:#f7f9fa;border-top:2px solid #0B3161}
-.q-imp{color:#0b7c6c;font-weight:700}
-.aviso{background:#fff8e6;border:1px solid #f0e0b0;border-radius:12px;padding:14px 18px;max-width:720px;margin:16px 0;font-size:13.5px;color:#7a5c00;line-height:1.5}
-.info{background:#eef4f6;border:1px solid #cfe0e6;border-radius:12px;padding:14px 18px;max-width:720px;margin:16px 0;font-size:13.5px;color:#255;line-height:1.5}
+.q-table tfoot td{font-weight:800;background:#f7f9fa;border-top:2px solid var(--brand)}
+.q-imp{color:var(--green-d);font-weight:700}
+.aviso{background:#fff8e6;border:1px solid #f0e0b0;border-radius:var(--radius);padding:14px 18px;max-width:720px;margin:16px 0;font-size:13.5px;color:#7a5c00;line-height:1.5}
+.info{background:#eef4f6;border:1px solid #cfe0e6;border-radius:var(--radius);padding:14px 18px;max-width:720px;margin:16px 0;font-size:13.5px;color:#255;line-height:1.5}
 </style>{% endblock %}
 
 {% block content %}
@@ -31,7 +31,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 
       {% for a in anios %}<option value="{{ a }}" {% if a == anio %}selected{% endif %}>{{ a }}</option>{% endfor %}
     </select>
   </div>
-  <noscript><button type="submit" style="padding:9px 18px;border:none;border-radius:9px;background:#0B3161;color:#fff;font-weight:600">Ver</button></noscript>
+  <noscript><button type="submit" style="padding:9px 18px;border:none;border-radius:9px;background:var(--brand);color:#fff;font-weight:600">Ver</button></noscript>
 </form>
 
 {% if hay_factor %}

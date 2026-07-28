@@ -84,6 +84,28 @@ class Producto(models.Model):
     def bajo_minimo(self):
         return self.stock_actual <= self.stock_minimo
 
+    @property
+    def margen_pct(self):
+        """Margen de ganancia (%) sobre el precio de venta.
+        Fórmula: ((PrecioVenta - Costo) / PrecioVenta) * 100
+        Retorna Decimal con 2 decimales, o None si PrecioVenta es 0."""
+        if self.precio_venta == 0:
+            return None
+        from decimal import Decimal
+        margen = ((self.precio_venta - self.costo_promedio) / self.precio_venta) * Decimal('100')
+        return round(margen, 2)
+
+    @property
+    def markup_pct(self):
+        """Markup o recargo (%) sobre el costo.
+        Fórmula: ((PrecioVenta - Costo) / Costo) * 100
+        Retorna Decimal con 2 decimales, o None si Costo es 0."""
+        if self.costo_promedio == 0:
+            return None
+        from decimal import Decimal
+        markup = ((self.precio_venta - self.costo_promedio) / self.costo_promedio) * Decimal('100')
+        return round(markup, 2)
+
 
 class CambioPrecio(models.Model):
     """Bitácora inmutable de cada cambio manual del precio de venta: quién lo

@@ -1,0 +1,82 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Más vendidos{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:var(--bg) !important;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:url('{% static "patterns/allpetcr-logo.png" %}');background-repeat:repeat;background-size:120px 120px;opacity:.045;pointer-events:none;z-index:-1}
+.mv-wrap{max-width:920px;margin:0 auto}
+.mv-title{font-size:28px;font-weight:700;letter-spacing:-.03em;margin-bottom:6px}
+.mv-sub{font-size:15px;color:var(--ink2);margin-bottom:20px}
+.mv-bar{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:22px}
+.mv-bar .f label{display:block;font-size:12px;font-weight:600;color:var(--ink3);margin-bottom:6px}
+.mv-bar input{padding:11px 13px;border:1px solid var(--line);border-radius:var(--radius);font-size:14px;font-family:var(--font);background:#fff;outline:none}
+.mv-bar input:focus{border-color:var(--brand);box-shadow:0 0 0 4px rgba(11,49,97,.12)}
+.mv-bar button{padding:12px 24px;border:none;border-radius:var(--radius-pill);background:var(--brand);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:filter .2s}
+.mv-bar button:hover{filter:brightness(1.1)}
+.mv-metrics{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:16px;max-width:520px;margin-bottom:24px}
+.mv-metric{background:var(--card);border:.5px solid rgba(0,0,0,.04);border-radius:var(--radius-lg);padding:20px 22px;box-shadow:var(--shadow)}
+.mv-metric .l{font-size:12.5px;color:var(--ink2);font-weight:500;text-transform:uppercase;letter-spacing:.03em}
+.mv-metric .v{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums}
+.mv-card{background:var(--card);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow);border:.5px solid rgba(0,0,0,.04)}
+table{width:100%;border-collapse:collapse;font-size:15px}
+th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink2);padding:12px 18px;border-bottom:1.5px solid var(--line);font-weight:600}
+td{padding:13px 18px;border-bottom:1px solid #f0f0f2;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#f9fafb}
+.mv-rank{width:30px;height:30px;border-radius:50%;color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center}
+.mv-rank.r1{background:linear-gradient(140deg,#E0B24E,#CD963A)}
+.mv-rank.r2{background:linear-gradient(140deg,#c7c7cc,#8e8e93)}
+.mv-rank.r3{background:linear-gradient(140deg,#e0a06a,#b87333)}
+.mv-rank.rx{background:linear-gradient(140deg,#14498f,#072244)}
+.mv-num{text-align:right;font-variant-numeric:tabular-nums}
+.mv-back{display:inline-block;margin-top:22px;color:var(--ink2);font-size:14px}
+.mv-back:hover{color:var(--brand)}
+</style>{% endblock %}
+
+{% block content %}
+<div class="mv-wrap">
+  <div class="mv-title">Más vendidos</div>
+  <div class="mv-sub">Productos ordenados por unidades vendidas. Solo ventas emitidas (no anuladas).</div>
+
+  <form method="get" class="mv-bar">
+    <div class="f"><label>Desde</label><input type="date" name="desde" value="{{ desde|date:'Y-m-d' }}"></div>
+    <div class="f"><label>Hasta</label><input type="date" name="hasta" value="{{ hasta|date:'Y-m-d' }}"></div>
+    <button type="submit">Ver</button>
+  </form>
+
+  <div class="mv-metrics">
+    <div class="mv-metric"><div class="l">Unidades vendidas</div><div class="v">{{ total_unidades|crc:0 }}</div></div>
+    <div class="mv-metric"><div class="l">Ingreso del rango</div><div class="v">₡{{ total_ingreso|crc:0 }}</div></div>
+  </div>
+
+  <div class="mv-card">
+    <table>
+      <thead><tr>
+        <th style="width:50px"></th>
+        <th>Producto</th>
+        <th class="mv-num">Unidades</th>
+        <th class="mv-num">Ingreso</th>
+      </tr></thead>
+      <tbody>
+      {% for f in filas %}
+        <tr>
+          <td><div class="mv-rank {% if forloop.counter == 1 %}r1{% elif forloop.counter == 2 %}r2{% elif forloop.counter == 3 %}r3{% else %}rx{% endif %}">{{ forloop.counter }}</div></td>
+          <td>
+            <div style="font-weight:500">{{ f.producto__nombre }}</div>
+            <div style="font-size:12px;color:var(--ink2);margin-top:1px">{{ f.producto__sku }}</div>
+          </td>
+          <td class="mv-num" style="font-weight:700">{{ f.unidades|crc:0 }}</td>
+          <td class="mv-num">₡{{ f.ingreso|default:0|crc:0 }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" style="color:var(--ink2);padding:24px 18px">No hay ventas en este rango de fechas.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <a class="mv-back" href="{% url 'core:reportes' %}">← Centro de reportes</a>
+</div>
+{% endblock %}

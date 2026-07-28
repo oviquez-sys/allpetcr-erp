@@ -188,3 +188,22 @@ LOGGING = {
         "django.request": {"handlers": ["principal"], "level": "ERROR", "propagate": False},
     },
 }
+
+# --- Correo (envío de facturas por email) ---
+# Sin EMAIL_HOST_PASSWORD configurado, Django usa el backend de consola: no
+# manda nada de verdad, solo imprime el correo en la terminal. Así el sistema
+# no se rompe si todavía no se configuró el correo.
+if os.environ.get("EMAIL_HOST_PASSWORD"):
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.office365.com")
+    EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+    EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "1") == "1"
+    EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+    EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+    DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", f"AllPetcr <{EMAIL_HOST_USER}>")
+    # Sin esto, si el servidor de correo no responde (bloqueo de firewall,
+    # SMTP AUTH desactivado sin avisar, red caída), Django puede quedarse
+    # colgado esperando en vez de fallar rápido con un error claro.
+    EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "20"))
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
