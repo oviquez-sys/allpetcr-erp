@@ -3,12 +3,34 @@ consultar datos REALES del negocio, en vez de solo explicar cómo se usa el
 sistema. Todo acá es de SOLO LECTURA — ninguna herramienta escribe en la base
 de datos. Si algún día se agrega una que sí escribe, tiene que pedir
 confirmación explícita en el frontend antes de ejecutarse.
+
+PERMISOS (auditoría 2026-07-28, hallazgo SEG-01)
+------------------------------------------------
+Estas herramientas devuelven costos, márgenes y valor de inventario: los
+mismos datos que /precios/ y /reportes/ le niegan al rol Cajero. Sin filtro
+por rol, un cajero obtenía por conversación lo que no puede obtener por
+navegación — una escalada de privilegios por la puerta de atrás.
+
+Por eso el permiso se aplica DOS veces: en la vista (que exige el rol) y aquí
+(que filtra herramienta por herramienta). La segunda capa existe para que el
+día que alguien afloje el decorador de la vista, los costos sigan protegidos.
 """
 from decimal import Decimal
 
 from . import reportes as rep
 from .dashboard import indicadores
 from .models import Empresa
+from .roles import CONTADOR, GERENTE, en_roles
+
+# Herramientas que exponen estructura de costos o resultados financieros.
+# Solo Gerente y Contador. El Cajero conserva la ayuda de navegación, que es
+# la que de verdad le sirve para trabajar.
+HERRAMIENTAS_FINANCIERAS = {
+    "indicadores_del_negocio",
+    "productos_menor_margen",
+    "valor_inventario",
+    "productos_mas_vendidos",
+}
 
 # Definición de herramientas en formato Anthropic tool-use. La descripción es
 # lo que Claude lee para decidir CUÁNDO usar cada una — hay que ser preciso.
@@ -95,10 +117,32 @@ def _num(valor):
     return valor
 
 
-def ejecutar_herramienta(nombre, entrada):
+def herramientas_para(usuario):
+    """Las herramientas que este usuario puede usar. A quien no sea Gerente o
+    Contador no se le ofrecen las financieras: no aparecen en el esquema, así
+    que el modelo ni siquiera sabe que existen y no puede intentar usarlas."""
+    if usuario is not None and en_roles(usuario, GERENTE, CONTADOR):
+        return TOOLS_SCHEMA
+    return [t for t in TOOLS_SCHEMA if t["name"] not in HERRAMIENTAS_FINANCIERAS]
+
+
+def ejecutar_herramienta(nombre, entrada, usuario=None):
     """Corre la herramienta pedida y devuelve un dict JSON-serializable.
     Si algo falla o no hay empresa configurada, devuelve un error legible
-    en vez de reventar — Claude lo puede explicar al usuario."""
+    en vez de reventar — Claude lo puede explicar al usuario.
+
+    `usuario` es obligatorio en la práctica: sin él, las herramientas
+    financieras quedan bloqueadas. Es deliberado — si alguien agrega una
+    llamada nueva y se olvida de pasar el usuario, falla cerrado, no abierto.
+    """
+    if nombre in HERRAMIENTAS_FINANCIERAS and not (
+        usuario is not None and en_roles(usuario, GERENTE, CONTADOR)
+    ):
+        return {
+            "error": "Esa información es solo para gerencia y contabilidad. "
+                     "Puedo ayudarte con cómo usar el sistema."
+        }
+
     empresa = _empresa_actual()
     if empresa is None:
         return {"error": "Todavía no hay una empresa configurada en el sistema."}

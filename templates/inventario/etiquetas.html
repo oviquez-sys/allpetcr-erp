@@ -57,6 +57,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;color:var(--ink);background:#ff
   <div class="aviso">⚠ {{ faltan_codigo }} producto(s) no tienen código de barras y se omitieron.
   Corré el comando <code>python manage.py asignar_codigos_barras</code> para asignárselo.</div>
 {% endif %}
+{% if recortado %}
+  <div class="aviso">⚠ La selección pedía más de {{ tope }} etiquetas y se cortó ahí. No falta
+  nada de tu inventario: es un límite para que la página siga siendo imprimible.
+  Filtrá por categoría o usá <b>solo faltantes</b> para imprimir por tandas.</div>
+{% endif %}
 <div class="info">{{ total }} etiqueta(s). Ajustá los filtros y usá <b>Imprimir</b> (o Ctrl+P) sobre hojas de etiquetas adhesivas.</div>
 
 <div class="hoja">

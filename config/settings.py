@@ -4,6 +4,8 @@ Todo lo que varía entre desarrollo y producción se lee de variables de
 entorno. Desarrollo: SQLite. Producción (VPS): PostgreSQL (POSTGRES_HOST).
 """
 import os
+import sys
+from importlib.util import find_spec
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -145,9 +147,40 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "/admin/login/"
 
 # --- Protección contra fuerza bruta en el login (django-axes) ---
-# Se activa con DJANGO_ENABLE_AXES=1 y el paquete instalado (pip install django-axes).
-# Gated así para que la prueba local sin el paquete no se rompa.
-if os.environ.get("DJANGO_ENABLE_AXES") == "1":
+# ACTIVO POR DEFECTO (auditoría 2026-07-28, hallazgo SEG-04).
+#
+# Antes se activaba solo con DJANGO_ENABLE_AXES=1, así que el comportamiento
+# por defecto era SIN protección: el login del admin —que es la puerta única
+# de todo el ERP— aceptaba intentos ilimitados. Un defecto de seguridad nunca
+# debe ser el valor por defecto.
+#
+# Ahora la lógica es al revés: se activa salvo que se pida lo contrario, y en
+# producción no se puede apagar ni por error. En local se puede desactivar con
+# DJANGO_ENABLE_AXES=0 si estorba para probar.
+#
+# Excepción: durante `manage.py test` se apaga. No es una concesión de
+# seguridad — axes rechaza el authenticate() del cliente de pruebas de Django
+# porque no le llega un `request` real, y eso rompería las 174 pruebas del
+# proyecto sin que exista ningún fallo de verdad. El login de producción sí
+# pasa por el middleware y sí queda protegido.
+_EN_PRUEBAS = "test" in sys.argv
+_AXES_PEDIDO = os.environ.get("DJANGO_ENABLE_AXES", "1") != "0" and not _EN_PRUEBAS
+_AXES_DISPONIBLE = find_spec("axes") is not None
+
+if PRODUCCION and not _EN_PRUEBAS:
+    if not _AXES_DISPONIBLE:
+        raise RuntimeError(
+            "django-axes no está instalado y es obligatorio en producción "
+            "(protege el login contra fuerza bruta). Instalalo con: "
+            "pip install django-axes"
+        )
+    if not _AXES_PEDIDO:
+        raise RuntimeError(
+            "DJANGO_ENABLE_AXES=0 no está permitido en producción: dejaría el "
+            "login sin límite de intentos. Quitá esa variable de entorno."
+        )
+
+if _AXES_PEDIDO and _AXES_DISPONIBLE:
     INSTALLED_APPS += ["axes"]
     # El backend de axes debe ir PRIMERO para poder bloquear.
     AUTHENTICATION_BACKENDS = [

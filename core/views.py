@@ -12,7 +12,7 @@ from compras.models import Compra
 from ventas.models import DevolucionVenta, FacturaVenta
 
 from . import reportes as rep
-from .chat_tools import TOOLS_SCHEMA, ejecutar_herramienta
+from .chat_tools import ejecutar_herramienta, herramientas_para
 from .dashboard import indicadores
 from .models import ChatMensaje, Empresa
 from .roles import GERENTE, es_gerente, rol_de, rol_requerido
@@ -285,7 +285,9 @@ def chat_claude(request):
                 model="claude-haiku-4-5-20251001",
                 max_tokens=1024,
                 system=SYSTEM_PROMPT_CHAT,
-                tools=TOOLS_SCHEMA,
+                # Solo las herramientas que este usuario puede usar: a un
+                # cajero no se le ofrecen las que exponen costos y márgenes.
+                tools=herramientas_para(request.user),
                 messages=mensajes,
             )
             tokens_entrada += response.usage.input_tokens
@@ -304,7 +306,9 @@ def chat_claude(request):
             for bloque in response.content:
                 if getattr(bloque, "type", None) != "tool_use":
                     continue
-                salida = ejecutar_herramienta(bloque.name, bloque.input or {})
+                salida = ejecutar_herramienta(
+                    bloque.name, bloque.input or {}, usuario=request.user
+                )
                 resultados.append({
                     "type": "tool_result",
                     "tool_use_id": bloque.id,

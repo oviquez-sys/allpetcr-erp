@@ -8,10 +8,16 @@ from django.utils.safestring import mark_safe
 
 from catalogo.models import Categoria, Producto
 from core.roles import CAJERO, GERENTE, rol_requerido
+from core.tenancy import empresa_actual
 
 from .etiquetas import svg_barcode
 from .forms import AjusteInventarioForm
 from .services import registrar_movimiento
+
+# Máximo de etiquetas que una sola petición puede generar. Cubre cualquier
+# tanda de impresión real; por encima de esto la página deja de ser imprimible
+# y el navegador se traba, así que recortar es mejor servicio que cumplir.
+TOPE_ETIQUETAS = 500
 
 
 @rol_requerido(GERENTE)
@@ -54,7 +60,11 @@ def etiquetas(request):
       ?segun_stock=1    una etiqueta por unidad en existencia
       ?solo_faltantes=1 solo productos en/ bajo el mínimo
     """
-    productos = Producto.objects.filter(activo=True).select_related("categoria").order_by("nombre")
+    productos = (
+        Producto.objects.filter(activo=True, empresa=empresa_actual(request))
+        .select_related("categoria")
+        .order_by("nombre")
+    )
 
     cat_id = request.GET.get("categoria")
     if cat_id:
@@ -70,12 +80,28 @@ def etiquetas(request):
 
     etiquetas_render = []
     faltan_codigo = 0
+    recortado = False
     for p in productos:
+        # Tope global: sin él, "una etiqueta por unidad en existencia" sobre un
+        # producto con stock alto construye una página de cientos de MB que
+        # tumba el proceso (medido: stock 99.999 => 207 MB en una sola
+        # respuesta). El tope corta ahí y avisa, en vez de reventar.
+        if len(etiquetas_render) >= TOPE_ETIQUETAS:
+            recortado = True
+            break
         if not p.codigo_barras:
             faltan_codigo += 1
             continue
-        n = int(p.stock_actual) if segun_stock else copias
-        n = max(1, n)
+        pedidas = max(1, int(p.stock_actual) if segun_stock else copias)
+        # Nunca pasar del tope, aunque este producto solo pida más. Se compara
+        # ANTES de recortar: si se pidió más de lo que cabe, hubo recorte real
+        # aunque el bucle termine aquí y no vuelva a entrar (caso de un único
+        # producto con stock enorme, que es justo el que provocaba el fallo).
+        n = min(pedidas, TOPE_ETIQUETAS - len(etiquetas_render))
+        if n < pedidas:
+            recortado = True
+        if n <= 0:
+            break
         svg = mark_safe(svg_barcode(p.codigo_barras))
         for _ in range(n):
             etiquetas_render.append({
@@ -89,6 +115,8 @@ def etiquetas(request):
         "etiquetas": etiquetas_render,
         "total": len(etiquetas_render),
         "faltan_codigo": faltan_codigo,
+        "recortado": recortado,
+        "tope": TOPE_ETIQUETAS,
         "categorias": Categoria.objects.all().order_by("nombre"),
         "cat_actual": cat_id or "",
         "copias": copias,
