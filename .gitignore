@@ -6,3 +6,7 @@ db.sqlite3
 /media/
 /respaldos/
 /logs/
+
+db.sqlite3*
+
+db.sqlite3*
