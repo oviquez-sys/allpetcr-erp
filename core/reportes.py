@@ -11,7 +11,18 @@ pregunta de negocio concreta:
 from datetime import timedelta
 from decimal import Decimal
 
-from django.db.models import Sum, F, DecimalField
+from django.db.models import (
+    BooleanField,
+    Case,
+    Count,
+    DecimalField,
+    F,
+    Q,
+    Sum,
+    Value,
+    When,
+)
+from django.db.models.functions import Coalesce, Lower
 from django.utils import timezone
 
 
@@ -60,24 +71,37 @@ def niveles_stock(empresa, solo_bajo=False):
     los que están en o por debajo del mínimo (los que hay que reponer)."""
     from catalogo.models import Producto
 
+    # Auditoría 2026-07-28 (BE-06): antes esto traía TODOS los productos a
+    # memoria, los recorría en Python para filtrar y ordenar, y remataba con
+    # un .count() que disparaba otra consulta. Con 184 productos da igual; con
+    # 5 000 SKU se carga la tabla entera en cada reporte. El patrón correcto
+    # ya estaba en dashboard.py — acá se aplica el mismo criterio.
     productos = (
         Producto.objects.filter(empresa=empresa, activo=True)
         .select_related("categoria")
-        .order_by("nombre")
+        # `bajo` lo calcula la base, no Python: así se puede filtrar y ordenar
+        # por ese valor sin traerse las filas.
+        .annotate(bajo=Case(
+            When(stock_actual__lte=F("stock_minimo"), then=Value(True)),
+            default=Value(False),
+            output_field=BooleanField(),
+        ))
     )
-    filas = []
-    for p in productos:
-        bajo = p.stock_actual <= p.stock_minimo
-        if solo_bajo and not bajo:
-            continue
-        filas.append(p)
-    # Los bajo mínimo primero, luego por nombre.
-    filas.sort(key=lambda p: (not (p.stock_actual <= p.stock_minimo), p.nombre.lower()))
-    num_bajo = sum(1 for p in productos if p.stock_actual <= p.stock_minimo)
+    # Un solo recorrido de la base para los dos conteos, en vez de dos
+    # consultas más (num_total y num_bajo).
+    conteos = productos.aggregate(
+        num_total=Count("id"),
+        num_bajo=Count("id", filter=Q(stock_actual__lte=F("stock_minimo"))),
+    )
+    filas = productos
+    if solo_bajo:
+        filas = filas.filter(stock_actual__lte=F("stock_minimo"))
+    # Los bajo mínimo primero, luego por nombre — mismo orden que antes.
+    filas = filas.order_by("-bajo", Lower("nombre"))
     return {
         "productos": filas,
-        "num_total": productos.count(),
-        "num_bajo": num_bajo,
+        "num_total": conteos["num_total"],
+        "num_bajo": conteos["num_bajo"],
     }
 
 
@@ -87,25 +111,38 @@ def valor_inventario(empresa):
     denormalizado stock_actual, que reconciliar mantiene cuadrado."""
     from catalogo.models import Producto
 
-    productos = Producto.objects.filter(empresa=empresa, activo=True).select_related("categoria")
+    # Auditoría 2026-07-28 (BE-06): el agrupado por categoría lo hace la base
+    # con values()+annotate(), no un diccionario de Python alimentado fila a
+    # fila. Mismo resultado, sin traerse el catálogo completo a memoria.
+    productos = Producto.objects.filter(empresa=empresa, activo=True)
 
-    grupos = {}
-    total_valor = Decimal("0")
-    total_unidades = Decimal("0")
-    for p in productos:
-        valor = (p.stock_actual or Decimal("0")) * (p.costo_promedio or Decimal("0"))
-        total_valor += valor
-        total_unidades += p.stock_actual or Decimal("0")
-        cat = p.categoria.nombre if p.categoria else "Sin categoría"
-        g = grupos.setdefault(cat, {"categoria": cat, "valor": Decimal("0"), "unidades": Decimal("0"), "items": 0})
-        g["valor"] += valor
-        g["unidades"] += p.stock_actual or Decimal("0")
-        g["items"] += 1
+    valor_linea = Coalesce(F("stock_actual"), Value(Decimal("0"))) * Coalesce(
+        F("costo_promedio"), Value(Decimal("0"))
+    )
+    filas = list(
+        productos.values("categoria__nombre")
+        .annotate(
+            valor=Sum(valor_linea, output_field=DecimalField(max_digits=18, decimal_places=4)),
+            unidades=Sum(Coalesce(F("stock_actual"), Value(Decimal("0")))),
+            items=Count("id"),
+        )
+        .order_by("-valor")
+    )
+    # La plantilla espera la clave "categoria"; los productos sin categoría
+    # llegan con None y se muestran igual que antes.
+    for f in filas:
+        f["categoria"] = f.pop("categoria__nombre") or "Sin categoría"
+        f["valor"] = f["valor"] or Decimal("0")
+        f["unidades"] = f["unidades"] or Decimal("0")
 
-    filas = sorted(grupos.values(), key=lambda g: g["valor"], reverse=True)
+    totales = productos.aggregate(
+        total_valor=Sum(valor_linea, output_field=DecimalField(max_digits=18, decimal_places=4)),
+        total_unidades=Sum(Coalesce(F("stock_actual"), Value(Decimal("0")))),
+        num_productos=Count("id"),
+    )
     return {
         "filas": filas,
-        "total_valor": total_valor,
-        "total_unidades": total_unidades,
-        "num_productos": productos.count(),
+        "total_valor": totales["total_valor"] or Decimal("0"),
+        "total_unidades": totales["total_unidades"] or Decimal("0"),
+        "num_productos": totales["num_productos"],
     }

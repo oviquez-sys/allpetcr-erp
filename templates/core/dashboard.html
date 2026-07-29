@@ -315,6 +315,20 @@ a{text-decoration:none;color:inherit}
     </div>
     {% endif %}
 
+    {# Integridad de datos (auditoría 2026-07-28, BE-04). Dos avisos distintos:
+       encontramos diferencias, o hace mucho que nadie las busca. #}
+    {% if integridad_descuadres %}
+    <div class="adv-row">
+      <div class="adv-ic danger"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+      <div class="adv-tx"><div class="t">Revisar integridad de datos</div><div class="d">El último chequeo encontró {{ integridad_descuadres }} diferencia(s) entre el stock/saldo guardado y los libros. No corrijas nada a mano: pedí que se investigue de dónde salió.</div></div>
+    </div>
+    {% elif integridad_vencida %}
+    <div class="adv-row">
+      <div class="adv-ic info"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
+      <div class="adv-tx"><div class="t">Chequeo de integridad pendiente</div><div class="d">{% if integridad_ultimo %}El último fue el {{ integridad_ultimo|date:"d/m/Y" }}.{% else %}Nunca se ha corrido.{% endif %} Conviene correr <code>manage.py reconciliar</code> cada semana para confirmar que el inventario y los saldos cuadran.</div></div>
+    </div>
+    {% endif %}
+
     {% if alerta_rts %}
     <div class="adv-row">
       <div class="adv-ic danger"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
@@ -361,6 +375,9 @@ a{text-decoration:none;color:inherit}
   </div>
 </div>
 
+{# json_script serializa del lado del servidor con escape seguro (evita
+   inyección si algún día la lista deja de ser solo números). #}
+{{ ventas_ultimos_7|json_script:"ventas-ultimos-7" }}
 <script>
 (function(){
   const h = new Date().getHours();
@@ -372,7 +389,7 @@ a{text-decoration:none;color:inherit}
 
 const ctx = document.getElementById('chartTendencias');
 if(ctx){
-  const data = {{ ventas_ultimos_7|safe }};
+  const data = JSON.parse(document.getElementById('ventas-ultimos-7').textContent);
   const vacio = data.every(v => !v);
   const emptyBox = document.getElementById('chartEmpty');
   if(vacio && emptyBox){ ctx.style.display='none'; emptyBox.style.display='flex'; }

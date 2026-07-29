@@ -5,8 +5,28 @@ cd /d "C:\Users\oviqu\OneDrive\Desktop\GRUPO VAYRU\AllPet\CLAUDE\allpetcr-erp"
 echo Activando entorno virtual...
 call .venv\Scripts\activate
 
-echo Configurando ruta de base de datos (fuera de OneDrive)...
-set DJANGO_DB_PATH=C:\allpetcr-datos\db.sqlite3
+echo Verificando base de datos PostgreSQL...
+if "%POSTGRES_HOST%"=="" (
+    echo.
+    echo   [ERROR] No se encontro POSTGRES_HOST.
+    echo.
+    echo   El sistema usa PostgreSQL desde el 28/07/2026. Sin esta variable,
+    echo   Django arrancaria contra el SQLite viejo y VERIAS EL SISTEMA VACIO
+    echo   aunque los datos esten intactos en PostgreSQL.
+    echo.
+    echo   Para reparar, abrir PowerShell y ejecutar:
+    echo     setx POSTGRES_HOST "localhost"
+    echo     setx POSTGRES_DB "allpetcr"
+    echo     setx POSTGRES_USER "allpetcr"
+    echo     setx POSTGRES_PASSWORD "la-contrasena-local-de-postgres"
+    echo     setx POSTGRES_PORT "5432"
+    echo.
+    echo   Luego cerrar esta ventana y volver a abrir el sistema.
+    echo.
+    pause
+    exit /b 1
+)
+echo   OK: PostgreSQL configurado (%POSTGRES_DB% en %POSTGRES_HOST%).
 
 echo Verificando clave de Claude (chat de ayuda)...
 if "%ANTHROPIC_API_KEY%"=="" (

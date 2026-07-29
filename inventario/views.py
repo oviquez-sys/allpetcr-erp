@@ -24,7 +24,7 @@ TOPE_ETIQUETAS = 500
 def ajuste_inventario(request):
     """Único camino de ajuste manual: pasa por el servicio de dominio,
     exige motivo y queda auditado con usuario e IP."""
-    form = AjusteInventarioForm(request.POST or None)
+    form = AjusteInventarioForm(request.POST or None, empresa=empresa_actual(request))
     if request.method == "POST" and form.is_valid():
         datos = form.cleaned_data
         referencia = f"AJ-{timezone.now():%Y%m%d-%H%M%S}"

@@ -87,22 +87,52 @@ class ChatLoopHerramientasMockTest(TestCase):
         cliente_mock = MockAnthropic.return_value
         cliente_mock.messages.create.return_value = resp
 
-        historial = [
-            {"role": "user", "content": "¿cuánto vendí hoy?"},
-            {"role": "assistant", "content": "Vendiste ₡24000 hoy."},
-        ]
+        # El historial lo arma el SERVIDOR desde ChatMensaje, no el navegador
+        # (auditoría 2026-07-28, SEG-07). Se siembra un intercambio previo.
+        from core.models import ChatMensaje
+
+        ChatMensaje.objects.create(
+            usuario=self.user, pregunta="¿cuánto vendí hoy?", respuesta="Vendiste ₡24000 hoy."
+        )
         r = self.client_django.post("/api/chat/", data=json.dumps({
-            "message": "¿ese es el total correcto?", "history": historial,
+            "message": "¿ese es el total correcto?",
         }), content_type="application/json")
         self.assertEqual(r.status_code, 200)
 
         # El historial + el mensaje nuevo se le mandaron a Claude en la llamada.
         _, kwargs = cliente_mock.messages.create.call_args
         mensajes_enviados = kwargs["messages"]
-        print("Mensajes enviados a Claude:", mensajes_enviados)
         self.assertEqual(len(mensajes_enviados), 3)
         self.assertEqual(mensajes_enviados[0]["content"], "¿cuánto vendí hoy?")
         self.assertEqual(mensajes_enviados[2]["content"], "¿ese es el total correcto?")
+
+    @mock.patch.dict("os.environ", {"ANTHROPIC_API_KEY": "sk-fake-para-test"})
+    @mock.patch("core.views.anthropic.Anthropic")
+    def test_el_historial_que_manda_el_cliente_se_ignora(self, MockAnthropic):
+        """SEG-07: el cliente ya no decide cuánto contexto se le paga al modelo.
+
+        Se manda un historial inflado a propósito; el servidor debe descartarlo
+        y enviar solo el mensaje nuevo, porque no hay conversación previa
+        guardada para este usuario.
+        """
+        cliente_mock = MockAnthropic.return_value
+        cliente_mock.messages.create.return_value = SimpleNamespace(
+            stop_reason="end_turn", usage=_usage(), content=[_bloque_texto("ok")],
+        )
+        historial_inflado = [
+            {"role": "user", "content": "x" * 4000} for _ in range(20)
+        ]
+        r = self.client_django.post("/api/chat/", data=json.dumps({
+            "message": "hola", "history": historial_inflado,
+        }), content_type="application/json")
+        self.assertEqual(r.status_code, 200)
+
+        _, kwargs = cliente_mock.messages.create.call_args
+        self.assertEqual(
+            len(kwargs["messages"]), 1,
+            "El historial del cliente se coló: el costo de contexto vuelve a "
+            "estar en manos del navegador.",
+        )
 
     @mock.patch.dict("os.environ", {"ANTHROPIC_API_KEY": "sk-fake-para-test"})
     @mock.patch("core.views.anthropic.Anthropic")

@@ -24,6 +24,8 @@ from decimal import Decimal
 from django.core.management.base import BaseCommand
 from django.db.models import Sum
 
+from core.models import ChequeoIntegridad
+
 
 class Command(BaseCommand):
     help = "Verifica (solo lectura) que los saldos/stock denormalizados cuadren con los libros."
@@ -33,11 +35,16 @@ class Command(BaseCommand):
             "--verbose", action="store_true",
             help="Muestra también los registros que cuadran, no solo los descuadrados.",
         )
+        parser.add_argument(
+            "--sin-guardar", action="store_true", dest="sin_guardar",
+            help="No registra el resultado (para pruebas o corridas exploratorias).",
+        )
 
     def handle(self, *args, **opciones):
         verbose = opciones["verbose"]
         self._descuadres = 0
         self._revisados = 0
+        self._diferencias = []  # se guardan para que el dashboard las muestre
 
         self.stdout.write(self.style.MIGRATE_HEADING("Reconciliación de denormalizados vs. libros"))
         self.stdout.write("")
@@ -58,6 +65,18 @@ class Command(BaseCommand):
                 f"registros revisados. Revisá cada caso antes de corregir nada a mano."
             ))
 
+        # Guardar el resultado (auditoría 2026-07-28, BE-04). Antes esto moría
+        # en la consola: si nadie leía la salida, un descuadre de stock pasaba
+        # inadvertido hasta que el POS bloqueara una venta de producto que sí
+        # había. Ahora el gerente lo ve en el dashboard sin tener que saber
+        # que este comando existe.
+        if not opciones.get("sin_guardar"):
+            ChequeoIntegridad.objects.create(
+                revisados=self._revisados,
+                descuadres=self._descuadres,
+                detalle="\n".join(self._diferencias[:100]),  # tope: el dashboard no es un log
+            )
+
     # --- utilidades ---
     def _ok(self, texto, verbose):
         if verbose:
@@ -65,6 +84,7 @@ class Command(BaseCommand):
 
     def _mal(self, texto):
         self._descuadres += 1
+        self._diferencias.append(texto)
         self.stdout.write(self.style.ERROR(f"  DIF  {texto}"))
 
     # --- 1. Stock de productos vs kardex ---

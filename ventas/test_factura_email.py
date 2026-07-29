@@ -49,19 +49,29 @@ class FacturaEnviarTest(TestCase):
         self.assertContains(resp, "Factura enviada a cliente@ejemplo.com")
 
     def test_sin_destinatario_no_manda_nada(self):
+        """400: falta un dato que debía mandar el cliente.
+
+        Antes respondía 200 (auditoría 2026-07-28, BE-07). El mensaje en
+        pantalla no cambió; lo que cambió es que ahora la respuesta dice la
+        verdad y un monitoreo puede detectarlo.
+        """
         resp = self.client_django.post(f"/pos/factura/{self.factura.pk}/enviar/", {"destinatario": ""})
-        print("STATUS sin destinatario:", resp.status_code)
-        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.status_code, 400)
         self.assertEqual(len(mail.outbox), 0)
-        self.assertContains(resp, "Falta el correo")
+        self.assertContains(resp, "Falta el correo", status_code=400)
 
     @mock.patch("ventas.views.EmailMessage.send", side_effect=OSError("Servidor no responde"))
-    def test_falla_de_envio_no_truena(self, _mock_send):
+    def test_falla_de_envio_no_truena_pero_lo_reporta(self, _mock_send):
+        """502: el servicio de correo falló, no el usuario ni la aplicación.
+
+        Antes devolvía 200 (auditoría 2026-07-28, BE-07), así que las facturas
+        podían dejar de salir durante días sin que nada lo detectara. La
+        pantalla sigue mostrando el aviso amable: lo que cambia es el estado.
+        """
         resp = self.client_django.post(f"/pos/factura/{self.factura.pk}/enviar/",
                                         {"destinatario": "cliente@ejemplo.com"})
-        print("STATUS con fallo SMTP:", resp.status_code)
-        self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "No se pudo enviar")
+        self.assertEqual(resp.status_code, 502)
+        self.assertContains(resp, "No se pudo enviar", status_code=502)
         self.assertEqual(len(mail.outbox), 0)
 
     def test_email_no_incluye_boton_imprimir_ni_form(self):

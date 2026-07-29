@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from core.models import Empresa
 from core.roles import CONTADOR, GERENTE, rol_requerido
-from core.tenancy import documento_de_empresa
+from core.tenancy import documento_de_empresa, empresa_actual
 
 from .models import Asiento, CierrePeriodo, CuentaContable, LineaAsiento
 from .services import cerrar_periodo, fecha_bloqueo, reabrir_periodo
@@ -17,7 +17,7 @@ from .services import cerrar_periodo, fecha_bloqueo, reabrir_periodo
 
 @rol_requerido(GERENTE, CONTADOR)
 def libro_diario(request):
-    empresa = Empresa.objects.first()
+    empresa = empresa_actual(request)
     asientos = (
         Asiento.objects.filter(empresa=empresa)
         .prefetch_related("lineas__cuenta")
@@ -31,7 +31,7 @@ def balance_comprobacion(request):
     """Suma débitos y créditos por cuenta de movimiento. Por partida doble el
     total de débitos SIEMPRE iguala el de créditos: es la prueba de que la
     contabilidad, generada sola, está cuadrada."""
-    empresa = Empresa.objects.first()
+    empresa = empresa_actual(request)
     filas = (
         LineaAsiento.objects.filter(asiento__empresa=empresa)
         .values("cuenta__codigo", "cuenta__nombre")
@@ -53,7 +53,7 @@ def cierres(request):
     """Cerrar un período (hasta una fecha) y reabrir cierres, solo gerente.
     Cerrar bloquea todo registro con esa fecha o anterior; reabrir queda
     auditado (quién, cuándo, por qué)."""
-    empresa = Empresa.objects.first()
+    empresa = empresa_actual(request)
 
     if request.method == "POST":
         accion = request.POST.get("accion")
@@ -105,7 +105,7 @@ def estado_resultados(request):
     Se arma SOLO desde los asientos ya cuadrados: ingresos (naturaleza I) menos
     costo de ventas y gastos (naturaleza G). No hay cifras digitadas a mano, así
     que siempre concuerda con el libro diario y el balance."""
-    empresa = Empresa.objects.first()
+    empresa = empresa_actual(request)
     hoy = timezone.localdate()
     desde = _parse_fecha(request.GET.get("desde"), hoy.replace(month=1, day=1))
     hasta = _parse_fecha(request.GET.get("hasta"), hoy)
@@ -169,7 +169,7 @@ def iva_trimestral(request):
     from compras.models import Compra
     from ventas.models import FacturaVenta
 
-    empresa = Empresa.objects.first()
+    empresa = empresa_actual(request)
     hoy = timezone.localdate()
     try:
         anio = int(request.GET.get("anio") or hoy.year)

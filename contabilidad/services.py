@@ -119,8 +119,23 @@ def _siguiente_numero(empresa) -> str:
     simultáneos (en PostgreSQL/varios cajeros) podían recibir el mismo número y
     chocar contra la restricción de unicidad.
 
-    La primera vez, el contador se siembra a partir de los asientos ya
-    existentes (numeración vieja), para no colisionar con ellos."""
+    Siembra inicial (auditoría 2026-07-28, hallazgo BE-05)
+    ------------------------------------------------------
+    La primera vez el contador se siembra a partir de los asientos que ya
+    existen, para no colisionar con una numeración anterior.
+
+    Antes esa siembra usaba `count()`: contaba filas y ponía el contador en
+    "cantidad + 1". Eso es frágil por una razón concreta: si alguna vez
+    faltara un asiento —hoy no debería, son inmutables, pero una restauración
+    parcial o una migración de datos puede dejar huecos— el contador
+    RETROCEDERÍA y el siguiente asiento chocaría contra la restricción de
+    unicidad, justo en medio de una venta.
+
+    Ahora se siembra con el número MÁS ALTO ya emitido, que es el dato que de
+    verdad importa. Se extrae el entero del campo `numero` (formato
+    "AS-00000123") y se sigue desde ahí. Con huecos en la secuencia el
+    resultado sigue siendo correcto.
+    """
     from ventas.models import Consecutivo
 
     with transaction.atomic():
@@ -128,13 +143,35 @@ def _siguiente_numero(empresa) -> str:
                         .select_for_update()
                         .get_or_create(empresa=empresa, tipo="AS"))
         if creado or fila.siguiente <= 1:
-            existentes = Asiento.objects.filter(empresa=empresa).count()
-            if existentes >= fila.siguiente:
-                fila.siguiente = existentes + 1
+            siguiente_seguro = _ultimo_numero_emitido(empresa) + 1
+            if siguiente_seguro > fila.siguiente:
+                fila.siguiente = siguiente_seguro
         numero = fila.siguiente
         fila.siguiente = numero + 1
         fila.save(update_fields=["siguiente"])
     return f"AS-{numero:08d}"
+
+
+def _ultimo_numero_emitido(empresa) -> int:
+    """Mayor número de asiento ya emitido para la empresa, como entero.
+
+    Se ordena por el texto del campo `numero`: como el formato tiene ancho
+    fijo con ceros a la izquierda ("AS-00000123"), el orden alfabético
+    coincide con el numérico. Los valores que no siguen el formato se ignoran
+    en vez de romper la numeración.
+    """
+    ultimo = (
+        Asiento.objects.filter(empresa=empresa, numero__startswith="AS-")
+        .order_by("-numero")
+        .values_list("numero", flat=True)
+        .first()
+    )
+    if not ultimo:
+        return 0
+    try:
+        return int(ultimo.split("-", 1)[1])
+    except (IndexError, ValueError):
+        return 0
 
 
 @transaction.atomic

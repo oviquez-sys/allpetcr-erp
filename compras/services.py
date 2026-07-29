@@ -58,7 +58,8 @@ def recibir_compra(*, compra, usuario=None) -> Compra:
     compra = Compra.objects.select_for_update().get(pk=compra.pk)
     if compra.estado != Compra.Estado.BORRADOR:
         raise ValidationError("Solo se puede recibir una compra en borrador.")
-    bodega = Bodega.objects.filter(sucursal=compra.sucursal).first()
+    # Bodega principal explícita (auditoría 2026-07-28, BE-09).
+    bodega = Bodega.principal_de(compra.sucursal)
     if bodega is None:
         raise ValidationError("La sucursal no tiene bodega configurada.")
 
@@ -106,7 +107,8 @@ def anular_compra(*, compra, motivo, usuario=None) -> Compra:
     if not motivo or not motivo.strip():
         raise ValidationError("El motivo de la anulación es obligatorio.")
 
-    bodega = Bodega.objects.filter(sucursal=compra.sucursal).first()
+    # Bodega principal explícita (auditoría 2026-07-28, BE-09).
+    bodega = Bodega.principal_de(compra.sucursal)
     if bodega is None:
         raise ValidationError("La sucursal no tiene bodega configurada.")
 

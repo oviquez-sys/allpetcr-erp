@@ -20,7 +20,45 @@ LIMITE_RTS_SALARIOS = 186
 UMBRAL_ALERTA = Decimal("80")  # porcentaje: avisa al llegar al 80% del límite
 
 
-def indicadores(empresa):
+# Segundos que se cachean los indicadores (auditoría 2026-07-28, PERF-03).
+# Dos minutos: suficiente para que abrir el dashboard varias veces seguidas no
+# recalcule ocho agregados, y poco para que las ventas del día se sientan al
+# instante. Si se quiere ver el efecto de una venta ya, se recarga a los dos
+# minutos — es el compromiso correcto para un tablero, no para el POS.
+CACHE_INDICADORES_SEG = int(os.environ.get("DASHBOARD_CACHE_SEG", "120"))
+
+
+def indicadores(empresa, usar_cache=True):
+    """Indicadores del tablero, con caché corta.
+
+    La caché es TOLERANTE a fallos a propósito: si la tabla de caché no existe
+    todavía (falta `manage.py createcachetable`) o el backend falla, se calcula
+    igual y el dashboard funciona. Un tablero que no abre porque la caché no
+    está configurada sería un problema peor que el que la caché resuelve.
+    """
+    from django.core.cache import cache
+
+    clave = f"dashboard:indicadores:{empresa.pk}"
+    if usar_cache:
+        try:
+            en_cache = cache.get(clave)
+        except Exception:  # noqa: BLE001 — la caché nunca debe tumbar el tablero
+            en_cache = None
+        if en_cache is not None:
+            # El estado de integridad NO se cachea: es una alerta y tiene que
+            # verse apenas cambia.
+            return {**en_cache, **_estado_integridad()}
+
+    datos = _calcular_indicadores(empresa)
+    if usar_cache:
+        try:
+            cache.set(clave, datos, CACHE_INDICADORES_SEG)
+        except Exception:  # noqa: BLE001
+            pass  # sin caché el tablero sigue funcionando, solo más lento
+    return {**datos, **_estado_integridad()}
+
+
+def _calcular_indicadores(empresa):
     from caja.services import monto_esperado
     from caja.models import SesionCaja
     from catalogo.models import Producto
@@ -106,6 +144,47 @@ def indicadores(empresa):
         "pct_rts": pct_rts,
         "alerta_rts": pct_rts >= UMBRAL_ALERTA,
         "es_rts": empresa.regimen == empresa.Regimen.SIMPLIFICADO,
+    }
+
+
+# Días tras los cuales un chequeo de integridad deja de ser informativo.
+# Una semana: si el stock se descuadró el lunes, no queremos enterarnos el mes
+# siguiente, cuando ya se vendió con datos malos.
+DIAS_CHEQUEO_VIGENTE = 7
+
+
+def _estado_integridad():
+    """Resumen del último `manage.py reconciliar`, para avisar en el dashboard.
+
+    Devuelve dos alertas distintas a propósito:
+
+    - `integridad_descuadres`: se encontraron diferencias entre el stock/saldo
+      guardado y lo que dicen los libros. Es lo que hace que el POS bloquee
+      ventas de producto que sí hay, o que el control de crédito autorice de
+      más.
+    - `integridad_vencida`: hace más de una semana que nadie corre el chequeo
+      (o no se corrió nunca). No significa que algo esté mal: significa que no
+      sabemos si algo está mal, que es una situación distinta y también hay
+      que mostrarla.
+    """
+    from django.utils import timezone
+
+    from .models import ChequeoIntegridad
+
+    ultimo = ChequeoIntegridad.ultimo()
+    if ultimo is None:
+        return {
+            "integridad_ultimo": None,
+            "integridad_descuadres": 0,
+            "integridad_vencida": True,
+            "integridad_detalle": "",
+        }
+    dias = (timezone.now() - ultimo.fecha).days
+    return {
+        "integridad_ultimo": ultimo.fecha,
+        "integridad_descuadres": ultimo.descuadres,
+        "integridad_vencida": dias > DIAS_CHEQUEO_VIGENTE,
+        "integridad_detalle": ultimo.detalle,
     }
 
 

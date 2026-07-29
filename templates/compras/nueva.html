@@ -247,7 +247,18 @@ let carrito = {}; // id -> {cantidad, costo}
 let formaPago = 'CON';
 
 const fmt = n => "₡" + n.toLocaleString("es-ES",{maximumFractionDigits:2});
-const msg = (t, err) => { const m=document.getElementById('msg'); m.innerHTML=t;
+
+// esc()/escUrl() — mismo motivo que en el POS (auditoría 2026-07-28, SEG-02):
+// el servidor entrega los datos escapados, pero innerHTML los vuelve a
+// interpretar como HTML. Esta pantalla es más sensible todavía, porque el
+// alta rápida de producto acepta el nombre que se escriba y lo repinta de
+// inmediato en la grilla.
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => (
+  {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+));
+const escUrl = s => encodeURI(String(s ?? '')).replace(/["'()\\]/g, '');
+
+const msg = (t, err) => { const m=document.getElementById('msg'); m.textContent=t;
   m.className = err ? 'err show':'show'; clearTimeout(m._h); m._h=setTimeout(()=>m.className='',3800); };
 
 function setFp(v){
@@ -263,12 +274,22 @@ function onProveedorChange(){
 let catActiva = "Todas";
 let cats = ["Todas", ...Array.from(new Set(productos.map(p=>p.categoria))).sort()];
 function pintarChips(){
-  document.getElementById('chips').innerHTML = cats.map(c =>
-    `<button class="chip-f ${c===catActiva?'on':''}" onclick="setCat('${c.replace(/'/g,"\\'")}')">${c}</button>`
-  ).join('');
-  document.getElementById('catlist').innerHTML = cats
-    .filter(c => c !== 'Todas' && c !== 'Sin categoría')
-    .map(c => `<option value="${c}">`).join('');
+  const cont = document.getElementById('chips');
+  cont.textContent = '';
+  cats.forEach(c => {
+    const b = document.createElement('button');
+    b.className = 'chip-f' + (c===catActiva ? ' on' : '');
+    b.textContent = c;
+    b.addEventListener('click', () => setCat(c));
+    cont.appendChild(b);
+  });
+  const lista = document.getElementById('catlist');
+  lista.textContent = '';
+  cats.filter(c => c !== 'Todas' && c !== 'Sin categoría').forEach(c => {
+    const o = document.createElement('option');
+    o.value = c;
+    lista.appendChild(o);
+  });
 }
 function setCat(c){ catActiva = c; pintarChips(); pintarGrid(); }
 
@@ -320,7 +341,11 @@ async function guardarProductoNuevo(){
     carrito[p.id] = { cantidad: 1, costo };
     cerrarNuevoProducto();
     pintarChips(); pintarGrid(); pintarLineas();
-    msg(`✅ "${p.nombre}" creado y agregado a la compra.`);
+    // Si la foto se rechazó (no era imagen, pesaba de más), el producto SÍ se
+    // creó pero sin imagen. Antes eso pasaba en silencio y el usuario no
+    // entendía por qué faltaba la foto (auditoría 2026-07-28, BE-03/SEG-06).
+    if (d.aviso) msg(`⚠️ "${p.nombre}" se creó, pero la foto no: ${d.aviso}`, true);
+    else msg(`✅ "${p.nombre}" creado y agregado a la compra.`);
   } catch(e){ msg("⛔ No se pudo conectar con el servidor.", true); }
 }
 
@@ -336,14 +361,14 @@ function filtrar(){
 function pintarGrid(){
   const vivos = filtrar().slice(0, 150);
   document.getElementById('grid').innerHTML = vivos.map(p => {
-    const pres = p.presentacion ? `<div class="pres">${p.presentacion}</div>` : '';
+    const pres = p.presentacion ? `<div class="pres">${esc(p.presentacion)}</div>` : '';
     const foto = p.imagen
-      ? `<div class="foto" style="background-image:url('${p.imagen}')"></div>`
+      ? `<div class="foto" style="background-image:url('${escUrl(p.imagen)}')"></div>`
       : `<div class="foto">🐾</div>`;
-    return `<div class="pcard" onclick="agregar(${p.id})" title="${p.nombre}">
+    return `<div class="pcard" onclick="agregar(${p.id})" title="${esc(p.nombre)}">
       ${foto}
-      <div class="n">${p.nombre}</div>
-      <div class="cat">${p.categoria}</div>${pres}
+      <div class="n">${esc(p.nombre)}</div>
+      <div class="cat">${esc(p.categoria)}</div>${pres}
       <div class="p">costo prom. ${fmt(p.costo_promedio)}</div>
       <div class="s">hay ${p.stock_actual}</div></div>`;
   }).join('') || '<p class="empty">No hay productos con ese filtro. Probá otra categoría o borrá la búsqueda.</p>';
@@ -370,7 +395,7 @@ function pintarLineas(){
   document.getElementById('lineas').innerHTML = ids.length ? ids.map(id=>{
     const p = porId[id], l = carrito[id];
     return `<div class="linea">
-      <span class="nm">${p.nombre}</span>
+      <span class="nm">${esc(p.nombre)}</span>
       <span><span class="lbl">cant.</span><input type="number" min="0.01" step="any" value="${l.cantidad}" onchange="cambiarCantidad(${id}, this.value)"></span>
       <span><span class="lbl">costo</span><input type="number" min="0" step="any" value="${l.costo}" onchange="cambiarCosto(${id}, this.value)"></span>
       <span class="mt">${fmt(l.cantidad*l.costo)}</span>

@@ -7,4 +7,9 @@ class CoreConfig(AppConfig):
     verbose_name = "Núcleo (empresa y auditoría)"
 
     def ready(self):
-        from . import signals  # noqa: F401  (activa la auditoría automática)
+        # Los receptores se conectan modelo por modelo (auditoría 2026-07-28,
+        # BE-01): antes se registraban globalmente y se ejecutaban en cada
+        # save() del proyecto. Ver core/signals.py.
+        from . import signals
+
+        signals.conectar()

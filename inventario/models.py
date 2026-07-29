@@ -8,12 +8,50 @@ from core.models import Sucursal
 class Bodega(models.Model):
     sucursal = models.ForeignKey(Sucursal, on_delete=models.PROTECT, related_name="bodegas")
     nombre = models.CharField(max_length=80)
+    # Auditoría 2026-07-28, hallazgo BE-09.
+    #
+    # Las ventas y las anulaciones descontaban de `Bodega.objects.filter(
+    # sucursal=...).first()`: la primera que apareciera. Con una sola bodega
+    # por sucursal funciona, pero el supuesto estaba implícito en el código y
+    # nada lo garantizaba. El día que una sucursal tenga bodega principal y
+    # bodega de exhibición, el POS descontaría de la que el ORM devolviera
+    # primero —sin avisar y sin forma de notarlo hasta cuadrar inventario—.
+    #
+    # Ahora el supuesto es explícito y verificable: cada sucursal declara cuál
+    # es su bodega principal, y una restricción de base de datos impide que
+    # haya dos.
+    principal = models.BooleanField(
+        default=False,
+        verbose_name="bodega principal",
+        help_text="De esta bodega salen las ventas. Solo puede haber una por sucursal.",
+    )
 
     class Meta:
         verbose_name_plural = "bodegas"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["sucursal"],
+                condition=models.Q(principal=True),
+                name="una_sola_bodega_principal_por_sucursal",
+            )
+        ]
 
     def __str__(self):
         return f"{self.nombre} — {self.sucursal.nombre}"
+
+    @classmethod
+    def principal_de(cls, sucursal):
+        """Bodega de la que salen las ventas de esa sucursal.
+
+        Si ninguna está marcada como principal —bases creadas antes de este
+        campo, o una sucursal nueva sin configurar— se cae a la primera, que
+        es el comportamiento histórico. Así nada se rompe al actualizar; lo
+        que se gana es que cuando alguien marque la principal, se respete.
+        """
+        return (
+            cls.objects.filter(sucursal=sucursal, principal=True).first()
+            or cls.objects.filter(sucursal=sucursal).order_by("id").first()
+        )
 
 
 class MovimientoInventario(models.Model):

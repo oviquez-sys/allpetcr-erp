@@ -1,11 +1,12 @@
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import anthropic
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from compras.models import Compra
@@ -14,12 +15,19 @@ from ventas.models import DevolucionVenta, FacturaVenta
 from . import reportes as rep
 from .chat_tools import ejecutar_herramienta, herramientas_para
 from .dashboard import indicadores
-from .models import ChatMensaje, Empresa
+from .models import ChatMensaje
+from .tenancy import empresa_actual
 from .roles import GERENTE, es_gerente, rol_de, rol_requerido
 
 # Cuántas preguntas por día puede hacer un mismo usuario. Frena tanto abuso
 # como facturas sorpresa; configurable sin tocar código.
 CHAT_LIMITE_DIARIO = int(os.environ.get("CHAT_LIMITE_DIARIO", "40"))
+# Y cuántas por minuto (auditoría 2026-07-28, SEG-07): sin este tope, las 40
+# del día se gastaban en segundos y el control de gasto era decorativo.
+CHAT_LIMITE_POR_MINUTO = int(os.environ.get("CHAT_LIMITE_POR_MINUTO", "6"))
+# Cuántos turnos de conversación previa se le mandan al modelo. El historial
+# lo reconstruye el SERVIDOR desde ChatMensaje, no lo manda el navegador.
+CHAT_TURNOS_CONTEXTO = 10
 # Cuántas rondas de "usar herramienta -> ver resultado" se permiten antes de
 # forzar una respuesta. Evita loops infinitos si el modelo insiste en pedir
 # herramientas sin parar.
@@ -28,7 +36,7 @@ CHAT_MAX_RONDAS_HERRAMIENTAS = 4
 
 @staff_member_required
 def dashboard(request):
-    empresa = Empresa.objects.first()
+    empresa = empresa_actual(request)
     ctx = {
         "es_gerente": es_gerente(request.user),
         "rol": rol_de(request.user),
@@ -46,19 +54,26 @@ def actividad(request):
     """Bitácora de ventas y compras recientes con opción de anular, y un
     historial separado de anulaciones (quién, cuándo, por qué): la vista
     anti-fraude, porque anular es el punto donde se esconde el robo."""
+    # Acotado a la empresa del usuario (auditoría 2026-07-28, ARQ-01). Esta es
+    # justamente la pantalla que no debería mezclar empresas: es la que se usa
+    # para investigar anulaciones sospechosas.
+    empresa = empresa_actual(request)
     ventas = (FacturaVenta.objects
+              .filter(empresa=empresa)
               .select_related("cliente", "usuario", "anulada_por")
               .order_by("-id")[:40])
     compras = (Compra.objects
+               .filter(empresa=empresa)
                .select_related("proveedor", "usuario", "anulada_por")
                .order_by("-id")[:40])
     ventas_anuladas = (FacturaVenta.objects
-                       .filter(estado=FacturaVenta.Estado.ANULADA)
+                       .filter(empresa=empresa, estado=FacturaVenta.Estado.ANULADA)
                        .select_related("anulada_por").order_by("-anulada_en")[:50])
     compras_anuladas = (Compra.objects
-                        .filter(estado=Compra.Estado.ANULADA)
+                        .filter(empresa=empresa, estado=Compra.Estado.ANULADA)
                         .select_related("anulada_por").order_by("-anulada_en")[:50])
     devoluciones = (DevolucionVenta.objects
+                    .filter(factura__empresa=empresa)
                     .select_related("factura", "usuario").order_by("-creado_en")[:50])
     return render(request, "core/actividad.html", {
         "ventas": ventas,
@@ -94,7 +109,7 @@ def reportes(request):
 
 @rol_requerido(GERENTE)
 def reporte_mas_vendidos(request):
-    empresa = Empresa.objects.first()
+    empresa = empresa_actual(request)
     if empresa is None:
         return render(request, "core/reporte_mas_vendidos.html", {"sin_empresa": True})
     desde_def, hasta_def = rep._rango_por_defecto()
@@ -106,7 +121,7 @@ def reporte_mas_vendidos(request):
 
 @rol_requerido(GERENTE)
 def reporte_stock(request):
-    empresa = Empresa.objects.first()
+    empresa = empresa_actual(request)
     if empresa is None:
         return render(request, "core/reporte_stock.html", {"sin_empresa": True})
     solo_bajo = request.GET.get("filtro") != "todos"
@@ -117,7 +132,7 @@ def reporte_stock(request):
 
 @rol_requerido(GERENTE)
 def reporte_inventario(request):
-    empresa = Empresa.objects.first()
+    empresa = empresa_actual(request)
     if empresa is None:
         return render(request, "core/reporte_inventario.html", {"sin_empresa": True})
     ctx = rep.valor_inventario(empresa)
@@ -217,20 +232,32 @@ inventar una respuesta.
 - Respuestas cortas y prácticas, sin relleno."""
 
 
-def _historial_valido(bruto):
-    """Sanitiza el historial que manda el frontend: solo user/assistant con
-    texto, tope de turnos para no dejar crecer el costo sin límite."""
-    if not isinstance(bruto, list):
-        return []
-    limpio = []
-    for turno in bruto[-20:]:  # últimos 10 intercambios (20 mensajes)
-        if not isinstance(turno, dict):
-            continue
-        rol = turno.get("role")
-        contenido = turno.get("content")
-        if rol in ("user", "assistant") and isinstance(contenido, str) and contenido.strip():
-            limpio.append({"role": rol, "content": contenido[:4000]})
-    return limpio
+def _historial_del_usuario(usuario, turnos=CHAT_TURNOS_CONTEXTO):
+    """Conversación previa reconstruida DESDE LA BASE, no desde el navegador.
+
+    Auditoría 2026-07-28, hallazgo SEG-07
+    -------------------------------------
+    Antes el historial venía en el cuerpo de la petición: el cliente podía
+    mandar 20 turnos de 4 000 caracteres cada uno, ~80 000 caracteres por
+    pregunta. El límite diario de 40 preguntas no acotaba nada, porque el
+    costo real lo fija el tamaño del contexto, y ese lo elegía el navegador.
+
+    Ahora el volumen de contexto lo decide el servidor. La tabla ChatMensaje
+    ya guardaba cada pregunta y su respuesta, así que la información estaba
+    disponible; solo faltaba usarla en vez de confiar en el cliente.
+
+    Efecto lateral bueno: la conversación sobrevive a recargar la página.
+    """
+    previos = (
+        ChatMensaje.objects.filter(usuario=usuario)
+        .exclude(respuesta="")
+        .order_by("-creado_en")[:turnos]
+    )
+    historial = []
+    for m in reversed(list(previos)):
+        historial.append({"role": "user", "content": m.pregunta[:4000]})
+        historial.append({"role": "assistant", "content": m.respuesta[:4000]})
+    return historial
 
 
 @staff_member_required
@@ -253,6 +280,19 @@ def chat_claude(request):
             status=429,
         )
 
+    # Límite por minuto (auditoría 2026-07-28, hallazgo SEG-07). El límite
+    # diario solo no alcanzaba: las 40 preguntas se podían gastar en segundos,
+    # cada una con el historial lleno y hasta cuatro rondas de herramientas.
+    # El control de costo existía en la intención pero no en la práctica.
+    hace_un_minuto = timezone.now() - timedelta(minutes=1)
+    if ChatMensaje.objects.filter(
+        usuario=request.user, creado_en__gte=hace_un_minuto
+    ).count() >= CHAT_LIMITE_POR_MINUTO:
+        return JsonResponse(
+            {"error": "Estás preguntando muy rápido. Esperá un momento y volvé a intentar."},
+            status=429,
+        )
+
     try:
         datos = json.loads(request.body)
     except json.JSONDecodeError:
@@ -270,7 +310,10 @@ def chat_claude(request):
             status=500,
         )
 
-    historial = _historial_valido(datos.get("history"))
+    # El historial NO se toma de `datos["history"]` (SEG-07): lo reconstruye el
+    # servidor desde ChatMensaje. El frontend puede seguir mandando el campo;
+    # se ignora a propósito.
+    historial = _historial_del_usuario(request.user)
     mensajes = historial + [{"role": "user", "content": mensaje}]
 
     tokens_entrada = 0

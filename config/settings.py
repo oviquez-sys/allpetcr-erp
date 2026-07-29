@@ -50,6 +50,32 @@ if PRODUCCION:
         o.strip() for o in os.environ.get("DJANGO_CSRF_ORIGINS", "").split(",") if o.strip()
     ]
 
+# --- Proxies inversos de confianza (auditoría 2026-07-28, hallazgo SEG-05) ---
+# Solo si la petición llega desde una de estas IP se hace caso a la cabecera
+# X-Forwarded-For para registrar el origen en la auditoría. Vacío = no se
+# confía en nadie y se usa REMOTE_ADDR, que el cliente no puede falsificar.
+# En el VPS: DJANGO_PROXIES_CONFIABLES="127.0.0.1" (el nginx local).
+PROXIES_CONFIABLES = tuple(
+    p.strip() for p in os.environ.get("DJANGO_PROXIES_CONFIABLES", "").split(",") if p.strip()
+)
+
+# --- Duración de la sesión (auditoría 2026-07-28, hallazgo SEG-08) ---
+# Django trae 2 semanas por defecto. En una tienda con turnos eso significa
+# que el cajero termina, no cierra sesión, y el siguiente opera con SU
+# identidad: la auditoría atribuye las ventas a la persona equivocada y el
+# arqueo de caja pierde sentido. 12 horas cubre la jornada más larga y obliga
+# a autenticarse de nuevo al día siguiente.
+SESSION_COOKIE_AGE = int(os.environ.get("DJANGO_SESSION_HORAS", "12")) * 3600
+SESSION_SAVE_EVERY_REQUEST = True  # la jornada se cuenta desde la última acción, no desde el login
+SESSION_COOKIE_HTTPONLY = True     # también fuera de producción
+SESSION_COOKIE_SAMESITE = "Lax"
+
+# --- Content-Security-Policy (auditoría 2026-07-28, hallazgo SEG-03) ---
+# Ver core/seguridad.py: por defecto se bloquean las directivas que no rompen
+# nada y el resto va en modo reporte. DJANGO_CSP_ESTRICTA=1 pasa todo a
+# bloqueo — activar solo después de sacar el JavaScript en línea.
+CSP_ESTRICTA = os.environ.get("DJANGO_CSP_ESTRICTA") == "1"
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -75,6 +101,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "core.middleware.CurrentUserMiddleware",  # usuario/IP para auditoría
     "core.middleware.AdminSoloGerente",       # /admin solo para gerentes
+    "core.seguridad.CabecerasDeSeguridad",    # CSP y Permissions-Policy (SEG-03)
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -122,6 +149,39 @@ else:
             "NAME": os.environ.get("DJANGO_DB_PATH", BASE_DIR / "db.sqlite3"),
         }
     }
+
+# --- Caché (auditoría 2026-07-28, hallazgo PERF-03) ---
+# Caché en memoria del proceso. Decisiones y por qué:
+#
+# NO Redis: para un negocio con un local sería complejidad prematura —un
+# servicio más que instalar, monitorear y que se puede caer—. El propio
+# auditor lo desaconsejó hasta que haya varios workers.
+#
+# NO caché en base de datos: en PostgreSQL, una consulta que falla dentro de
+# una transacción la aborta ENTERA. Si faltara `createcachetable`, un fallo
+# al leer la caché del dashboard podría tumbar operaciones que no tienen nada
+# que ver. Cambiar rendimiento por ese riesgo no vale la pena.
+#
+# Límite conocido y aceptado: con varios workers de gunicorn cada uno tiene su
+# copia, así que un indicador puede tardar hasta TIMEOUT en verse igual en
+# todos. Para un tablero de dos minutos de vigencia es irrelevante. El día que
+# haya varios workers y esto moleste, ahí sí entra Redis.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "allpetcr-dashboard",
+        "TIMEOUT": 120,
+    }
+}
+
+# Durante `manage.py test`, sin caché. Django NO limpia LocMemCache entre
+# pruebas, así que una prueba que carga el dashboard deja indicadores viejos
+# que la siguiente lee como si fueran suyos: fallos intermitentes que
+# dependen del ORDEN en que corren las pruebas, de los más caros de
+# diagnosticar. Las pruebas de la caché en sí activan LocMemCache
+# explícitamente con override_settings (core/test_dashboard_cache.py).
+if "test" in sys.argv:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},

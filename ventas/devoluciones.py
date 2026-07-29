@@ -56,7 +56,8 @@ def registrar_devolucion(*, factura, lineas, motivo, usuario=None) -> Devolucion
         raise ValidationError("Seleccioná al menos un producto a devolver.")
 
     empresa = factura.empresa
-    bodega = Bodega.objects.filter(sucursal=factura.sucursal).first()
+    # La devolución entra a la misma bodega de la que salió (BE-09).
+    bodega = Bodega.principal_de(factura.sucursal)
     if bodega is None:
         raise ValidationError("La sucursal no tiene bodega configurada.")
 

@@ -1,4 +1,5 @@
 import json
+import logging
 import smtplib
 
 from django.conf import settings
@@ -20,6 +21,8 @@ from . import services
 from .cxc import registrar_abono
 from .devoluciones import registrar_devolucion
 from .models import Cliente, DocumentoCxC, FacturaVenta
+
+logger = logging.getLogger(__name__)
 
 
 @rol_requerido(CAJERO, GERENTE)
@@ -126,9 +129,17 @@ def factura_enviar(request, factura_id):
     destinatario = (request.POST.get("destinatario") or "").strip()
     ctx = {"f": f}
 
+    # El código de estado tiene que decir la verdad (auditoría 2026-07-28,
+    # hallazgo BE-07). Antes se respondía 200 en los tres casos —éxito, fallo
+    # del servidor de correo y falta de destinatario— y el problema se
+    # señalaba solo con una variable de contexto. Consecuencia: ningún
+    # monitoreo externo podía detectar que las facturas habían dejado de
+    # salir, y en una venta a crédito una factura no entregada debilita la
+    # posición de cobro. El mensaje en pantalla sigue siendo igual de amable;
+    # lo que cambia es lo que la máquina reporta.
     if not destinatario:
         ctx["enviado_error"] = "Falta el correo del destinatario."
-        return render(request, "ventas/factura.html", ctx)
+        return render(request, "ventas/factura.html", ctx, status=400)
 
     try:
         html = render_to_string("ventas/factura.html", {"f": f, "es_email": True})
@@ -139,11 +150,15 @@ def factura_enviar(request, factura_id):
         )
         correo.content_subtype = "html"
         correo.send(fail_silently=False)
-        ctx["enviado_ok"] = True
-        ctx["enviado_a"] = destinatario
     except (smtplib.SMTPException, OSError) as e:
+        # 502: el fallo no es del usuario ni de esta aplicación, sino del
+        # servicio de correo del que dependemos.
+        logger.exception("No se pudo enviar la factura %s a %s", f.numero, destinatario)
         ctx["enviado_error"] = str(e)
+        return render(request, "ventas/factura.html", ctx, status=502)
 
+    ctx["enviado_ok"] = True
+    ctx["enviado_a"] = destinatario
     return render(request, "ventas/factura.html", ctx)
 
 

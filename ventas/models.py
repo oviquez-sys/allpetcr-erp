@@ -105,6 +105,28 @@ class FacturaVenta(models.Model):
     def __str__(self):
         return f"{self.numero} ({self.get_estado_display()}) ₡{self.total}"
 
+    @property
+    def estado_visual(self):
+        """Estado para mostrar al cliente: Pagada / Pendiente / Anulada.
+
+        FacturaVenta solo distingue Emitida/Anulada — "pagada" no es un campo
+        propio, es "emitida y, si fue a crédito, ya sin saldo pendiente en su
+        DocumentoCxC". Este helper traduce esa realidad para la factura a
+        color, sin inventar un estado que el modelo no tiene.
+        """
+        if self.estado == self.Estado.ANULADA:
+            return "ANU"
+        cxc = getattr(self, "cxc", None)  # OneToOneField: no existe si fue de contado
+        if cxc is not None and cxc.estado == cxc.Estado.PENDIENTE:
+            return "PEN"
+        return "PAG"
+
+    ESTADO_VISUAL_LABEL = {"PAG": "Pagada", "PEN": "Pendiente", "ANU": "Anulada"}
+
+    @property
+    def estado_visual_display(self):
+        return self.ESTADO_VISUAL_LABEL[self.estado_visual]
+
 
 class LineaVenta(models.Model):
     factura = models.ForeignKey(FacturaVenta, on_delete=models.CASCADE, related_name="lineas")

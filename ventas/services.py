@@ -57,7 +57,9 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
 
     sucursal = sesion_caja.sucursal
     empresa = sucursal.empresa
-    bodega = Bodega.objects.filter(sucursal=sucursal).first()
+    # Bodega principal explícita (auditoría 2026-07-28, BE-09) en vez de "la
+    # primera que aparezca". Ver inventario.models.Bodega.principal_de.
+    bodega = Bodega.principal_de(sucursal)
     if bodega is None:
         raise ValidationError("La sucursal no tiene bodega configurada.")
 
@@ -162,7 +164,8 @@ def anular_factura(*, factura, motivo, usuario) -> FacturaVenta:
     if not motivo or not motivo.strip():
         raise ValidationError("El motivo de anulación es obligatorio.")
 
-    bodega = Bodega.objects.filter(sucursal=factura.sucursal).first()
+    # Se reversa contra la MISMA bodega de la que salió (BE-09).
+    bodega = Bodega.principal_de(factura.sucursal)
     for linea in factura.lineas.all():
         registrar_movimiento(
             producto=linea.producto, bodega=bodega, tipo="DEV",

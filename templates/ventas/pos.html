@@ -231,16 +231,45 @@ clientes.forEach(c => {
 });
 
 const fmt = n => "₡" + n.toLocaleString("es-ES",{maximumFractionDigits:2});
-const msg = (t, err) => { const m=document.getElementById('msg'); m.innerHTML=t;
+
+// esc() — escape de HTML antes de interpolar cualquier dato que venga de la
+// base de datos (auditoría 2026-07-28, hallazgo SEG-02).
+//
+// El servidor entrega los datos bien escapados vía json_script, pero al
+// reinsertarlos con innerHTML el navegador VUELVE a interpretarlos como HTML.
+// Un producto llamado <img src=x onerror=...> ejecutaba ese código en la
+// sesión de todo cajero que abriera el POS. Solo un gerente puede crear
+// productos, así que el vector era interno — pero destruye la trazabilidad
+// en la que se apoya el control anti-fraude, y eso es justo lo que no se
+// puede perder. Todo dato de origen externo pasa por esta función.
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => (
+  {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]
+));
+// Para valores que van dentro de un atributo CSS url(...): ahí el escape de
+// HTML no alcanza, hay que impedir que se cierre el paréntesis o la comilla.
+const escUrl = s => encodeURI(String(s ?? '')).replace(/["'()\\]/g, '');
+
+// textContent en vez de innerHTML: todos los avisos son texto plano y varios
+// incluyen el nombre del producto o un error del servidor.
+const msg = (t, err) => { const m=document.getElementById('msg'); m.textContent=t;
   m.className = err ? 'err show':'show'; clearTimeout(m._h); m._h=setTimeout(()=>m.className='',3800); };
 
 // Chips de categorías (tocar para explorar sin escribir)
 let catActiva = "Todas";
 const cats = ["Todas", ...Array.from(new Set(productos.map(p=>p.categoria))).sort()];
 function pintarChips(){
-  document.getElementById('chips').innerHTML = cats.map(c =>
-    `<button class="chip-f ${c===catActiva?'on':''}" onclick="setCat('${c.replace(/'/g,"\\'")}')">${c}</button>`
-  ).join('');
+  const cont = document.getElementById('chips');
+  cont.textContent = '';
+  cats.forEach(c => {
+    // Nodo real en vez de HTML interpolado: el nombre de la categoría nunca
+    // se reinterpreta, y el handler recibe el valor por closure (no por una
+    // cadena que hubiera que escapar dos veces, para HTML y para JS).
+    const b = document.createElement('button');
+    b.className = 'chip-f' + (c===catActiva ? ' on' : '');
+    b.textContent = c;
+    b.addEventListener('click', () => setCat(c));
+    cont.appendChild(b);
+  });
 }
 function setCat(c){ catActiva = c; pintarChips(); pintarGrid(); }
 
@@ -257,14 +286,14 @@ function pintarGrid(){
   const vivos = filtrar().slice(0, 150);
   document.getElementById('grid').innerHTML = vivos.map(p => {
     const disp = p.stock_actual - (carrito[p.id]?.cantidad || 0);
-    const pres = p.presentacion ? `<div class="pres">${p.presentacion}</div>` : '';
+    const pres = p.presentacion ? `<div class="pres">${esc(p.presentacion)}</div>` : '';
     const foto = p.imagen
-      ? `<div class="foto" style="background-image:url('${p.imagen}')"></div>`
+      ? `<div class="foto" style="background-image:url('${escUrl(p.imagen)}')"></div>`
       : `<div class="foto ph"><svg viewBox="0 0 24 24"><circle cx="8" cy="9.5" r="1.9"/><circle cx="16" cy="9.5" r="1.9"/><circle cx="4.7" cy="13.2" r="1.8"/><circle cx="19.3" cy="13.2" r="1.8"/><path d="M12 14.2c2.6 0 4.7 1.7 4.7 3.4 0 1.6-2.1 2.2-4.7 2.2s-4.7-.6-4.7-2.2c0-1.7 2.1-3.4 4.7-3.4z"/></svg></div>`;
-    return `<div class="pcard ${disp<=0?'agotado':''}" onclick="agregar(${p.id})" title="${p.nombre}">
+    return `<div class="pcard ${disp<=0?'agotado':''}" onclick="agregar(${p.id})" title="${esc(p.nombre)}">
       ${foto}
-      <div class="n">${p.nombre}</div>
-      <div class="cat">${p.categoria}</div>${pres}
+      <div class="n">${esc(p.nombre)}</div>
+      <div class="cat">${esc(p.categoria)}</div>${pres}
       <div class="p">${fmt(p.precio_venta)}</div>
       <div class="s">quedan ${disp}</div></div>`;
   }).join('') || '<p class="empty">No hay productos con ese filtro. Probá otra categoría o borrá la búsqueda.</p>';
@@ -317,7 +346,7 @@ function pintar(){
          <span class="regtxt">Sale del inventario a costo, sin cobro</span>`
       : `<button class="toggle" onclick="toggleRegalo(${id})">🎁 Regalo</button>
          <span class="descbox">Descuento <input type="number" min="0" max="100" step="0.01" value="${it.descuento_pct||''}" placeholder="0" onchange="setDescuentoPct(${id}, this.value)"> %</span>`;
-    return `<div class="linea"><span class="nm">${p.nombre}</span>
+    return `<div class="linea"><span class="nm">${esc(p.nombre)}</span>
       <span class="qtn"><button onclick="quitar(${id})">−</button><b>${it.cantidad}</b><button onclick="agregar(${id})">＋</button></span>
       <span class="mt">${mt}</span></div>
       <div class="linea-x">${ctrl}</div>`;

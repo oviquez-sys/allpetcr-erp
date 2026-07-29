@@ -117,17 +117,45 @@ class PermisosHerramientasTest(TestCase):
 
 
 class HistorialValidoTest(TestCase):
-    def test_historial_sanitiza_basura(self):
-        from core.views import _historial_valido
-        bruto = [
-            {"role": "user", "content": "hola"},
-            {"role": "hacker", "content": "malo"},
-            {"role": "assistant", "content": 12345},
-            "no es un dict",
-            {"role": "assistant", "content": "bien"},
-        ]
-        limpio = _historial_valido(bruto)
-        print("historial sanitizado:", limpio)
-        self.assertEqual(len(limpio), 2)
-        self.assertEqual(limpio[0]["content"], "hola")
-        self.assertEqual(limpio[1]["content"], "bien")
+    def setUp(self):
+        from django.contrib.auth.models import User
+
+        self.user = User.objects.create_user("cajero_hist", password="x", is_staff=True)
+
+    def test_historial_se_reconstruye_desde_la_base(self):
+        """El historial ya no se sanitiza: se ignora y se reconstruye.
+
+        Auditoría 2026-07-28, hallazgo SEG-07. Antes el navegador mandaba la
+        conversación previa y el servidor la limpiaba (esta prueba verificaba
+        esa limpieza). El problema no era la limpieza sino el origen: el
+        cliente controlaba CUÁNTO contexto se le mandaba al modelo, hasta
+        ~80 000 caracteres por pregunta, y ahí es donde está el costo real.
+
+        Ahora el servidor arma el historial desde ChatMensaje, que ya guardaba
+        cada pregunta y respuesta. No hay nada que sanitizar porque no viene
+        nada de afuera.
+        """
+        from core.models import ChatMensaje
+        from core.views import _historial_del_usuario
+
+        ChatMensaje.objects.create(
+            usuario=self.user, pregunta="¿cuánto vendí?", respuesta="₡24 000."
+        )
+        # Sin respuesta (la llamada falló): no aporta contexto, se omite.
+        ChatMensaje.objects.create(usuario=self.user, pregunta="¿y ayer?", respuesta="")
+
+        historial = _historial_del_usuario(self.user)
+        self.assertEqual(len(historial), 2, "Un intercambio completo = 2 mensajes")
+        self.assertEqual(historial[0], {"role": "user", "content": "¿cuánto vendí?"})
+        self.assertEqual(historial[1], {"role": "assistant", "content": "₡24 000."})
+
+    def test_el_historial_de_un_usuario_no_se_le_da_a_otro(self):
+        """Cada quien ve su propia conversación."""
+        from django.contrib.auth.models import User
+
+        from core.models import ChatMensaje
+        from core.views import _historial_del_usuario
+
+        otro = User.objects.create_user("otro_cajero", password="x", is_staff=True)
+        ChatMensaje.objects.create(usuario=otro, pregunta="secreto", respuesta="dato")
+        self.assertEqual(_historial_del_usuario(self.user), [])

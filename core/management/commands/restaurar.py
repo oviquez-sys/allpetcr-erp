@@ -13,7 +13,9 @@ Uso:
     python manage.py restaurar --archivo respaldo_allpetcr_20260721_200000.zip
     python manage.py restaurar --archivo ...zip --confirmar
 """
+import os
 import shutil
+import subprocess
 import zipfile
 from datetime import datetime
 from pathlib import Path
@@ -37,8 +39,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opts):
         engine = settings.DATABASES["default"]["ENGINE"]
-        if "sqlite3" not in engine:
-            raise CommandError("La restauración automática es para SQLite (uso local).")
+        es_postgres = "postgresql" in engine
+        es_sqlite = "sqlite3" in engine
+        if not (es_postgres or es_sqlite):
+            raise CommandError(f"Motor no soportado por la restauración: {engine}")
 
         carpeta = carpeta_respaldos(opts["destino"])
         disponibles = sorted(
@@ -69,17 +73,42 @@ class Command(BaseCommand):
             raise CommandError(f"No se encontró el respaldo: {zip_path}")
         if not zipfile.is_zipfile(zip_path):
             raise CommandError(f"El archivo no es un zip válido: {zip_path}")
+        # Qué motor produjo este respaldo: SQLite guarda "db.sqlite3" y
+        # PostgreSQL, "db.dump". Se comprueba que coincida con el motor actual
+        # para no intentar meter un volcado de Postgres en un archivo SQLite
+        # (o al revés), que dejaría la base inservible.
         with zipfile.ZipFile(zip_path) as z:
-            if "db.sqlite3" not in z.namelist():
-                raise CommandError("El respaldo no contiene la base de datos (db.sqlite3). ¿Es un respaldo de AllPetcr?")
+            contenido = z.namelist()
+            tiene_sqlite = "db.sqlite3" in contenido
+            tiene_dump = "db.dump" in contenido
+        if not (tiene_sqlite or tiene_dump):
+            raise CommandError(
+                "El respaldo no contiene la base de datos (ni db.sqlite3 ni db.dump). "
+                "¿Es un respaldo de AllPetcr?"
+            )
+        if es_postgres and not tiene_dump:
+            raise CommandError(
+                "Este respaldo es de la época de SQLite y la base actual es PostgreSQL.\n"
+                "No se puede restaurar automáticamente: hay que volver a migrar los datos.\n"
+                "Los respaldos hechos desde el 28/07/2026 sí son compatibles."
+            )
+        if es_sqlite and not tiene_sqlite:
+            raise CommandError(
+                "Este respaldo es de PostgreSQL y la base actual es SQLite. "
+                "Configurá POSTGRES_HOST antes de restaurar."
+            )
 
-        db_path = Path(settings.DATABASES["default"]["NAME"])
         media = Path(settings.MEDIA_ROOT)
+        db_path = None if es_postgres else Path(settings.DATABASES["default"]["NAME"])
+        descripcion_base = (
+            f"la base PostgreSQL '{settings.DATABASES['default']['NAME']}'"
+            if es_postgres else f"la base {db_path}"
+        )
 
         if not opts["confirmar"]:
             self.stdout.write(self.style.WARNING(
                 f"[SIMULACIÓN] Restauraría desde {zip_path.name}:\n"
-                f"  - reemplazaría la base {db_path}\n"
+                f"  - reemplazaría {descripcion_base}\n"
                 f"  - reemplazaría las fotos en {media}\n"
                 f"Primero guardaría una copia del estado actual.\n\n"
                 "Si estás seguro y el servidor está APAGADO, repetí con --confirmar."
@@ -90,7 +119,7 @@ class Command(BaseCommand):
         sello = datetime.now().strftime("%Y%m%d_%H%M%S")
         previa = carpeta / f"antes_de_restaurar_{sello}"
         previa.mkdir(parents=True, exist_ok=True)
-        if db_path.exists():
+        if db_path is not None and db_path.exists():
             shutil.copy2(db_path, previa / "db.sqlite3")
         if media.exists():
             shutil.copytree(media, previa / "media", dirs_exist_ok=True)
@@ -100,8 +129,11 @@ class Command(BaseCommand):
             tmp = carpeta / f"_restaurando_{sello}"
             z.extractall(tmp)
             # Base
-            db_path.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(tmp / "db.sqlite3", db_path)
+            if es_postgres:
+                self._restaurar_postgres(tmp / "db.dump")
+            else:
+                db_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(tmp / "db.sqlite3", db_path)
             # Fotos: reemplazar la carpeta media completa
             origen_media = tmp / "media"
             if origen_media.exists():
@@ -115,3 +147,49 @@ class Command(BaseCommand):
             f"El estado anterior quedó guardado en: {previa}\n"
             "Ya podés encender el sistema (python manage.py runserver)."
         ))
+
+    def _restaurar_postgres(self, dump: Path):
+        """Restaura el volcado con pg_restore, reemplazando lo que haya.
+
+        `--clean --if-exists` borra los objetos anteriores antes de recrearlos:
+        sin eso, restaurar sobre una base con datos deja una mezcla de los dos
+        estados, que es peor que cualquiera de los dos por separado.
+
+        pg_restore devuelve código distinto de cero por advertencias que no son
+        errores reales (por ejemplo, intentar borrar algo que no existía). Por
+        eso se revisa el texto del error en vez de confiar solo en el código.
+        """
+        cfg = settings.DATABASES["default"]
+        entorno = os.environ.copy()
+        if cfg.get("PASSWORD"):
+            entorno["PGPASSWORD"] = cfg["PASSWORD"]
+        comando = [
+            os.environ.get("PG_RESTORE_BIN", "pg_restore"),
+            "--clean",
+            "--if-exists",
+            "--no-owner",
+            "--no-privileges",
+            f"--host={cfg.get('HOST') or 'localhost'}",
+            f"--port={cfg.get('PORT') or '5432'}",
+            f"--username={cfg.get('USER') or ''}",
+            f"--dbname={cfg['NAME']}",
+            str(dump),
+        ]
+        try:
+            proceso = subprocess.run(
+                comando, env=entorno, capture_output=True, text=True, timeout=1800
+            )
+        except FileNotFoundError:
+            raise CommandError(
+                "No se encontró 'pg_restore'. Viene con PostgreSQL, en la misma\n"
+                "carpeta que pg_dump. Agregala al PATH o definí PG_RESTORE_BIN."
+            )
+        except subprocess.TimeoutExpired:
+            raise CommandError("pg_restore tardó más de 30 minutos y se canceló.")
+        if proceso.returncode != 0 and "error" in (proceso.stderr or "").lower():
+            raise CommandError(f"pg_restore falló:\n{proceso.stderr.strip()}")
+        if proceso.stderr and proceso.stderr.strip():
+            self.stdout.write(self.style.WARNING(
+                "pg_restore reportó avisos (normalmente inofensivos):\n"
+                + proceso.stderr.strip()[:1000]
+            ))

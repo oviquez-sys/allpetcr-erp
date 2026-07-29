@@ -15,12 +15,15 @@ Por eso el permiso se aplica DOS veces: en la vista (que exige el rol) y aquí
 (que filtra herramienta por herramienta). La segunda capa existe para que el
 día que alguien afloje el decorador de la vista, los costos sigan protegidos.
 """
+import logging
 from decimal import Decimal
 
 from . import reportes as rep
 from .dashboard import indicadores
 from .models import Empresa
 from .roles import CONTADOR, GERENTE, en_roles
+
+logger = logging.getLogger(__name__)
 
 # Herramientas que exponen estructura de costos o resultados financieros.
 # Solo Gerente y Contador. El Cajero conserva la ayuda de navegación, que es
@@ -232,4 +235,8 @@ def ejecutar_herramienta(nombre, entrada, usuario=None):
 
         return {"error": f"Herramienta desconocida: {nombre}"}
     except Exception as e:  # nunca reventar el chat por un dato raro
+        # Devolver el error al chat está bien; tragárselo sin registrarlo, no
+        # (auditoría 2026-07-28, BE-03). Si una herramienta empieza a fallar,
+        # el único síntoma sería que el asistente "responde raro".
+        logger.exception("Fallo la herramienta de chat '%s'", nombre)
         return {"error": f"No se pudo consultar '{nombre}': {e}"}

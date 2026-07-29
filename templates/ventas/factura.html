@@ -2,162 +2,430 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ f.numero }}</title>
 <style>
-:root{--brand:#0B3161;--brand-d:#072244;--gold:#CD963A;--ink:#1d1d1f;--ink2:#86868b;--line:#e5e5ea;--bg:#f5f5f7}
+/*
+  Factura electrónica premium (v2, pedido de Oscar, 28/07/2026).
+  Referencia: Stripe Dashboard, Apple Wallet, Notion, Linear, Shopify, Vercel.
+
+  Cambio estructural respecto a v1: panel lateral fijo (30%) en vez de tarjeta
+  flotante junto a la tabla — es la observación de Oscar y tiene razón: separa
+  "lo que se compró" (columna izquierda) de "cómo se resume y se paga"
+  (columna derecha), que es exactamente el patrón de un checkout de Stripe o
+  una orden de Shopify.
+
+  Tipografía: Inter vía Google Fonts (@import). Fallback a system fonts si no
+  carga — el correo llega igual de legible sin depender de que el proveedor
+  de correo permita la fuente externa.
+
+  Iconos: SVG dibujados a mano en el estilo Lucide (trazo 1.5-1.75, esquinas
+  redondeadas, 20-24px) pero sin cargar la librería de un CDN. Mismo motivo
+  que la fuente: un correo HTML no debería depender de un tercero para verse
+  bien, y las plantillas de compras/POS del ERP ya siguen esta misma regla.
+
+  Sin QR: ni el de Hacienda (Régimen Simplificado, sin clave numérica que
+  codificar) ni el de seguimiento (no existe tracking de pedidos en el
+  sistema). Ver HALLAZGOS.md — decisión explícita, no un olvido.
+
+  Espaciado: escala de 8px (8/16/24/32/48/64), aplicada con variables para que
+  todo el archivo comparta el mismo ritmo.
+*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root{
+  --azul:#1E4E8D; --azul-d:#153a6b; --azul-50:#eef4fc;
+  --dorado:#DBAF5A; --dorado-d:#b8863a;
+  --ink:#0f172a; --ink2:#64748b; --ink3:#94a3b8;
+  --line:#eef0f3; --line-fuerte:#e2e5ea;
+  --panel-bg:#F8FAFC;
+  --verde:#15803d; --verde-bg:#eefbf1;
+  --ambar:#a3720f; --ambar-bg:#fdf3e0;
+  --rojo:#c0261e; --rojo-bg:#fdecea;
+  --s1:8px; --s2:16px; --s3:24px; --s4:32px; --s6:48px; --s8:64px;
+  --radio-lg:20px; --radio-md:14px; --radio-sm:10px;
+  --sombra-tarjeta:0 1px 2px rgba(15,23,42,.04), 0 8px 24px rgba(15,23,42,.06);
+  --sombra-boton:0 1px 2px rgba(15,23,42,.06), 0 2px 8px rgba(30,78,141,.16);
+}
 *{box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  color:var(--ink);margin:0;padding:40px;background:#fff;max-width:640px;margin:0 auto}
-.head{text-align:center;margin-bottom:36px;padding-bottom:28px;border-bottom:2px solid var(--brand)}
-.head img{height:150px;width:auto;margin-bottom:20px}
-.head .row{display:flex;justify-content:space-between;align-items:baseline;text-align:left}
-.head .num{font-size:19px;font-weight:700;color:var(--brand);letter-spacing:-.01em}
-.head .fecha{font-size:13px;color:var(--ink2);text-align:right;line-height:1.5}
-.anulada{color:#b00020;border:2px solid #b00020;text-align:center;font-weight:700;padding:10px;border-radius:10px;margin-bottom:24px}
-.cliente{background:var(--bg);border-radius:12px;padding:16px 20px;margin-bottom:28px;border-left:4px solid var(--gold);
-  display:flex;align-items:center;gap:12px}
-.cliente .av{width:40px;height:40px;border-radius:50%;background:var(--gold);color:#fff;display:flex;align-items:center;
-  justify-content:center;font-weight:700;font-size:16px;flex-shrink:0}
-.cliente .nombre{font-size:15px;font-weight:600}
-.cliente .rol{font-size:12px;color:var(--ink2)}
-table{width:100%;border-collapse:collapse;margin-bottom:24px}
-thead tr{background:var(--brand);color:#fff}
-th{padding:14px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
-th.n{text-align:right}
-th.c{text-align:center}
-td{padding:12px 16px;font-size:14px;border-bottom:1px solid var(--line)}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:var(--ink); background:#eef1f5; -webkit-font-smoothing:antialiased;
+  font-size:14px; line-height:1.5;
+}
+.lienzo{max-width:1040px; margin:0 auto; padding:var(--s4) var(--s3)}
+.hoja{
+  background:#fff; border-radius:var(--radio-lg); overflow:hidden;
+  box-shadow:var(--sombra-tarjeta); border:1px solid var(--line-fuerte);
+}
+
+/* ---------- Barra superior: filete azul→dorado, muy fina ---------- */
+.barra{height:4px; background:linear-gradient(90deg, var(--azul) 0%, var(--azul) 70%, var(--dorado) 100%)}
+
+/* ---------- Encabezado ---------- */
+.head{
+  display:flex; justify-content:space-between; align-items:flex-start;
+  padding:var(--s6) var(--s6) var(--s4);
+}
+.head .marca img{height:64px; width:auto; display:block; margin-bottom:var(--s2)}
+.head .marca .nombre{font-size:20px; font-weight:800; color:var(--ink); letter-spacing:-.02em}
+.head .marca .tipo{font-size:12.5px; color:var(--ink2); font-weight:500; margin-top:2px}
+.head .doc{text-align:right}
+.head .doc .num{font-size:30px; font-weight:800; color:var(--ink); letter-spacing:-.03em; line-height:1.1}
+.head .doc .fecha{font-size:12.5px; color:var(--ink3); font-weight:500; margin-top:var(--s1)}
+.badge{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 14px; border-radius:980px; font-size:12.5px; font-weight:700;
+  margin-top:var(--s2);
+}
+.badge .dot{width:6px; height:6px; border-radius:50%; background:currentColor}
+.badge.pag{background:var(--verde-bg); color:var(--verde)}
+.badge.pen{background:var(--ambar-bg); color:var(--ambar)}
+.badge.anu{background:var(--rojo-bg); color:var(--rojo)}
+
+.motivo-anulacion{
+  margin:0 var(--s6) var(--s4); padding:var(--s2) var(--s3); border-radius:var(--radio-sm);
+  background:var(--rojo-bg); color:var(--rojo); font-size:13px; font-weight:500;
+}
+
+/* ---------- Layout de dos columnas: 70% contenido / 30% panel ---------- */
+.grid{display:flex; align-items:flex-start; border-top:1px solid var(--line)}
+.col-principal{flex:1 1 68%; min-width:0; padding:var(--s6)}
+.col-panel{
+  flex:0 0 32%; min-width:260px; background:var(--panel-bg);
+  padding:var(--s6) var(--s4); align-self:stretch;
+  border-left:1px solid var(--line);
+}
+
+/* ---------- Tarjetas de datos (cliente / dirección / pago) ---------- */
+.datos{display:flex; flex-direction:column; gap:var(--s2); margin-bottom:var(--s4)}
+.dato{
+  display:flex; align-items:center; gap:14px;
+  padding:14px var(--s2); border-radius:var(--radio-md); background:#fff;
+  border:1px solid var(--line);
+}
+.dato .ic{
+  width:38px; height:38px; border-radius:11px; background:var(--azul-50);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.dato .ic svg{width:19px; height:19px; stroke:var(--azul); fill:none; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round}
+.dato .tx{min-width:0}
+.dato .tx .l{font-size:11px; color:var(--ink3); text-transform:uppercase; letter-spacing:.05em; font-weight:600; margin-bottom:2px}
+.dato .tx .v{font-size:14.5px; font-weight:600; color:var(--ink); overflow-wrap:break-word}
+
+.seccion-titulo{
+  font-size:11px; font-weight:700; color:var(--ink3); text-transform:uppercase;
+  letter-spacing:.07em; margin:0 0 var(--s2);
+}
+
+/* ---------- Tabla de productos, estilo Stripe: sin bordes duros ---------- */
+table{width:100%; border-collapse:collapse}
+thead th{
+  text-align:left; font-size:11px; font-weight:700; color:var(--ink3);
+  text-transform:uppercase; letter-spacing:.06em;
+  padding:0 var(--s2) 12px; border-bottom:1px solid var(--line-fuerte);
+}
+th.n{text-align:right} th.c{text-align:center}
+td{padding:18px var(--s2); font-size:14px; border-bottom:1px solid var(--line); color:var(--ink)}
 tbody tr:last-child td{border-bottom:none}
-td.n{text-align:right;font-variant-numeric:tabular-nums}
-td.c{text-align:center;color:var(--ink2)}
-td.tot{font-weight:600;color:var(--brand)}
-.regalo{color:var(--gold);font-size:12px}
-.descuento td{color:#b00020;font-size:12.5px;padding-top:0}
-.resumen{margin-bottom:24px}
+td.n{text-align:right; font-variant-numeric:tabular-nums; color:var(--ink)}
+td.c{text-align:center; color:var(--ink2)}
+td.tot{font-weight:600}
+.prod-nombre{font-weight:500}
+.regalo{
+  display:inline-block; margin-left:8px; font-size:10px; font-weight:700;
+  color:var(--dorado-d); background:#fbf3e3; padding:3px 9px; border-radius:980px;
+  vertical-align:middle;
+}
+.descuento td{color:var(--rojo); font-size:12.5px; font-weight:500; padding:0 var(--s2) 16px; border-bottom:1px solid var(--line)}
+
+.resumen{margin-top:var(--s1)}
 .resumen table{margin-bottom:0}
-.resumen td{border:none;padding:5px 16px}
-.resumen .n{text-align:right;font-variant-numeric:tabular-nums}
-.total-box{display:flex;justify-content:flex-end;align-items:baseline;gap:14px;
-  padding:16px 4px;border-top:1px solid var(--line);margin-bottom:28px}
-.total-box .l{font-size:13px;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em}
-.total-box .v{font-size:24px;font-weight:700;color:var(--brand)}
-.meta{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;font-size:13px}
-.meta .box{background:var(--bg);padding:12px 16px;border-radius:8px}
-.meta .box .l{color:var(--ink2);font-size:11px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
-.meta .box .v{font-weight:600}
-.foot{border-top:1px solid var(--line);padding-top:20px;text-align:center}
-.foot .gracias{font-size:14px;color:var(--brand);font-weight:600;margin-bottom:12px}
-.foot .info{font-size:12px;color:var(--ink2);line-height:1.7;margin-bottom:16px}
-.foot .legal{font-size:11px;color:#c7c7cc;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
-.no-print{text-align:center;margin-top:24px}
-.no-print button{padding:10px 26px;font-size:14px;border:none;border-radius:980px;background:var(--brand);color:#fff;
-  font-weight:600;cursor:pointer}
-@media print{.no-print{display:none}body{padding:20px}}
+.resumen td{border:none; padding:6px var(--s2); font-size:13.5px}
+.resumen .n{text-align:right; font-variant-numeric:tabular-nums; color:var(--ink2)}
+.resumen .impuesto td{color:var(--ink2)}
+.resumen .descuento-fila td{color:var(--rojo)}
+
+/* ---------- Panel lateral: total, estado, resumen, pago ---------- */
+.panel-bloque{margin-bottom:var(--s4)}
+.panel-bloque:last-child{margin-bottom:0}
+
+.tarjeta-total{
+  background:linear-gradient(155deg, var(--azul) 0%, var(--azul-d) 100%);
+  border-radius:var(--radio-lg); padding:var(--s4); color:#fff;
+  box-shadow:0 12px 28px rgba(30,78,141,.28);
+}
+.tarjeta-total .ic-recibo{
+  width:40px; height:40px; border-radius:12px; background:rgba(255,255,255,.14);
+  display:flex; align-items:center; justify-content:center; margin-bottom:var(--s2);
+}
+.tarjeta-total .ic-recibo svg{width:20px; height:20px; stroke:#fff; fill:none; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round}
+.tarjeta-total .l{
+  font-size:11.5px; text-transform:uppercase; letter-spacing:.08em;
+  opacity:.78; font-weight:600; margin-bottom:var(--s1);
+}
+.tarjeta-total .v{font-size:34px; font-weight:800; letter-spacing:-.02em; line-height:1.05}
+.tarjeta-total .mini{font-size:12px; opacity:.82; margin-top:var(--s2); line-height:1.6}
+
+.panel-titulo{font-size:11px; font-weight:700; color:var(--ink3); text-transform:uppercase; letter-spacing:.07em; margin-bottom:12px}
+.resumen-panel{display:flex; flex-direction:column; gap:10px}
+.resumen-panel .fila{display:flex; justify-content:space-between; align-items:baseline; font-size:13px}
+.resumen-panel .fila .l{color:var(--ink2)}
+.resumen-panel .fila .v{font-weight:600; font-variant-numeric:tabular-nums}
+.resumen-panel .fila.descuento .v{color:var(--rojo)}
+.resumen-panel .fila.impuesto .v{color:var(--ink2); font-weight:500}
+.resumen-panel hr{border:none; border-top:1px solid var(--line-fuerte); margin:4px 0}
+
+.pago-panel{display:flex; align-items:center; gap:12px}
+.pago-panel .ic{
+  width:36px; height:36px; border-radius:10px; background:#fff; border:1px solid var(--line-fuerte);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+.pago-panel .ic svg{width:18px; height:18px; stroke:var(--azul); fill:none; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round}
+.pago-panel .v{font-size:13.5px; font-weight:600}
+.pago-panel .l{font-size:10.5px; color:var(--ink3); text-transform:uppercase; letter-spacing:.05em; font-weight:600}
+
+/* ---------- Footer ---------- */
+.pie{border-top:1px solid var(--line); padding:var(--s4) var(--s6) var(--s6)}
+.pie .gracias{font-size:15px; font-weight:700; color:var(--ink); margin-bottom:var(--s3); letter-spacing:-.01em}
+.pie .contacto{display:flex; gap:var(--s4); flex-wrap:wrap; margin-bottom:var(--s3)}
+.pie .contacto .item{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--ink2); font-weight:500}
+.pie .contacto .item svg{width:15px; height:15px; stroke:var(--dorado-d); fill:none; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0}
+.pie .legal{font-size:11px; color:var(--ink3); line-height:1.7; padding-top:var(--s2); border-top:1px solid var(--line)}
+
+/* ---------- Acciones ---------- */
+.acciones{
+  padding:var(--s4) var(--s6) var(--s6); display:flex; flex-direction:column;
+  gap:var(--s2); align-items:center; background:var(--panel-bg); border-top:1px solid var(--line);
+}
+.acciones form{display:flex; gap:10px; width:100%; max-width:420px}
+.acciones input[type=email]{
+  flex:1; padding:0 var(--s2); height:46px; border:1px solid var(--line-fuerte);
+  border-radius:var(--radio-md); font-size:13.5px; font-family:inherit; background:#fff;
+  transition:border-color .15s;
+}
+.acciones input[type=email]:focus{outline:none; border-color:var(--azul)}
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  height:46px; padding:0 24px; font-size:14px; font-weight:600; font-family:inherit;
+  border-radius:var(--radio-md); cursor:pointer; white-space:nowrap;
+  transition:transform .12s ease, box-shadow .12s ease, background .15s ease;
+}
+.btn svg{width:17px; height:17px; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round}
+.btn-primario{
+  background:linear-gradient(155deg, var(--azul), var(--azul-d)); color:#fff; border:none;
+  box-shadow:var(--sombra-boton); flex-shrink:0;
+}
+.btn-primario svg{stroke:#fff; fill:none}
+.btn-primario:hover{transform:translateY(-1px); box-shadow:0 4px 14px rgba(30,78,141,.32)}
+.btn-secundario{background:#fff; color:var(--ink2); border:1px solid var(--line-fuerte)}
+.btn-secundario svg{stroke:var(--ink2); fill:none}
+.btn-secundario:hover{background:var(--bg,#fafafa); border-color:var(--ink3)}
+.aviso{font-size:12.5px; text-align:center; margin:0; font-weight:500}
+.aviso.ok{color:var(--verde)} .aviso.err{color:var(--rojo)}
+
+/* ---------- Impresión y A4 ---------- */
+@media print{
+  body{background:#fff; font-size:12.5px}
+  .lienzo{padding:0; max-width:100%}
+  .hoja{box-shadow:none; border:none; border-radius:0}
+  .col-panel{background:#fff}
+  .acciones{display:none}
+  @page{size:A4; margin:14mm}
+}
+
+/* ---------- Tablet ---------- */
+@media (max-width:860px){
+  .grid{flex-direction:column}
+  .col-panel{
+    flex:1 1 auto; width:100%; border-left:none; border-top:1px solid var(--line);
+  }
+}
+
+/* ---------- Móvil ---------- */
+@media (max-width:560px){
+  .lienzo{padding:var(--s2)}
+  .head{flex-direction:column; gap:var(--s3); padding:var(--s4)}
+  .head .doc{text-align:left}
+  .col-principal, .col-panel, .pie, .acciones, .motivo-anulacion{padding-left:var(--s3); padding-right:var(--s3)}
+  table{font-size:12.5px}
+  td, thead th{padding-left:8px; padding-right:8px}
+  .tarjeta-total .v{font-size:28px}
+  .acciones form{flex-direction:column}
+}
 </style>
 </head>
 <body>
+<div class="lienzo">
+<div class="hoja">
+  <div class="barra"></div>
 
-<div class="head">
-  <img src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetcr.com">
-  <div class="row">
-    <div class="num">{{ f.numero }}</div>
-    <div class="fecha">{{ f.creado_en|date:"d \d\e F \d\e Y" }} · {{ f.creado_en|date:"h:i A" }}</div>
+  <div class="head">
+    <div class="marca">
+      <img src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetCR">
+      <div class="nombre">AllPetCR</div>
+      <div class="tipo">Factura electrónica</div>
+    </div>
+    <div class="doc">
+      <div class="num">{{ f.numero }}</div>
+      <div class="fecha">{{ f.creado_en|date:"d \d\e F \d\e Y" }} · {{ f.creado_en|date:"h:i A" }}</div>
+      {% if f.estado_visual == "PAG" %}
+      <div class="badge pag"><span class="dot"></span>Pagada</div>
+      {% elif f.estado_visual == "PEN" %}
+      <div class="badge pen"><span class="dot"></span>Pendiente</div>
+      {% else %}
+      <div class="badge anu"><span class="dot"></span>Anulada</div>
+      {% endif %}
+    </div>
   </div>
-</div>
 
-{% if f.estado == "ANU" %}
-<div class="anulada">★ ANULADA ★<br>{{ f.motivo_anulacion }}</div>
-{% endif %}
+  {% if f.estado == "ANU" %}
+  <div class="motivo-anulacion">Motivo de anulación: {{ f.motivo_anulacion }}</div>
+  {% endif %}
 
-{% if f.cliente %}
-<div class="cliente">
-  <div class="av">{{ f.cliente.nombre|slice:":1"|upper }}</div>
-  <div>
-    <div class="nombre">{{ f.cliente.nombre }}</div>
-    <div class="rol">Cliente</div>
+  <div class="grid">
+    <div class="col-principal">
+
+      <div class="seccion-titulo">Detalles</div>
+      <div class="datos">
+        {% if f.cliente %}
+        <div class="dato">
+          <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+          <div class="tx"><div class="l">Cliente</div><div class="v">{{ f.cliente.nombre }}</div></div>
+        </div>
+        {% if f.cliente.direccion %}
+        <div class="dato">
+          <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 21s7-6.4 7-12a7 7 0 1 0-14 0c0 5.6 7 12 7 12z"/><circle cx="12" cy="9" r="2.3"/></svg></div>
+          <div class="tx"><div class="l">Dirección</div><div class="v">{{ f.cliente.direccion }}</div></div>
+        </div>
+        {% endif %}
+        {% endif %}
+        <div class="dato">
+          <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18"/></svg></div>
+          <div class="tx"><div class="l">Método de pago</div><div class="v">{{ f.get_medio_pago_display }}</div></div>
+        </div>
+      </div>
+
+      <div class="seccion-titulo">Productos</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Descripción</th>
+            <th class="c">Cant.</th>
+            <th class="n">P. Unit.</th>
+            <th class="n">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for l in f.lineas.all %}
+          <tr>
+            <td><span class="prod-nombre">{{ l.producto.nombre }}</span>{% if l.es_regalia %}<span class="regalo">Regalo</span>{% endif %}</td>
+            <td class="c">{{ l.cantidad }}</td>
+            <td class="n">{% if l.es_regalia %}—{% else %}₡{{ l.precio_unitario|crc:0 }}{% endif %}</td>
+            <td class="n tot">{% if l.es_regalia %}₡0{% else %}₡{{ l.total|crc:0 }}{% endif %}</td>
+          </tr>
+          {% if l.descuento_pct > 0 %}
+          <tr class="descuento"><td colspan="3">Descuento {{ l.descuento_pct }}%</td><td class="n">− ₡{{ l.descuento_monto|crc:0 }}</td></tr>
+          {% endif %}
+        {% endfor %}
+        </tbody>
+      </table>
+
+      {% if f.impuesto > 0 or f.descuento > 0 %}
+      <div class="resumen">
+        <table>
+          {% if f.impuesto > 0 %}
+          <tr><td>Subtotal</td><td class="n">₡{{ f.subtotal|crc:0 }}</td></tr>
+          <tr class="impuesto"><td>IVA</td><td class="n">₡{{ f.impuesto|crc:0 }}</td></tr>
+          {% endif %}
+          {% if f.descuento > 0 %}
+          <tr class="descuento"><td>Descuentos</td><td class="n">− ₡{{ f.descuento|crc:0 }}</td></tr>
+          {% endif %}
+        </table>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="col-panel">
+
+      <div class="panel-bloque">
+        <div class="tarjeta-total">
+          <div class="ic-recibo"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></div>
+          <div class="l">Total a pagar</div>
+          <div class="v">₡{{ f.total|crc:0 }}</div>
+          <div class="mini">{{ f.sucursal.nombre }} · {{ f.lineas.all|length }} producto{{ f.lineas.all|length|pluralize }}</div>
+        </div>
+      </div>
+
+      <div class="panel-bloque">
+        <div class="panel-titulo">Resumen de compra</div>
+        <div class="resumen-panel">
+          {% if f.impuesto > 0 %}
+          <div class="fila"><span class="l">Subtotal</span><span class="v">₡{{ f.subtotal|crc:0 }}</span></div>
+          <div class="fila impuesto"><span class="l">IVA</span><span class="v">₡{{ f.impuesto|crc:0 }}</span></div>
+          {% endif %}
+          {% if f.descuento > 0 %}
+          <div class="fila descuento"><span class="l">Descuentos</span><span class="v">− ₡{{ f.descuento|crc:0 }}</span></div>
+          {% endif %}
+          <hr>
+          <div class="fila"><span class="l">Total</span><span class="v">₡{{ f.total|crc:0 }}</span></div>
+        </div>
+      </div>
+
+      <div class="panel-bloque">
+        <div class="panel-titulo">Pago</div>
+        <div class="pago-panel">
+          <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M3 10.5h18"/></svg></div>
+          <div>
+            <div class="l">Método</div>
+            <div class="v">{{ f.get_medio_pago_display }}</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
-{% endif %}
 
-<table>
-  <thead>
-    <tr>
-      <th>Descripción</th>
-      <th class="c">Cant.</th>
-      <th class="n">P. Unit.</th>
-      <th class="n">Total</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for l in f.lineas.all %}
-    <tr>
-      <td>{{ l.producto.nombre }}{% if l.es_regalia %} <span class="regalo">REGALO</span>{% endif %}</td>
-      <td class="c">{{ l.cantidad }}</td>
-      <td class="n">{% if l.es_regalia %}—{% else %}₡{{ l.precio_unitario|crc:0 }}{% endif %}</td>
-      <td class="n tot">{% if l.es_regalia %}₡0{% else %}₡{{ l.total|crc:0 }}{% endif %}</td>
-    </tr>
-    {% if l.descuento_pct > 0 %}
-    <tr class="descuento"><td colspan="3">descuento {{ l.descuento_pct }}%</td><td class="n">− ₡{{ l.descuento_monto|crc:0 }}</td></tr>
-    {% endif %}
-  {% endfor %}
-  </tbody>
-</table>
-
-{% if f.impuesto > 0 or f.descuento > 0 %}
-<div class="resumen">
-  <table>
-    {% if f.impuesto > 0 %}
-    <tr><td>Subtotal</td><td class="n">₡{{ f.subtotal|crc:0 }}</td></tr>
-    <tr><td>IVA</td><td class="n">₡{{ f.impuesto|crc:0 }}</td></tr>
-    {% endif %}
-    {% if f.descuento > 0 %}
-    <tr><td>Descuentos</td><td class="n">− ₡{{ f.descuento|crc:0 }}</td></tr>
-    {% endif %}
-  </table>
-</div>
-{% endif %}
-
-<div class="total-box">
-  <div class="l">TOTAL</div>
-  <div class="v">₡{{ f.total|crc:0 }}</div>
-</div>
-
-<div class="meta">
-  <div class="box">
-    <div class="l">Forma de pago</div>
-    <div class="v">{{ f.get_medio_pago_display }}</div>
+  <div class="pie">
+    <div class="gracias">Gracias por confiar en AllPetCR</div>
+    <div class="contacto">
+      <div class="item">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18 14 14 0 0 1 0-18z"/></svg>
+        www.allpetcr.com
+      </div>
+      <div class="item">
+        <svg viewBox="0 0 24 24"><path d="M21 15.5c0 1-1 2-2 2-6 0-11-5-11-11 0-1 1-2 2-2l2 4-1.5 1.5a8 8 0 0 0 5 5l1.5-1.5z"/></svg>
+        WhatsApp +506 8856-2992
+      </div>
+    </div>
+    <div class="legal">
+      {{ f.empresa.nombre }}{% if f.empresa.identificacion %} · Céd. {{ f.empresa.identificacion }}{% endif %}<br>
+      Comprobante del Régimen de Tributación Simplificada — Documento interno de control, no constituye comprobante electrónico
+    </div>
   </div>
-  <div class="box">
-    <div class="l">Sucursal</div>
-    <div class="v">{{ f.sucursal.nombre }}</div>
-  </div>
-</div>
 
-<div class="foot">
-  <div class="gracias">¡Gracias por tu compra!</div>
-  <div class="info">
-    {{ f.empresa.nombre }}{% if f.empresa.identificacion %} · Céd. {{ f.empresa.identificacion }}{% endif %}<br>
-    www.allpetcr.com
+  {% if not es_email %}
+  <div class="acciones">
+    <form method="post" action="{% url 'ventas:factura_enviar' f.pk %}">
+      {% csrf_token %}
+      <input type="email" name="destinatario" placeholder="correo del cliente"
+             value="{{ f.cliente.email|default:'' }}" required>
+      <button type="submit" class="btn btn-primario">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 7l9 6 9-6"/><rect x="3" y="5" width="18" height="14" rx="2"/></svg>
+        Enviar por correo
+      </button>
+    </form>
+    <button type="button" class="btn btn-secundario" onclick="window.print()">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M6 9V3h12v6"/><path d="M6 18H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-2"/><rect x="6" y="14" width="12" height="7"/></svg>
+      Imprimir
+    </button>
+    {% if enviado_ok %}<p class="aviso ok">Factura enviada a {{ enviado_a }}.</p>{% endif %}
+    {% if enviado_error %}<p class="aviso err">No se pudo enviar: {{ enviado_error }}</p>{% endif %}
   </div>
-  <div class="legal">
-    Comprobante del Régimen de Tributación Simplificada<br>
-    Documento interno de control — No constituye comprobante electrónico
-  </div>
-</div>
+  {% endif %}
 
-{% if not es_email %}
-<div class="no-print" style="display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap">
-  <button onclick="window.print()">Imprimir</button>
-  <form method="post" action="{% url 'ventas:factura_enviar' f.pk %}" style="display:flex;gap:8px;align-items:center">
-    {% csrf_token %}
-    <input type="email" name="destinatario" placeholder="correo del cliente"
-           value="{{ f.cliente.email|default:'' }}" required
-           style="padding:9px 14px;border:1px solid #d0d0d5;border-radius:980px;font-size:13px;min-width:220px">
-    <button type="submit" style="background:#CD963A">Enviar por correo</button>
-  </form>
 </div>
-{% if enviado_ok %}<p class="c" style="color:#1c6b30;font-size:13px">Factura enviada a {{ enviado_a }}.</p>{% endif %}
-{% if enviado_error %}<p class="c" style="color:#b5231a;font-size:13px">No se pudo enviar: {{ enviado_error }}</p>{% endif %}
-{% endif %}
-
+</div>
 </body>
 </html>

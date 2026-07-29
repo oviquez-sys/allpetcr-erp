@@ -69,9 +69,56 @@ class AuditLog(models.Model):
         verbose_name = "registro de auditoría"
         verbose_name_plural = "registros de auditoría"
         ordering = ["-fecha"]
+        indexes = [
+            # Auditoría 2026-07-28 (PERF-02). Esta tabla crece ~191 000 filas
+            # al año y no tenía ningún índice: las dos consultas para las que
+            # existe la bitácora terminaban recorriéndola entera.
+            #
+            # "¿Qué le pasó a este documento?" → filtra por tabla + objeto_id.
+            models.Index(fields=["tabla", "objeto_id"], name="audit_obj_idx"),
+            # "¿Qué hizo este empleado tal día?" → filtra por usuario y ordena
+            # por fecha; es la consulta de una investigación de faltante.
+            models.Index(fields=["usuario", "fecha"], name="audit_usuario_fecha_idx"),
+            # La vista de actividad reciente ordena por fecha sin filtrar.
+            models.Index(fields=["-fecha"], name="audit_fecha_idx"),
+        ]
 
     def __str__(self):
         return f"{self.fecha:%d/%m %H:%M} {self.accion} {self.tabla}#{self.objeto_id}"
+
+
+class ChequeoIntegridad(models.Model):
+    """Resultado de la última corrida de `manage.py reconciliar`.
+
+    Auditoría 2026-07-28, hallazgo BE-04. El comando de reconciliación ya
+    existía y estaba bien hecho, pero su salida era texto en una consola: si
+    el stock denormalizado se desincronizaba del kardex, nadie se enteraba
+    salvo que alguien se acordara de correrlo y de leer el resultado.
+
+    Un control que depende de que una persona lo recuerde no es un control.
+    Guardar el resultado permite dos cosas que antes no se podían: que el
+    dashboard avise si hay diferencias, y que avise TAMBIÉN si hace mucho que
+    nadie lo corre — porque un chequeo viejo es tan poco informativo como no
+    tener ninguno.
+    """
+
+    fecha = models.DateTimeField(auto_now_add=True)
+    revisados = models.PositiveIntegerField(default=0)
+    descuadres = models.PositiveIntegerField(default=0)
+    detalle = models.TextField(blank=True, help_text="Las diferencias encontradas, si las hubo")
+
+    class Meta:
+        verbose_name = "chequeo de integridad"
+        verbose_name_plural = "chequeos de integridad"
+        ordering = ["-fecha"]
+
+    def __str__(self):
+        estado = "OK" if self.descuadres == 0 else f"{self.descuadres} diferencia(s)"
+        return f"{self.fecha:%d/%m/%Y %H:%M} — {estado}"
+
+    @classmethod
+    def ultimo(cls):
+        return cls.objects.order_by("-fecha").first()
 
 
 class ChatMensaje(models.Model):
