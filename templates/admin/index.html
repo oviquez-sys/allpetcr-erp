@@ -209,8 +209,10 @@ body.dashboard #content-main{display:block}
     <p>{% translate "You don't have permission to view or edit anything." %}</p>
   {% endif %}
 
-  {# Acciones recientes: al pie y en una línea, no en una tarjeta del mismo
-     tamaño que Catálogo para decir que no hay ninguna. #}
+  {% comment %}
+    Acciones recientes: al pie y en una línea, no en una tarjeta del mismo
+    tamaño que Catálogo para decir que no hay ninguna.
+  {% endcomment %}
   <div class="ax-recent">
     <h3>{% translate 'Recent actions' %}</h3>
     {% get_admin_log 10 as admin_log for_user user %}

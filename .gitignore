@@ -1,12 +1,93 @@
+# ============================================================================
+# ALLPETCR ERP — archivos que NO se suben a GitHub
+# ----------------------------------------------------------------------------
+# Regla general: al repositorio va el CÓDIGO, no los DATOS ni lo que cada
+# computadora genera por su cuenta. Si un archivo se puede volver a crear
+# corriendo un comando, no pertenece acá.
+# ============================================================================
+
+# ---- Python ----
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ---- Entornos virtuales ----
+# (venv ya crea su propio .gitignore adentro, pero se declara por si se
+#  arma con otro nombre o con otra herramienta)
+.venv/
+venv/
+env/
+ENV/
+
+# ---- Base de datos ----
+# La base NUNCA va al repositorio: contiene ventas, clientes y contabilidad
+# reales. Además, dos personas trabajando a la vez generarían conflictos
+# imposibles de resolver a mano.
 db.sqlite3
+db.sqlite3-journal
+db.sqlite3.*
+*.sqlite3
+
+# ---- Secretos ----
+# Claves de API, contraseñas de correo, credenciales del servidor.
 .env
+.env.*
+!.env.example
+
+# ---- Generados por Django ----
 /staticfiles/
 /media/
 /respaldos/
 /logs/
+*.log
 
-db.sqlite3*
+# ---- Datos operativos del negocio ----
+# Los Excel de inventario cambian cada vez que se hace una carga y pesan
+# varios MB. Versionarlos infla el repositorio sin aportar historia útil:
+# el inventario real vive en la base de datos, no en estos archivos.
+# Si alguna vez se necesita compartir una plantilla de importación, se guarda
+# como data/plantilla_*.xlsx, que sí queda incluida por la excepción de abajo.
+/data/*.xlsx
+/data/*.xls
+/data/*.csv
+!/data/plantilla_*.xlsx
 
-db.sqlite3*
+# ---- Temporales y basura ----
+# .fuse_hidden*  : archivos que quedan trabados cuando se borra algo que
+#                  todavía estaba abierto (pasa al montar la carpeta en Linux
+#                  o al sincronizar con OneDrive).
+# ~$*            : bloqueos que crea Excel/Word mientras un archivo está abierto.
+.fuse_hidden*
+~$*
+*.tmp
+*.bak
+*.orig
+*.rej
+
+# ---- Sistema operativo ----
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+.Spotlight-V100
+.Trashes
+
+# ---- Editores ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ---- Archivos sueltos que no son del proyecto ----
+# Descargas o paquetes que caen en la carpeta por accidente. Se listan por
+# patrón porque suelen tener nombres generados al azar.
+/ziP6XwC3
+*.zip.download

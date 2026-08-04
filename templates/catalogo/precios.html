@@ -38,6 +38,8 @@ tbody tr:hover{background:#f9fafb}
 .pr-margen.bajo{background:rgba(255,59,48,.1);color:#b5231a}
 .pr-link{color:var(--brand);font-weight:600;font-size:14px}
 .pr-link:hover{color:var(--brand-d)}
+.pr-agotados{font-size:13.5px;color:#6e6e73;margin:-10px 0 20px}
+.pr-agotados a{color:var(--brand);font-weight:600;margin-left:6px}
 .tooltip-wrapper{position:relative;display:inline-flex;align-items:center;gap:4px}
 .tooltip-icon{width:14px;height:14px;border-radius:50%;background:#d0d0d5;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:help;flex-shrink:0}
 .tooltip-box{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#1d1d1f;color:#fff;padding:7px 10px;border-radius:7px;font-size:11px;line-height:1.3;white-space:nowrap;opacity:0;visibility:hidden;transition:opacity .2s,visibility .2s;pointer-events:none;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,.3)}
@@ -58,6 +60,22 @@ tbody tr:hover{background:#f9fafb}
     <input type="text" name="q" value="{{ q }}" placeholder="Nombre, código (REF) o código de barras" autofocus>
     <button type="submit">Buscar</button>
   </form>
+
+  {% comment %}
+    La lista muestra solo lo que hay en existencia. El enlace deja ver
+    también los agotados: revisar el precio de algo antes de reponerlo es
+    un caso real. El estado va en la URL (?agotados=1) para que se vea de
+    un vistazo y nadie quede con el filtro puesto sin darse cuenta.
+  {% endcomment %}
+  <div class="pr-agotados">
+    {% if agotados %}
+      Mostrando <b>todos</b> los productos, incluidos los que están sin existencias.
+      <a href="?{% if q %}q={{ q|urlencode }}{% endif %}">Ver solo lo que hay</a>
+    {% else %}
+      Mostrando solo productos <b>con existencias</b>.
+      <a href="?agotados=1{% if q %}&amp;q={{ q|urlencode }}{% endif %}">Ver también los agotados</a>
+    {% endif %}
+  </div>
 
   <div class="pr-card">
     <table>
