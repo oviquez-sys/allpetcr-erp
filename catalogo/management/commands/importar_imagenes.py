@@ -1,12 +1,25 @@
 """Extrae las fotos embebidas en el Excel y las asocia a cada producto.
 
-Las imágenes de un .xlsx viven en xl/media/ y su posición (fila) está en
-xl/drawings/drawing1.xml. Cada imagen se ancla a la fila de su producto, así
-que se mapea por orden de fila con la lista de productos (mismo orden que
-importar_inventario).
-
 Uso:
-    python manage.py importar_imagenes "data/INVENTARIO REAL AL 6-7-2026   2.0.xlsx"
+    python manage.py importar_imagenes                  # usa data/INVENTARIO_ALLPETCR.xlsx
+    python manage.py importar_imagenes --archivo otro.xlsx --hoja "Otra hoja"
+
+Cómo funciona
+-------------
+Las imágenes de un .xlsx viven en `xl/media/` y su posición está en
+`xl/drawings/drawing1.xml`: cada una se ancla a una fila. Como la fila de la
+foto es la fila del producto, se mapea fila → SKU leyendo la columna B de la
+hoja. Es un mapeo por posición, no por nombre de archivo: los archivos de
+`xl/media/` se llaman `image1.jpeg`, `image2.jpeg`… y no dicen a qué producto
+pertenecen.
+
+Por qué la hoja se pasa por nombre y no se adivina
+--------------------------------------------------
+Antes, si la hoja esperada no estaba, caía en `wb.active` — la hoja que quedó
+seleccionada al guardar el archivo. Con el Excel del 02/08/2026 eso habría
+leído "Supuestos" (25 filas de costos fijos) y mapeado imágenes contra basura
+sin que nada fallara: cada producto habría quedado con la foto de otro. Ahora
+aborta con un mensaje claro.
 """
 import re
 import zipfile
@@ -19,16 +32,24 @@ from django.db import transaction
 
 from catalogo.models import Producto
 
+HOJA_POR_DEFECTO = "Inventario Claude"
+ARCHIVO_POR_DEFECTO = "data/INVENTARIO_ALLPETCR.xlsx"
+COL_SKU = 1  # columna B, 0-based
+
 
 class Command(BaseCommand):
     help = "Extrae las imágenes del Excel y las asigna a cada producto por su fila"
 
     def add_arguments(self, parser):
-        parser.add_argument("ruta_excel")
+        parser.add_argument("ruta_excel", nargs="?", default=ARCHIVO_POR_DEFECTO)
+        parser.add_argument("--archivo", dest="archivo", default=None,
+                            help="Alias de ruta_excel, por simetría con sincronizar_inventario.")
+        parser.add_argument("--hoja", default=HOJA_POR_DEFECTO)
 
     @transaction.atomic
     def handle(self, *args, **opts):
-        ruta = opts["ruta_excel"]
+        ruta = opts["archivo"] or opts["ruta_excel"]
+        hoja = opts["hoja"]
         try:
             zf = zipfile.ZipFile(ruta)
         except (FileNotFoundError, zipfile.BadZipFile):
@@ -61,11 +82,19 @@ class Command(BaseCommand):
 
             # Mapa fila 0-based del Excel -> SKU (columna B), leyendo la hoja.
             wb = openpyxl.load_workbook(ruta, data_only=True, read_only=True)
-            ws = wb["Inventario Real"] if "Inventario Real" in wb.sheetnames else wb.active
+            if hoja not in wb.sheetnames:
+                disponibles = ", ".join(wb.sheetnames)
+                wb.close()
+                raise CommandError(
+                    f"El Excel no tiene la hoja '{hoja}'. Hojas disponibles: {disponibles}.\n"
+                    "  Pasá la correcta con --hoja. No se adivina: mapear imágenes contra "
+                    "la hoja equivocada le pone a cada producto la foto de otro."
+                )
+            ws = wb[hoja]
             fila_sku = {}
-            for i, row in enumerate(ws.iter_rows(min_row=1, values_only=True)):
+            for i, row in enumerate(ws.iter_rows(values_only=True)):
                 # i es 0-based y coincide con la fila 0-based de los anchors
-                sku = row[1] if len(row) > 1 else None
+                sku = row[COL_SKU] if len(row) > COL_SKU else None
                 if sku:
                     fila_sku[i] = str(sku).strip()
             wb.close()
@@ -75,6 +104,7 @@ class Command(BaseCommand):
             destino.mkdir(parents=True, exist_ok=True)
 
             guardadas = sin_producto = 0
+            con_foto = set()
             for fila, media in fila_media.items():
                 sku = fila_sku.get(fila)
                 prod = por_sku.get(sku) if sku else None
@@ -93,8 +123,25 @@ class Command(BaseCommand):
                     prod.imagen = rel
                     prod.save(update_fields=["imagen"])
                 guardadas += 1
+                con_foto.add(prod.sku)
 
         self.stdout.write(self.style.SUCCESS(
             f"Listo: {guardadas} imágenes extraídas y asignadas a productos."
             + (f" ({sin_producto} imágenes sin producto coincidente)" if sin_producto else "")
         ))
+
+        # Un producto sin foto se publica con el marcador "Foto pendiente" del
+        # sitio: no se ve roto, pero conviene saber cuáles son para fotografiarlos.
+        faltan = [
+            (p.sku, p.nombre)
+            for p in Producto.objects.filter(activo=True).order_by("nombre")
+            if p.sku not in con_foto and not p.imagen
+        ]
+        if faltan:
+            self.stdout.write(self.style.WARNING(
+                f"\n  {len(faltan)} producto(s) activos quedaron sin foto:"
+            ))
+            for sku, nombre in faltan[:15]:
+                self.stdout.write(f"    {sku} — {nombre}")
+            if len(faltan) > 15:
+                self.stdout.write(f"    … y {len(faltan) - 15} más.")

@@ -10,6 +10,7 @@ from django.shortcuts import redirect, render
 from core.roles import GERENTE, rol_requerido
 from core.tenancy import documento_de_empresa, empresa_actual
 
+from .consultas import pidio_agotados, productos_visibles
 from .models import Producto
 from .services import cambiar_precio
 
@@ -20,17 +21,25 @@ logger = logging.getLogger(__name__)
 def precios(request):
     """Buscador de productos para revisar/ajustar precios."""
     q = (request.GET.get("q") or "").strip()
+    agotados = pidio_agotados(request)
     # Filtro por empresa (auditoría 2026-07-28, ARQ-01): esta era una de las
     # tres consultas de producto que no lo aplicaban. Hoy da igual porque hay
     # una sola empresa; el día que haya dos, este listado mostraría precios
     # y costos de la otra.
-    productos = Producto.objects.filter(activo=True, empresa=empresa_actual(request))
+    #
+    # Filtro por existencias (regla del 02/08/2026, ver catalogo/consultas.py).
+    # Con ?agotados=1 se ven también los que están en cero: revisar el precio
+    # de algo antes de reponerlo es un caso real, y por eso acá la excepción
+    # es un botón y no una prohibición.
+    productos = productos_visibles(empresa_actual(request), incluir_agotados=agotados)
     if q:
         productos = productos.filter(
             Q(nombre__icontains=q) | Q(sku__icontains=q) | Q(codigo_barras__icontains=q)
         )
     productos = list(productos.order_by("nombre")[:60])
-    return render(request, "catalogo/precios.html", {"productos": productos, "q": q})
+    return render(request, "catalogo/precios.html", {
+        "productos": productos, "q": q, "agotados": agotados,
+    })
 
 
 @rol_requerido(GERENTE)

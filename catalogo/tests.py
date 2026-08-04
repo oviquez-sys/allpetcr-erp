@@ -45,6 +45,20 @@ class AsignarCodigosBarras(TestCase):
 
 
 class PaginaEtiquetas(TestCase):
+    """Etiquetas imprimibles.
+
+    Desde el 02/08/2026 esta pantalla respeta la regla "solo se lista lo que
+    hay en existencia" (ver catalogo/consultas.py): una etiqueta es para
+    pegarla en un artículo que está en la góndola. Por eso los productos de
+    estas pruebas nacen CON stock — antes daba igual porque no se filtraba.
+
+    `stock_actual` se fija directo y no por el kardex a propósito: acá se
+    prueba la pantalla de etiquetas, no el servicio de inventario, y montar
+    sucursal + bodega + movimiento para cada caso oscurecería lo que se está
+    verificando. El camino real del stock ya está cubierto en
+    inventario/tests.py.
+    """
+
     def setUp(self):
         self.empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
         self.cat = Categoria.objects.create(nombre="Accesorios")
@@ -52,7 +66,48 @@ class PaginaEtiquetas(TestCase):
         Producto.objects.create(
             empresa=self.empresa, sku="75564", nombre="Mochila higiénica",
             categoria=self.cat, codigo_barras="75564", precio_venta=Decimal("700"),
+            stock_actual=Decimal("5"),
         )
+
+    def test_no_lista_productos_sin_existencias(self):
+        """La regla del 02/08/2026, verificada donde se aplica.
+
+        Sin esta prueba, el filtro se podría quitar en una limpieza y nadie se
+        enteraría: la pantalla seguiría funcionando, solo mostraría de más."""
+        Producto.objects.create(
+            empresa=self.empresa, sku="88888", nombre="Agotado hace meses",
+            categoria=self.cat, codigo_barras="88888", precio_venta=Decimal("900"),
+            stock_actual=Decimal("0"),
+        )
+        self.client.login(username="oscar", password="x")
+        r = self.client.get(reverse("inventario:etiquetas"))
+        self.assertNotContains(r, "Agotado hace meses")
+        self.assertContains(r, "Mochila higiénica")
+
+    def test_agotados_1_los_vuelve_a_mostrar(self):
+        """La salida explícita: imprimir por adelantado las etiquetas de un
+        pedido que viene en camino es un caso real."""
+        Producto.objects.create(
+            empresa=self.empresa, sku="88888", nombre="Agotado hace meses",
+            categoria=self.cat, codigo_barras="88888", precio_venta=Decimal("900"),
+            stock_actual=Decimal("0"),
+        )
+        self.client.login(username="oscar", password="x")
+        r = self.client.get(reverse("inventario:etiquetas"), {"agotados": "1"})
+        self.assertContains(r, "Agotado hace meses")
+
+    def test_solo_faltantes_levanta_el_filtro_de_existencias(self):
+        """Los dos filtros miden lo mismo en direcciones opuestas: un producto
+        en cero es el más faltante de todos. Sin esta excepción, 'solo
+        faltantes' mostraría justo lo que no falta."""
+        Producto.objects.create(
+            empresa=self.empresa, sku="88888", nombre="Agotado hace meses",
+            categoria=self.cat, codigo_barras="88888", precio_venta=Decimal("900"),
+            stock_actual=Decimal("0"),
+        )
+        self.client.login(username="oscar", password="x")
+        r = self.client.get(reverse("inventario:etiquetas"), {"solo_faltantes": "1"})
+        self.assertContains(r, "Agotado hace meses")
 
     def test_requiere_login(self):
         r = self.client.get(reverse("inventario:etiquetas"))
@@ -77,6 +132,7 @@ class PaginaEtiquetas(TestCase):
         p = Producto.objects.create(
             empresa=self.empresa, sku="999", nombre="Sin código",
             categoria=self.cat, precio_venta=Decimal("500"),
+            stock_actual=Decimal("3"),
         )
         Producto.objects.filter(pk=p.pk).update(codigo_barras="")
         self.client.login(username="oscar", password="x")

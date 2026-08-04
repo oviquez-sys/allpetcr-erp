@@ -6,7 +6,13 @@ from core.models import Empresa
 
 class Categoria(models.Model):
     """Familia de productos (taxonomía limpia). La categoría original del
-    Excel se conserva en Producto.categoria_original hasta depurarla."""
+    Excel se conserva en Producto.categoria_original hasta depurarla.
+
+    Desde el inventario del 02/08/2026 el árbol tiene DOS niveles reales:
+    la categoría web (`padre=None`, ej. "Juguetes") y la subcategoría
+    (`padre=Juguetes`, ej. "Pelotas"). Antes era plano — nueve familias sin
+    hijas— y el sitio ya sabía recorrer `padre_id`, así que no hizo falta un
+    modelo nuevo: la jerarquía que ya existía pasó a usarse de verdad."""
 
     nombre = models.CharField(max_length=80, unique=True)
     padre = models.ForeignKey("self", null=True, blank=True, on_delete=models.PROTECT, related_name="hijas")
@@ -43,6 +49,16 @@ class Producto(models.Model):
     categoria_original = models.CharField(max_length=120, blank=True, help_text="Categoría del Excel original, pendiente de depurar")
     codigo_barras = models.CharField(max_length=30, blank=True, db_index=True)
     presentacion = models.CharField(max_length=120, blank=True)
+    # Texto de venta que publica el sitio. Vive en el ERP y no en el sitio
+    # web a propósito: si viviera allá, cada corrección de una descripción
+    # sería un despliegue, y el personal de la tienda —que es quien conoce el
+    # producto— no podría tocarla.
+    descripcion = models.TextField(blank=True, help_text="Descripción pública del producto (la publica el sitio web)")
+    # Especie a la que va dirigido: "Perro", "Gato", "Perro y gato", "Peces"…
+    # El sitio no tenía este dato y por eso su navegación NO podía ser
+    # Perros/Gatos, que es como piensa quien compra (ver el comentario largo
+    # en allpetcr-web/lib/navegacion.ts). Con este campo ya puede.
+    mascota = models.CharField(max_length=30, blank=True, db_index=True, help_text="Especie destino: Perro, Gato, Perro y gato, Peces, Tortugas, Otros")
     imagen = models.CharField(max_length=200, blank=True, help_text="Ruta relativa dentro de media/ (ej. productos/75564.png)")
     impuesto = models.ForeignKey(Impuesto, null=True, blank=True, on_delete=models.PROTECT)
     # Costo y stock: denormalizados para lectura rápida.
