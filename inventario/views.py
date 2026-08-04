@@ -6,7 +6,8 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 
-from catalogo.models import Categoria, Producto
+from catalogo.consultas import pidio_agotados, productos_visibles
+from catalogo.models import Categoria
 from core.roles import CAJERO, GERENTE, rol_requerido
 from core.tenancy import empresa_actual
 
@@ -59,9 +60,21 @@ def etiquetas(request):
       ?copias=<n>       n etiquetas por producto (por defecto 1)
       ?segun_stock=1    una etiqueta por unidad en existencia
       ?solo_faltantes=1 solo productos en/ bajo el mínimo
+      ?agotados=1       incluir también los que están sin existencias
     """
+    # Solo lo que hay en existencia (regla del 02/08/2026, ver
+    # catalogo/consultas.py): una etiqueta es para pegarla en un artículo que
+    # está en la góndola. `?agotados=1` la levanta para el caso de imprimir
+    # por adelantado las etiquetas de un pedido que viene en camino.
+    solo_faltantes = bool(request.GET.get("solo_faltantes"))
+    # `solo_faltantes` levanta el filtro de existencias por su cuenta: un
+    # producto en cero es el más faltante de todos, y filtrarlo antes dejaría
+    # a "solo faltantes" mostrando justo lo que no falta. Los dos filtros
+    # miden lo mismo y en direcciones opuestas; gana el que el usuario pidió
+    # explícitamente.
+    agotados = pidio_agotados(request) or solo_faltantes
     productos = (
-        Producto.objects.filter(activo=True, empresa=empresa_actual(request))
+        productos_visibles(empresa_actual(request), incluir_agotados=agotados)
         .select_related("categoria")
         .order_by("nombre")
     )
@@ -69,7 +82,7 @@ def etiquetas(request):
     cat_id = request.GET.get("categoria")
     if cat_id:
         productos = productos.filter(categoria_id=cat_id)
-    if request.GET.get("solo_faltantes"):
+    if solo_faltantes:
         productos = [p for p in productos if p.stock_actual <= p.stock_minimo]
 
     segun_stock = request.GET.get("segun_stock") == "1"

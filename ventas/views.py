@@ -13,6 +13,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from caja.services import sesion_abierta_de
+from catalogo.consultas import productos_visibles
 from catalogo.models import Producto
 from core.roles import CAJERO, GERENTE, es_gerente, rol_requerido
 from core.tenancy import documento_de_empresa
@@ -31,8 +32,14 @@ def pos(request):
     if not sesion:
         return redirect("caja:abrir")
     empresa = sesion.sucursal.empresa
+    # Solo lo que hay en existencia (regla del 02/08/2026, ver
+    # catalogo/consultas.py). Sin excepción y sin botón para ver los agotados:
+    # el POS existe para cobrar, y el servicio de inventario rechaza cualquier
+    # venta que deje el stock en negativo. Ofrecer en pantalla lo que la venta
+    # va a rechazar solo produce un error a mitad del cobro, con el cliente
+    # esperando.
     productos = list(
-        Producto.objects.filter(activo=True, empresa=empresa)
+        productos_visibles(empresa)
         .select_related("categoria")
         .values("id", "sku", "nombre", "codigo_barras", "precio_venta",
                 "stock_actual", "presentacion", "categoria__nombre", "imagen")

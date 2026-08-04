@@ -107,6 +107,14 @@ def nueva(request):
     paso: crea la compra y la recibe de inmediato (sube stock, recalcula
     costo promedio y genera el asiento), para minimizar pasos y errores."""
     empresa = empresa_actual(request)
+    # ── EXCEPCIÓN DELIBERADA a la regla "solo en existencia" del 02/08/2026 ──
+    # Acá NO se usa catalogo.consultas.productos_visibles, y no es un olvido.
+    # Esta es la pantalla que hace que un producto agotado deje de estarlo.
+    # Si el filtro se aplicara: un producto que llega a cero no se podría
+    # seleccionar para recibirlo, así que su stock nunca subiría, así que
+    # nunca volvería a aparecer en ninguna pantalla. Se agota una vez y
+    # desaparece del sistema para siempre. Está verificado en
+    # core/test_arquitectura.py para que nadie lo "corrija" por consistencia.
     productos = list(
         Producto.objects.filter(activo=True, empresa=empresa)
         .select_related("categoria")

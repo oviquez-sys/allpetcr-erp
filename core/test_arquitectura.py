@@ -171,3 +171,63 @@ class AuditoriaConectadaPorSenderTest(TestCase):
             f"Estos modelos están marcados como no auditados a propósito pero "
             f"volvieron a AUDITED: {solapados}",
         )
+
+
+class ReglaSoloEnExistenciaTest(TestCase):
+    """Regla del 02/08/2026: el ERP lista solo lo que hay en existencia.
+
+    Las pantallas que listan productos para verlos o venderlos pasan por
+    `catalogo.consultas.productos_visibles`. Las dos que NO —compras y ajuste
+    de inventario— son excepciones documentadas, y esta prueba las fija: si
+    alguien las "corrige" por consistencia, rompe el sistema de una forma que
+    no da error, solo hace desaparecer productos para siempre.
+    """
+
+    # Archivo -> por qué se salta el filtro. Estar en esta lista obliga a
+    # escribir la razón; una excepción sin razón no pasa la revisión.
+    EXCEPCIONES = {
+        "compras/views.py": "es la pantalla que hace que un agotado deje de estarlo",
+        "inventario/forms.py": "corrige el conteo, filtrar por stock filtra el dato a corregir",
+    }
+    # Pantallas que listan productos y sí deben respetar la regla.
+    OBLIGADAS = ["ventas/views.py", "catalogo/views.py", "inventario/views.py"]
+
+    def test_las_pantallas_de_listado_usan_productos_visibles(self):
+        faltan = []
+        for relativa in self.OBLIGADAS:
+            texto = (Path(settings.BASE_DIR) / relativa).read_text(encoding="utf-8")
+            if "productos_visibles" not in texto:
+                faltan.append(relativa)
+        self.assertEqual(
+            faltan,
+            [],
+            "Estas pantallas listan productos sin pasar por "
+            "catalogo.consultas.productos_visibles:\n  " + "\n  ".join(faltan)
+            + "\n\nSi la pantalla necesita ver los agotados, usá "
+            "productos_visibles(..., incluir_agotados=True) para que la "
+            "excepción quede escrita.",
+        )
+
+    def test_las_excepciones_siguen_documentadas(self):
+        """Cada excepción tiene que explicarse en el archivo que la comete.
+
+        No es burocracia: el fallo que evita es silencioso. Un producto que se
+        agota y desaparece del selector de compras no lanza ningún error —
+        simplemente ya nunca se puede reponer, y el día que alguien lo note
+        van a haber pasado semanas.
+        """
+        sin_explicar = []
+        for relativa in self.EXCEPCIONES:
+            texto = (Path(settings.BASE_DIR) / relativa).read_text(encoding="utf-8")
+            if "EXCEPCIÓN DELIBERADA" not in texto:
+                sin_explicar.append(relativa)
+        self.assertEqual(
+            sin_explicar,
+            [],
+            "Estos archivos consultan productos sin el filtro de existencias y "
+            "ya no explican por qué:\n  " + "\n  ".join(sin_explicar)
+            + "\n\nSi la excepción sigue siendo válida, restaurá el comentario "
+            "«EXCEPCIÓN DELIBERADA». Si ya no lo es, aplicá "
+            "catalogo.consultas.productos_visibles y sacá el archivo de "
+            "EXCEPCIONES en esta prueba.",
+        )

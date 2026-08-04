@@ -41,6 +41,13 @@ class AjusteInventarioForm(forms.Form):
     def __init__(self, *args, empresa=None, **kwargs):
         super().__init__(*args, **kwargs)
         if empresa is not None:
+            # ── EXCEPCIÓN DELIBERADA a la regla "solo en existencia" del
+            # 02/08/2026 ── Este formulario existe para corregir el conteo
+            # cuando la base dice cero y en la bodega hay tres, o al revés.
+            # Filtrar por stock acá sería filtrar por el mismo dato que se
+            # viene a corregir: el producto mal contado es exactamente el que
+            # desaparecería del selector. Verificado en
+            # core/test_arquitectura.py.
             self.fields["producto"].queryset = (
                 Producto.objects.filter(activo=True, empresa=empresa).order_by("nombre")
             )

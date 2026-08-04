@@ -61,19 +61,56 @@ body{
 }
 
 /* ---------- Barra superior: filete azul→dorado, muy fina ---------- */
-.barra{height:4px; background:linear-gradient(90deg, var(--azul) 0%, var(--azul) 70%, var(--dorado) 100%)}
+.barra{height:4px; background:linear-gradient(90deg, var(--azul) 0%, var(--azul) 70%, var(--dorado) 100%); position:relative; z-index:10}
 
 /* ---------- Encabezado ---------- */
 .head{
-  display:flex; justify-content:space-between; align-items:flex-start;
-  padding:var(--s6) var(--s6) var(--s4);
+  display:flex; justify-content:space-between; align-items:stretch;
+  padding:0;
+  gap:0;
+  min-height:200px;
+  position:relative;
 }
-.head .marca img{height:64px; width:auto; display:block; margin-bottom:var(--s2)}
-.head .marca .nombre{font-size:20px; font-weight:800; color:var(--ink); letter-spacing:-.02em}
-.head .marca .tipo{font-size:12.5px; color:var(--ink2); font-weight:500; margin-top:2px}
-.head .doc{text-align:right}
-.head .doc .num{font-size:30px; font-weight:800; color:var(--ink); letter-spacing:-.03em; line-height:1.1}
-.head .doc .fecha{font-size:12.5px; color:var(--ink3); font-weight:500; margin-top:var(--s1)}
+.head .marca{
+  display:flex; align-items:center; justify-content:center; flex:1;
+  padding:var(--s3) var(--s6);
+  position:relative;
+  z-index:1;
+}
+.head .marca img{
+  height:280px; width:auto; display:block; object-fit:contain;
+  max-width:100%;
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%, calc(-50% + 38px));
+  pointer-events:none;
+  z-index:0;
+}
+.head .marca .nombre{display:none}
+.head .marca .tipo{display:none}
+.head .marca-txt{display:none}
+.head::after{
+  content:''; position:absolute;
+  left:66%; top:0; bottom:0; width:1px;
+  background:var(--line);
+  z-index:10;
+}
+.head .doc{
+  display:flex; flex-direction:column; justify-content:center;
+  text-align:right; flex-shrink:0;
+  padding:var(--s4) var(--s6);
+  width:310px;
+  background:#fff;
+  position:relative;
+  z-index:5;
+}
+.head .doc .tipo{
+  font-size:14px; font-weight:700; color:var(--ink3); text-transform:uppercase;
+  letter-spacing:.06em; margin-bottom:var(--s3);
+}
+.head .doc .num{font-size:26px; font-weight:800; color:var(--ink); letter-spacing:-.03em; line-height:1.1}
+.head .doc .fecha{font-size:11.5px; color:var(--ink3); font-weight:500; margin-top:8px}
 .badge{
   display:inline-flex; align-items:center; gap:6px;
   padding:6px 14px; border-radius:980px; font-size:12.5px; font-weight:700;
@@ -90,7 +127,7 @@ body{
 }
 
 /* ---------- Layout de dos columnas: 70% contenido / 30% panel ---------- */
-.grid{display:flex; align-items:flex-start; border-top:1px solid var(--line)}
+.grid{display:flex; align-items:flex-start}
 .col-principal{flex:1 1 68%; min-width:0; padding:var(--s6)}
 .col-panel{
   flex:0 0 32%; min-width:260px; background:var(--panel-bg);
@@ -241,13 +278,27 @@ td.tot{font-weight:600}
   .col-panel{
     flex:1 1 auto; width:100%; border-left:none; border-top:1px solid var(--line);
   }
+  .head{min-height:160px}
+  .head .marca img{height:210px}
+  .head .doc{width:260px; padding:var(--s3) var(--s4)}
+  .head .doc .tipo{font-size:12px; margin-bottom:var(--s2)}
+  .head .doc .num{font-size:24px}
 }
 
 /* ---------- Móvil ---------- */
 @media (max-width:560px){
   .lienzo{padding:var(--s2)}
-  .head{flex-direction:column; gap:var(--s3); padding:var(--s4)}
-  .head .doc{text-align:left}
+  .head{flex-direction:column; min-height:auto; border-bottom:1px solid var(--line)}
+  .head .marca{padding:var(--s2); position:static}
+  .head .marca img{height:140px; position:static; transform:none}
+  .head .doc{
+    width:100%; text-align:left;
+    border-left:none; border-top:1px solid var(--line);
+    padding:var(--s3) var(--s3);
+    position:static;
+  }
+  .head .doc .tipo{font-size:12px; margin-bottom:var(--s2)}
+  .head .doc .num{font-size:22px}
   .col-principal, .col-panel, .pie, .acciones, .motivo-anulacion{padding-left:var(--s3); padding-right:var(--s3)}
   table{font-size:12.5px}
   td, thead th{padding-left:8px; padding-right:8px}
@@ -264,10 +315,9 @@ td.tot{font-weight:600}
   <div class="head">
     <div class="marca">
       <img src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetCR">
-      <div class="nombre">AllPetCR</div>
-      <div class="tipo">Factura electrónica</div>
     </div>
     <div class="doc">
+      <div class="tipo">Factura electrónica</div>
       <div class="num">{{ f.numero }}</div>
       <div class="fecha">{{ f.creado_en|date:"d \d\e F \d\e Y" }} · {{ f.creado_en|date:"h:i A" }}</div>
       {% if f.estado_visual == "PAG" %}
