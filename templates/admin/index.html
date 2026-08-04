@@ -1,0 +1,279 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static log %}
+
+{% comment %}
+  ÍNDICE DE ADMINISTRACIÓN — rediseño 2026-08-03
+  ---------------------------------------------------------------------------
+  Qué estaba mal en la versión anterior (el índice que Django arma solo):
+
+  1. Los nombres se partían letra por letra: "Cambio s de precio",
+     "Movimi entos de inventa rio", "Registr os de auditor ía". No era un
+     problema de fuente: las tarjetas medían 300px, de los cuales 40 se iban
+     en padding y unos 150 en los botones "Añadir" y "Modificar". Al nombre
+     le quedaban ~90px y el navegador lo quebraba donde podía.
+
+  2. Estaba ordenado alfabéticamente por app de Django, no por cómo se usa
+     el negocio. "Axes" (registros de intentos de acceso, que nadie abre
+     nunca) aparecía segundo, antes que Catálogo, Ventas o Caja.
+
+  3. Los diez módulos tenían exactamente el mismo peso visual, así que no
+     había forma de saber cuál importa. Y tres de ellos estaban en inglés
+     ("Access attempts", "Access failures", "Access logs") porque vienen de
+     una librería de seguridad.
+
+  Qué hace esta versión:
+
+  · Agrupa por trabajo real: primero lo que se toca a diario (catálogo,
+    ventas, compras, inventario, caja), después contabilidad, y al final —
+    en tono apagado — lo técnico que casi nunca se abre.
+  · Cada nombre entra en una línea, con el enlace ocupando toda la fila y
+    el "+" de añadir como acción secundaria.
+  · Buscador que filtra en vivo: con más de 30 tablas, escribir "prod" es
+    más rápido que recorrer la pantalla con la vista.
+  · Mantiene el lenguaje visual del sistema: navy y oro de la marca, la
+    marca de agua del logo, tarjetas redondeadas e iconos con degradado,
+    igual que el Inicio.
+
+  Respeta los permisos de Django: cada fila sale de `app_list`, así que un
+  usuario sin permiso sobre una tabla sigue sin verla.
+{% endcomment %}
+
+{% comment %}
+  Va en `extrahead` y no en `extrastyle` a propósito: en admin/base.html el
+  bloque extrastyle se imprime ANTES que extrahead, y base_site.html —de donde
+  hereda esta pantalla— pone su tema en extrahead. Desde extrastyle, la grilla
+  de 300px de base_site pisaría la de acá. Con block.super se conserva el tema
+  del admin y estos estilos se aplican encima.
+{% endcomment %}
+{% block extrahead %}{{ block.super }}<style>
+/* La marca de agua del logo, igual que en el Inicio y los reportes. */
+body.dashboard{position:relative}
+body.dashboard::before{content:'';position:fixed;inset:0;
+  background-image:url('{% static "patterns/allpetcr-logo.png" %}');
+  background-repeat:repeat;background-size:130px 130px;background-position:center;
+  opacity:.045;pointer-events:none;z-index:-1}
+
+/* Django fija ".dashboard #content{width:600px}", un ancho heredado pensado
+   para una sola columna. Se libera para poder armar la grilla. */
+.dashboard #content{width:auto !important;max-width:1500px;margin:0 auto}
+body.dashboard #content-main{display:block}
+
+.ax-head{margin:4px 0 22px}
+.ax-h1{font-size:30px;font-weight:700;letter-spacing:-.03em;color:var(--ink);line-height:1.15}
+.ax-sub{font-size:15px;color:var(--ink2);margin-top:5px}
+
+/* ---- Buscador ---- */
+.ax-find{position:relative;max-width:420px;margin:18px 0 6px}
+.ax-find input{width:100%;padding:13px 16px 13px 42px;font-size:15px;font-family:var(--font);
+  border:1px solid var(--line) !important;border-radius:14px !important;background:#fff;
+  color:var(--ink);outline:none;transition:border .2s,box-shadow .2s;height:auto}
+.ax-find input:focus{border-color:var(--brand) !important;box-shadow:0 0 0 4px rgba(11,49,97,.12)}
+.ax-find svg{position:absolute;left:15px;top:50%;transform:translateY(-50%);width:17px;height:17px;
+  stroke:var(--ink2);stroke-width:2;fill:none;pointer-events:none}
+.ax-none{display:none;color:var(--ink2);font-size:15px;padding:30px 4px}
+
+/* ---- Secciones ---- */
+.ax-sec{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--ink2);margin:38px 4px 16px}
+.ax-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px;align-items:start}
+
+/* ---- Tarjeta de módulo ----
+   Cabecera clara con el icono en color, en vez de la franja navy sólida que
+   llevaba cada módulo: con diez tarjetas en pantalla eran diez barras azules
+   compitiendo con los nombres que uno viene a leer. */
+.ax-card{background:var(--card);border-radius:22px;box-shadow:var(--shadow);
+  border:.5px solid rgba(0,0,0,.05);overflow:hidden}
+.ax-card-h{display:flex;align-items:center;gap:12px;padding:18px 20px 14px}
+.ax-ic{width:38px;height:38px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.13)}
+.ax-ic svg{width:20px;height:20px;stroke:#fff;stroke-width:2;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+.ax-card-h .tt{font-size:16px;font-weight:700;letter-spacing:-.015em;color:var(--ink);line-height:1.2}
+.ax-card-h .dd{font-size:12.5px;color:var(--ink2);margin-top:1px}
+
+/* ---- Fila de tabla ----
+   El nombre toma todo el ancho disponible (flex:1) y ya no se parte. El
+   enlace cubre la fila entera, así que el clic no exige puntería. */
+.ax-row{display:flex;align-items:center;gap:8px;padding:0 12px 0 20px;
+  border-top:1px solid var(--line);transition:background .15s}
+.ax-row:hover{background:#f8f9fb}
+.ax-row .lk{flex:1;min-width:0;display:block;padding:13px 0;
+  font-size:15px;font-weight:500;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ax-row:hover .lk{color:var(--brand)}
+.ax-row .add{flex-shrink:0;width:30px;height:30px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;font-weight:400;line-height:1;color:var(--ink2);
+  background:transparent;transition:background .15s,color .15s}
+.ax-row .add:hover{background:var(--brand);color:#fff}
+.ax-row .ro{flex-shrink:0;font-size:11px;color:var(--ink2);padding-right:6px}
+.ax-card-b{padding-bottom:4px}
+
+/* ---- Zona técnica ----
+   Mismo componente, tono apagado: se puede llegar, pero no compite con lo
+   que se usa todos los días. */
+.ax-grid.quiet .ax-card{box-shadow:none;border:1px solid var(--line);background:#fcfcfd}
+.ax-grid.quiet .ax-ic{background:#dfe3e9 !important;box-shadow:none}
+.ax-grid.quiet .ax-ic svg{stroke:#7c8798}
+.ax-grid.quiet .ax-card-h .tt{font-size:15px;font-weight:600}
+.ax-grid.quiet .ax-row .lk{font-size:14px;color:var(--ink3)}
+
+/* Degradados de marca, los mismos que usa el Inicio. */
+.i-cat{background:linear-gradient(140deg,#0B3161,#1f5a8f)}
+.i-sell{background:linear-gradient(140deg,#14498f,#072244)}
+.i-buy{background:linear-gradient(140deg,#E0B24E,#CD963A)}
+.i-inv{background:linear-gradient(140deg,#2d6bb0,#0B3161)}
+.i-cash{background:linear-gradient(140deg,#34c759,#248a3d)}
+.i-acc{background:linear-gradient(140deg,#1f5a8f,#0B3161)}
+.i-sys{background:linear-gradient(140deg,#8e8e93,#5a5a5e)}
+
+/* ---- Acciones recientes ----
+   Antes ocupaba una tarjeta del mismo tamaño que Catálogo o Ventas para
+   decir "Ninguno disponible". Baja al pie, en una línea. */
+.ax-recent{margin-top:40px;padding:18px 20px;background:var(--card);border-radius:18px;
+  border:.5px solid rgba(0,0,0,.05);box-shadow:var(--shadow)}
+.ax-recent h3{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--ink2);margin-bottom:10px}
+.ax-recent ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.ax-recent li{font-size:13.5px}
+.ax-recent li a{color:var(--brand);background:#f2f5f9;padding:6px 13px;border-radius:980px;
+  display:inline-block;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ax-recent li a:hover{background:rgba(11,49,97,.1)}
+.ax-recent .empty{font-size:14px;color:var(--ink2)}
+
+@media(max-width:640px){
+  .ax-grid{grid-template-columns:1fr}
+  .ax-h1{font-size:25px}
+}
+</style>{% endblock %}
+
+{% block coltype %}colM{% endblock %}
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block content %}
+<div id="content-main">
+
+  <div class="ax-head">
+    <div class="ax-h1">Administración</div>
+    <div class="ax-sub">Todas las tablas del sistema. Elegí una para ver o editar sus registros.</div>
+  </div>
+
+  <div class="ax-find">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input type="text" id="axFind" placeholder="Buscar una tabla… (productos, clientes, asientos)" autocomplete="off">
+  </div>
+  <div class="ax-none" id="axNone">No hay ninguna tabla con ese nombre.</div>
+
+  {% if app_list %}
+
+    {% comment %}
+      El orden lo fija el negocio, no el alfabeto. Django entrega app_list
+      ordenada alfabéticamente (Autenticación, Axes, Caja, Catálogo…), que es
+      cómo se llaman las cosas por dentro, no cómo se usan. Acá se recorre la
+      lista una vez por módulo, en la secuencia real del trabajo: primero se
+      define qué se vende, después se vende, se repone, se controla el stock
+      y se cierra la caja.
+    {% endcomment %}
+
+    {# ============ OPERACIÓN DIARIA ============ #}
+    <div class="ax-sec ax-band">Operación diaria</div>
+    <div class="ax-grid">
+      {% for app in app_list %}{% if app.app_label == 'catalogo' %}{% include "admin/_ax_card.html" %}{% endif %}{% endfor %}
+      {% for app in app_list %}{% if app.app_label == 'ventas' %}{% include "admin/_ax_card.html" %}{% endif %}{% endfor %}
+      {% for app in app_list %}{% if app.app_label == 'compras' %}{% include "admin/_ax_card.html" %}{% endif %}{% endfor %}
+      {% for app in app_list %}{% if app.app_label == 'inventario' %}{% include "admin/_ax_card.html" %}{% endif %}{% endfor %}
+      {% for app in app_list %}{% if app.app_label == 'caja' %}{% include "admin/_ax_card.html" %}{% endif %}{% endfor %}
+    </div>
+
+    {# ============ CONTABILIDAD ============ #}
+    {% for app in app_list %}{% if app.app_label == 'contabilidad' %}
+      <div class="ax-sec ax-band">Contabilidad</div>
+      <div class="ax-grid">{% include "admin/_ax_card.html" %}</div>
+    {% endif %}{% endfor %}
+
+    {# ============ CONFIGURACIÓN Y TÉCNICO ============ #}
+    <div class="ax-sec ax-band">Configuración del sistema</div>
+    <div class="ax-grid quiet">
+      {% for app in app_list %}{% if app.app_label == 'core' %}{% include "admin/_ax_card.html" %}{% endif %}{% endfor %}
+      {% for app in app_list %}{% if app.app_label == 'auth' %}{% include "admin/_ax_card.html" %}{% endif %}{% endfor %}
+      {% for app in app_list %}{% if app.app_label == 'axes' %}{% include "admin/_ax_card.html" %}{% endif %}{% endfor %}
+      {% comment %}
+        Red de seguridad: cualquier app futura que no esté contemplada arriba
+        cae acá igual. Sin esto, instalar un módulo nuevo lo dejaría invisible
+        en el índice y nadie sabría por qué.
+      {% endcomment %}
+      {% for app in app_list %}{% if app.app_label != 'catalogo' and app.app_label != 'ventas' and app.app_label != 'compras' and app.app_label != 'inventario' and app.app_label != 'caja' and app.app_label != 'contabilidad' and app.app_label != 'core' and app.app_label != 'auth' and app.app_label != 'axes' %}{% include "admin/_ax_card.html" %}{% endif %}{% endfor %}
+    </div>
+
+  {% else %}
+    <p>{% translate "You don't have permission to view or edit anything." %}</p>
+  {% endif %}
+
+  {# Acciones recientes: al pie y en una línea, no en una tarjeta del mismo
+     tamaño que Catálogo para decir que no hay ninguna. #}
+  <div class="ax-recent">
+    <h3>{% translate 'Recent actions' %}</h3>
+    {% get_admin_log 10 as admin_log for_user user %}
+    {% if not admin_log %}
+      <div class="empty">Todavía no hiciste cambios desde el panel de administración.</div>
+    {% else %}
+      <ul>
+      {% for entry in admin_log %}
+        <li>
+          {% if entry.is_deletion or not entry.get_admin_url %}
+            <a style="background:#f2f2f5;color:var(--ink3)">{{ entry.object_repr }}</a>
+          {% else %}
+            <a href="{{ entry.get_admin_url }}" title="{{ entry.content_type }}">{{ entry.object_repr }}</a>
+          {% endif %}
+        </li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // Buscador en vivo. Con más de treinta tablas, escribir tres letras llega
+  // antes que recorrer la pantalla con la vista. Oculta las filas que no
+  // coinciden y, si una tarjeta se queda sin filas visibles, la tarjeta
+  // entera; así no quedan cabeceras huérfanas.
+  var input = document.getElementById('axFind');
+  var vacio = document.getElementById('axNone');
+  if(!input) return;
+
+  function filtrar(){
+    var q = input.value.toLowerCase().trim();
+    var algo = false;
+
+    document.querySelectorAll('[data-card]').forEach(function(card){
+      var visibles = 0;
+      card.querySelectorAll('[data-row]').forEach(function(row){
+        var ok = !q || (row.dataset.name || '').indexOf(q) !== -1;
+        row.style.display = ok ? '' : 'none';
+        if(ok) visibles++;
+      });
+      card.style.display = visibles ? '' : 'none';
+      if(visibles) algo = true;
+    });
+
+    // Los rótulos de sección y sus grillas se ocultan si quedaron vacíos.
+    document.querySelectorAll('.ax-grid').forEach(function(grid){
+      var vivos = grid.querySelectorAll('[data-card]:not([style*="display: none"])').length;
+      grid.style.display = vivos ? '' : 'none';
+      var band = grid.previousElementSibling;
+      if(band && band.classList.contains('ax-band')) band.style.display = vivos ? '' : 'none';
+    });
+
+    vacio.style.display = algo ? 'none' : 'block';
+  }
+
+  input.addEventListener('input', filtrar);
+  // Esc limpia la búsqueda sin tener que borrar a mano.
+  input.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){ input.value = ''; filtrar(); }
+  });
+})();
+</script>
+{% endblock %}

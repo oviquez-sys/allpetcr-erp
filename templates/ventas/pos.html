@@ -110,7 +110,11 @@ main{flex:1;display:grid;grid-template-columns:1fr 440px;gap:16px;padding:14px 2
 #msg.err{background:rgba(211,51,42,.95)}
 #msg.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-.help-fab{position:fixed;right:22px;bottom:22px;width:52px;height:52px;border-radius:50%;
+/* bottom:100px y no 22px: el asistente ocupa la esquina inferior derecha con
+   400px de ancho y z-index 9999, así que a 22px este botón quedaba tapado por
+   completo y era imposible de tocar. Sube justo por encima de la barra del
+   chat. Mismo tamaño, mismo color, misma forma. */
+.help-fab{position:fixed;right:22px;bottom:100px;width:52px;height:52px;border-radius:50%;
   background:var(--brand);color:#fff;font-size:24px;font-weight:600;display:flex;align-items:center;justify-content:center;
   box-shadow:0 8px 24px rgba(11,49,97,.4);cursor:pointer;z-index:40;transition:transform .18s}
 .help-fab:hover{transform:scale(1.08)}
@@ -209,6 +213,7 @@ main{flex:1;display:grid;grid-template-columns:1fr 440px;gap:16px;padding:14px 2
     <div class="step2"><div class="n">3</div><div class="st">Tocá cómo paga: <b>Efectivo</b>, <b>Tarjeta</b> o <b>SINPE</b>. Sale el tiquete solo.</div></div>
     <div class="step2"><div class="n">4</div><div class="st">Si el cliente lleva fiado, elegí su nombre arriba y usá <b>Fiado</b>.</div></div>
     <div class="step2"><div class="n">5</div><div class="st"><b>Descuento o regalo.</b> Debajo de cada producto en la venta podés poner un <b>descuento</b> en colones, o marcarlo como <b>🎁 Regalo</b> (sale gratis, pero igual descuenta del inventario y se registra el costo).</div></div>
+    <div class="step2"><div class="n">6</div><div class="st"><b>Con el teclado es más rápido.</b> <b>F1</b> cobra en efectivo, <b>F2</b> con tarjeta y <b>F3</b> por SINPE. <b>Esc</b> limpia la búsqueda y devuelve el cursor al escáner.</div></div>
     <button class="close" onclick="document.getElementById('ayuda').classList.remove('on')">Entendido</button>
   </div>
 </div>
@@ -290,14 +295,36 @@ function pintarGrid(){
     const foto = p.imagen
       ? `<div class="foto" style="background-image:url('${escUrl(p.imagen)}')"></div>`
       : `<div class="foto ph"><svg viewBox="0 0 24 24"><circle cx="8" cy="9.5" r="1.9"/><circle cx="16" cy="9.5" r="1.9"/><circle cx="4.7" cy="13.2" r="1.8"/><circle cx="19.3" cy="13.2" r="1.8"/><path d="M12 14.2c2.6 0 4.7 1.7 4.7 3.4 0 1.6-2.1 2.2-4.7 2.2s-4.7-.6-4.7-2.2c0-1.7 2.1-3.4 4.7-3.4z"/></svg></div>`;
-    return `<div class="pcard ${disp<=0?'agotado':''}" onclick="agregar(${p.id})" title="${esc(p.nombre)}">
+    return `<div class="pcard ${disp<=0?'agotado':''}" data-id="${p.id}" onclick="agregar(${p.id})" title="${esc(p.nombre)}">
       ${foto}
       <div class="n">${esc(p.nombre)}</div>
       <div class="cat">${esc(p.categoria)}</div>${pres}
       <div class="p">${fmt(p.precio_venta)}</div>
-      <div class="s">quedan ${disp}</div></div>`;
+      <div class="s" data-stock="${p.id}">quedan ${disp}</div></div>`;
   }).join('') || '<p class="empty">No hay productos con ese filtro. Probá otra categoría o borrá la búsqueda.</p>';
 }
+
+// refrescarStock() — rendimiento del catálogo.
+//
+// Antes, cada toque del + o del − llamaba a pintar(), que al final llamaba a
+// pintarGrid() y reconstruía por innerHTML las 150 tarjetas con sus imágenes.
+// En la máquina de la caja eso se siente como un tirón en cada clic. Acá solo
+// se reescribe el "quedan N" del producto que cambió: mismo HTML, mismo
+// aspecto, sin volver a armar el catálogo entero.
+function refrescarStock(id){
+  const el = document.querySelector(`[data-stock="${id}"]`);
+  if(!el) return;
+  const disp = porId[id].stock_actual - (carrito[id]?.cantidad || 0);
+  el.textContent = `quedan ${disp}`;
+  const card = el.closest('.pcard');
+  if(card) card.classList.toggle('agotado', disp <= 0);
+}
+// volverAlEscaner() — la pistola de código de barras es un teclado: escribe
+// donde esté el foco. Si después de tocar un producto el cursor se queda en
+// el catálogo, el siguiente escaneo se pierde y hay que hacer clic en la caja
+// de búsqueda para cada producto. Se llama tras cada acción del carrito.
+function volverAlEscaner(){ document.getElementById('buscar').focus(); }
+
 function agregar(id){
   const p = porId[id];
   const item = carrito[id] || {cantidad:0, descuento:0, regalia:false};
@@ -305,8 +332,15 @@ function agregar(id){
   item.cantidad += 1;
   carrito[id] = item;
   pintar();
+  refrescarStock(id);
+  volverAlEscaner();
 }
-function quitar(id){ if(--carrito[id].cantidad <= 0) delete carrito[id]; pintar(); }
+function quitar(id){
+  if(--carrito[id].cantidad <= 0) delete carrito[id];
+  pintar();
+  refrescarStock(id);
+  volverAlEscaner();
+}
 function toggleRegalo(id){
   const it = carrito[id]; if(!it) return;
   it.regalia = !it.regalia;
@@ -352,12 +386,24 @@ function pintar(){
       <div class="linea-x">${ctrl}</div>`;
   }).join('') : '<div class="empty"><span class="big">🛒</span>Escaneá o tocá un producto<br>para empezar la venta</div>';
   const total = ids.reduce((a,id)=>a + totalLinea(id), 0);
-  const desc = ids.reduce((a,id)=> a + (carrito[id].regalia ? 0 : (carrito[id].descuento||0)), 0);
+  // Corrección 2026-08-03: esta suma leía `carrito[id].descuento`, un campo
+  // que quedó huérfano cuando el descuento pasó a ser porcentual
+  // (`descuento_pct`). Como nunca se llenaba, la fila "Descuentos" jamás
+  // aparecía aunque el cajero aplicara un 20%. El total cobrado siempre
+  // estuvo bien — esto solo arregla que se vea cuánto se rebajó.
+  const desc = ids.reduce((a,id)=>{
+    if (carrito[id].regalia) return a;
+    const bruto = porId[id].precio_venta * carrito[id].cantidad;
+    return a + (bruto - totalLinea(id));
+  }, 0);
   let html = '';
   if (desc > 0) html += `<div class="tot d"><span>Descuentos</span><span>− ${fmt(desc)}</span></div>`;
   html += `<div class="tot g"><span>Total</span><span>${fmt(total)}</span></div>`;
   document.getElementById('totales').innerHTML = html;
-  pintarGrid();
+  // pintarGrid() ya NO se llama acá: reconstruía las 150 tarjetas del catálogo
+  // en cada cambio de cantidad. Ahora quien cambia el carrito actualiza solo
+  // el contador del producto afectado con refrescarStock(id). El catálogo se
+  // rearma únicamente cuando cambia de verdad: al buscar, filtrar o cobrar.
 }
 async function cobrar(medio){
   const lineas = Object.entries(carrito).map(([id,c])=>({
@@ -378,10 +424,13 @@ async function cobrar(medio){
     const d = await r.json();
     if (d.ok){
       Object.entries(carrito).forEach(([id,c])=>{ porId[id].stock_actual -= c.cantidad; });
-      carrito = {}; pintar();
+      carrito = {};
+      pintar();
+      pintarGrid();   // acá sí toca rearmar el catálogo: bajó el stock de varios productos
       document.getElementById('cliente').value = '';
       msg(`✅ Venta ${d.numero} por ${fmt(d.total)}. Abriendo tiquete…`);
       window.open(d.tiquete_url, '_blank', 'width=420,height=640');
+      volverAlEscaner();   // listo para la siguiente venta sin tocar el mouse
     } else { msg("⛔ " + d.error, true); }
   } catch(e){ msg("⛔ No se pudo conectar con el servidor.", true); }
   document.querySelectorAll('.pagos button, #btnCredito').forEach(b=>b.disabled=false);
@@ -397,6 +446,21 @@ document.getElementById('buscar').addEventListener('keydown', e=>{
   if (prod){ agregar(prod.id); e.target.value=''; pintarGrid(); }
   else { msg("No encontré ese producto: " + q, true); }
 });
+// Atajos de cobro. Con la pistola en una mano, las teclas de función evitan
+// soltar el escáner para ir al mouse en cada venta. Esc limpia la búsqueda y
+// devuelve el cursor al escáner (y cierra la ayuda si está abierta).
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){
+    const ay = document.getElementById('ayuda');
+    if (ay && ay.classList.contains('on')){ ay.classList.remove('on'); return; }
+    const b = document.getElementById('buscar');
+    b.value = ''; pintarGrid(); volverAlEscaner();
+    return;
+  }
+  const medios = {F1:'EFE', F2:'TAR', F3:'SIN'};
+  if (medios[e.key]){ e.preventDefault(); cobrar(medios[e.key]); }
+});
+
 document.getElementById('buscar').focus();
 pintarChips();
 pintar();

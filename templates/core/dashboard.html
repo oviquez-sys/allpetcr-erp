@@ -137,7 +137,11 @@ a{text-decoration:none;color:inherit}
 .rgrid .ri .rv{font-size:21px;font-weight:700;letter-spacing:-.02em;margin-top:4px;font-variant-numeric:tabular-nums}
 
 /* ===== HELP FAB ===== */
-.fab{position:fixed;right:32px;bottom:32px;width:56px;height:56px;border-radius:50%;
+/* bottom:100px y no 32px: el asistente ocupa la esquina inferior derecha con
+   400px de ancho y z-index 9999, así que a 32px este botón quedaba tapado por
+   completo y era imposible de tocar. Sube justo por encima de la barra del
+   chat. Mismo tamaño, mismo color, misma forma. */
+.fab{position:fixed;right:32px;bottom:100px;width:56px;height:56px;border-radius:50%;
   background:var(--brand);color:#fff;font-size:25px;font-weight:500;display:flex;align-items:center;justify-content:center;
   box-shadow:0 6px 20px rgba(11,49,97,.22);cursor:pointer;z-index:30;transition:transform .2s}
 .fab:hover{transform:scale(1.1)}
@@ -284,15 +288,24 @@ a{text-decoration:none;color:inherit}
   <!-- SUGERENCIAS -->
   <div class="sec">Sugerencias</div>
   <div class="adv">
+    {% comment %}
+      Corrección 2026-08-03 — este panel solo muestra lo que pide una decisión.
+
+      Antes mezclaba alertas reales con felicitaciones ("Margen excelente",
+      "Inventario saludable", "Tenés amplio margen todavía"), así que casi
+      siempre tenía algo escrito aunque no hubiera nada que hacer. Un panel
+      que casi siempre dice que todo va bien enseña a no leerlo — y el día
+      que aparece el descuadre entre stock y libros, está en el mismo sitio
+      donde ayer decía "todo bien", y tampoco se lee.
+
+      Las felicitaciones se agrupan ahora en un único aviso al final, que
+      aparece solo cuando de verdad no hay nada pendiente. Ni el diseño ni
+      las clases cambian: son las mismas filas .adv-row de siempre.
+    {% endcomment %}
     {% if margen < 30 %}
     <div class="adv-row">
       <div class="adv-ic warn"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
       <div class="adv-tx"><div class="t">Margen bajo</div><div class="d">Tu margen está en {{ margen|crc:1 }}%. Revisá si conviene ajustar precios de venta o negociar mejores costos con proveedores.</div></div>
-    </div>
-    {% elif margen >= 40 %}
-    <div class="adv-row">
-      <div class="adv-ic good"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.6L5.7 21 8 14 2 9.4h7.6z"/></svg></div>
-      <div class="adv-tx"><div class="t">Margen excelente</div><div class="d">{{ margen|crc:1 }}% de margen. Muy buena gestión de precios y control de costos. Seguí así.</div></div>
     </div>
     {% endif %}
 
@@ -308,15 +321,18 @@ a{text-decoration:none;color:inherit}
       <div class="adv-ic warn"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17l-5-5-3 3-4-4"/></svg></div>
       <div class="adv-tx"><div class="t">Stock bajo</div><div class="d">{{ num_stock_bajo }} producto{{ num_stock_bajo|pluralize }} necesita{{ num_stock_bajo|pluralize:"n" }} reposición. Contactá a tu proveedor. <a href="/reportes/stock/">Ver detalle →</a></div></div>
     </div>
-    {% else %}
-    <div class="adv-row">
-      <div class="adv-ic good"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div>
-      <div class="adv-tx"><div class="t">Inventario saludable</div><div class="d">Todos los productos tienen buen stock. Buena planificación de compras.</div></div>
-    </div>
     {% endif %}
 
-    {# Integridad de datos (auditoría 2026-07-28, BE-04). Dos avisos distintos:
-       encontramos diferencias, o hace mucho que nadie las busca. #}
+    {% comment %}
+      Integridad de datos (auditoría 2026-07-28, BE-04). Dos avisos distintos:
+      encontramos diferencias, o hace mucho que nadie las busca.
+
+      Corrección 2026-08-03: este comentario ocupaba dos líneas con el
+      símbolo numeral, que en Django solo comenta una línea — el resto se
+      imprimía tal cual en la pantalla del Inicio. Se cambia a este otro
+      formato de comentario, que sí admite varias líneas, sin tocar nada
+      del contenido ni del estilo.
+    {% endcomment %}
     {% if integridad_descuadres %}
     <div class="adv-row">
       <div class="adv-ic danger"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
@@ -334,10 +350,12 @@ a{text-decoration:none;color:inherit}
       <div class="adv-ic danger"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
       <div class="adv-tx"><div class="t">Alerta régimen simplificado</div><div class="d">Estás al {{ pct_rts|crc:1 }}% del límite anual de compras. Consultá con tu contador antes de superarlo.</div></div>
     </div>
-    {% else %}
+    {% endif %}
+
+    {% if margen >= 30 and num_stock_bajo == 0 and not integridad_descuadres and not integridad_vencida and not alerta_rts %}
     <div class="adv-row">
-      <div class="adv-ic info"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg></div>
-      <div class="adv-tx"><div class="t">Régimen simplificado</div><div class="d">Vas al {{ pct_rts|crc:1 }}% del límite anual. Tenés amplio margen todavía.</div></div>
+      <div class="adv-ic good"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div>
+      <div class="adv-tx"><div class="t">Todo en orden</div><div class="d">Margen del {{ margen|crc:1 }}%, inventario cubierto, libros al día y {{ pct_rts|crc:1 }}% del límite anual de compras. No hay nada pendiente.</div></div>
     </div>
     {% endif %}
   </div>
@@ -375,8 +393,10 @@ a{text-decoration:none;color:inherit}
   </div>
 </div>
 
-{# json_script serializa del lado del servidor con escape seguro (evita
-   inyección si algún día la lista deja de ser solo números). #}
+{% comment %}
+  json_script serializa del lado del servidor con escape seguro (evita
+  inyección si algún día la lista deja de ser solo números).
+{% endcomment %}
 {{ ventas_ultimos_7|json_script:"ventas-ultimos-7" }}
 <script>
 (function(){
