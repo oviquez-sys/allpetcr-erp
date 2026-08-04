@@ -29,12 +29,32 @@ Hay un **segundo repositorio**, `allpetcr-web` (Next.js 16), que es el sitio
 público. Son sistemas separados: el ERP exporta el catálogo a JSON y el sitio
 lo consume. Si un hallazgo dice "del sitio web", no es de este repo.
 
-## Estado (28/07/2026)
+## Estado (02/08/2026)
 
 - **235 pruebas** en verde · `check --deploy` sin advertencias
 - **PostgreSQL** (base `allpetcr` en localhost) desde el 28/07/2026
 - 184 productos reales en catálogo
 - Repos en GitHub: `oviquez-sys/allpetcr-erp` y `oviquez-sys/allpetcr-web`
+
+### Pendiente de aplicar (código listo y ensayado, base sin tocar)
+
+El 02/08/2026 entró el inventario nuevo (`data/INVENTARIO_ALLPETCR.xlsx`):
+532 productos, 530 fotos, descripciones y taxonomía de dos niveles.
+
+**El flujo completo se ensayó contra una base SQLite desechable** cargada con
+el inventario anterior, o sea el mismo estado que tiene PostgreSQL hoy:
+`sincronizar_inventario` → `importar_imagenes` → `exportar_catalogo_web`
+corren limpio y el export reproduce exactamente lo que ya está publicado en
+el sitio. Pero **los comandos NO se han corrido contra la base real**: sigue
+con 184 productos, precios viejos, sin descripciones y sin fotos.
+
+El sitio web YA tiene los datos nuevos. Mientras no se corran los comandos,
+el mostrador y el sitio cobran precios distintos. Pasos en
+`ACTUALIZAR_INVENTARIO.txt`.
+
+**Los costos del Excel se corrigieron antes de esto** (venían inflados ×1.25
+en 123 productos). El detalle y qué revisar la próxima vez están en
+`ACTUALIZAR_INVENTARIO.txt`.
 
 ## Cómo correrlo
 
@@ -58,6 +78,7 @@ python manage.py test ventas caja compras contabilidad # 119
 |---|---|
 | `HALLAZGOS.md` | **Estado de los 42 hallazgos de auditoría. Empezá por acá.** |
 | `README.md` | Historia del desarrollo por sprints |
+| `ACTUALIZAR_INVENTARIO.txt` | Cómo sincronizar el Excel con el ERP y el sitio |
 | `COMO_USAR.txt` | Manual para el personal de la tienda |
 | `PRODUCCION.txt` | Guía de despliegue en VPS |
 | `RESPALDOS.txt` | Cómo respaldar y restaurar |

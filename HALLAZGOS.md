@@ -140,6 +140,47 @@ técnica.
 trabajo previo (mover el JavaScript a archivos estáticos) son varios días y no
 debe hacerse a la carrera.
 
+**Envío de la factura por WhatsApp (descartado el 29/07/2026).** Se evaluó
+agregar un botón junto al de "Enviar por correo". Se descartó entero — no solo
+la versión con API, también la manual. Igual que el "sin QR" del template: es
+una decisión explícita, no un olvido.
+
+El correo funciona porque el HTML de la factura viaja *dentro* del mensaje.
+WhatsApp no permite eso: un enlace `wa.me` solo lleva texto plano, y el
+proyecto no tiene generador de PDF instalado (ni `weasyprint` ni `reportlab`),
+así que hoy no hay archivo que adjuntar. Mandar un enlace a la factura tampoco
+sirve: `ALLOWED_HOSTS` es `127.0.0.1,localhost`, el ERP vive en la red local y
+el celular del cliente no lo alcanza. Eso además exigiría un token por factura,
+porque si no cualquiera cambia el ID en la URL y ve facturas ajenas.
+
+La vía con API oficial (Meta Cloud) tiene tres bloqueos, y el costo por mensaje
+es el menor de ellos:
+
+1. **Verificación de negocio.** Meta exige documentación legal real. Choca de
+   frente con NEW-04: mientras la cédula jurídica siga sin confirmarse, no pasa
+   la verificación. Es previo a cualquier línea de código.
+2. **Captura del número.** Un número dentro de la Cloud API deja de funcionar
+   en la app normal de WhatsApp. El +506 8856-2992 del pie de la factura es el
+   que usa la tienda para atender clientes; meterlo a la API mata ese chat.
+   Haría falta una línea nueva.
+3. **Plantillas.** Cada texto se aprueba con Meta antes de usarse, y cada
+   cambio se re-aprueba.
+
+Sobre el costo, para no re-investigarlo: desde julio 2025 Meta cobra **por
+mensaje**, no por conversación. Una factura entra en la categoría *utility*,
+cuyo rango global publicado va de USD 0,004 a USD 0,0456 según el país. **No se
+encontró la tarifa exacta de Costa Rica** — cae en el bucket "Rest of Latin
+America". A 30 facturas diarias, y asumiendo el extremo caro del rango, son
+unos USD 20 al mes: irrelevante frente a los tres bloqueos de arriba. Ojo con
+una fecha: hasta ahora los mensajes dentro de una ventana de 24 h abierta por
+el cliente eran gratis, **pero Meta empieza a cobrarlos el 01/10/2026**.
+
+**Si se retoma:** la opción barata es el enlace `wa.me` con un resumen en texto
+(número, fecha, total, medio de pago) que el empleado envía desde su propio
+celular. No requiere cuenta verificada, ni número dedicado, ni plantillas, ni
+costo recurrente. Se descartó por ahora junto con el resto, pero es lo que
+habría que reconsiderar primero — no la API.
+
 ---
 
 ## Pendientes que dependen de vos, no del código

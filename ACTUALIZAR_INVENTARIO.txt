@@ -1,0 +1,199 @@
+═══════════════════════════════════════════════════════════════════════════
+ ACTUALIZAR EL INVENTARIO — ERP + SITIO WEB
+ Escrito el 02/08/2026
+═══════════════════════════════════════════════════════════════════════════
+
+Esto se corre cada vez que cambia el Excel de inventario: productos nuevos,
+precios nuevos, conteo de existencias, fotos.
+
+El archivo vigente es:
+
+    data/INVENTARIO_ALLPETCR.xlsx        ← hoja "Inventario Claude"
+
+El anterior ("INVENTARIO REAL AL 6-7-2026   2.0.xlsx") queda en la misma
+carpeta como respaldo histórico. NO se borra y NO se usa: su hoja y su orden
+de columnas son otros, y los comandos nuevos lo rechazan a propósito.
+
+
+───────────────────────────────────────────────────────────────────────────
+ CORRECCIÓN DE COSTOS DEL 02/08/2026 — LEER SI SE RECIBE UN EXCEL NUEVO
+───────────────────────────────────────────────────────────────────────────
+
+El inventario que llegó ese día traía los costos mayoristas inflados: de los
+184 productos con existencias, 119 tenían un costo EXACTAMENTE 1.25× el del
+inventario anterior y 4 tenían otros factores. Los 61 restantes coincidían.
+
+Importaba porque el Excel calcula  precio = costo / (1 - margen)  (verificado
+en las 532 filas, sin una sola excepción): el factor no se quedaba en el
+costo, entraba derecho al precio de venta.
+
+Se descartó que fuera arrastre de celda (las filas no son contiguas: 28
+bloques salteados), política por categoría (los dos grupos aparecen en las 10
+categorías) y efecto del trabajo de márgenes (el 1.25 ya venía en el archivo
+más viejo de la cadena). Nunca se determinó el origen.
+
+Oscar decidió que manda el costo del inventario ANTERIOR. Se corrigieron los
+123 productos: se restauró su costo y se recalculó el precio con el MISMO
+margen asignado, para no alterar la política de precios.
+
+    Efecto: la subida mediana de precio pasó de +23.5% a -1.2%.
+
+El archivo previo a la corrección quedó en:
+
+    data/INVENTARIO_ALLPETCR.antes-de-corregir-costos.xlsx
+
+QUÉ HACER LA PRÓXIMA VEZ
+    Antes de aplicar precios de un Excel nuevo, corré `--dry-run` y mirá el
+    bloque "producto(s) tienen un costo promedio distinto al del Excel". Si
+    aparece un factor repetido y redondo (1.25, 1.2, 1.1) en decenas de
+    productos, no es variación de proveedor: es un defecto de la fuente.
+    Verificalo contra una factura ANTES de aplicar. Existe `--sin-precios`
+    justamente para poder avanzar con el resto mientras se decide.
+
+QUÉ QUEDÓ SIN VERIFICAR
+    Los 348 productos que no estaban en el inventario anterior no tienen
+    contra qué compararse. Si el defecto venía de la fuente, podría
+    afectarlos también y no hay forma de detectarlo desde acá. Cuando entren
+    en existencias, conviene revisar su costo contra la factura antes de
+    ponerlos a la venta.
+
+
+───────────────────────────────────────────────────────────────────────────
+ ANTES DE EMPEZAR — RESPALDO
+───────────────────────────────────────────────────────────────────────────
+
+    python manage.py respaldar
+
+Sin excepción. La sincronización cambia precios y stock de cientos de
+productos en una sola pasada. Todo queda auditado y es reversible dato por
+dato, pero volver atrás 184 precios a mano no es un plan; restaurar un
+respaldo sí.
+
+
+───────────────────────────────────────────────────────────────────────────
+ LOS CUATRO PASOS
+───────────────────────────────────────────────────────────────────────────
+
+1) MIGRAR (solo la primera vez después del 02/08/2026)
+
+    python manage.py migrate
+
+   Agrega dos campos a Producto: `descripcion` y `mascota`. No toca ningún
+   dato existente.
+
+
+2) VER QUÉ VA A PASAR — sin escribir nada
+
+    python manage.py sincronizar_inventario --dry-run
+
+   Lee el Excel completo, simula la sincronización y revierte. Imprime
+   cuántos productos se crean, cuántos cambian de nombre, cuántos precios
+   suben o bajan y con qué porcentaje, y qué costos no cuadran.
+
+   LEÉ ESA SALIDA ANTES DEL PASO 3. Es el único momento barato para
+   arrepentirse.
+
+
+3) APLICARLO
+
+    python manage.py sincronizar_inventario --usuario TU_USUARIO
+
+   `--usuario` es opcional pero conviene: deja tu nombre firmando cada
+   cambio de precio y cada movimiento de kardex. Sin él quedan sin autor.
+
+   Qué hace exactamente:
+     · Crea los productos que no existen.
+     · Actualiza nombre, descripción, categoría, subcategoría y mascota.
+     · Cambia los precios PASANDO POR CambioPrecio (queda el historial).
+     · Ajusta el stock PASANDO POR EL KARDEX (tipo AJU, o INI si es alta).
+     · NO toca `costo_promedio`. Si el Excel trae un costo distinto al del
+       kardex, lo reporta y sigue: corregir un costo es un asiento contable,
+       no una importación. Decidilo aparte.
+     · CONSERVA `presentacion` y `codigo_barras`, que el Excel no trae. Si
+       se sobrescribieran con vacío habría que reimprimir etiquetas.
+
+   Es idempotente: correrlo dos veces seguidas no hace nada la segunda vez.
+
+
+4) FOTOS Y PUBLICACIÓN EN EL SITIO
+
+    python manage.py importar_imagenes
+    python manage.py exportar_catalogo_web
+
+   La primera extrae las 530 fotos embebidas en el Excel a media/productos/
+   y las asocia por SKU. La segunda escribe los dos JSON del sitio y copia a
+   allpetcr-web/public/productos/ solo las fotos de lo que se publica.
+
+   Después, en la carpeta del sitio:
+
+    npm run revisar     (lint + tipos + pruebas)
+    npm run build
+
+   `npm run build` corre antes el guardián de datos: se detiene si algún
+   producto apunta a una foto que no llegó a public/, si hay precios en cero
+   o si quedan datos de relleno.
+
+
+───────────────────────────────────────────────────────────────────────────
+ LA REGLA: SOLO SE MUESTRA LO QUE HAY EN EXISTENCIA
+───────────────────────────────────────────────────────────────────────────
+
+Decidida el 02/08/2026. De los 532 productos del catálogo, 348 están en cero.
+
+EN EL SITIO WEB
+  El exportador no publica lo que está en cero. La constante que lo controla
+  es SOLO_EN_EXISTENCIA, en
+  catalogo/management/commands/exportar_catalogo_web.py.
+
+  Costo a tener presente: cuando un producto se agota, su página
+  /producto/<sku> deja de existir y Google la marca 404; el posicionamiento
+  que tuviera se pierde y arranca de cero cuando vuelva. Para publicar los
+  agotados marcados como "sin existencias" —que es la práctica habitual en
+  comercio electrónico— corré:
+
+    python manage.py exportar_catalogo_web --incluir-agotados
+
+  o poné SOLO_EN_EXISTENCIA = False para que sea el comportamiento normal.
+  El sitio ya sabe mostrarlos: no requiere ningún otro cambio.
+
+EN EL ERP
+  Punto de venta, Precios y Etiquetas listan solo lo que hay. Precios y
+  Etiquetas tienen la salida `?agotados=1` para ver todo.
+
+  DOS PANTALLAS NO APLICAN EL FILTRO, Y NO ES UN OLVIDO:
+
+    · Compras / recibir mercadería
+    · Ajuste de inventario
+
+  Son las dos que operan justamente sobre el stock en cero. Si se filtraran,
+  un producto que se agota no se podría recibir ni recontar — o sea, su stock
+  nunca volvería a subir y desaparecería del sistema para siempre, sin que
+  nada diera error. Está explicado en catalogo/consultas.py y verificado en
+  core/test_arquitectura.py, para que nadie lo "corrija" por consistencia.
+
+
+───────────────────────────────────────────────────────────────────────────
+ SI ALGO SALE MAL
+───────────────────────────────────────────────────────────────────────────
+
+"El Excel no tiene la hoja 'Inventario Claude'"
+    Estás apuntando al archivo viejo, o alguien renombró la hoja. Pasá la
+    correcta con --hoja.
+
+"Los encabezados del Excel no coinciden"
+    Se reordenaron o renombraron columnas. NO fuerces el comando: escribiría
+    cada dato en el campo equivocado (la subcategoría dentro del código de
+    barras, por ejemplo). Actualizá COL y ENCABEZADOS_ESPERADOS en
+    catalogo/management/commands/sincronizar_inventario.py.
+
+Precios mal aplicados
+    Cada cambio está en CambioPrecio con valor anterior, autor y fecha.
+    Se ven en Precios → el producto → historial.
+
+Stock mal ajustado
+    Cada ajuste es un MovimientoInventario tipo AJU con referencia
+    SINC-INVENTARIO. Se revierte con un ajuste inverso, no editando el
+    stock a mano.
+
+Verificar que todo cuadra
+    python manage.py reconciliar
