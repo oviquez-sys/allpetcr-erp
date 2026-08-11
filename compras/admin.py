@@ -16,6 +16,7 @@ class LineaCompraInline(admin.TabularInline):
     model = LineaCompra
     extra = 1
     autocomplete_fields = ("producto",)
+    can_delete = False
 
     def get_readonly_fields(self, request, obj=None):
         # Una compra recibida es inmutable.
@@ -23,19 +24,32 @@ class LineaCompraInline(admin.TabularInline):
             return ("producto", "cantidad", "costo_unitario", "total")
         return ("total",)
 
+    def has_add_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(Compra)
 class CompraAdmin(admin.ModelAdmin):
+    """Documento de solo lectura, como sus pares (FacturaVenta, Asiento,
+    MovimientoInventario...): nace de crear_compra/recibir_compra, nunca se
+    digita ni se borra desde acá. Para corregir una compra recibida, usar
+    anular_compra (services.py) — nunca borrarla."""
+
     list_display = ("numero", "proveedor", "estado", "forma_pago", "total", "creado_en", "recibida_en")
     list_filter = ("estado", "forma_pago")
     search_fields = ("numero", "factura_proveedor", "proveedor__nombre")
     inlines = [LineaCompraInline]
     actions = ["accion_recibir"]
+    readonly_fields = [f.name for f in Compra._meta.fields]
 
-    def get_readonly_fields(self, request, obj=None):
-        if obj and obj.estado != Compra.Estado.BORRADOR:
-            return [f.name for f in Compra._meta.fields]
-        return ("numero", "total", "estado", "recibida_en")
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
     @admin.action(description="Recibir compra (entra a inventario y contabilidad)")
     def accion_recibir(self, request, queryset):

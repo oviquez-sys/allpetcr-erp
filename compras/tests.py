@@ -2,9 +2,10 @@
 import json
 from decimal import Decimal
 
+from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from catalogo.models import Producto
@@ -14,6 +15,7 @@ from core.models import Empresa, Sucursal
 from inventario.models import Bodega
 from inventario.services import registrar_movimiento
 
+from .admin import CompraAdmin, LineaCompraInline
 from .models import Compra, Proveedor
 from .services import anular_compra, crear_compra, recibir_compra
 
@@ -168,6 +170,35 @@ class AnulacionDeCompra(BaseCompras):
         recibir_compra(compra=compra, usuario=self.usuario)
         with self.assertRaises(ValidationError):
             anular_compra(compra=compra, motivo="   ", usuario=self.usuario)
+
+
+class PermisosDeAdminTest(BaseCompras):
+    """SEC-002 (auditoría 2026-08-10): Compra era el único documento de los
+    8 admin de "documento" del proyecto (FacturaVenta, Asiento,
+    MovimientoInventario...) sin add/change/delete bloqueados en su
+    ModelAdmin. Borrar una Compra RECIBIDA desde /admin/ no revierte
+    MovimientoInventario ni Asiento (no tienen FK a Compra, solo una
+    referencia de texto) ni el saldo del proveedor — deja el documento
+    huérfano y el libro descuadrado. Estas pruebas verifican que el camino
+    quedó cerrado."""
+
+    def setUp(self):
+        super().setUp()
+        self.compra = self.nueva_compra("5", "10000", forma="CRE")
+        recibir_compra(compra=self.compra, usuario=self.usuario)
+        self.request = RequestFactory().get("/admin/compras/compra/")
+        self.request.user = self.usuario
+
+    def test_compra_admin_bloquea_add_change_delete(self):
+        admin_compra = CompraAdmin(Compra, admin.site)
+        self.assertFalse(admin_compra.has_add_permission(self.request))
+        self.assertFalse(admin_compra.has_change_permission(self.request, self.compra))
+        self.assertFalse(admin_compra.has_delete_permission(self.request, self.compra))
+
+    def test_linea_compra_inline_no_permite_borrar_ni_agregar(self):
+        inline = LineaCompraInline(Compra, admin.site)
+        self.assertFalse(inline.can_delete)
+        self.assertFalse(inline.has_add_permission(self.request, self.compra))
 
 
 class MonitorRTS(BaseCompras):

@@ -56,6 +56,7 @@ AUDITED = {
     "ventas.facturaventa",
     "ventas.documentocxc",
     "ventas.abono",
+    "ventas.devolucionventa",
     "contabilidad.asiento",
     "contabilidad.cuentacontable",
     "compras.proveedor",

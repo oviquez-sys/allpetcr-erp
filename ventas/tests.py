@@ -348,6 +348,38 @@ class DevolucionesParciales(BaseVentas):
         self.assertEqual(mov_caja.monto, Decimal("-5000"))
         self._todo_cuadra()
 
+    def test_devolucion_queda_auditada(self):
+        # AUD-001 (auditoría 2026-08-10): DevolucionVenta no estaba en el set
+        # AUDITED de core/signals.py — una devolución fraudulenta (mercadería
+        # que nunca volvió) no dejaba rastro en AuditLog, a diferencia de
+        # todos los demás documentos de negocio (factura, abono, compra...).
+        #
+        # No se compara un conteo total antes/después: registrar_devolucion
+        # crea el documento y LUEGO le fija `total` con un segundo save()
+        # (ventas/devoluciones.py), así que con el modelo auditado quedan dos
+        # filas (crear + editar) por devolución. Lo que exige AUD-001 es que
+        # exista el registro de creación sobre el documento.
+        #
+        # No se afirma `log.usuario`: ese campo lo llena
+        # core.middleware.get_current_user() vía CurrentUserMiddleware, que
+        # solo corre en una request HTTP real — esta prueba llama al servicio
+        # directo, igual que inventario.tests.test_todo_movimiento_queda_auditado,
+        # que por la misma razón tampoco lo afirma. `usuario` vía middleware
+        # ya está cubierto en inventario.tests.test_auditoria_captura_usuario_e_ip,
+        # que sí pasa por el cliente HTTP.
+        from core.models import AuditLog
+        factura = self.vender(cantidad=2, medio="EFE")
+        linea = factura.lineas.first()
+        dev = registrar_devolucion(
+            factura=factura, motivo="no le sirvió",
+            lineas=[{"linea_venta_id": linea.id, "cantidad": 1}], usuario=self.usuario,
+        )
+        self.assertTrue(
+            AuditLog.objects.filter(
+                tabla="ventas.devolucionventa", objeto_id=str(dev.pk), accion="crear",
+            ).exists()
+        )
+
     def test_no_se_puede_devolver_mas_de_lo_comprado_acumulado(self):
         factura = self.vender(cantidad=3, medio="EFE")
         linea = factura.lineas.first()
