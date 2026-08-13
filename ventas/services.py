@@ -24,6 +24,15 @@ from inventario.services import registrar_movimiento
 
 from .models import Consecutivo, FacturaVenta, LineaVenta
 
+# Descuento máximo que un cajero puede aplicar por línea sin que un gerente
+# autorice la venta (SEC-001, auditoría 2026-08-10). Antes no había ningún
+# techo propio: el único freno era no vender bajo costo, que no protege el
+# margen de productos con margen amplio (un cajero podía regalar la mitad
+# del margen a un cómplice sin que nada lo bloqueara ni lo distinguiera de
+# un descuento legítimo). Valor de negocio, no técnico — decidir con el
+# dueño antes de cambiarlo.
+DESCUENTO_MAXIMO_SIN_AUTORIZACION = Decimal("15")
+
 
 def _desglose_fiscal(empresa, producto, total_linea):
     """Devuelve (subtotal, impuesto) de una línea según el régimen."""
@@ -36,13 +45,18 @@ def _desglose_fiscal(empresa, producto, total_linea):
 
 @transaction.atomic
 def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
-                    permitir_bajo_costo=False) -> FacturaVenta:
+                    permitir_bajo_costo=False, permitir_descuento_alto=False) -> FacturaVenta:
     """lineas: iterable de dicts {"producto_id": int, "cantidad": Decimal}.
 
     permitir_bajo_costo: por defecto NO se puede vender un producto por debajo
     de su costo promedio (protege el margen y cierra un hueco de fraude: un
     cajero descontando de más). El gerente sí puede autorizarlo (la vista lo
-    pasa en True cuando quien vende es gerente)."""
+    pasa en True cuando quien vende es gerente).
+
+    permitir_descuento_alto: por defecto un cajero no puede aplicar más de
+    DESCUENTO_MAXIMO_SIN_AUTORIZACION por línea (SEC-001) — protege el margen
+    en productos donde ese descuento no llega a bajar del costo, que es lo
+    único que el freno anterior cubría. El gerente sí puede autorizarlo."""
     # Releer la sesión desde la BD con bloqueo: el objeto en memoria puede
     # estar desactualizado (p. ej., la caja se cerró desde otra pantalla).
     sesion_caja = SesionCaja.objects.select_for_update().get(pk=sesion_caja.pk)
@@ -111,6 +125,16 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
                         f"queda por debajo del costo (₡{producto.costo_promedio}). "
                         "Un gerente debe autorizar la venta bajo costo."
                     )
+            # Techo de descuento sin autorización (SEC-001): independiente del
+            # piso de costo — un producto con margen amplio puede aceptar un
+            # descuento grande sin bajar del costo, y aun así representar una
+            # fuga de margen que un cajero no debería poder decidir solo.
+            if not permitir_descuento_alto and desc_pct > DESCUENTO_MAXIMO_SIN_AUTORIZACION:
+                raise ValidationError(
+                    f"{producto.nombre}: un descuento de {desc_pct}% supera el "
+                    f"{DESCUENTO_MAXIMO_SIN_AUTORIZACION}% que un cajero puede aplicar sin "
+                    "autorización. Pedile a un gerente que registre la venta."
+                )
             sub_l, imp_l = _desglose_fiscal(empresa, producto, total_linea)
             tipo_kardex = "VEN"
 

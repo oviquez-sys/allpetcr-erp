@@ -403,9 +403,13 @@ class DevolucionesParciales(BaseVentas):
 
     # ---------- Con descuento ----------
     def test_devolucion_prorratea_el_descuento(self):
+        # 20% > el 15% de SEC-001: esta prueba no trata sobre autorización de
+        # descuentos, así que se autoriza explícitamente para aislar lo que
+        # sí prueba (el prorrateo del descuento en la devolución).
         factura = registrar_venta(
             sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
             lineas=[{"producto_id": self.producto.pk, "cantidad": 4, "descuento_pct": 20}],
+            permitir_descuento_alto=True,
         )
         # 4×5000=20000, 20% desc = 4000, total línea 16000 -> por unidad 4000
         linea = factura.lineas.first()
@@ -625,6 +629,9 @@ class VentaBajoCosto(BaseVentas):
             sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
             lineas=[{"producto_id": self.producto.pk, "cantidad": 1, "descuento_pct": 70}],
             permitir_bajo_costo=True,
+            # 70% también supera el 15% de SEC-001: un gerente autoriza ambas
+            # protecciones a la vez (la vista siempre las pasa juntas).
+            permitir_descuento_alto=True,
         )
         self.assertEqual(factura.total, Decimal("1500.00"))
 
@@ -650,3 +657,62 @@ class VentaBajoCosto(BaseVentas):
         )
         self.assertEqual(r.status_code, 400)
         self.assertIn("costo", r.json()["error"].lower())
+
+
+class VentaDescuentoAlto(BaseVentas):
+    """SEC-001 (auditoría 2026-08-10): un cajero no puede aplicar más de
+    DESCUENTO_MAXIMO_SIN_AUTORIZACION (15%) por línea sin que un gerente
+    autorice la venta. Es una protección aparte del piso de costo: usa un
+    20% sobre el producto de prueba (precio 5000, costo 2000) porque ese
+    descuento NO baja del costo (total 4000 > 2000) — así se prueba el
+    techo de descuento aislado, sin que el piso de costo interfiera."""
+
+    def test_bloquea_descuento_mayor_al_umbral_sin_autorizacion(self):
+        with self.assertRaises(ValidationError):
+            registrar_venta(
+                sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
+                lineas=[{"producto_id": self.producto.pk, "cantidad": 1, "descuento_pct": 20}],
+                permitir_descuento_alto=False,
+            )
+
+    def test_gerente_puede_autorizar_descuento_alto(self):
+        factura = registrar_venta(
+            sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
+            lineas=[{"producto_id": self.producto.pk, "cantidad": 1, "descuento_pct": 20}],
+            permitir_descuento_alto=True,
+        )
+        self.assertEqual(factura.total, Decimal("4000.00"))
+
+    def test_descuento_igual_al_umbral_no_requiere_autorizacion(self):
+        # Exactamente 15%: dentro del límite, no se bloquea.
+        factura = registrar_venta(
+            sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
+            lineas=[{"producto_id": self.producto.pk, "cantidad": 1, "descuento_pct": 15}],
+            permitir_descuento_alto=False,
+        )
+        self.assertEqual(factura.total, Decimal("4250.00"))
+
+    def test_endpoint_cajero_no_puede_superar_umbral_de_descuento(self):
+        from django.contrib.auth.models import Group
+        cajero = User.objects.create_user("laura", password="c", is_staff=True)
+        cajero.groups.add(Group.objects.get(name="Cajero"))
+        abrir_caja(sucursal=self.sucursal, usuario=cajero, monto_apertura=Decimal("0"))
+        self.client.force_login(cajero)
+        r = self.client.post(
+            reverse("ventas:vender"),
+            data='{"medio_pago":"EFE","lineas":[{"producto_id":%d,"cantidad":1,"descuento_pct":20}]}' % self.producto.pk,
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("15", r.json()["error"])
+
+    def test_endpoint_gerente_si_puede_superar_umbral_de_descuento(self):
+        # self.usuario (BaseVentas) ya es superusuario/gerente.
+        self.client.force_login(self.usuario)
+        r = self.client.post(
+            reverse("ventas:vender"),
+            data='{"medio_pago":"EFE","lineas":[{"producto_id":%d,"cantidad":1,"descuento_pct":20}]}' % self.producto.pk,
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["ok"])
