@@ -111,8 +111,9 @@
     "severidad": "alto",
     "fase": "1-seguridad",
     "titulo": "Los respaldos (manage.py respaldar) se guardan en una carpeta común con auto-rotación que borra los más viejos; el mismo administrador que podría necesitar cubrir un fraude puede borrar o esperar a que se borren solos los respaldos que lo probarían",
-    "evidencia": "core/management/commands/respaldar.py:206-227 (_rotar, borra automáticamente los más viejos); carpeta configurable por ALLPETCR_RESPALDOS, hoy en OneDrive según CLAUDE.md. Nivel de prioridad 2: mandar automáticamente una copia del respaldo periódico al otro socio, en vez de infraestructura WORM nueva (evaluada como overkill en esta etapa). Detalle en 01_seguridad.md, sección 'FRA-001 a FRA-005'",
-    "archivos": ["core/management/commands/respaldar.py"],
-    "estado": "abierto"
+    "evidencia": "[IMPLEMENTADO 2026-08-15, commit bac4bec, PENDIENTE DE VERIFICACIÓN] core/management/commands/respaldar.py:_b2_configurado/_subir_a_b2 — sube el zip a Backblaze B2 (Object Lock, modo Compliance, 30 días) con una Application Key Write Only, cuando están definidas B2_BUCKET/B2_KEY_ID/B2_APPLICATION_KEY/B2_ENDPOINT. Diseño verificado contra la documentación oficial de B2 (no contra una cuenta real). Condición de cierre, aún no confirmada: contra la cuenta real de B2, (1) que Object Lock efectivamente bloquea el archivo subido en modo Compliance con 30 días de retención, y (2) que la Application Key Write Only configurada rechaza un intento de borrado. 3 pruebas con boto3 mockeado (core/test_respaldos.py) — no sustituyen esta verificación contra la cuenta real. Detalle en 01_seguridad.md, sección 'FRA-001 a FRA-005'",
+    "archivos": ["core/management/commands/respaldar.py", "core/test_respaldos.py", "requirements.txt", ".env.example", "PRODUCCION.txt"],
+    "estado": "implementado_pendiente_verificacion",
+    "commit": "bac4bec"
   }
 ]
