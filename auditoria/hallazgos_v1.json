@@ -89,9 +89,10 @@
     "severidad": "alto",
     "fase": "1-seguridad",
     "titulo": "manage.py restaurar --confirmar reemplaza la base completa (incluida AuditLog) con un respaldo anterior; la única protección es una copia local alcanzable por quien acaba de correr el comando",
-    "evidencia": "core/management/commands/restaurar.py (copia 'antes de restaurar' en el mismo disco; _restaurar_postgres usa pg_restore --clean --if-exists, que borra y recrea todo). Nivel de prioridad 2 (vale la pena, no bloqueante): notificación automática a ambos socios cuando corre el comando, reusando el mecanismo de FRA-004. Detalle en 01_seguridad.md, sección 'FRA-001 a FRA-005'",
-    "archivos": ["core/management/commands/restaurar.py"],
-    "estado": "abierto"
+    "evidencia": "[CERRADO 2026-08-15] core/management/commands/restaurar.py:_capturar_auditlog/_restaurar_auditlog — captura core_auditlog de la base VIVA antes de pg_restore/copia de archivo, y la reescribe después, reemplazando lo que trajera el respaldo. Seguro porque AuditLog es de solo agregar (FRA-001/002). usuario_id que no existe en la base restaurada queda NULL (mismo criterio que on_delete=SET_NULL del modelo). Tolerante a fallas: si la tabla no existe, avisa y el resto de la restauración sigue igual que antes. 4 pruebas nuevas (core/test_restaurar_auditlog.py); camino PostgreSQL verificado a mano (solo lectura) contra la base real. Pendiente, no implementado: notificación automática a ambos socios cuando corre el comando (nivel 2 original de FRA-003, reusaría el mecanismo de FRA-004) — el fix implementado ataca la causa (el borrado en sí), la notificación seguiría siendo una mejora complementaria, no bloqueante",
+    "archivos": ["core/management/commands/restaurar.py", "core/test_restaurar_auditlog.py"],
+    "estado": "cerrado",
+    "commit": "ee36944"
   },
   {
     "id": "FRA-004",
