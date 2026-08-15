@@ -99,8 +99,9 @@
     "fase": "1-seguridad",
     "titulo": "No existe ningún reporte periódico automático que llegue de forma independiente a ambos socios; la única forma de detectar una anomalía hoy es que alguien entre a revisar",
     "evidencia": "Verificado por ausencia: core/reportes.py no tiene ningún comando/tarea programada de envío; el envío de correo (config/settings.py:285-302) solo se usa hoy para facturas a pedido (ventas/views.py:factura_enviar). Nivel de prioridad 1 (el de mayor costo/beneficio de los cinco): reutiliza infraestructura de correo ya existente. Detalle en 01_seguridad.md, sección 'FRA-001 a FRA-005'",
-    "archivos": ["core/reportes.py", "config/settings.py"],
-    "estado": "abierto"
+    "archivos": ["core/reportes.py", "config/settings.py", "core/management/commands/reporte_diario.py", "templates/core/reporte_diario_email.html"],
+    "estado": "cerrado",
+    "commit": "b499198"
   },
   {
     "id": "FRA-005",
