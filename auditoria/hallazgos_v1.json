@@ -1,0 +1,68 @@
+[
+  {
+    "id": "SEC-001",
+    "severidad": "alto",
+    "fase": "1-seguridad",
+    "titulo": "Descuento de línea sin tope propio ni autorización de supervisor (solo limitado por el piso de costo)",
+    "evidencia": "ventas/services.py:98-113 — descuento_pct acepta 0-100 sin exigir segundo permiso; el único freno es no vender bajo costo_promedio, que no bloquea descuentos dentro del margen del producto",
+    "archivos": ["ventas/services.py", "ventas/views.py"],
+    "estado": "cerrado",
+    "commit": "a4d3008"
+  },
+  {
+    "id": "AUD-001",
+    "severidad": "alto",
+    "fase": "1-seguridad",
+    "titulo": "DevolucionVenta no está en el set AUDITED: las devoluciones no generan fila en AuditLog",
+    "evidencia": "core/signals.py:47-63 (ausencia de 'ventas.devolucionventa' en AUDITED, sin nota de exclusión deliberada como la que sí existe para las líneas de detalle)",
+    "archivos": ["core/signals.py", "ventas/devoluciones.py", "ventas/admin.py"],
+    "estado": "cerrado",
+    "commit": "b768b39"
+  },
+  {
+    "id": "SEC-002",
+    "severidad": "alto",
+    "fase": "1-seguridad",
+    "titulo": "CompraAdmin es el único admin de documento sin has_change_permission/has_delete_permission bloqueados; permite borrar una compra RECIBIDA dejando MovimientoInventario y Asiento huérfanos (intactos pero sin documento origen) y Proveedor.saldo inflado sin autocorrección",
+    "evidencia": "compras/admin.py (ausencia de has_add_permission/has_change_permission/has_delete_permission override; LineaCompraInline sin can_delete=False), contrastado con ventas/admin.py:42-49, contabilidad/admin.py:46-53, inventario/admin.py:23-30. Detección parcial: core/management/commands/reconciliar.py:159-179 sí reporta el descuadre de Proveedor.saldo si la compra era a crédito; no detecta nada si era de contado. AuditLog sí registra el borrado (compras.compra está en AUDITED, core/signals.py:47-63) pero no el detalle de líneas (compras.lineacompra está en NO_AUDITADOS_A_PROPOSITO, core/signals.py:69-73). Severidad calibrada en 01_seguridad.md, sección 'SEC-002 — por qué alto y no crítico'",
+    "archivos": ["compras/admin.py", "compras/services.py", "core/management/commands/reconciliar.py", "core/signals.py"],
+    "estado": "cerrado",
+    "commit": "b768b39"
+  },
+  {
+    "id": "SEC-003",
+    "severidad": "bajo",
+    "fase": "1-seguridad",
+    "titulo": "ProductoAdmin.entrada_view abre Producto por ID sin pasar por core.tenancy.documento_de_empresa (único punto de los 7 apps fuera de tenancy.py mismo)",
+    "evidencia": "catalogo/admin.py:86",
+    "archivos": ["catalogo/admin.py"],
+    "estado": "abierto"
+  },
+  {
+    "id": "SEC-004",
+    "severidad": "bajo",
+    "fase": "1-seguridad",
+    "titulo": "Sin 2FA para roles administrativos, sin límite de sesiones concurrentes, sin flujo propio de recuperación de contraseña",
+    "evidencia": "requirements.txt (sin paquete 2FA), config/settings.py (sin límite de sesión concurrente), config/urls.py (sin rutas password_reset*)",
+    "archivos": ["requirements.txt", "config/settings.py", "config/urls.py"],
+    "estado": "abierto"
+  },
+  {
+    "id": "SEC-005",
+    "severidad": "critico",
+    "fase": "1-seguridad",
+    "titulo": "Los management commands no tienen ninguna autorización de aplicación; en el despliegue real la máquina accesible es el propio POS del mostrador, usado por el Cajero sin supervisión durante todo su turno, por lo que un solo comando documentado (asignar_rol --dueno) da superusuario instantáneo y bypassea todos los demás controles de esta fase, incluida la inmutabilidad de AuditLog (que solo protege la UI de /admin/, no el ORM/shell)",
+    "evidencia": "core/management/commands/asignar_rol.py (sin chequeo de quién ejecuta), core/management/commands/restaurar.py (solo exige --confirmar), core/admin.py:26-33 (has_delete_permission=False es un candado de ModelAdmin, no del ORM — no aplica desde manage.py shell). Recalificado de medio a crítico en esta sesión tras confirmar el usuario que la máquina del ERP es el mostrador físico, no un servidor con acceso controlado. Justificación completa en 01_seguridad.md, sección 'SEC-005 — recalificación de medio a crítico'. Variable aún NO VERIFICADA que podría mitigar: si la cuenta de Windows de los cajeros está restringida (sin terminal/PowerShell)",
+    "archivos": ["core/management/commands/asignar_rol.py", "core/management/commands/restaurar.py", "core/management/commands/reconciliar.py", "core/admin.py"],
+    "estado": "abierto"
+  },
+  {
+    "id": "SEC-006",
+    "severidad": "alto",
+    "fase": "1-seguridad",
+    "titulo": "Marcar una línea de venta como es_regalia (precio 0) no tiene validación de rol y no pasa por el piso de costo que sí limita a los descuentos (SEC-001); cualquier Cajero puede entregar mercadería de cualquier valor sin cobrar nada y sin aprobación",
+    "evidencia": "ventas/services.py:87-113 (la rama 'if es_regalia:' está fuera del bloque de piso de costo, líneas 104-113 — ese chequeo no se ejecuta para regalías); ventas/views.py:71-99 (vender, @rol_requerido(CAJERO, GERENTE) sin distinción para es_regalia, a diferencia de permitir_bajo_costo=es_gerente(...) en la línea 88); templates/ventas/pos.html (botón 'Regalo' sin ningún {% if es_gerente %}). Trazabilidad dispersa, verificada: ventas.lineaventa está en NO_AUDITADOS_A_PROPOSITO (core/signals.py:69-73, sin AuditLog directo); sí genera MovimientoInventario tipo=REG (auditado, inventario.movimientoinventario está en AUDITED) y un asiento a la cuenta 'Gasto por regalías' (ventas/contabilizar.py:_costos_por_tipo); core/reportes.py:mas_vendidos (líneas 37-38) mezcla unidades regaladas con vendidas sin desglosar. Descubierto investigando SEC-001, antes de implementarlo. Análisis completo en 01_seguridad.md, sección 'SEC-006 — hallazgo nuevo, descubierto investigando SEC-001'. Implementación diferida: depende de una decisión de negocio (igual que SEC-001), no se corrige en esta sesión",
+    "archivos": ["ventas/services.py", "ventas/views.py", "templates/ventas/pos.html", "core/reportes.py"],
+    "estado": "abierto"
+  }
+]
