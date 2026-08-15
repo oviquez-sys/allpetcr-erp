@@ -63,6 +63,7 @@
     "titulo": "Marcar una línea de venta como es_regalia (precio 0) no tiene validación de rol y no pasa por el piso de costo que sí limita a los descuentos (SEC-001); cualquier Cajero puede entregar mercadería de cualquier valor sin cobrar nada y sin aprobación",
     "evidencia": "ventas/services.py:87-113 (la rama 'if es_regalia:' está fuera del bloque de piso de costo, líneas 104-113 — ese chequeo no se ejecuta para regalías); ventas/views.py:71-99 (vender, @rol_requerido(CAJERO, GERENTE) sin distinción para es_regalia, a diferencia de permitir_bajo_costo=es_gerente(...) en la línea 88); templates/ventas/pos.html (botón 'Regalo' sin ningún {% if es_gerente %}). Trazabilidad dispersa, verificada: ventas.lineaventa está en NO_AUDITADOS_A_PROPOSITO (core/signals.py:69-73, sin AuditLog directo); sí genera MovimientoInventario tipo=REG (auditado, inventario.movimientoinventario está en AUDITED) y un asiento a la cuenta 'Gasto por regalías' (ventas/contabilizar.py:_costos_por_tipo); core/reportes.py:mas_vendidos (líneas 37-38) mezcla unidades regaladas con vendidas sin desglosar. Descubierto investigando SEC-001, antes de implementarlo. Análisis completo en 01_seguridad.md, sección 'SEC-006 — hallazgo nuevo, descubierto investigando SEC-001'. Implementación diferida: depende de una decisión de negocio (igual que SEC-001), no se corrige en esta sesión",
     "archivos": ["ventas/services.py", "ventas/views.py", "templates/ventas/pos.html", "core/reportes.py"],
-    "estado": "abierto"
+    "estado": "cerrado",
+    "commit": "307a024"
   }
 ]

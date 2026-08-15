@@ -8,31 +8,18 @@ esto es solo el checklist de la sesión de auditoría en curso.
 (SEC-002 + AUD-001).
 
 ## 2. Implementar SEC-006
-**Pendiente.** Decisión de negocio ya tomada:
-- Cajero puede seguir marcando `es_regalia`, pero con **motivo obligatorio**
-  y **tope de ₡5,000** por línea (calculado sobre `precio_venta * cantidad`).
-- Por encima del tope, requiere autorización de Gerente (mismo patrón que
-  `permitir_bajo_costo` / `permitir_descuento_alto` de SEC-001).
-
-Archivos a tocar:
-- `ventas/services.py` — nueva constante `REGALIA_MAXIMA_SIN_AUTORIZACION`,
-  parámetro `permitir_regalia_alta`, validación de motivo dentro de la rama
-  `if es_regalia:` de `registrar_venta`.
-- `ventas/views.py` — pasar `permitir_regalia_alta=es_gerente(request.user)`
-  en `vender()`.
-- `templates/ventas/pos.html` — input de motivo en el toggle de "Regalo",
-  incluirlo en el payload de `cobrar()`.
-- `ventas/tests.py` — clase de tests nueva, mismo patrón que
-  `VentaDescuentoAlto`.
-
-Workflow acordado: un cambio a la vez, mostrar diff, correr tests de
-`ventas`, esperar aprobación antes de seguir. Commit aparte al cerrar.
+**Hecho.** Commit `307a024`, pusheado. Motivo obligatorio y tope de ₡5,000
+por línea (`REGALIA_MAXIMA_SIN_AUTORIZACION`), autorización de Gerente vía
+`permitir_regalia_alta`, mismo patrón que `permitir_bajo_costo` /
+`permitir_descuento_alto` de SEC-001. Tocados: `ventas/services.py`,
+`ventas/views.py`, `templates/ventas/pos.html`, `ventas/tests.py` (7 tests
+nuevos en `VentaRegaliaAlta` + 6 ajustados). 151/151 en verde
+(`ventas caja compras contabilidad inventario`).
 
 ## 3. Actualizar `auditoria/hallazgos_v1.json` y `01_seguridad.md`
-**Pendiente.** SEC-001, AUD-001 y SEC-002 siguen con `"estado": "abierto"`
-aunque ya están corregidos y pusheados. Actualizar a `"cerrado"` (o el valor
-que corresponda) en ambos archivos. SEC-006 se queda en `"abierto"` hasta
-que el punto 2 esté implementado y commiteado.
+**Hecho.** SEC-001 (`a4d3008`), AUD-001 (`b768b39`), SEC-002 (`b768b39`) y
+SEC-006 (`307a024`) quedan `"estado": "cerrado"` con su commit en ambos
+archivos.
 
 ## 4. SEC-005 (crítico, no es código)
 **Pendiente de respuesta del usuario.** No se corrige con código — es una
