@@ -92,6 +92,21 @@ Al crear usuarios ahora es OBLIGATORIO poner una contraseña fuerte (se acabó l
 clave por defecto). Sumá doble factor (2FA) para las cuentas con más poder cuando
 puedas: es la siguiente capa recomendada.
 
+-------------------------------------------------
+4b) ENDURECER LA BITÁCORA (fraude interno, FRA-002)
+-------------------------------------------------
+Un paso más de la Fase 1: que editar o borrar la bitácora (AuditLog) por
+SQL directo o "manage.py shell" deje de ser gratis. Se corre UNA VEZ, sobre
+la base de PostgreSQL de producción, después de migrate:
+        python manage.py endurecer_auditlog              # solo muestra el estado
+        python manage.py endurecer_auditlog --confirmar  # aplica el REVOKE
+
+Límite conocido (lo explica el propio comando al correrlo): el rol de la
+app es dueño de la tabla, así que sube el costo de manipularla, pero no lo
+vuelve imposible — un dueño siempre puede volver a otorgarse el permiso.
+Blindaje completo requeriría un rol de base de datos separado, más
+trabajo, fuera de alcance de este paso.
+
 
 -------------------------------------------------
 5) RESPALDOS EN LA NUBE (regla 3-2-1)
