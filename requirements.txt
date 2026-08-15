@@ -7,3 +7,4 @@ psycopg2-binary>=2.9   # PostgreSQL en producción (VPS)
 gunicorn>=21.0         # servidor de aplicación en producción
 django-axes>=6.0       # bloqueo de login por fuerza bruta (activar con DJANGO_ENABLE_AXES=1)
 anthropic>=0.120       # asistente de chat del ERP (core/views.py lo importa al arrancar)
+boto3>=1.34            # respaldo a Backblaze B2 (API S3-compatible), FRA-005

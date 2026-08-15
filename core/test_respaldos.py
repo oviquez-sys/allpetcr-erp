@@ -6,12 +6,16 @@ contra un archivo SQLite temporal real (creado a mano), apuntando la
 configuración a él con override_settings. Así validamos fielmente:
 respaldo consistente, inclusión de fotos, rotación y ciclo respaldar→restaurar.
 """
+import os
 import sqlite3
 import tempfile
 import zipfile
 from pathlib import Path
+from unittest import mock
 
+from botocore.exceptions import ClientError
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import SimpleTestCase, override_settings
 
 
@@ -117,3 +121,57 @@ class RespaldoTest(RespaldoBase):
         _crear_db(self.db, "SIN_TOCAR")
         call_command("restaurar", archivo=zip_name, destino=str(self.resp), verbosity=0)
         self.assertEqual(_leer_db(self.db), "SIN_TOCAR")
+
+
+_VARS_B2 = {
+    "B2_BUCKET": "allpetcr-respaldos-prueba",
+    "B2_KEY_ID": "keyid-de-prueba",
+    "B2_APPLICATION_KEY": "applicationkey-de-prueba",
+    "B2_ENDPOINT": "s3.us-west-004.backblazeb2.com",
+}
+
+
+class RespaldoB2Test(RespaldoBase):
+    """FRA-005: el envío a B2 nunca debe tocar la red real en un test —
+    se mockea boto3.client por completo. Lo que se prueba es que el
+    comando arma la llamada correcta y que el respaldo local no depende
+    de que B2 funcione."""
+
+    def test_sin_variables_b2_no_llama_a_boto3(self):
+        with mock.patch("core.management.commands.respaldar.boto3.client") as cliente_mock:
+            self._respaldar()
+        cliente_mock.assert_not_called()
+
+    def test_con_variables_b2_sube_el_zip_correcto(self):
+        with mock.patch.dict(os.environ, _VARS_B2), \
+             mock.patch("core.management.commands.respaldar.boto3.client") as cliente_mock:
+            self._respaldar()
+        zip_name = next(self.resp.glob("*.zip")).name
+
+        cliente_mock.assert_called_once_with(
+            "s3",
+            endpoint_url="https://s3.us-west-004.backblazeb2.com",
+            aws_access_key_id="keyid-de-prueba",
+            aws_secret_access_key="applicationkey-de-prueba",
+        )
+        cliente_mock.return_value.upload_file.assert_called_once()
+        args, _ = cliente_mock.return_value.upload_file.call_args
+        self.assertTrue(args[0].endswith(zip_name))
+        self.assertEqual(args[1], "allpetcr-respaldos-prueba")
+        self.assertEqual(args[2], zip_name)
+
+    def test_fallo_de_subida_no_pierde_el_respaldo_local(self):
+        with mock.patch.dict(os.environ, _VARS_B2), \
+             mock.patch("core.management.commands.respaldar.boto3.client") as cliente_mock:
+            cliente_mock.return_value.upload_file.side_effect = ClientError(
+                {"Error": {"Code": "AccessDenied", "Message": "denegado"}}, "PutObject"
+            )
+            with self.assertRaises(CommandError):
+                self._respaldar()
+
+        # El zip local ya se había creado y rotado ANTES de intentar subir
+        # a B2 — un fallo de red/credenciales no debe perderlo.
+        zips = list(self.resp.glob("respaldo_allpetcr_*.zip"))
+        self.assertEqual(len(zips), 1)
+        with zipfile.ZipFile(zips[0]) as z:
+            self.assertIn("db.sqlite3", z.namelist())

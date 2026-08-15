@@ -115,7 +115,7 @@ El sistema ya hace respaldos con rotación. En el servidor:
   - Agendá el respaldo diario (cron).
   - Guardá una copia en un lugar INDEPENDIENTE del servidor (otro bucket/nube,
     o descargarlos periódicamente). Si el servidor se pierde, los respaldos no
-    deben perderse con él.
+    deben perderse con él. Ver 5c) para la copia automática e inmutable.
   - Conservá aparte el respaldo del cierre de cada mes.
 
 
@@ -139,6 +139,82 @@ se recomienda para "manage.py reconciliar" (ver también RESPALDOS.txt).
 
 Probar antes de agendar en firme:
         python manage.py reporte_diario --fecha AAAA-MM-DD --destinatarios tucorreo@ejemplo.com
+
+
+-------------------------------------------------
+5c) RESPALDO INMUTABLE A BACKBLAZE B2 (fraude interno, FRA-005)
+-------------------------------------------------
+Con el servidor en DigitalOcean administrado por los dos socios, mandarle
+una copia del respaldo al "otro socio" no alcanza: los dos ya tienen el
+mismo nivel de acceso al servidor. Hace falta un tercero que NINGUNO de
+los dos pueda alterar desde ahí — Object Lock de Backblaze B2 en modo
+Compliance hace exactamente eso: una vez subido un archivo, nadie puede
+borrarlo ni modificarlo antes de que venza la retención, ni siquiera el
+dueño de la cuenta.
+
+Se evaluó DigitalOcean Spaces primero y se descartó: no tiene Object Lock
+(solo reglas de expiración, que BORRAN, no protegen) y sus llaves de
+acceso no tienen un nivel "solo escritura, sin borrado". Backblaze B2 sí
+tiene ambas piezas.
+
+PASO A PASO (una sola vez, por un socio, desde el panel web de B2):
+
+1. Crear el bucket:
+   - En el panel de B2, "Create a Bucket".
+   - Nombre: por ejemplo "allpetcr-respaldos".
+   - "Object Lock": ACTIVAR al crear el bucket (más simple que activarlo
+     después, aunque también se puede sobre uno ya existente).
+
+2. Configurar la retención por defecto del bucket:
+   - Dentro del bucket, configuración de Object Lock → "Default Retention".
+   - Modo: COMPLIANCE (no Governance — Compliance es el que nadie, ni el
+     dueño de la cuenta, puede saltarse antes de tiempo).
+   - Período: 30 días.
+   - A partir de acá, TODO archivo que se suba a este bucket queda
+     protegido automáticamente — no hace falta que la app pida nada
+     especial al subir.
+
+3. Crear la Application Key para el servidor:
+   - Panel de B2 → "Application Keys" → "Add a New Application Key".
+   - "Allow access to Bucket(s)": elegir SOLO "allpetcr-respaldos" (nunca
+     "All").
+   - "Type of Access": **Write Only**. NO elegir "Read and Write" — esa
+     llave, aunque el bucket tenga Object Lock, podría listar y ver los
+     respaldos; "Write Only" no puede ni listar ni borrar.
+   - "File name prefix": opcional, restringe la llave a nombres que
+     empiecen con "respaldo_allpetcr_" (mismo prefijo que ya usa el
+     comando) — un paso extra de acotamiento, no imprescindible.
+   - "Allow List All Bucket Names": dejar SIN marcar.
+   - Guardar el "keyID" y la "applicationKey" que se muestran UNA sola vez
+     — no se pueden volver a ver después.
+
+4. Completar el .env del servidor (ver .env.example):
+        B2_BUCKET=allpetcr-respaldos
+        B2_KEY_ID=<el keyID del paso 3>
+        B2_APPLICATION_KEY=<el applicationKey del paso 3>
+        B2_ENDPOINT=<el endpoint S3 de tu región, ej. s3.us-west-004.backblazeb2.com>
+
+5. Probar: correr "python manage.py respaldar" y confirmar en el panel de
+   B2 que el archivo llegó, y que su "Retention" muestra "Compliance,
+   expira en 30 días".
+
+Con esto configurado, cada corrida de "python manage.py respaldar" sube
+automáticamente el zip a B2 además de guardarlo local — no hace falta
+ningún paso manual día a día.
+
+LÍMITE CONOCIDO (documentado a propósito): esto protege la copia YA
+subida, no la máquina que la sube. Si alguien roba las credenciales del
+servidor (.env), puede seguir subiendo respaldos nuevos (es justo lo que
+debe poder hacer), pero no puede borrar ni sobrescribir los que ya están
+protegidos por Object Lock. Purgar un archivo bloqueado exige, aunque sea
+con la cuenta completa de B2, esperar a que venza el plazo de 30 días —
+no hay atajo.
+
+RESTAURAR DESDE B2 (manual, si hace falta): descargar el zip desde el
+panel web de B2, o con el cliente S3 de AWS apuntando al endpoint de B2:
+        aws s3 cp s3://allpetcr-respaldos/NOMBRE.zip . --endpoint-url https://TU_ENDPOINT
+y después seguir el flujo normal de "python manage.py restaurar --archivo
+NOMBRE.zip --confirmar" con ese zip ya en la carpeta local de respaldos.
 
 
 -------------------------------------------------

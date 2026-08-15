@@ -15,6 +15,15 @@ Puntos clave del diseño:
     más viejos se borran solos, para no llenar el disco.
   * La carpeta de respaldos vive dentro del proyecto (que OneDrive sincroniza),
     así que además queda una copia fuera de la computadora.
+  * Si están definidas las variables B2_BUCKET/B2_KEY_ID/B2_APPLICATION_KEY/
+    B2_ENDPOINT, el zip también se sube a Backblaze B2 (FRA-005, auditoría
+    2026-08-15) — un tercero que ni siquiera un administrador del servidor
+    puede alterar: la Application Key configurada es "Write Only" (sin
+    listar ni borrar) y el bucket tiene Object Lock en modo Compliance, que
+    ninguna cuenta puede saltarse antes de que venza la retención. Ver
+    PRODUCCION.txt para cómo crear el bucket y la llave. Sin esas variables,
+    esta parte simplemente no corre — el respaldo local sigue igual que
+    siempre.
 
 Uso:
     python manage.py respaldar
@@ -31,12 +40,16 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 logger = logging.getLogger(__name__)
 
 PREFIJO = "respaldo_allpetcr_"
+
+_VARIABLES_B2 = ("B2_BUCKET", "B2_KEY_ID", "B2_APPLICATION_KEY", "B2_ENDPOINT")
 
 
 def carpeta_respaldos(destino=None) -> Path:
@@ -46,6 +59,12 @@ def carpeta_respaldos(destino=None) -> Path:
     if env:
         return Path(env)
     return Path(settings.BASE_DIR) / "respaldos"
+
+
+def _b2_configurado() -> bool:
+    """Ausencia de configuración apaga el envío a B2, no lo rompe — mismo
+    criterio que EMAIL_HOST_PASSWORD en config/settings.py."""
+    return all(os.environ.get(v) for v in _VARIABLES_B2)
 
 
 def _copia_consistente_sqlite(db_path: Path, salida: Path):
@@ -131,6 +150,37 @@ class Command(BaseCommand):
         ))
         if borrados:
             self.stdout.write(f"Se borraron {borrados} respaldo(s) viejo(s); se conservan los últimos {opts['conservar']}.")
+
+        if _b2_configurado():
+            try:
+                self._subir_a_b2(zip_path)
+            except (BotoCoreError, ClientError) as e:
+                # El respaldo local YA está hecho y rotado — un fallo acá no
+                # lo pierde. Pero tiene que quedar visible: código de salida
+                # distinto de cero para que el cron lo note.
+                raise CommandError(
+                    f"El respaldo local quedó bien ({zip_path.name}), pero no se "
+                    f"pudo subir a Backblaze B2: {e}"
+                )
+            self.stdout.write(self.style.SUCCESS(f"Copia enviada a Backblaze B2: {zip_path.name}"))
+
+    # --- respaldo a Backblaze B2 (FRA-005) ---
+    def _subir_a_b2(self, zip_path: Path):
+        """Sube el zip a B2 vía su API S3-compatible.
+
+        Sin list_objects ni delete_object en ningún lado de este método, a
+        propósito: la Application Key configurada (ver PRODUCCION.txt) es
+        "Write Only" — no tiene esos permisos de todos modos. El bucket con
+        Object Lock en modo Compliance hace el resto: nadie, ni con esta
+        llave ni con la cuenta completa, puede borrar la versión subida
+        antes de que venza la retención (30 días por defecto)."""
+        cliente = boto3.client(
+            "s3",
+            endpoint_url=f"https://{os.environ['B2_ENDPOINT']}",
+            aws_access_key_id=os.environ["B2_KEY_ID"],
+            aws_secret_access_key=os.environ["B2_APPLICATION_KEY"],
+        )
+        cliente.upload_file(str(zip_path), os.environ["B2_BUCKET"], zip_path.name)
 
     # --- respaldo de PostgreSQL ---
     def _volcar_postgres(self, tmp: Path):
