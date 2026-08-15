@@ -33,6 +33,14 @@ from .models import Consecutivo, FacturaVenta, LineaVenta
 # dueño antes de cambiarlo.
 DESCUENTO_MAXIMO_SIN_AUTORIZACION = Decimal("15")
 
+# Valor máximo (precio de lista × cantidad) que un cajero puede regalar por
+# línea sin que un gerente autorice la venta (SEC-006, auditoría 2026-08-10).
+# Antes una regalía no tenía techo ni control de rol: cualquier cajero podía
+# marcar es_regalia y sacar mercadería de cualquier valor sin cobrar nada, sin
+# el piso de costo que sí protege a los descuentos (SEC-001). Valor de
+# negocio, no técnico — decidir con el dueño antes de cambiarlo.
+REGALIA_MAXIMA_SIN_AUTORIZACION = Decimal("5000")
+
 
 def _desglose_fiscal(empresa, producto, total_linea):
     """Devuelve (subtotal, impuesto) de una línea según el régimen."""
@@ -45,7 +53,8 @@ def _desglose_fiscal(empresa, producto, total_linea):
 
 @transaction.atomic
 def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
-                    permitir_bajo_costo=False, permitir_descuento_alto=False) -> FacturaVenta:
+                    permitir_bajo_costo=False, permitir_descuento_alto=False,
+                    permitir_regalia_alta=False) -> FacturaVenta:
     """lineas: iterable de dicts {"producto_id": int, "cantidad": Decimal}.
 
     permitir_bajo_costo: por defecto NO se puede vender un producto por debajo
@@ -56,7 +65,11 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     permitir_descuento_alto: por defecto un cajero no puede aplicar más de
     DESCUENTO_MAXIMO_SIN_AUTORIZACION por línea (SEC-001) — protege el margen
     en productos donde ese descuento no llega a bajar del costo, que es lo
-    único que el freno anterior cubría. El gerente sí puede autorizarlo."""
+    único que el freno anterior cubría. El gerente sí puede autorizarlo.
+
+    permitir_regalia_alta: por defecto un cajero no puede marcar es_regalia
+    en una línea cuyo valor de lista supere REGALIA_MAXIMA_SIN_AUTORIZACION
+    (SEC-006). Toda regalía exige además un motivo (línea["motivo"])."""
     # Releer la sesión desde la BD con bloqueo: el objeto en memoria puede
     # estar desactualizado (p. ej., la caja se cerró desde otra pantalla).
     sesion_caja = SesionCaja.objects.select_for_update().get(pk=sesion_caja.pk)
@@ -106,6 +119,23 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             total_linea = Decimal("0")
             sub_l = imp_l = Decimal("0")
             tipo_kardex = "REG"
+            # Motivo obligatorio (SEC-006): sin esto, una regalía no deja
+            # ningún rastro de por qué se entregó gratis (LineaVenta no está
+            # auditada; el motivo es lo único que queda en el kardex).
+            motivo_regalia = (linea.get("motivo") or "").strip()
+            if not motivo_regalia:
+                raise ValidationError(f"{producto.nombre}: toda regalía requiere un motivo.")
+            # Techo de valor regalado sin autorización (SEC-006): a diferencia
+            # del descuento, una regalía no tiene piso de costo propio — sin
+            # este freno un cajero podía sacar mercadería de cualquier valor
+            # sin cobrar nada y sin que nadie más lo autorizara.
+            valor_regalado = (producto.precio_venta * cantidad).quantize(Decimal("0.01"))
+            if not permitir_regalia_alta and valor_regalado > REGALIA_MAXIMA_SIN_AUTORIZACION:
+                raise ValidationError(
+                    f"{producto.nombre}: una regalía de ₡{valor_regalado:.2f} supera el tope de "
+                    f"₡{REGALIA_MAXIMA_SIN_AUTORIZACION} que un cajero puede dar sin autorización. "
+                    "Pedile a un gerente que registre la venta."
+                )
         else:
             precio = producto.precio_venta
             bruto_linea = (precio * cantidad).quantize(Decimal("0.01"))
@@ -142,7 +172,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
         registrar_movimiento(
             producto=producto, bodega=bodega, tipo=tipo_kardex,
             cantidad=-cantidad, referencia=numero, usuario=usuario,
-            motivo="Regalía / promoción" if es_regalia else "",
+            motivo=f"Regalía: {motivo_regalia}" if es_regalia else "",
         )
         LineaVenta.objects.create(
             factura=factura, producto=producto, cantidad=cantidad,

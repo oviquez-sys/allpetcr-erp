@@ -215,7 +215,7 @@ class DescuentosYRegalias(BaseVentas):
     def test_regalia_descuenta_stock_pero_no_cobra(self):
         factura = registrar_venta(
             sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
-            lineas=[{"producto_id": self.producto.pk, "cantidad": 1, "es_regalia": True}],
+            lineas=[{"producto_id": self.producto.pk, "cantidad": 1, "es_regalia": True, "motivo": "prueba"}],
         )
         self.assertEqual(factura.total, Decimal("0"))
         self.producto.refresh_from_db()
@@ -226,7 +226,7 @@ class DescuentosYRegalias(BaseVentas):
     def test_regalia_costo_va_a_gasto_regalias_no_a_costo_ventas(self):
         registrar_venta(
             sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
-            lineas=[{"producto_id": self.producto.pk, "cantidad": 1, "es_regalia": True}],
+            lineas=[{"producto_id": self.producto.pk, "cantidad": 1, "es_regalia": True, "motivo": "prueba"}],
         )
         gasto_d, _ = self._saldos("gasto_regalias")
         cventas_d, _ = self._saldos("costo_ventas")
@@ -237,7 +237,7 @@ class DescuentosYRegalias(BaseVentas):
     def test_regalia_genera_movimiento_kardex_tipo_REG(self):
         factura = registrar_venta(
             sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
-            lineas=[{"producto_id": self.producto.pk, "cantidad": 1, "es_regalia": True}],
+            lineas=[{"producto_id": self.producto.pk, "cantidad": 1, "es_regalia": True, "motivo": "prueba"}],
         )
         mov = MovimientoInventario.objects.filter(tipo="REG", referencia=factura.numero).first()
         self.assertIsNotNone(mov)
@@ -252,7 +252,7 @@ class DescuentosYRegalias(BaseVentas):
             sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
             lineas=[
                 {"producto_id": self.producto.pk, "cantidad": 1},                 # vende 5000
-                {"producto_id": p2.pk, "cantidad": 1, "es_regalia": True},        # regala (costo 1000)
+                {"producto_id": p2.pk, "cantidad": 1, "es_regalia": True, "motivo": "prueba"},        # regala (costo 1000)
             ],
         )
         self.assertEqual(factura.total, Decimal("5000"))
@@ -422,9 +422,13 @@ class DevolucionesParciales(BaseVentas):
 
     # ---------- Regalías ----------
     def test_devolucion_de_regalia_no_reembolsa_pero_devuelve_stock(self):
+        # permitir_regalia_alta=True: 2 unidades a 5000 superan el tope de
+        # SEC-006 (₡5000); esta prueba es sobre la devolución, no sobre el
+        # tope, igual que test_devolucion_prorratea_el_descuento con SEC-001.
         factura = registrar_venta(
             sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
-            lineas=[{"producto_id": self.producto.pk, "cantidad": 2, "es_regalia": True}],
+            lineas=[{"producto_id": self.producto.pk, "cantidad": 2, "es_regalia": True, "motivo": "prueba"}],
+            permitir_regalia_alta=True,
         )
         linea = factura.lineas.first()
         dev = registrar_devolucion(
@@ -712,6 +716,85 @@ class VentaDescuentoAlto(BaseVentas):
         r = self.client.post(
             reverse("ventas:vender"),
             data='{"medio_pago":"EFE","lineas":[{"producto_id":%d,"cantidad":1,"descuento_pct":20}]}' % self.producto.pk,
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertTrue(r.json()["ok"])
+
+
+class VentaRegaliaAlta(BaseVentas):
+    """SEC-006 (auditoría 2026-08-10): una regalía exige motivo siempre, y
+    un cajero no puede regalar más de REGALIA_MAXIMA_SIN_AUTORIZACION
+    (₡5000) por línea sin que un gerente autorice la venta. Producto de
+    prueba: precio 5000, costo 2000 — 2 unidades regaladas valen ₡10000."""
+
+    def test_bloquea_regalia_sin_motivo(self):
+        with self.assertRaises(ValidationError):
+            registrar_venta(
+                sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
+                lineas=[{"producto_id": self.producto.pk, "cantidad": 1, "es_regalia": True}],
+            )
+
+    def test_bloquea_regalia_mayor_al_tope_sin_autorizacion(self):
+        # 2 unidades × 5000 = 10000 > tope de 5000
+        with self.assertRaises(ValidationError):
+            registrar_venta(
+                sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
+                lineas=[{"producto_id": self.producto.pk, "cantidad": 2, "es_regalia": True, "motivo": "prueba"}],
+                permitir_regalia_alta=False,
+            )
+
+    def test_gerente_puede_autorizar_regalia_alta(self):
+        factura = registrar_venta(
+            sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
+            lineas=[{"producto_id": self.producto.pk, "cantidad": 2, "es_regalia": True, "motivo": "prueba"}],
+            permitir_regalia_alta=True,
+        )
+        self.assertEqual(factura.total, Decimal("0"))
+
+    def test_regalia_igual_al_tope_no_requiere_autorizacion(self):
+        # Exactamente 5000 (1 unidad): dentro del límite, no se bloquea.
+        factura = registrar_venta(
+            sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
+            lineas=[{"producto_id": self.producto.pk, "cantidad": 1, "es_regalia": True, "motivo": "prueba"}],
+            permitir_regalia_alta=False,
+        )
+        self.assertEqual(factura.total, Decimal("0"))
+
+    def test_endpoint_cajero_no_puede_superar_tope_de_regalia(self):
+        from django.contrib.auth.models import Group
+        cajero = User.objects.create_user("marta", password="c", is_staff=True)
+        cajero.groups.add(Group.objects.get(name="Cajero"))
+        abrir_caja(sucursal=self.sucursal, usuario=cajero, monto_apertura=Decimal("0"))
+        self.client.force_login(cajero)
+        r = self.client.post(
+            reverse("ventas:vender"),
+            data='{"medio_pago":"EFE","lineas":[{"producto_id":%d,"cantidad":2,"es_regalia":true,"motivo":"prueba"}]}' % self.producto.pk,
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("5000", r.json()["error"])
+
+    def test_endpoint_cajero_no_puede_regalar_sin_motivo(self):
+        from django.contrib.auth.models import Group
+        cajero = User.objects.create_user("nora", password="c", is_staff=True)
+        cajero.groups.add(Group.objects.get(name="Cajero"))
+        abrir_caja(sucursal=self.sucursal, usuario=cajero, monto_apertura=Decimal("0"))
+        self.client.force_login(cajero)
+        r = self.client.post(
+            reverse("ventas:vender"),
+            data='{"medio_pago":"EFE","lineas":[{"producto_id":%d,"cantidad":1,"es_regalia":true}]}' % self.producto.pk,
+            content_type="application/json",
+        )
+        self.assertEqual(r.status_code, 400)
+        self.assertIn("motivo", r.json()["error"].lower())
+
+    def test_endpoint_gerente_si_puede_superar_tope_de_regalia(self):
+        # self.usuario (BaseVentas) ya es superusuario/gerente.
+        self.client.force_login(self.usuario)
+        r = self.client.post(
+            reverse("ventas:vender"),
+            data='{"medio_pago":"EFE","lineas":[{"producto_id":%d,"cantidad":2,"es_regalia":true,"motivo":"prueba"}]}' % self.producto.pk,
             content_type="application/json",
         )
         self.assertEqual(r.status_code, 200)

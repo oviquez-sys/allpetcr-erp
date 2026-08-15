@@ -87,6 +87,7 @@ def vender(request):
             usuario=request.user,
             permitir_bajo_costo=es_gerente(request.user),  # el gerente puede vender bajo costo
             permitir_descuento_alto=es_gerente(request.user),  # el gerente puede autorizar descuentos > 15% (SEC-001)
+            permitir_regalia_alta=es_gerente(request.user),  # el gerente puede autorizar regalías > ₡5000 (SEC-006)
         )
     except ValidationError as e:
         return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)

@@ -354,6 +354,11 @@ function setDescuentoPct(id, v){
   it.descuento_pct = pct;
   pintar();
 }
+function setMotivoRegalia(id, v){
+  const it = carrito[id]; if(!it) return;
+  it.motivo_regalia = v;
+  // No repinta: perdería el foco del input en cada tecla (SEC-006).
+}
 function totalLinea(id){
   const p = porId[id], it = carrito[id];
   if (it.regalia) return 0;
@@ -377,7 +382,8 @@ function pintar(){
     }
     const ctrl = it.regalia
       ? `<button class="toggle on" onclick="toggleRegalo(${id})">🎁 Regalo</button>
-         <span class="regtxt">Sale del inventario a costo, sin cobro</span>`
+         <span class="regtxt">Sale del inventario a costo, sin cobro</span>
+         <span class="descbox">Motivo <input type="text" maxlength="200" value="${esc(it.motivo_regalia||'')}" placeholder="obligatorio" onchange="setMotivoRegalia(${id}, this.value)"></span>`
       : `<button class="toggle" onclick="toggleRegalo(${id})">🎁 Regalo</button>
          <span class="descbox">Descuento <input type="number" min="0" max="100" step="0.01" value="${it.descuento_pct||''}" placeholder="0" onchange="setDescuentoPct(${id}, this.value)"> %</span>`;
     return `<div class="linea"><span class="nm">${esc(p.nombre)}</span>
@@ -410,8 +416,14 @@ async function cobrar(medio){
     producto_id:+id, cantidad:c.cantidad,
     descuento_pct: c.regalia ? 0 : (c.descuento_pct||0),
     es_regalia: !!c.regalia,
+    motivo: c.regalia ? (c.motivo_regalia||'').trim() : '',
   }));
   if (!lineas.length){ msg("Todavía no agregaste productos.", true); return; }
+  // Chequeo local (SEC-006): evita el viaje al servidor por un motivo vacío;
+  // el servidor lo exige igual, esto es solo para no hacer esperar al cajero.
+  if (lineas.some(l => l.es_regalia && !l.motivo)){
+    msg("Toda regalía necesita un motivo.", true); return;
+  }
   const clienteId = document.getElementById('cliente').value;
   if (medio === 'CRE' && !clienteId){ msg("Para fiar, elegí primero el cliente arriba.", true); return; }
   document.querySelectorAll('.pagos button, #btnCredito').forEach(b=>b.disabled=true);
