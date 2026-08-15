@@ -52,7 +52,7 @@
     "severidad": "critico",
     "fase": "1-seguridad",
     "titulo": "Los management commands no tienen ninguna autorización de aplicación; en el despliegue real la máquina accesible es el propio POS del mostrador, usado por el Cajero sin supervisión durante todo su turno, por lo que un solo comando documentado (asignar_rol --dueno) da superusuario instantáneo y bypassea todos los demás controles de esta fase, incluida la inmutabilidad de AuditLog (que solo protege la UI de /admin/, no el ORM/shell)",
-    "evidencia": "core/management/commands/asignar_rol.py (sin chequeo de quién ejecuta), core/management/commands/restaurar.py (solo exige --confirmar), core/admin.py:26-33 (has_delete_permission=False es un candado de ModelAdmin, no del ORM — no aplica desde manage.py shell). Recalificado de medio a crítico en esta sesión tras confirmar el usuario que la máquina del ERP es el mostrador físico, no un servidor con acceso controlado. Justificación completa en 01_seguridad.md, sección 'SEC-005 — recalificación de medio a crítico'. Variable aún NO VERIFICADA que podría mitigar: si la cuenta de Windows de los cajeros está restringida (sin terminal/PowerShell)",
+    "evidencia": "core/management/commands/asignar_rol.py (sin chequeo de quién ejecuta), core/management/commands/restaurar.py (solo exige --confirmar), core/admin.py:26-33 (has_delete_permission=False es un candado de ModelAdmin, no del ORM — no aplica desde manage.py shell). Recalificado de medio a crítico en esta sesión tras confirmar el usuario que la máquina del ERP es el mostrador físico, no un servidor con acceso controlado. Justificación completa en 01_seguridad.md, sección 'SEC-005 — recalificación de medio a crítico'. [VERIFICADO 2026-08-15] El usuario confirmó en la máquina real: cmd.exe abre sin restricción desde la sesión del cajero (Win+R → cmd). La máquina tiene cuenta de Administrador y cuenta Estándar separadas, pero eso no mitiga el hallazgo — Windows no bloquea cmd.exe/PowerShell por el solo hecho de ser cuenta Estándar, hace falta una directiva de grupo explícita (gpedit.msc) o AppLocker, y no hay evidencia de que exista. Plan de remediación propuesto, sin implementar: ver 01_seguridad.md, sección 'SEC-005 — plan de remediación'",
     "archivos": ["core/management/commands/asignar_rol.py", "core/management/commands/restaurar.py", "core/management/commands/reconciliar.py", "core/admin.py"],
     "estado": "abierto"
   },
@@ -65,5 +65,50 @@
     "archivos": ["ventas/services.py", "ventas/views.py", "templates/ventas/pos.html", "core/reportes.py"],
     "estado": "cerrado",
     "commit": "307a024"
+  },
+  {
+    "id": "FRA-001",
+    "severidad": "alto",
+    "fase": "1-seguridad",
+    "titulo": "QuerySet.update() o SQL directo sobre documentos financieros/kardex no dispara las señales de auditoría; actor = administrador/socio con acceso a manage.py shell o a la base, no un Cajero/Gerente sin ese acceso",
+    "evidencia": "core/signals.py:178-186 (señales conectadas a pre_save/post_save/post_delete, que QuerySet.update() no dispara — comportamiento documentado de Django); manage.py dbshell / psql se saltan el ORM por completo, sin ninguna señal posible. Nivel de prioridad 1 (barato, alto valor): REVOKE UPDATE a nivel de PostgreSQL sobre las tablas verdaderamente append-only, REVOKE DELETE sobre las tablas de documento. Verificación de qué tabla tolera qué, y plan de remediación completo con niveles de prioridad para negocio de dos socios: 01_seguridad.md, sección 'FRA-001 a FRA-005 — fraude interno de administrador/socio'",
+    "archivos": ["core/signals.py", "ventas/services.py", "compras/services.py", "inventario/services.py", "caja/services.py", "contabilidad/services.py"],
+    "estado": "abierto"
+  },
+  {
+    "id": "FRA-002",
+    "severidad": "alto",
+    "fase": "1-seguridad",
+    "titulo": "core.auditlog no tiene ninguna protección de base de datos contra su propia alteración o borrado (no puede estar en AUDITED, sería circular)",
+    "evidencia": "core/signals.py:47-64 (ausencia de 'core.auditlog' en AUDITED); core/admin.py:26-33 (has_add/change/delete_permission=False es un candado de ModelAdmin, no de PostgreSQL). Nivel de prioridad 1: mismo REVOKE UPDATE, DELETE que FRA-001. Detalle en 01_seguridad.md, sección 'FRA-001 a FRA-005'",
+    "archivos": ["core/signals.py", "core/admin.py", "core/models.py"],
+    "estado": "abierto"
+  },
+  {
+    "id": "FRA-003",
+    "severidad": "alto",
+    "fase": "1-seguridad",
+    "titulo": "manage.py restaurar --confirmar reemplaza la base completa (incluida AuditLog) con un respaldo anterior; la única protección es una copia local alcanzable por quien acaba de correr el comando",
+    "evidencia": "core/management/commands/restaurar.py (copia 'antes de restaurar' en el mismo disco; _restaurar_postgres usa pg_restore --clean --if-exists, que borra y recrea todo). Nivel de prioridad 2 (vale la pena, no bloqueante): notificación automática a ambos socios cuando corre el comando, reusando el mecanismo de FRA-004. Detalle en 01_seguridad.md, sección 'FRA-001 a FRA-005'",
+    "archivos": ["core/management/commands/restaurar.py"],
+    "estado": "abierto"
+  },
+  {
+    "id": "FRA-004",
+    "severidad": "medio",
+    "fase": "1-seguridad",
+    "titulo": "No existe ningún reporte periódico automático que llegue de forma independiente a ambos socios; la única forma de detectar una anomalía hoy es que alguien entre a revisar",
+    "evidencia": "Verificado por ausencia: core/reportes.py no tiene ningún comando/tarea programada de envío; el envío de correo (config/settings.py:285-302) solo se usa hoy para facturas a pedido (ventas/views.py:factura_enviar). Nivel de prioridad 1 (el de mayor costo/beneficio de los cinco): reutiliza infraestructura de correo ya existente. Detalle en 01_seguridad.md, sección 'FRA-001 a FRA-005'",
+    "archivos": ["core/reportes.py", "config/settings.py"],
+    "estado": "abierto"
+  },
+  {
+    "id": "FRA-005",
+    "severidad": "alto",
+    "fase": "1-seguridad",
+    "titulo": "Los respaldos (manage.py respaldar) se guardan en una carpeta común con auto-rotación que borra los más viejos; el mismo administrador que podría necesitar cubrir un fraude puede borrar o esperar a que se borren solos los respaldos que lo probarían",
+    "evidencia": "core/management/commands/respaldar.py:206-227 (_rotar, borra automáticamente los más viejos); carpeta configurable por ALLPETCR_RESPALDOS, hoy en OneDrive según CLAUDE.md. Nivel de prioridad 2: mandar automáticamente una copia del respaldo periódico al otro socio, en vez de infraestructura WORM nueva (evaluada como overkill en esta etapa). Detalle en 01_seguridad.md, sección 'FRA-001 a FRA-005'",
+    "archivos": ["core/management/commands/respaldar.py"],
+    "estado": "abierto"
   }
 ]

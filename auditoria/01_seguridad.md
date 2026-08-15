@@ -341,7 +341,12 @@ en sí sea inmutable (**AUD-001**).
 | **SEC-002** ✅ *cerrado — commit `b768b39`* | 🟠 alto | `compras/admin.py:CompraAdmin` es el único `ModelAdmin` de documento (de 8) que no bloquea `has_change_permission`/`has_delete_permission`; su inline `LineaCompraInline` tampoco fija `can_delete=False` | `compras/admin.py` completo, contrastado con `ventas/admin.py:42-49`, `contabilidad/admin.py:46-53`, `inventario/admin.py:23-30`, etc. | El superusuario (o cualquier cuenta que el sistema deje llegar a superusuario, ver `asignar_rol.py:85-88`) puede borrar una compra ya `RECIBIDA` desde `/admin/`: `LineaCompra` se borra en cascada (FK `CASCADE`), pero `MovimientoInventario` y `Asiento`/`LineaAsiento` NO tienen FK a `Compra` (solo un `referencia`/string con el número) y quedan intactos, huérfanos de su documento origen; `Proveedor.saldo` (si era crédito) queda inflado porque nada ejecuta la lógica de reversa de `anular_compra` — ver análisis detallado abajo de la tabla | Cuentas por pagar a proveedor quedan infladas si la compra era a crédito (`reconciliar` lo detecta en la próxima corrida); si era de contado, ningún chequeo automático lo detecta — solo un cruce manual por número de documento | Agregar `has_add_permission`/`has_change_permission`/`has_delete_permission = False` a `CompraAdmin` (igual que sus 8 pares) y `can_delete = False` a `LineaCompraInline`; para corregir una compra, usar siempre `anular_compra` | S | Ninguna |
 | **SEC-003** | 🟢 bajo | `catalogo/admin.py:86` (`ProductoAdmin.entrada_view`) abre `Producto` con `get_object_or_404` sin pasar por `core.tenancy.documento_de_empresa` — el único punto de los 7 apps (fuera de la propia `tenancy.py`) que se salta el patrón | `catalogo/admin.py:86` | Hoy no explotable (una sola empresa); el día que haya una segunda, este punto queda descubierto para IDOR | Ninguno hoy; riesgo latente si el negocio se expande a multi-empresa | Usar `documento_de_empresa` también en las vistas custom de `ModelAdmin` | S | Ninguna |
 | **SEC-004** | 🟢 bajo | Sin 2FA para Gerente/superusuario, sin límite de sesiones concurrentes, sin flujo propio de recuperación de contraseña | `requirements.txt` (sin paquete 2FA), `config/settings.py` (sin límite de sesión), `config/urls.py` (sin rutas `password_reset*`) | Un ex-empleado con sesión activa en un dispositivo sigue autenticado hasta que alguien cambie su contraseña explícitamente (Django invalida sesiones automáticamente al cambiar contraseña, pero nadie lo hace si no sabe que hace falta) | Acceso residual de personal que ya no debería tenerlo, sin fecha de caducidad automática | Checklist operativo de baja de personal (cambiar contraseña / desactivar usuario el mismo día); evaluar 2FA para el rol Gerente | S (proceso) / M (2FA) | Ninguna |
-| **SEC-005** | 🔴 crítico *(recalibrado — ver análisis abajo de la tabla)* | Los 10 management commands no tienen ninguna autorización de aplicación — quien tenga terminal en la máquina donde corre el ERP puede autopromoverse a superusuario, borrar `AuditLog` directo por ORM (bypassea el candado de `/admin/`), o restaurar la base desde un zip arbitrario para borrar evidencia | `core/management/commands/asignar_rol.py` (sin chequeo de quién lo ejecuta); `restaurar.py` (requiere solo `--confirmar`, no una sesión ni un rol) | La máquina que corre el ERP es el propio POS del mostrador, usado sin supervisión por el Cajero durante todo su turno (confirmado por el usuario) — el actor que este control necesita frenar es exactamente el actor prioritario del threat model, no un atacante remoto hipotético | Compromiso total: dinero, inventario, datos de clientes, y la posibilidad de borrar el propio rastro de auditoría (`restaurar`) después de un fraude — sin dejar ninguna de las protecciones de esta fase con efecto | Cuenta de Windows restringida para el personal en la máquina del POS (sin terminal/PowerShell, sin acceso de exploración a la carpeta del proyecto) — verificar YA si existe; si no existe, es la acción más urgente de todo este informe, por delante de cualquier otro hallazgo | S (si es solo configurar la cuenta de Windows) / M (si hay que migrar a otro esquema) | Decisión de infraestructura, fuera del alcance de este repositorio — pero de prioridad máxima |
+| **SEC-005** | 🔴 crítico *(recalibrado — ver análisis abajo de la tabla)* | Los 10 management commands no tienen ninguna autorización de aplicación — quien tenga terminal en la máquina donde corre el ERP puede autopromoverse a superusuario, borrar `AuditLog` directo por ORM (bypassea el candado de `/admin/`), o restaurar la base desde un zip arbitrario para borrar evidencia | `core/management/commands/asignar_rol.py` (sin chequeo de quién lo ejecuta); `restaurar.py` (requiere solo `--confirmar`, no una sesión ni un rol) | La máquina que corre el ERP es el propio POS del mostrador, usado sin supervisión por el Cajero durante todo su turno (confirmado por el usuario) — el actor que este control necesita frenar es exactamente el actor prioritario del threat model, no un atacante remoto hipotético | Compromiso total: dinero, inventario, datos de clientes, y la posibilidad de borrar el propio rastro de auditoría (`restaurar`) después de un fraude — sin dejar ninguna de las protecciones de esta fase con efecto | Ver plan de remediación propuesto abajo de la tabla (sección 'SEC-005 — plan de remediación') | S–M según la opción | Decisión de infraestructura, fuera del alcance de este repositorio — pero de prioridad máxima |
+| **FRA-001** | 🟠 alto | `QuerySet.update()` o SQL directo sobre documentos financieros/kardex no dispara las señales de `core/signals.py` — una edición hecha así no genera fila en `AuditLog`, a diferencia de `.save()`/`.delete()` normales | `core/signals.py:178-186` (señales conectadas a `pre_save`/`post_save`/`post_delete`, que `QuerySet.update()` no dispara — comportamiento documentado de Django, no un bug); confirmado que `manage.py dbshell`/`psql` se saltan el ORM por completo | Un administrador/socio con acceso a `manage.py shell` o a la base edita un total, un monto de kardex o un asiento sin dejar ningún rastro — ver análisis completo abajo de la tabla | Estado financiero alterable sin evidencia, en disputas entre socios o ante una auditoría externa | Ver plan de remediación (sección 'Fraude interno de administrador/socio' abajo de la tabla) | S | Ninguna |
+| **FRA-002** | 🟠 alto | `core.auditlog` no está en el propio set `AUDITED` (correcto, sería circular) pero tampoco tiene ninguna protección de base de datos — se puede editar o borrar como cualquier tabla | `core/signals.py:47-64` (ausencia de `"core.auditlog"` en `AUDITED`); `core/admin.py:26-33` (el candado es de `ModelAdmin`, no de PostgreSQL) | La bitácora que se supone prueba todo lo demás no tiene nada que la proteja a ella misma de alteración | Sin este dato, ninguna otra evidencia de esta fase es confiable ante quien tenga acceso a la base | Ver plan de remediación abajo de la tabla | S | Ninguna |
+| **FRA-003** | 🟠 alto | `manage.py restaurar --confirmar` reemplaza la base completa (incluida `AuditLog`) con un respaldo anterior; la única protección es una copia "antes de restaurar" en el mismo disco, alcanzable por quien acaba de correr el comando | `core/management/commands/restaurar.py` (líneas ~120-125, la copia previa; `_restaurar_postgres` usa `pg_restore --clean --if-exists`, que borra y recrea todo) | Un administrador comete o cubre un fraude y luego restaura un respaldo anterior a ese momento, borrando la venta/movimiento Y su propio rastro en el mismo paso | Reversión completa e indetectable del estado del sistema, sin que quede ninguna señal de que ocurrió | Ver plan de remediación abajo de la tabla | S–M | Ninguna |
+| **FRA-004** | 🟡 medio | No existe ningún reporte periódico automático que llegue de forma independiente a ambos socios — la única forma de detectar una anomalía hoy es que alguien entre a revisar | Verificado por ausencia: `core/reportes.py` no tiene ningún comando/tarea programada de envío; el envío de correo (`config/settings.py:285-302`) solo se usa hoy para mandar facturas a pedido (`ventas/views.py:factura_enviar`) | Sin un control detectivo automático, una anomalía puede pasar meses sin que nadie la note, incluso sin que exista mala fe — simple descuido de revisión | Es el control más barato de todos y el que más protege a ambos socios por igual, no solo a uno | Ver plan de remediación abajo de la tabla | S | Ninguna |
+| **FRA-005** | 🟠 alto | Los respaldos (`manage.py respaldar`) se guardan en una carpeta común, totalmente escribible, con auto-rotación que borra los más viejos — el mismo administrador que podría necesitar cubrir un fraude puede borrar o esperar a que se borren solos los respaldos que lo probarían | `core/management/commands/respaldar.py:206-227` (`_rotar`, borra automáticamente los más viejos); carpeta configurable por `ALLPETCR_RESPALDOS`, hoy en OneDrive según `CLAUDE.md` — totalmente accesible a quien administra la máquina | Los respaldos, que deberían ser la red de seguridad ante un `restaurar` malicioso (FRA-003), están controlados por el mismo actor que ese control necesita vigilar | Sin una copia fuera del alcance del administrador, no hay forma independiente de reconstruir qué pasó antes de una restauración | Ver plan de remediación abajo de la tabla | S–M | Ninguna |
 | **SEC-006** ✅ *cerrado — commit `307a024`* | 🟠 alto | Marcar una línea de venta como `es_regalia` (precio 0, sale del inventario a costo) no tiene ninguna validación de rol — cualquier Cajero puede hacerlo, sin motivo obligatorio, sin tope de monto y **sin pasar por el piso de costo** que sí limita a los descuentos (SEC-001) | `ventas/services.py:87-113` (la rama `if es_regalia:` está fuera del bloque `if not permitir_bajo_costo and ...`, líneas 104-113 — el chequeo de piso de costo simplemente no se ejecuta para regalías); `ventas/views.py:71-99` (`vender`, `@rol_requerido(CAJERO, GERENTE)`, sin distinción adicional); `templates/ventas/pos.html` (botón "🎁 Regalo", sin `{% if es_gerente %}` ni equivalente) | Un cajero deshonesto entrega mercadería de cualquier valor sin cobrar nada, a un cómplice, sin aprobación de un Gerente y sin el único freno que sí aplica al descuento | Pérdida de mercadería a valor completo (no solo de margen, como en SEC-001) camuflada como "regalía/promoción" — el rastro existe pero está repartido en tres lugares (kardex `tipo=REG`, cuenta contable "Gasto por regalías", ranking de más vendidos que mezcla unidades regaladas con vendidas) y no hay un solo reporte donde el dueño lo vea agrupado | Exigir `@rol_requerido(GERENTE)` para marcar `es_regalia`, o motivo obligatorio + tope de monto por regalía, igual que se decida para SEC-001; agregar un reporte que agrupe regalías por periodo/cajero/producto | S–M | Decisión de negocio pendiente (igual que SEC-001) — implementación diferida a otra sesión |
 
 ### SEC-002 — por qué queda en 🟠 alto y no en 🔴 crítico
@@ -459,12 +464,65 @@ opera completamente por fuera de él. No hay auditoría, no hay motivo
 obligatorio, no hay segunda capa: es la diferencia entre "el sistema tiene
 una grieta" y "el sistema, para este actor, no existe".
 
-**Lo único que puede seguir mitigando esto**, y que esta sesión no puede
-verificar desde el código: si la cuenta de Windows que usan los cajeros en
-esa máquina está restringida (sin terminal/PowerShell, sin navegación a la
-carpeta del proyecto) — `[NO VERIFICADO]`. Es, con la información
-disponible hoy, la variable más importante de todo este informe: mientras
-no se confirme que existe esa restricción, hay que asumir que no existe.
+**Verificación en la máquina real (2026-08-15):** el usuario confirmó,
+probando directamente en el POS con la sesión del cajero: `cmd.exe` abre
+sin restricción (`Win+R` → `cmd`). La máquina tiene cuenta de Administrador
+y cuenta Estándar separadas, pero eso por sí solo no cierra el hallazgo —
+Windows no bloquea `cmd.exe` ni `powershell.exe` solo por ser cuenta
+Estándar; eso requiere una directiva de grupo explícita (`gpedit.msc`) o
+una lista blanca de aplicaciones (AppLocker), y no hay evidencia de que
+exista ninguna de las dos. **SEC-005 queda confirmado, no mitigado.**
+
+### SEC-005 — plan de remediación (propuesto, sin implementar)
+
+Ninguno de estos pasos es código de este repositorio — son configuración
+de la máquina del POS. Se listan de la más a la menos urgente; ninguna es
+suficiente sola, se complementan:
+
+1. **Confirmar y, si hace falta, forzar que la sesión del cajero sea la
+   cuenta Estándar** (no la de Administrador). Con dos cuentas ya
+   existentes en la máquina, falta confirmar cuál usa el cajero día a día
+   — si es la de Administrador, esto es lo primero que hay que corregir,
+   antes de cualquier otro paso, porque una cuenta Administrador puede
+   deshacer cualquier bloqueo posterior.
+
+2. **Bloquear `cmd.exe` y PowerShell vía Directiva de grupo local**
+   (`gpedit.msc`, disponible en Windows 11 Pro — confirmar que el POS
+   también es Pro, no Home, porque Home no trae `gpedit.msc`):
+   - Configuración de usuario → Plantillas administrativas → Sistema →
+     **"Impedir el acceso al símbolo del sistema"** → Habilitada (con
+     "deshabilitar también el procesamiento de scripts .bat/.cmd" en
+     **No**, para no romper el `.bat` que arranca el ERP si depende de
+     esa sesión — verificar esto en pruebas antes de aplicar en firme).
+   - PowerShell no lo bloquea la misma política — hay que restringirlo
+     aparte (removerlo de la sesión del cajero, o bloquear
+     `powershell.exe`/`powershell_ise.exe` igual que `cmd.exe`).
+
+3. **AppLocker** (más robusto, más trabajo): en vez de bloquear
+   ejecutables puntuales, definir una lista blanca de qué puede correr la
+   cuenta Estándar del cajero — el navegador, y el lanzador del ERP,
+   nada más. Cierra rutas que la Directiva de grupo simple no cubre
+   (ejecutar `python.exe` directo, copiar un `.exe` y correrlo, etc.).
+
+4. **Revisar cómo arranca el ERP hoy** (`Iniciar_AllPetCR_ERP.bat`):
+   si depende de que la sesión del cajero tenga `python.exe` accesible
+   en su `PATH`, cualquiera de los bloqueos de arriba puede romper el
+   arranque del sistema — hay que probarlo explícitamente antes de dejarlo
+   en producción, no asumir que sigue andando.
+
+5. **Restringir permisos NTFS de la carpeta del proyecto** para la cuenta
+   del cajero (sin acceso de escritura, idealmente sin necesidad de
+   navegar ahí en absoluto si el `.bat` puede lanzarse desde un acceso
+   directo que no exponga la ruta) — cierra el vector de "colocar un
+   script a mano y ejecutarlo" incluso si algún acceso a terminal se
+   filtra por otro lado.
+
+**Verificación de que la remediación funcionó:** repetir exactamente los
+pasos con los que se confirmó el hallazgo (`Win+R` → `cmd`, → `powershell`)
+con la sesión real del cajero, y confirmar además que el POS sigue
+arrancando con el `.bat` normal — un control que rompe el flujo de venta
+no se va a mantener en producción, así que hay que probarlo antes de darlo
+por cerrado.
 
 ### SEC-006 — hallazgo nuevo, descubierto investigando SEC-001
 
@@ -522,6 +580,118 @@ vista quedaría calculando un impuesto que no corresponde al régimen real de
 la empresa — pero esto es una discrepancia de cumplimiento fiscal (Fase 4),
 no de seguridad; se deja registrada aquí solo porque apareció durante la
 lectura de `contabilidad/views.py` en esta fase.
+
+---
+
+### FRA-001 a FRA-005 — fraude interno de administrador/socio
+
+Todo lo anterior de esta fase (SEC-001 a SEC-006) asume que la amenaza es
+alguien **sin** el privilegio máximo — un Cajero o un Gerente no-dueño
+excediendo su rol. Esta familia de hallazgos es distinta: qué puede hacer
+alguien que **legítimamente ya tiene** el privilegio máximo (superusuario/
+socio) para editar su propio historial o cubrir su rastro. Ningún candado de
+`ModelAdmin` (`has_delete_permission=False`, etc.) sirve contra esto — son
+candados de la interfaz `/admin/`, no de la base de datos, tal como ya se
+estableció para SEC-005.
+
+**Qué tabla tolera qué, verificado leyendo cada `services.py` (no
+inferido):**
+
+| Tabla | ¿Se edita después de creada en algún flujo legítimo? | Evidencia |
+|---|---|---|
+| `core.auditlog` | No, nunca | Ningún código la vuelve a tocar tras `AuditLog.objects.create(...)` |
+| `inventario.movimientoinventario` (kardex) | No, nunca | `inventario/services.py:59` — solo `.objects.create(...)`; correcciones son movimientos nuevos (tipo `DEV`), no ediciones |
+| `caja.movimientocaja` | No, nunca | `caja/services.py:29,43` — solo `.objects.create(...)` |
+| `contabilidad.asiento` / `lineaasiento` | No, nunca | `contabilidad/services.py:200,209` — solo `.objects.create(...)`; anulaciones generan un asiento inverso nuevo (`asentar_anulacion`), no editan el original |
+| `ventas.facturaventa` | **Sí** | `ventas/services.py:187` (totales, justo después de crear la factura) y `:249` (`anular_factura`: `estado`, `motivo_anulacion`, `anulada_en`, `anulada_por`) |
+| `ventas.devolucionventa` | **Sí** | `ventas/devoluciones.py:126` (`total`, justo después de crear) |
+| `ventas.documentocxc` | **Sí** | `ventas/cxc.py:65,107` (`saldo`, `estado`, en cada abono/anulación) |
+| `compras.compra` | **Sí** | `compras/services.py:50,92,145` (`total`, `estado`, `recibida_en`, anulación) |
+| `caja.sesioncaja` | **Sí** | Se abre y se cierra (`caja/services.py:69`) — es un registro de estado vivo, no un documento inmutable |
+
+**Esto corrige una idea que propuse en el análisis previo, antes de
+verificar código:** había sugerido `REVOKE UPDATE` también sobre
+`ventas_facturaventa` y por extensión sobre las demás tablas "documento".
+Es incorrecto — `anular_factura`, `recibir_compra`/`anular_compra`,
+`registrar_abono` y el propio `registrar_venta` (el cálculo de totales)
+dependen de `UPDATE` legítimo sobre esas tablas. Bloquearlo rompería
+anulaciones, recepciones de compra y abonos de hoy mismo.
+
+**Lo que sí se sostiene, con la distinción correcta:**
+- **`REVOKE UPDATE`** solo tiene sentido, sin romper nada, sobre las 4
+  tablas verdaderamente append-only: `core_auditlog`,
+  `inventario_movimientoinventario`, `caja_movimientocaja`,
+  `contabilidad_asiento`/`contabilidad_lineaasiento`.
+- **`REVOKE DELETE`**, en cambio, sí es seguro sobre TODAS las tablas de
+  documento de arriba (`ventas_facturaventa`, `ventas_devolucionventa`,
+  `ventas_documentocxc`, `compras_compra`, además de las 4 append-only) —
+  ningún flujo de negocio borra ninguna de ellas nunca; solo cambian de
+  `estado`. Borrar sigue siendo, en todos los casos, un error o un intento
+  de ocultar algo, nunca una operación legítima.
+
+**Priorización por costo/beneficio — negocio de dos socios, no banca:**
+
+**Nivel 1 — hacer ya (barato, alto valor):**
+1. **FRA-001 + FRA-002**: `REVOKE UPDATE, DELETE` sobre las 4 tablas
+   append-only y `REVOKE DELETE` (sin `UPDATE`) sobre las 4 tablas de
+   documento. Es un cambio de permisos de PostgreSQL, una sola vez, sin
+   tocar código Django ni romper ningún flujo verificado arriba. Cierra la
+   mayoría del riesgo real de edición/borrado silencioso.
+2. **FRA-004**: reporte diario automático a ambos socios. Reutiliza el
+   envío de correo que ya existe (`config/settings.py:285-302`); es el
+   control de mayor costo/beneficio de los cinco — una persona notando "esto
+   no cuadra" detecta más fraude real que cualquier control técnico, y es
+   casi gratis de construir. Debe ser automático (tarea programada) y
+   llegar SIEMPRE a los dos, no solo a quien administra el sistema ese día
+   — si depende de que alguien lo envíe a mano, es la misma persona que
+   podría "olvidarlo" el día que algo pasó.
+
+**Nivel 2 — vale la pena, requiere una decisión, no bloqueante:**
+3. **FRA-005, versión barata**: en vez de infraestructura nueva, que
+   `respaldar` (o una tarea aparte) mande automáticamente una copia del
+   respaldo periódico a una cuenta/correo del OTRO socio — reutiliza la
+   misma idea de FRA-004 aplicada a los respaldos. Resuelve la mayor parte
+   del riesgo sin contratar almacenamiento nuevo.
+4. **FRA-003, versión barata**: que correr `restaurar --confirmar` dispare
+   automáticamente una notificación a ambos socios (mismo mecanismo de
+   FRA-004) — no evita la restauración, pero la hace imposible de ocultar.
+
+**Nivel 3 — overkill para dos socios en esta etapa; explícitamente NO
+recomendado ahora:**
+- **Encadenamiento por hash de `AuditLog`** (cada fila referencia el hash
+  de la anterior): valioso en teoría, pero es complejidad de ingeniería
+  (migración, verificación periódica) para un beneficio marginal sobre lo
+  que ya logran el `REVOKE` + el reporte a los socios.
+- **Envío de cada evento de auditoría a un sistema externo en tiempo
+  real** (log shipping): apropiado para una empresa con equipo de
+  seguridad dedicado; para dos socios y un POS, es una pieza más de
+  infraestructura que mantener con beneficio marginal sobre FRA-004/FRA-005
+  ya minimizados.
+- **Almacenamiento WORM/object-lock en la nube** (S3 Object Lock, etc.):
+  resuelve el mismo problema que "mandarle el respaldo al otro socio", con
+  más costo de configuración y una cuenta cloud más que administrar. Solo
+  vale la pena si ya usan ese tipo de almacenamiento por otra razón.
+- **Trigger de PostgreSQL como respaldo del `REVOKE`**: más robusto en
+  teoría (protege incluso si alguien cambia los permisos de rol más
+  adelante), pero es una segunda capa sobre algo que el `REVOKE` ya
+  resuelve casi por completo — mantenimiento extra sin beneficio
+  proporcional para este tamaño de negocio.
+- **Separación de credenciales/roles de infraestructura completa** (IAM
+  granular, cuentas cloud separadas por persona): solo tiene sentido real
+  si hay una persona distinta de los socios administrando el servidor; si
+  el propio Oscar administra todo, él mismo podría revertir esa separación,
+  perdiendo el propósito.
+
+**Nota de honestidad:** ninguna de estas medidas —ni siquiera las de Nivel
+3— vuelve el sistema inmune a un socio decidido con acceso de
+administrador completo a la máquina: quien controla el sistema operativo
+puede, en el límite, desinstalar o reconfigurar cualquier control que viva
+dentro de él. Lo que sí logran es que hacerlo deje de ser silencioso y
+gratuito — cada medida de Nivel 1 convierte "borrar la evidencia" en algo
+que exige un paso adicional, deliberado, y potencialmente visible para el
+otro socio (FRA-004/FRA-005). Para una sociedad de dos personas, esa es la
+protección realista: no blindaje perfecto, sino que ocultar algo deje de
+ser trivial y silencioso.
 
 ---
 
