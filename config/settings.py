@@ -300,3 +300,15 @@ if os.environ.get("EMAIL_HOST_PASSWORD"):
     EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "20"))
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# --- Reporte diario a los socios (FRA-004, auditoría 2026-08-15) ---
+# Control detectivo contra fraude interno: un resumen automático de cada día
+# (ventas, regalías/descuentos con autorización de gerente, arqueo de caja,
+# ediciones/borrados de AuditLog) que llega a ambos socios sin que nadie
+# tenga que entrar a revisar. Separado del login del sistema a propósito: no
+# existe un concepto de "socio" en el modelo de usuarios (is_superuser es
+# "dueño", no necesariamente los dos), así que los destinatarios se
+# configuran aparte, igual que DJANGO_ALLOWED_HOSTS/DJANGO_CSRF_ORIGINS.
+REPORTE_DIARIO_DESTINATARIOS = [
+    d.strip() for d in os.environ.get("REPORTE_DIARIO_DESTINATARIOS", "").split(",") if d.strip()
+]

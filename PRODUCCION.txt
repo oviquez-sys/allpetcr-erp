@@ -105,6 +105,28 @@ El sistema ya hace respaldos con rotación. En el servidor:
 
 
 -------------------------------------------------
+5b) REPORTE DIARIO A LOS SOCIOS (fraude interno, FRA-004)
+-------------------------------------------------
+Control detectivo: un correo automático cada día con ventas, regalías/
+descuentos que necesitaron autorización de gerente, arqueo de caja, y
+cualquier edición/borrado sobre documentos financieros. Reutiliza el mismo
+SMTP de las facturas — no requiere nada nuevo salvo agendarlo.
+
+Configurá REPORTE_DIARIO_DESTINATARIOS en el .env (correos de ambos socios,
+separados por coma) y agendá, una vez al día (de madrugada, resume el día
+anterior):
+        python manage.py reporte_diario
+
+En Windows, Programador de tareas → Crear tarea básica → Diariamente →
+Acción "Iniciar un programa" → apuntá al mismo Python/entorno virtual del
+proyecto con el argumento "manage.py reporte_diario". Mismo mecanismo que
+se recomienda para "manage.py reconciliar" (ver también RESPALDOS.txt).
+
+Probar antes de agendar en firme:
+        python manage.py reporte_diario --fecha AAAA-MM-DD --destinatarios tucorreo@ejemplo.com
+
+
+-------------------------------------------------
 6) VERIFICACIÓN FINAL DE SEGURIDAD
 -------------------------------------------------
 Con las variables de producción puestas, corré:

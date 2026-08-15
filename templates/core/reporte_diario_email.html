@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Resumen {{ fecha|date:"d/m/Y" }} — {{ empresa.nombre }}</title>
+<style>
+/*
+  Reporte interno (FRA-004), no un documento de cliente: sin fuente externa
+  ni logo — solo tiene que leerse bien en un cliente de correo. Los mismos
+  colores de alerta que ya usa el resto del sistema (verde=cuadra,
+  ámbar=revisar, rojo=diferencia), para que "algo está mal" se reconozca de
+  un vistazo sin tener que leer cada número.
+*/
+body{margin:0;padding:24px;background:#f8fafc;color:#0f172a;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5}
+.tarjeta{max-width:640px;margin:0 auto;background:#fff;border:1px solid #e2e5ea;border-radius:12px;overflow:hidden}
+.cab{background:#1E4E8D;color:#fff;padding:20px 24px}
+.cab h1{margin:0;font-size:18px}
+.cab p{margin:4px 0 0;opacity:.85;font-size:13px}
+.sec{padding:20px 24px;border-top:1px solid #eef0f3}
+.sec h2{margin:0 0 10px;font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:#64748b}
+.vacio{color:#94a3b8;font-style:italic}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:#64748b;font-weight:600;padding:4px 8px 4px 0;border-bottom:1px solid #eef0f3}
+td{padding:6px 8px 6px 0;border-bottom:1px solid #eef0f3}
+.total{font-size:20px;font-weight:700}
+.alerta{background:#fdecea;color:#c0261e;padding:2px 8px;border-radius:6px;font-weight:600}
+.ok{background:#eefbf1;color:#15803d;padding:2px 8px;border-radius:6px;font-weight:600}
+.pie{padding:16px 24px;color:#94a3b8;font-size:12px}
+</style>
+</head>
+<body>
+<div class="tarjeta">
+  <div class="cab">
+    <h1>Resumen diario — {{ empresa.nombre }}</h1>
+    <p>{{ fecha|date:"l d \d\e F \d\e Y" }} · reporte automático (FRA-004)</p>
+  </div>
+
+  <div class="sec">
+    <h2>Ventas del día</h2>
+    <p class="total">₡{{ ventas.total|crc:2 }}<span style="font-size:13px;font-weight:400;color:#64748b"> — {{ ventas.num_ventas }} venta{{ ventas.num_ventas|pluralize }}</span></p>
+    {% if ventas.por_medio %}
+    <table>
+      <tr><th>Medio de pago</th><th>Ventas</th><th>Total</th></tr>
+      {% for m in ventas.por_medio %}
+      <tr><td>{{ m.medio_pago }}</td><td>{{ m.cantidad }}</td><td>₡{{ m.total|crc:2 }}</td></tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+  </div>
+
+  <div class="sec">
+    <h2>Regalías por encima del tope sin autorizar de más (SEC-006)</h2>
+    {% if regalias_altas %}
+    <table>
+      <tr><th>Factura</th><th>Producto</th><th>Cant.</th><th>Valor</th></tr>
+      {% for r in regalias_altas %}
+      <tr><td>{{ r.factura__numero }}</td><td>{{ r.producto__nombre }}</td><td>{{ r.cantidad }}</td><td><span class="alerta">₡{{ r.valor|crc:2 }}</span></td></tr>
+      {% endfor %}
+    </table>
+    <p style="color:#64748b;font-size:12px;margin-top:8px">Estas requirieron que un Gerente registrara la venta — revisar que el motivo declarado tenga sentido.</p>
+    {% else %}
+    <p class="vacio">Sin regalías por encima del tope hoy.</p>
+    {% endif %}
+  </div>
+
+  <div class="sec">
+    <h2>Descuentos por encima del umbral (SEC-001)</h2>
+    {% if descuentos_altos %}
+    <table>
+      <tr><th>Factura</th><th>Producto</th><th>Descuento</th><th>Monto</th></tr>
+      {% for d in descuentos_altos %}
+      <tr><td>{{ d.factura__numero }}</td><td>{{ d.producto__nombre }}</td><td>{{ d.descuento_pct }}%</td><td><span class="alerta">₡{{ d.descuento_monto|crc:2 }}</span></td></tr>
+      {% endfor %}
+    </table>
+    <p style="color:#64748b;font-size:12px;margin-top:8px">Estos requirieron que un Gerente registrara la venta.</p>
+    {% else %}
+    <p class="vacio">Sin descuentos por encima del umbral hoy.</p>
+    {% endif %}
+  </div>
+
+  <div class="sec">
+    <h2>Arqueo de caja</h2>
+    {% if sesiones_cerradas %}
+    <table>
+      <tr><th>Cajero</th><th>Sucursal</th><th>Esperado</th><th>Contado</th><th>Diferencia</th></tr>
+      {% for s in sesiones_cerradas %}
+      <tr>
+        <td>{{ s.usuario__username }}</td>
+        <td>{{ s.sucursal__nombre }}</td>
+        <td>₡{{ s.monto_esperado|crc:2 }}</td>
+        <td>₡{{ s.monto_contado|crc:2 }}</td>
+        <td>{% if s.diferencia %}<span class="alerta">₡{{ s.diferencia|crc:2 }}</span>{% else %}<span class="ok">₡0,00</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <p class="vacio">Ninguna sesión de caja cerrada hoy.</p>
+    {% endif %}
+  </div>
+
+  <div class="sec">
+    <h2>Ediciones o borrados en documentos financieros</h2>
+    {% if ediciones_auditlog %}
+    <table>
+      <tr><th>Tabla</th><th>ID</th><th>Acción</th><th>Usuario</th><th>Hora</th></tr>
+      {% for e in ediciones_auditlog %}
+      <tr>
+        <td>{{ e.tabla }}</td>
+        <td>{{ e.objeto_id }}</td>
+        <td><span class="alerta">{{ e.accion }}</span></td>
+        <td>{{ e.usuario__username|default:"—" }}</td>
+        <td>{{ e.fecha|date:"H:i" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <p style="color:#64748b;font-size:12px;margin-top:8px">Ningún documento de venta/compra/asiento se edita o borra en el uso normal del sistema — cualquier fila acá merece una explicación.</p>
+    {% else %}
+    <p class="vacio">Sin ediciones ni borrados sobre documentos financieros hoy.</p>
+    {% endif %}
+  </div>
+
+  <div class="pie">
+    Este correo se genera automáticamente todos los días y llega a los mismos destinatarios sin excepción — si dejás de recibirlo, avisá.
+  </div>
+</div>
+</body>
+</html>
