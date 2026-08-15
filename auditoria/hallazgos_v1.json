@@ -71,9 +71,10 @@
     "severidad": "alto",
     "fase": "1-seguridad",
     "titulo": "QuerySet.update() o SQL directo sobre documentos financieros/kardex no dispara las señales de auditoría; actor = administrador/socio con acceso a manage.py shell o a la base, no un Cajero/Gerente sin ese acceso",
-    "evidencia": "core/signals.py:178-186 (señales conectadas a pre_save/post_save/post_delete, que QuerySet.update() no dispara — comportamiento documentado de Django); manage.py dbshell / psql se saltan el ORM por completo, sin ninguna señal posible. Nivel de prioridad 1 (barato, alto valor): REVOKE UPDATE a nivel de PostgreSQL sobre las tablas verdaderamente append-only, REVOKE DELETE sobre las tablas de documento. Verificación de qué tabla tolera qué, y plan de remediación completo con niveles de prioridad para negocio de dos socios: 01_seguridad.md, sección 'FRA-001 a FRA-005 — fraude interno de administrador/socio'",
-    "archivos": ["core/signals.py", "ventas/services.py", "compras/services.py", "inventario/services.py", "caja/services.py", "contabilidad/services.py"],
-    "estado": "abierto"
+    "evidencia": "[CERRADO 2026-08-15, commit 4106eea] core/management/commands/endurecer_documentos.py — dos grupos verificados leyendo cada services.py: REVOKE UPDATE, DELETE (append-only real, sin ninguna FK entrante) sobre inventario_movimientoinventario, caja_movimientocaja, contabilidad_lineaasiento, ventas_abono; REVOKE DELETE únicamente sobre ventas_facturaventa, ventas_devolucionventa, ventas_documentocxc, compras_compra, caja_sesioncaja y contabilidad_asiento. contabilidad_asiento quedó en el grupo documentos (no append-only) aunque la app nunca la edita: tiene una FK entrante (LineaAsiento.asiento, contabilidad/models.py:120) y PostgreSQL exige UPDATE/DELETE/TRUNCATE sobre la tabla REFERENCIADA para el lock FOR KEY SHARE que corre en cada INSERT que la referencia — confirmado con una prueba real (registrar_venta rompía en cada venta con UPDATE revocado). PROTECCIÓN PARCIAL documentada explícitamente, en el comando y aquí: sobre el grupo documentos, REVOKE DELETE no impide un UPDATE (por SQL directo o QuerySet.update(), que no dispara AuditLog) que vacíe los montos sin borrar la fila — cierra el borrado de filas, no la manipulación de montos por UPDATE. 5 pruebas nuevas contra PostgreSQL real (core/test_endurecer_documentos.py), incluida una de punta a punta (registrar_venta + anular_factura reales). No se aplicó --confirmar contra la base real — el comando queda listo, a criterio del usuario",
+    "archivos": ["core/management/commands/endurecer_documentos.py", "core/test_endurecer_documentos.py"],
+    "estado": "cerrado",
+    "commit": "4106eea"
   },
   {
     "id": "FRA-002",

@@ -342,7 +342,7 @@ en sí sea inmutable (**AUD-001**).
 | **SEC-003** | 🟢 bajo | `catalogo/admin.py:86` (`ProductoAdmin.entrada_view`) abre `Producto` con `get_object_or_404` sin pasar por `core.tenancy.documento_de_empresa` — el único punto de los 7 apps (fuera de la propia `tenancy.py`) que se salta el patrón | `catalogo/admin.py:86` | Hoy no explotable (una sola empresa); el día que haya una segunda, este punto queda descubierto para IDOR | Ninguno hoy; riesgo latente si el negocio se expande a multi-empresa | Usar `documento_de_empresa` también en las vistas custom de `ModelAdmin` | S | Ninguna |
 | **SEC-004** | 🟢 bajo | Sin 2FA para Gerente/superusuario, sin límite de sesiones concurrentes, sin flujo propio de recuperación de contraseña | `requirements.txt` (sin paquete 2FA), `config/settings.py` (sin límite de sesión), `config/urls.py` (sin rutas `password_reset*`) | Un ex-empleado con sesión activa en un dispositivo sigue autenticado hasta que alguien cambie su contraseña explícitamente (Django invalida sesiones automáticamente al cambiar contraseña, pero nadie lo hace si no sabe que hace falta) | Acceso residual de personal que ya no debería tenerlo, sin fecha de caducidad automática | Checklist operativo de baja de personal (cambiar contraseña / desactivar usuario el mismo día); evaluar 2FA para el rol Gerente | S (proceso) / M (2FA) | Ninguna |
 | **SEC-005** | 🔴 crítico *(recalibrado — ver análisis abajo de la tabla)* | Los 10 management commands no tienen ninguna autorización de aplicación — quien tenga terminal en la máquina donde corre el ERP puede autopromoverse a superusuario, borrar `AuditLog` directo por ORM (bypassea el candado de `/admin/`), o restaurar la base desde un zip arbitrario para borrar evidencia | `core/management/commands/asignar_rol.py` (sin chequeo de quién lo ejecuta); `restaurar.py` (requiere solo `--confirmar`, no una sesión ni un rol) | La máquina que corre el ERP es el propio POS del mostrador, usado sin supervisión por el Cajero durante todo su turno (confirmado por el usuario) — el actor que este control necesita frenar es exactamente el actor prioritario del threat model, no un atacante remoto hipotético | Compromiso total: dinero, inventario, datos de clientes, y la posibilidad de borrar el propio rastro de auditoría (`restaurar`) después de un fraude — sin dejar ninguna de las protecciones de esta fase con efecto | Ver plan de remediación propuesto abajo de la tabla (sección 'SEC-005 — plan de remediación') | S–M según la opción | Decisión de infraestructura, fuera del alcance de este repositorio — pero de prioridad máxima |
-| **FRA-001** | 🟠 alto | `QuerySet.update()` o SQL directo sobre documentos financieros/kardex no dispara las señales de `core/signals.py` — una edición hecha así no genera fila en `AuditLog`, a diferencia de `.save()`/`.delete()` normales | `core/signals.py:178-186` (señales conectadas a `pre_save`/`post_save`/`post_delete`, que `QuerySet.update()` no dispara — comportamiento documentado de Django, no un bug); confirmado que `manage.py dbshell`/`psql` se saltan el ORM por completo | Un administrador/socio con acceso a `manage.py shell` o a la base edita un total, un monto de kardex o un asiento sin dejar ningún rastro — ver análisis completo abajo de la tabla | Estado financiero alterable sin evidencia, en disputas entre socios o ante una auditoría externa | Ver plan de remediación (sección 'Fraude interno de administrador/socio' abajo de la tabla) | S | Ninguna |
+| **FRA-001** ✅ *cerrado — commit `4106eea`* | 🟠 alto | `QuerySet.update()` o SQL directo sobre documentos financieros/kardex no dispara las señales de `core/signals.py` — una edición hecha así no genera fila en `AuditLog`, a diferencia de `.save()`/`.delete()` normales | `core/signals.py:178-186` (señales conectadas a `pre_save`/`post_save`/`post_delete`, que `QuerySet.update()` no dispara — comportamiento documentado de Django, no un bug); confirmado que `manage.py dbshell`/`psql` se saltan el ORM por completo | Un administrador/socio con acceso a `manage.py shell` o a la base edita un total, un monto de kardex o un asiento sin dejar ningún rastro — ver análisis completo abajo de la tabla | Estado financiero alterable sin evidencia, en disputas entre socios o ante una auditoría externa | Ver plan de remediación (sección 'Fraude interno de administrador/socio' abajo de la tabla) | S | Ninguna |
 | **FRA-002** ✅ *cerrado — commit `7ac5c84`* | 🟠 alto | `core.auditlog` no está en el propio set `AUDITED` (correcto, sería circular) pero tampoco tiene ninguna protección de base de datos — se puede editar o borrar como cualquier tabla | `core/signals.py:47-64` (ausencia de `"core.auditlog"` en `AUDITED`); `core/admin.py:26-33` (el candado es de `ModelAdmin`, no de PostgreSQL) | La bitácora que se supone prueba todo lo demás no tiene nada que la proteja a ella misma de alteración | Sin este dato, ninguna otra evidencia de esta fase es confiable ante quien tenga acceso a la base | Ver plan de remediación abajo de la tabla | S | Ninguna |
 | **FRA-003** ✅ *cerrado — commit `ee36944`* | 🟠 alto | `manage.py restaurar --confirmar` reemplaza la base completa (incluida `AuditLog`) con un respaldo anterior; la única protección es una copia "antes de restaurar" en el mismo disco, alcanzable por quien acaba de correr el comando | `core/management/commands/restaurar.py` (líneas ~120-125, la copia previa; `_restaurar_postgres` usa `pg_restore --clean --if-exists`, que borra y recrea todo) | Un administrador comete o cubre un fraude y luego restaura un respaldo anterior a ese momento, borrando la venta/movimiento Y su propio rastro en el mismo paso | Reversión completa e indetectable del estado del sistema, sin que quede ninguna señal de que ocurrió | Ver plan de remediación abajo de la tabla | S–M | Ninguna |
 | **FRA-004** ✅ *cerrado — commit `b499198`* | 🟡 medio | No existe ningún reporte periódico automático que llegue de forma independiente a ambos socios — la única forma de detectar una anomalía hoy es que alguien entre a revisar | Verificado por ausencia: `core/reportes.py` no tiene ningún comando/tarea programada de envío; el envío de correo (`config/settings.py:285-302`) solo se usa hoy para mandar facturas a pedido (`ventas/views.py:factura_enviar`) | Sin un control detectivo automático, una anomalía puede pasar meses sin que nadie la note, incluso sin que exista mala fe — simple descuido de revisión | Es el control más barato de todos y el que más protege a ambos socios por igual, no solo a uno | Ver plan de remediación abajo de la tabla | S | Ninguna |
@@ -602,7 +602,9 @@ inferido):**
 | `core.auditlog` | No, nunca | Ningún código la vuelve a tocar tras `AuditLog.objects.create(...)` |
 | `inventario.movimientoinventario` (kardex) | No, nunca | `inventario/services.py:59` — solo `.objects.create(...)`; correcciones son movimientos nuevos (tipo `DEV`), no ediciones |
 | `caja.movimientocaja` | No, nunca | `caja/services.py:29,43` — solo `.objects.create(...)` |
-| `contabilidad.asiento` / `lineaasiento` | No, nunca | `contabilidad/services.py:200,209` — solo `.objects.create(...)`; anulaciones generan un asiento inverso nuevo (`asentar_anulacion`), no editan el original |
+| `contabilidad.lineaasiento` | No, nunca | `contabilidad/services.py:209` — solo `.objects.create(...)`; las otras dos referencias (`contabilidad/views.py:36,114`) son `SELECT` de reportes, no escrituras |
+| `contabilidad.asiento` | No, nunca por la app — **pero no tolera `REVOKE UPDATE` igual** | Ver "Corrección FRA-001" abajo — `LineaAsiento.asiento` es una FK hacia ella |
+| `ventas.abono` | No, nunca | `ventas/cxc.py:59` — solo `.objects.create(...)`; si ya tiene abonos, `cancelar_cxc_por_anulacion` (líneas 97-101) **bloquea** la anulación en vez de tocar el abono |
 | `ventas.facturaventa` | **Sí** | `ventas/services.py:187` (totales, justo después de crear la factura) y `:249` (`anular_factura`: `estado`, `motivo_anulacion`, `anulada_en`, `anulada_por`) |
 | `ventas.devolucionventa` | **Sí** | `ventas/devoluciones.py:126` (`total`, justo después de crear) |
 | `ventas.documentocxc` | **Sí** | `ventas/cxc.py:65,107` (`saldo`, `estado`, en cada abono/anulación) |
@@ -617,17 +619,40 @@ Es incorrecto — `anular_factura`, `recibir_compra`/`anular_compra`,
 dependen de `UPDATE` legítimo sobre esas tablas. Bloquearlo rompería
 anulaciones, recepciones de compra y abonos de hoy mismo.
 
+**Corrección FRA-001, encontrada implementando (no en el análisis
+original):** `contabilidad.asiento` nunca la edita la app —parecía, por
+eso, tan append-only como `lineaasiento`— pero moverla al grupo `REVOKE
+UPDATE, DELETE` rompía **cada venta** al probarlo. Causa: `LineaAsiento.
+asiento` es una FK hacia `Asiento` (`contabilidad/models.py:120`), y
+PostgreSQL exige privilegio `UPDATE` (o `DELETE`/`TRUNCATE`) sobre la
+tabla REFERENCIADA para el lock `FOR KEY SHARE` que corre en cada
+`INSERT` de una fila que la referencia — sin importar que la app nunca la
+edite directo. `asentar_venta` crea un `Asiento` y sus `LineaAsiento` en
+la misma transacción de cada venta, así que perder `UPDATE` ahí tumbaba
+el sistema entero, no solo un caso raro. Se confirmó con una prueba real
+(`registrar_venta` completo) antes de aplicar nada. Ninguna otra tabla de
+este hallazgo tiene este problema — verificado que ninguna `ForeignKey`
+del repositorio apunta a `inventario.movimientoinventario`,
+`caja.movimientocaja`, `contabilidad.lineaasiento` ni `ventas.abono`.
+
 **Lo que sí se sostiene, con la distinción correcta:**
-- **`REVOKE UPDATE`** solo tiene sentido, sin romper nada, sobre las 4
-  tablas verdaderamente append-only: `core_auditlog`,
+- **`REVOKE UPDATE`** solo tiene sentido, sin romper nada, sobre 4 tablas
+  verdaderamente append-only Y sin ninguna FK entrante: `core_auditlog`,
   `inventario_movimientoinventario`, `caja_movimientocaja`,
-  `contabilidad_asiento`/`contabilidad_lineaasiento`.
+  `contabilidad_lineaasiento`, `ventas_abono` (esta última no estaba en
+  la lista original).
 - **`REVOKE DELETE`**, en cambio, sí es seguro sobre TODAS las tablas de
   documento de arriba (`ventas_facturaventa`, `ventas_devolucionventa`,
-  `ventas_documentocxc`, `compras_compra`, además de las 4 append-only) —
-  ningún flujo de negocio borra ninguna de ellas nunca; solo cambian de
-  `estado`. Borrar sigue siendo, en todos los casos, un error o un intento
-  de ocultar algo, nunca una operación legítima.
+  `ventas_documentocxc`, `compras_compra`, `caja_sesioncaja`, y
+  `contabilidad_asiento` por la razón de arriba) — ningún flujo de
+  negocio borra ninguna de ellas nunca; solo cambian de `estado` (o, en
+  el caso de `asiento`, ni eso). Borrar sigue siendo, en todos los casos,
+  un error o un intento de ocultar algo, nunca una operación legítima.
+  **Protección parcial, documentada a propósito**: `REVOKE DELETE` sin
+  `UPDATE` no impide que un `UPDATE` por SQL directo o `QuerySet.update()`
+  (que no dispara `AuditLog`, FRA-001 mismo) vacíe los montos de un
+  documento sin borrar la fila — cierra el borrado, no la manipulación de
+  montos por `UPDATE` en ese grupo.
 
 **Priorización por costo/beneficio — negocio de dos socios, no banca:**
 
@@ -639,10 +664,15 @@ anulaciones, recepciones de compra y abonos de hoy mismo.
    nada — pero sí es dueño de la tabla, así que el REVOKE es real (Postgres
    lo hace cumplir) y a la vez reversible por ese mismo rol (un dueño
    siempre puede volver a otorgarse el permiso). Documentado como tal, no
-   como blindaje absoluto. El resto de FRA-001 (`REVOKE DELETE` sobre las
-   tablas de documento, `REVOKE UPDATE` sobre las otras 3 tablas
-   append-only) sigue pendiente — se implementó solo lo pedido para
-   `core_auditlog`.
+   como blindaje absoluto.
+1b. **FRA-001** ✅ *implementado — commit `4106eea`*: `REVOKE UPDATE,
+   DELETE` sobre las 4 tablas append-only restantes (más `ventas.abono`,
+   agregada durante la verificación) vía `manage.py endurecer_documentos`,
+   y `REVOKE DELETE` sobre las 5 (en realidad 6, ver corrección de
+   `contabilidad.asiento` arriba) tablas de documento. Mismo límite que
+   FRA-002 (real pero reversible por el rol dueño), y protección parcial
+   documentada explícitamente para el grupo `REVOKE DELETE` (no impide
+   vaciar montos por `UPDATE`).
 2. **FRA-004** ✅ *implementado — commit `b499198`*: reporte diario
    automático a ambos socios. Reutiliza el envío de correo que ya existe
    (`config/settings.py:285-302`); es el control de mayor costo/beneficio
