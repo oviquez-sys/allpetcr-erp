@@ -80,9 +80,10 @@
     "severidad": "alto",
     "fase": "1-seguridad",
     "titulo": "core.auditlog no tiene ninguna protección de base de datos contra su propia alteración o borrado (no puede estar en AUDITED, sería circular)",
-    "evidencia": "core/signals.py:47-64 (ausencia de 'core.auditlog' en AUDITED); core/admin.py:26-33 (has_add/change/delete_permission=False es un candado de ModelAdmin, no de PostgreSQL). Nivel de prioridad 1: mismo REVOKE UPDATE, DELETE que FRA-001. Detalle en 01_seguridad.md, sección 'FRA-001 a FRA-005'",
-    "archivos": ["core/signals.py", "core/admin.py", "core/models.py"],
-    "estado": "abierto"
+    "evidencia": "[CERRADO 2026-08-15] core/management/commands/endurecer_auditlog.py — REVOKE UPDATE, DELETE sobre core_auditlog al rol de la app, solo PostgreSQL. Verificado antes de implementar contra la base real: 'allpetcr' (rol de la app) no es superusuario (el único es 'postgres', rol distinto) — el REVOKE sí lo hace cumplir Postgres. Pero 'allpetcr' es dueño de la tabla, así que el REVOKE es reversible por ese mismo rol (GRANT de vuelta, o DROP/ALTER TABLE); documentado explícitamente, no se presenta como blindaje absoluto. 4 pruebas nuevas contra Postgres real (core/test_endurecer_auditlog.py). No se aplicó --confirmar contra la base real de desarrollo/producción — el comando queda listo, se corre a criterio del usuario (documentado en PRODUCCION.txt). core/signals.py:47-64 y core/admin.py:26-33 (motivo original del hallazgo) sin cambios — la protección ahora es de PostgreSQL, no de esas dos capas",
+    "archivos": ["core/management/commands/endurecer_auditlog.py", "core/test_endurecer_auditlog.py", "PRODUCCION.txt"],
+    "estado": "cerrado",
+    "commit": "7ac5c84"
   },
   {
     "id": "FRA-003",
