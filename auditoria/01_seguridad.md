@@ -776,3 +776,4 @@ seguridad (seguridad de autenticación/autorización/inyección/uploads casi
 completa; configuración de despliegue real y dependencias con huecos
 declarados). `[INFERENCIA]`, no una métrica medida — se declara así para
 cumplir la regla de no dar veredicto sin declarar cobertura.
+
