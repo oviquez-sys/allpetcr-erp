@@ -13,3 +13,10 @@ class CoreConfig(AppConfig):
         from . import signals
 
         signals.conectar()
+
+        # El índice de /admin/ muestra el resumen del mes (2026-08-16). Se
+        # instala acá y no al importar el módulo para que ocurra con las apps
+        # ya cargadas; ver core/admin_site.py.
+        from . import admin_site
+
+        admin_site.instalar()

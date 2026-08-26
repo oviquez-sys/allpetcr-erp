@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inicio · ALLPETCR</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+{% comment %}
+  Formato de moneda compartido con el servidor (2026-08-16): el gráfico
+  formateaba con toLocaleString('es-ES'), que no agrupa los miles hasta los
+  cinco dígitos. Ver static/js/formato.js.
+{% endcomment %}
+<script src="{% static 'js/formato.js' %}"></script>
 <style>
 :root{
   --bg:#ffffff; --card:#ffffff; --ink:#1d1d1f; --ink2:#86868b; --ink3:#6e6e73; --line:#e5e5ea;
@@ -66,6 +72,7 @@ a{text-decoration:none;color:inherit}
 .hero .today{position:relative;z-index:1;text-align:right}
 .hero .today .l{font-size:14px;color:rgba(255,255,255,.72);font-weight:500}
 .hero .today .v{font-size:52px;font-weight:800;letter-spacing:-.035em;line-height:1;margin-top:6px;font-variant-numeric:tabular-nums}
+.hero .today .tsub{font-size:13.5px;color:rgba(255,255,255,.66);margin-top:8px}
 
 /* ===== SECTION TITLE ===== */
 .sec{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink2);margin:46px 4px 18px}
@@ -75,7 +82,12 @@ a{text-decoration:none;color:inherit}
 .kpi{background:var(--card);border-radius:var(--r);padding:26px 28px;box-shadow:var(--shadow);
   transition:transform .2s ease,box-shadow .2s ease}
 .kpi:hover{transform:translateY(-4px);box-shadow:var(--shadow-h)}
-.kpi .l{font-size:14px;color:var(--ink2);font-weight:500}
+.kpi .l{font-size:14px;color:var(--ink2);font-weight:500;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+/* "Ver origen" aparece al pasar por encima: la tarjeta se ve limpia en
+   reposo, pero descubre que es abrible apenas el puntero la toca. En táctil
+   no hay hover, así que la tarjeta entera es el enlace — no depende de esto. */
+.kpi .ver{font-size:11.5px;font-weight:600;color:var(--brand);opacity:0;transition:opacity .18s;white-space:nowrap}
+.kpi:hover .ver{opacity:1}
 .kpi .v{font-size:34px;font-weight:700;letter-spacing:-.035em;line-height:1;margin-top:14px;font-variant-numeric:tabular-nums}
 .kpi .d{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;padding:5px 11px;border-radius:980px;margin-top:16px}
 .kpi .d.up{color:var(--green-d);background:rgba(52,199,89,.13)}
@@ -209,6 +221,7 @@ a{text-decoration:none;color:inherit}
     <div class="today">
       <div class="l">Ventas de hoy</div>
       <div class="v">₡{{ ventas_hoy|crc:0 }}</div>
+      <div class="tsub">{{ tiquetes_hoy }} tiquete{{ tiquetes_hoy|pluralize }}{% if tiquetes_hoy %} · promedio ₡{{ ticket_promedio_hoy|crc:0 }}{% endif %}</div>
     </div>
     {% endif %}
   </a>
@@ -224,29 +237,42 @@ a{text-decoration:none;color:inherit}
   {% endif %}
 
   {% if es_gerente %}
-  <!-- KPIs -->
-  <div class="sec">Resumen del mes</div>
+  {% comment %}
+    KPIs DEL DÍA — rediseño 2026-08-16.
+
+    Antes acá vivía el "Resumen del mes" (ganancia, ventas del mes, margen).
+    Se movió a /admin/. El motivo: esta pantalla se abre decenas de veces por
+    día desde el mostrador y la ganancia del mes no cambia ninguna decisión
+    del mostrador. Mezclar los dos ritmos hacía que ninguno se leyera.
+
+    Las cuatro tarjetas son enlaces: cada número se puede abrir para ver de
+    dónde sale. Un tablero que muestra una cifra sin poder abrirla enseña a
+    desconfiar de la cifra, y entonces no sirve para decidir.
+  {% endcomment %}
+  <div class="sec">Hoy</div>
   <div class="kpis">
-    <div class="kpi">
-      <div class="l">Ganancia del mes</div>
-      <div class="v">₡{{ utilidad_mes|crc:0 }}</div>
-      <div class="d {% if margen >= 35 %}up{% else %}down{% endif %}">{% if margen >= 35 %}▲{% else %}▼{% endif %} {{ margen|crc:1 }}% margen</div>
-    </div>
-    <div class="kpi">
-      <div class="l">Ventas este mes</div>
-      <div class="v">₡{{ ventas_mes|crc:0 }}</div>
-      <div class="d {% if variacion_mes >= 0 %}up{% else %}down{% endif %}">{% if variacion_mes >= 0 %}▲{% else %}▼{% endif %} {{ variacion_mes|crc:1 }}% vs mes anterior</div>
-    </div>
-    <div class="kpi">
-      <div class="l">Efectivo en caja</div>
+    <a class="kpi" href="{% url 'core:evidencia_caja' %}">
+      <div class="l">Efectivo en caja <span class="ver">Ver origen →</span></div>
       <div class="v">₡{{ saldo_caja|crc:0 }}</div>
       <div class="s">{% if caja_abierta %}<span class="dot">●</span> Caja abierta ahora{% else %}Sin caja abierta{% endif %}</div>
-    </div>
-    <div class="kpi">
-      <div class="l">Por cobrar (crédito)</div>
+    </a>
+    <a class="kpi" href="{% url 'core:evidencia_medios' %}">
+      <div class="l">Ventas de hoy por medio <span class="ver">Ver origen →</span></div>
+      <div class="v">₡{{ ventas_hoy|crc:0 }}</div>
+      <div class="s">
+        {% for m in ventas_hoy_por_medio %}{% if m.total %}{{ m.etiqueta }} ₡{{ m.total|crc:0 }}{% if not forloop.last %} · {% endif %}{% endif %}{% empty %}Sin ventas todavía{% endfor %}
+      </div>
+    </a>
+    <a class="kpi" href="{% url 'core:evidencia_cxc' %}">
+      <div class="l">Por cobrar (crédito) <span class="ver">Ver origen →</span></div>
       <div class="v">₡{{ cxc_total|crc:0 }}</div>
-      <div class="s">Total de clientes fiados</div>
-    </div>
+      <div class="s">{{ cxc_clientes }} cliente{{ cxc_clientes|pluralize }} con saldo</div>
+    </a>
+    <a class="kpi" href="{% url 'core:reporte_reposicion' %}">
+      <div class="l">Stock bajo <span class="ver">Ver origen →</span></div>
+      <div class="v">{{ num_stock_bajo }}</div>
+      <div class="s">Producto{{ num_stock_bajo|pluralize }} en o bajo el mínimo</div>
+    </a>
   </div>
 
   {% endif %}
@@ -261,10 +287,14 @@ a{text-decoration:none;color:inherit}
       {% else %}
       <a class="qa-item" href="/caja/abrir/"><div class="qa-ic i-cash"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/></svg></div><div class="lb">Abrir caja</div></a>
       {% endif %}
-      <a class="qa-item" href="/inventario/etiquetas/"><div class="qa-ic i-tag"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></div><div class="lb">Códigos</div></a>
+      {% comment %}
+        "Códigos" y "Reportes" salieron de acá (2026-08-16): imprimir etiquetas
+        y leer reportes no son tareas del mostrador, y ocupaban dos de los
+        siete lugares del acceso rápido. Viven ahora en /admin/, detrás del
+        botón "Admin" que ya estaba en esta misma fila.
+      {% endcomment %}
       {% if es_gerente %}
       <a class="qa-item" href="/compras/"><div class="qa-ic i-box"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div><div class="lb">Recibir</div></a>
-      <a class="qa-item" href="/reportes/"><div class="qa-ic i-chart"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 9l-5 5-3-3-4 4"/></svg></div><div class="lb">Reportes</div></a>
       <a class="qa-item" href="/admin/"><div class="qa-ic i-admin"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><div class="lb">Admin</div></a>
       <a class="qa-item" href="/actividad/"><div class="qa-ic i-revert"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg></div><div class="lb">Reversas</div></a>
       {% endif %}
@@ -360,20 +390,11 @@ a{text-decoration:none;color:inherit}
     {% endif %}
   </div>
 
-  <!-- MONITOR RTS -->
-  {% if es_rts %}
-  <div class="sec">Régimen simplificado</div>
-  <div class="rts">
-    <h3>Monitor de compras del año</h3>
-    <div class="rsub">Al superar el límite de 186 salarios base, salís del régimen simplificado.</div>
-    <div class="rbar {% if alerta_rts %}warn{% endif %}"><div style="width:{{ pct_rts|crc:0 }}%"></div></div>
-    <div class="rgrid">
-      <div class="ri"><div class="rl">Compras del año</div><div class="rv">₡{{ compras_anio|crc:0 }}</div></div>
-      <div class="ri"><div class="rl">Límite anual</div><div class="rv">₡{{ limite_rts|crc:0 }}</div></div>
-      <div class="ri"><div class="rl">Utilizado</div><div class="rv">{{ pct_rts|crc:1 }}%</div></div>
-    </div>
-  </div>
-  {% endif %}
+  {% comment %}
+    El monitor del régimen simplificado se movió a /admin/ (2026-08-16): es un
+    acumulado ANUAL y no cambia nada de la jornada. La alerta sí se queda acá,
+    arriba, en "Pendientes" — porque cuando se dispara sí hay que hacer algo.
+  {% endcomment %}
 
   {% endif %}
 {% endif %}
@@ -425,10 +446,10 @@ if(ctx){
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},tooltip:{
         backgroundColor:'#1d1d1f',padding:12,cornerRadius:10,titleFont:{size:13},bodyFont:{size:14,weight:'600'},
-        callbacks:{title:()=>'',label:(c)=>'₡'+c.parsed.y.toLocaleString('es-ES')}}},
+        callbacks:{title:()=>'',label:(c)=>fmt(c.parsed.y)}}},
       scales:{
         y:{beginAtZero:true,border:{display:false},grid:{color:'rgba(0,0,0,.05)'},
-          ticks:{color:'#86868b',font:{size:13},callback:(v)=>'₡'+v.toLocaleString('es-ES')}},
+          ticks:{color:'#86868b',font:{size:13},callback:(v)=>fmt(v)}},
         x:{border:{display:false},grid:{display:false},ticks:{color:'#86868b',font:{size:13}}}
       }}
   });

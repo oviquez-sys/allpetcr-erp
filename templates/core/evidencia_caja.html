@@ -1,0 +1,102 @@
+{% extends "core/_evidencia_base.html" %}
+
+{% block titulo %}Efectivo en caja{% endblock %}
+
+{% block contenido %}
+<h1>Efectivo en caja</h1>
+<div class="sub">De dónde sale este número y qué registros lo componen.</div>
+
+{% if sin_empresa %}
+  <div class="tbl"><div class="vacio">Todavía no hay empresa configurada.</div></div>
+{% elif not sesion %}
+  <div class="tbl"><div class="vacio">
+    No hay ninguna caja abierta en este momento, así que no hay efectivo esperado que desglosar.<br>
+    <a href="/caja/abrir/" style="color:var(--brand);font-weight:600">Abrir caja →</a>
+  </div></div>
+{% else %}
+
+<div class="big">
+  <div>
+    <div class="nl">Esperado en la gaveta ahora</div>
+    <div class="n">₡{{ total|crc:0 }}</div>
+  </div>
+  <div class="sep"></div>
+  <div class="meta">
+    Sesión <b>Caja #{{ sesion.pk }}</b> · abierta el <b>{{ sesion.abierta_en|date:"d/m/Y" }}</b>
+    a las <b>{{ sesion.abierta_en|time:"H:i" }}</b> por <b>{{ sesion.usuario.username }}</b><br>
+    Sucursal <b>{{ sesion.sucursal.nombre }}</b> · <b>{{ filas|length }}</b> movimiento{{ filas|length|pluralize }} registrado{{ filas|length|pluralize }}
+  </div>
+</div>
+
+<div class="sec">Cómo se calcula</div>
+<div class="form">
+  {% for f in formula %}
+  <div class="fr">
+    <div>
+      <div class="lb"><span class="op {% if f.signo == '+' %}p{% elif f.signo == '−' %}m{% endif %}">{{ f.signo }}</span> {{ f.concepto }}</div>
+      <div class="hint">{{ f.detalle }}</div>
+    </div>
+    <div class="vv">{% if f.signo == '−' and f.monto > 0 %}−{% endif %}₡{{ f.monto|crc:0 }}</div>
+  </div>
+  {% endfor %}
+  <div class="fr total">
+    <div class="lb">Efectivo esperado en caja</div>
+    <div class="vv">₡{{ total|crc:0 }}</div>
+  </div>
+</div>
+
+{% comment %}
+  Los egresos y las devoluciones se guardan con monto NEGATIVO en la base
+  (así lo define MovimientoCaja: positivo entra, negativo sale). Por eso la
+  fórmula de arriba muestra el signo pero el valor ya viene con su signo
+  propio, y la suma de la columna da el total sin más artificios.
+{% endcomment %}
+
+<div class="sec">Evidencia · todos los movimientos de esta sesión</div>
+<div class="tbl">
+  <div class="scroll">
+  <table>
+    <thead><tr>
+      <th>Hora</th><th>Tipo</th><th>Descripción</th><th>Referencia</th><th>Usuario</th><th class="num">Monto</th>
+    </tr></thead>
+    <tbody>
+      {% for m in filas %}
+      <tr>
+        <td class="mut">{{ m.fecha|time:"H:i" }}</td>
+        <td>
+          <span class="chip {% if m.tipo == 'VEN' %}ok{% elif m.tipo == 'EGR' or m.tipo == 'ANU' %}bad{% elif m.tipo == 'ING' %}info{% else %}mut{% endif %}">{{ m.get_tipo_display }}</span>
+        </td>
+        <td>{{ m.descripcion|default:"—" }}</td>
+        <td class="mut">{{ m.referencia|default:"—" }}</td>
+        <td class="mut">{{ m.usuario.username|default:"—" }}</td>
+        <td class="num {% if m.monto < 0 %}neg{% endif %}">{% if m.monto < 0 %}−{% endif %}₡{{ m.monto|crc_abs:0 }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="tot">
+        <td colspan="5">Suma de los {{ filas|length }} movimiento{{ filas|length|pluralize }}</td>
+        <td class="num">₡{{ total|crc:0 }}</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+{% if excluye %}
+<div class="sec">Qué NO entra en este número</div>
+<div class="note">
+  <div class="nh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> La gaveta no es lo mismo que las ventas</div>
+  <ul>
+    {% for e in excluye %}<li><b>{{ e.titulo }}</b> — {{ e.detalle }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="sec">Ir a la fuente</div>
+<div class="srcs">
+  <a class="src" href="/admin/caja/sesioncaja/{{ sesion.pk }}/change/"><span class="k">Tabla</span> Sesión de caja #{{ sesion.pk }}</a>
+  <a class="src" href="/admin/caja/movimientocaja/?sesion__id__exact={{ sesion.pk }}"><span class="k">Tabla</span> Movimientos de esta sesión</a>
+  <a class="src" href="/caja/cerrar/"><span class="k">Acción</span> Cerrar caja y hacer el arqueo →</a>
+</div>
+
+{% endif %}
+{% endblock %}

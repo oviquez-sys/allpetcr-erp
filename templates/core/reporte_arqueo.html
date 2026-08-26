@@ -1,0 +1,132 @@
+{% extends "core/_evidencia_base.html" %}
+
+{% block titulo %}Arqueo de caja{% endblock %}
+
+{% block contenido %}
+<h1>Diferencias de arqueo</h1>
+<div class="sub">
+  Lo que sobró o faltó al cerrar caja, por cajero, en los últimos {{ dias }} días.
+</div>
+
+{% if sin_empresa %}
+  <div class="tbl"><div class="vacio">Todavía no hay empresa configurada.</div></div>
+{% else %}
+
+<div class="big">
+  <div>
+    <div class="nl">Diferencia acumulada</div>
+    <div class="n" style="color:{% if total < 0 %}#b5231a{% elif total > 0 %}#8a5700{% else %}var(--green-d){% endif %}">{% if total < 0 %}−{% endif %}₡{{ total|crc_abs:0 }}</div>
+  </div>
+  <div class="sep"></div>
+  <div class="meta">
+    <b>{{ cierres }}</b> cierre{{ cierres|pluralize }} en la ventana<br>
+    <b>{{ num_faltantes }}</b> con faltante · <b>{{ num_sobrantes }}</b> con sobrante<br>
+    Se considera cuadrado hasta ₡{{ tolerancia|crc:0 }} de diferencia
+  </div>
+</div>
+
+{% comment %}
+  LO QUE SE BUSCA ACÁ NO ES EL TOTAL, ES EL SESGO.
+
+  Diferencias que caen a los dos lados (a veces sobra, a veces falta) son
+  error de conteo y son normales en cualquier caja. Diferencias que caen
+  siempre del mismo lado, con la misma persona, son otra cosa.
+
+  Por eso faltantes y sobrantes se cuentan por separado en vez de promediarse:
+  un promedio los cancela entre sí y esconde justo lo que se está buscando.
+
+  La marca "revisar" exige al menos 5 cierres y 3 faltantes antes de aparecer.
+  Con dos cierres no hay patrón, hay casualidad — y acusar a alguien por
+  casualidad es peor que no mirar.
+{% endcomment %}
+{% if hay_revisar %}
+<div class="bad-box">
+  <svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+  <div>
+    Hay un cajero cuyos descuadres caen casi siempre del mismo lado.
+    <div class="d">
+      No es prueba de nada por sí solo: puede ser una forma de contar, un turno con
+      mucho vuelto o una impresora que se traga tiquetes. Es motivo para mirar los
+      cierres concretos de abajo y conversar, no para concluir.
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="sec">Resumen por cajero</div>
+<div class="tbl">
+  <div class="scroll">
+  <table>
+    <thead><tr>
+      <th>Cajero</th><th class="num">Cierres</th><th class="num">Cuadrados</th>
+      <th class="num">Con faltante</th><th class="num">Con sobrante</th>
+      <th class="num">Faltante total</th><th class="num">Diferencia neta</th><th>Último cierre</th>
+    </tr></thead>
+    <tbody>
+      {% for f in filas %}
+      <tr>
+        <td>
+          {{ f.usuario }}
+          {% if f.revisar %}<span class="chip bad" style="margin-left:8px">Revisar</span>{% endif %}
+        </td>
+        <td class="num">{{ f.cierres }}</td>
+        <td class="num">{{ f.cuadrados }}</td>
+        <td class="num">{{ f.faltantes }}</td>
+        <td class="num">{{ f.sobrantes }}</td>
+        <td class="num {% if f.monto_faltante %}neg{% endif %}">{% if f.monto_faltante %}−₡{{ f.monto_faltante|crc_abs:0 }}{% else %}—{% endif %}</td>
+        <td class="num {% if f.total < 0 %}neg{% endif %}">{% if f.total < 0 %}−{% endif %}₡{{ f.total|crc_abs:0 }}</td>
+        <td class="mut">{{ f.ultimo|date:"d/m/Y" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="vacio">No hay cierres de caja registrados en los últimos {{ dias }} días.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="sec">Evidencia · los cierres que no cuadraron</div>
+<div class="tbl">
+  <div class="scroll">
+  <table>
+    <thead><tr>
+      <th>Cerrada</th><th>Sesión</th><th>Cajero</th>
+      <th class="num">Esperado</th><th class="num">Contado</th><th class="num">Diferencia</th>
+    </tr></thead>
+    <tbody>
+      {% for s in descuadres %}
+      <tr>
+        <td class="mut">{{ s.cerrada_en|date:"d/m/Y" }} {{ s.cerrada_en|time:"H:i" }}</td>
+        <td><a href="/admin/caja/sesioncaja/{{ s.pk }}/change/" style="color:var(--brand);font-weight:600">Caja #{{ s.pk }}</a></td>
+        <td>{{ s.usuario.username }}</td>
+        <td class="num">₡{{ s.monto_esperado|crc:0 }}</td>
+        <td class="num">₡{{ s.monto_contado|crc:0 }}</td>
+        <td class="num {% if s.diferencia < 0 %}neg{% endif %}">{% if s.diferencia < 0 %}−{% endif %}₡{{ s.diferencia|crc_abs:0 }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="vacio">Todos los cierres de la ventana cuadraron dentro de la tolerancia.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="sec">Cómo leer esto</div>
+<div class="note">
+  <div class="nh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> Un faltante no es un robo</div>
+  <ul>
+    <li><b>Lo que importa es el sesgo, no el monto.</b> Que a alguien a veces le sobre y a veces le falte es normal: es error de conteo.</li>
+    <li><b>Que siempre falte, en cambio, es un patrón</b>, y los patrones tienen causa. Puede ser la forma de dar el vuelto, un turno con mucho efectivo o algo peor. Hay que mirar, no asumir.</li>
+    <li><b>La marca «Revisar» necesita al menos 5 cierres</b> y 3 faltantes antes de aparecer. Con dos cierres no hay patrón, hay casualidad.</li>
+    <li><b>Se considera cuadrado hasta ₡{{ tolerancia|crc:0 }}.</b> Exigir el céntimo exacto genera ruido constante y entrena a ignorar la alerta.</li>
+  </ul>
+</div>
+
+<div class="sec">Ir a la fuente</div>
+<div class="srcs">
+  <a class="src" href="/admin/caja/sesioncaja/"><span class="k">Tabla</span> Sesiones de caja</a>
+  <a class="src" href="/admin/caja/movimientocaja/"><span class="k">Tabla</span> Movimientos de caja</a>
+</div>
+
+{% endif %}
+{% endblock %}

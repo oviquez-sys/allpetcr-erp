@@ -1,0 +1,136 @@
+{% extends "core/_evidencia_base.html" %}
+
+{% block titulo %}Ventas por medio de pago{% endblock %}
+
+{% block contenido %}
+<h1>Ventas de hoy por medio de pago</h1>
+<div class="sub">Qué se vendió, cómo se cobró, y cuánto dinero entró de verdad.</div>
+
+{% if sin_empresa %}
+  <div class="tbl"><div class="vacio">Todavía no hay empresa configurada.</div></div>
+{% else %}
+
+<div class="big">
+  <div>
+    <div class="nl">Ventas del {{ fecha|date:"d/m/Y" }}</div>
+    <div class="n">₡{{ total_ventas|crc:0 }}</div>
+  </div>
+  <div class="sep"></div>
+  <div>
+    <div class="nl">Dinero recibido en el día</div>
+    <div class="n" style="font-size:40px;color:var(--green-d)">₡{{ recibido|crc:0 }}</div>
+  </div>
+</div>
+
+{% comment %}
+  Estos dos números son distintos A PROPÓSITO y no es un error de cálculo.
+
+  "Ventas" incluye el crédito, que se factura hoy pero se cobra después.
+  "Recibido" descuenta ese crédito y suma los abonos que entraron hoy contra
+  créditos de días anteriores. Presentarlos juntos, con el puente explícito
+  entre uno y otro, es todo el punto de esta pantalla: mezclarlos era el
+  error que hacía parecer que había entrado plata que no entró.
+{% endcomment %}
+
+<div class="sec">Ventas del día, por medio de pago</div>
+<div class="form">
+  {% for f in formula %}
+  <div class="fr">
+    <div>
+      <div class="lb"><span class="op p">+</span> {{ f.concepto }}</div>
+      <div class="hint">{{ f.detalle }}{% if f.codigo == 'CRE' %} · no es dinero recibido{% endif %}</div>
+    </div>
+    <div class="vv">₡{{ f.monto|crc:0 }}</div>
+  </div>
+  {% endfor %}
+  <div class="fr total">
+    <div class="lb">Total facturado hoy</div>
+    <div class="vv">₡{{ total_ventas|crc:0 }}</div>
+  </div>
+</div>
+
+<div class="sec">De lo facturado a lo cobrado</div>
+<div class="form">
+  {% for p in puente %}
+  <div class="fr">
+    <div>
+      <div class="lb"><span class="op {% if p.signo == '+' %}p{% elif p.signo == '−' %}m{% endif %}">{{ p.signo }}</span> {{ p.concepto }}</div>
+      <div class="hint">{{ p.detalle }}</div>
+    </div>
+    <div class="vv">{% if p.signo == '−' and p.monto > 0 %}−{% endif %}₡{{ p.monto|crc:0 }}</div>
+  </div>
+  {% endfor %}
+  <div class="fr total">
+    <div class="lb">Dinero recibido en el día</div>
+    <div class="vv">₡{{ recibido|crc:0 }}</div>
+  </div>
+</div>
+
+<div class="sec">Evidencia · facturas del día</div>
+<div class="tbl">
+  <div class="scroll">
+  <table>
+    <thead><tr>
+      <th>Hora</th><th>Factura</th><th>Cliente</th><th>Medio</th><th>Cajero</th><th class="num">Total</th>
+    </tr></thead>
+    <tbody>
+      {% for f in filas %}
+      <tr>
+        <td class="mut">{{ f.creado_en|time:"H:i" }}</td>
+        <td><a href="/pos/factura/{{ f.pk }}/" style="color:var(--brand);font-weight:600">{{ f.numero }}</a></td>
+        <td>{{ f.cliente.nombre|default:"Contado" }}</td>
+        <td><span class="chip {% if f.medio_pago == 'EFE' %}ok{% elif f.medio_pago == 'CRE' %}bad{% else %}info{% endif %}">{{ f.get_medio_pago_display }}</span></td>
+        <td class="mut">{{ f.usuario.username|default:"—" }}</td>
+        <td class="num">₡{{ f.total|crc:0 }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="vacio">No hay ventas emitidas en esta fecha.</td></tr>
+      {% endfor %}
+      {% if filas %}
+      <tr class="tot"><td colspan="5">Total facturado</td><td class="num">₡{{ total_ventas|crc:0 }}</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+{% if abonos %}
+<div class="sec">Evidencia · abonos cobrados hoy (créditos de días anteriores)</div>
+<div class="tbl">
+  <div class="scroll">
+  <table>
+    <thead><tr><th>Hora</th><th>Cliente</th><th>Contra la factura</th><th>Medio</th><th>Cajero</th><th class="num">Monto</th></tr></thead>
+    <tbody>
+      {% for a in abonos %}
+      <tr>
+        <td class="mut">{{ a.fecha|time:"H:i" }}</td>
+        <td>{{ a.documento.cliente.nombre }}</td>
+        <td class="mut">{{ a.documento.factura.numero }}</td>
+        <td><span class="chip info">{{ a.get_medio_display }}</span></td>
+        <td class="mut">{{ a.usuario.username|default:"—" }}</td>
+        <td class="num">₡{{ a.monto|crc:0 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="sec">Qué NO entra en estos números</div>
+<div class="note">
+  <div class="nh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> Antes de comparar con otra pantalla</div>
+  <ul>
+    {% for e in excluye %}<li><b>{{ e.titulo }}</b> — {{ e.detalle }}</li>{% endfor %}
+    <li><b>El efectivo en caja es otra cosa.</b> Sólo el medio Efectivo llega a la gaveta; SINPE y tarjeta van al banco. <a href="{% url 'core:evidencia_caja' %}" style="color:var(--amber);font-weight:600">Ver el desglose de la caja →</a></li>
+  </ul>
+</div>
+
+<div class="sec">Ir a la fuente</div>
+<div class="srcs">
+  <a class="src" href="/admin/ventas/facturaventa/"><span class="k">Tabla</span> Facturas de venta</a>
+  <a class="src" href="/actividad/"><span class="k">Pantalla</span> Actividad y reversas →</a>
+</div>
+
+{% endif %}
+{% endblock %}

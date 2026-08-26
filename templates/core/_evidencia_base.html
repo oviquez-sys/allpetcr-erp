@@ -1,0 +1,150 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block titulo %}Evidencia{% endblock %} · ALLPETCR</title>
+{% comment %}
+  PANTALLAS DE EVIDENCIA — 2026-08-16
+  ---------------------------------------------------------------------------
+  Todas comparten esta base porque todas responden la misma pregunta con la
+  misma estructura, y esa uniformidad es parte del valor: una vez que
+  aprendiste a leer una, sabés leer las otras tres.
+
+  El orden no es decorativo:
+
+    1. El número, grande, con su alcance y la hora en que se calculó.
+    2. La fórmula: los sumandos, en el orden en que se suman.
+    3. La evidencia: los registros reales. La suma de la tabla TIENE que dar
+       el total de arriba. Si no da, es un defecto — no un redondeo.
+    4. Qué NO entra. Es la sección que más consultas evita: casi siempre la
+       duda no es "de dónde sale" sino "por qué no coincide con aquel otro".
+    5. La fuente cruda, para el que quiera seguir tirando del hilo.
+
+  Los estilos son los mismos tokens del resto del sistema (navy de marca,
+  tarjetas redondeadas, marca de agua del logo).
+{% endcomment %}
+<style>
+:root{
+  --bg:#f5f5f7; --card:#fff; --ink:#1d1d1f; --ink2:#86868b; --ink3:#6e6e73; --line:#e5e5ea;
+  --brand:#0B3161; --brand-d:#072244;
+  --green:#34c759; --green-d:#248a3d; --amber:#ff9f0a; --red:#ff3b30;
+  --shadow:0 1px 2px rgba(0,0,0,.02), 0 4px 12px rgba(0,0,0,.035);
+  --r:24px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:#fff;color:var(--ink);line-height:1.47;letter-spacing:-.01em;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:url('{% static "patterns/allpetcr-logo.png" %}');
+  background-repeat:repeat;background-size:140px 140px;opacity:.04;pointer-events:none;z-index:-1}
+a{text-decoration:none;color:inherit}
+
+.nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:16px;padding:10px 40px;
+  background:rgba(245,245,247,.85);backdrop-filter:saturate(180%) blur(22px);
+  -webkit-backdrop-filter:saturate(180%) blur(22px);border-bottom:1px solid rgba(0,0,0,.05)}
+.nav .logo{height:56px;width:auto;object-fit:contain;display:block}
+.nav .sp{flex:1}
+.nav .out{font-size:14px;color:var(--brand);font-weight:500;padding:8px 14px;border-radius:980px}
+
+.wrap{max-width:1240px;margin:0 auto;padding:36px 48px 90px}
+.back{font-size:14px;color:var(--ink2);display:inline-block;margin-bottom:16px}
+.back:hover{color:var(--brand)}
+h1{font-size:38px;font-weight:700;letter-spacing:-.035em;line-height:1.05}
+.sub{font-size:16px;color:var(--ink2);margin-top:8px;max-width:720px}
+.sec{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink2);margin:38px 4px 16px}
+
+.big{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:30px 34px;margin-top:24px;
+  display:flex;align-items:center;gap:40px;flex-wrap:wrap}
+.big .nl{font-size:13.5px;color:var(--ink2);font-weight:500;margin-bottom:8px}
+.big .n{font-size:54px;font-weight:800;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.big .sep{width:1px;align-self:stretch;background:var(--line)}
+.big .meta{font-size:14px;color:var(--ink3);line-height:1.65}
+.big .meta b{color:var(--ink);font-weight:600}
+
+.form{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.fr{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 30px;border-bottom:1px solid var(--line)}
+.fr:last-child{border-bottom:none}
+.fr .lb{font-size:15px;display:flex;align-items:center;gap:11px}
+.fr .op{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;flex-shrink:0;background:rgba(11,49,97,.1);color:var(--brand)}
+.fr .op.p{background:rgba(52,199,89,.15);color:var(--green-d)}
+.fr .op.m{background:rgba(255,59,48,.11);color:var(--red)}
+.fr .hint{font-size:13px;color:var(--ink2);margin-left:35px}
+.fr .vv{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fr.total{background:#f7f9fc}
+.fr.total .lb{font-weight:700;font-size:16px}
+.fr.total .vv{font-size:22px;font-weight:800}
+
+.tbl{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.tbl .scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2);
+  padding:13px 20px;background:#fafafb;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:13px 20px;font-size:14.5px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.num{font-weight:600}
+td.mut{color:var(--ink2);font-size:13.5px}
+td.neg{color:#b5231a}
+tr.tot td{background:#f7f9fc;font-weight:800;font-size:15.5px;border-top:1.5px solid var(--line)}
+.chip{display:inline-flex;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:980px;white-space:nowrap}
+.chip.ok{background:rgba(52,199,89,.15);color:var(--green-d)}
+.chip.warn{background:rgba(255,159,10,.16);color:#8a5700}
+.chip.bad{background:rgba(255,59,48,.11);color:#b5231a}
+.chip.info{background:rgba(90,110,230,.14);color:#3634a3}
+.chip.mut{background:#ececf0;color:var(--ink2)}
+.vacio{padding:40px 30px;text-align:center;color:var(--ink2);font-size:15px}
+
+.note{background:#fffaf0;border:1px solid rgba(255,159,10,.35);border-radius:20px;padding:22px 26px}
+.note .nh{font-size:15.5px;font-weight:700;display:flex;align-items:center;gap:10px}
+.note .nh svg{width:19px;height:19px;stroke:var(--amber);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.note ul{margin:10px 0 0 30px}
+.note li{font-size:14px;color:var(--ink3);line-height:1.6;margin-bottom:4px}
+.note li b{color:var(--ink)}
+
+.ok-box,.bad-box{border-radius:20px;padding:18px 24px;display:flex;align-items:flex-start;gap:12px;font-size:14.5px;font-weight:600;margin-top:18px}
+.ok-box{background:rgba(52,199,89,.1);border:1px solid rgba(52,199,89,.35);color:#1c6b30}
+.bad-box{background:rgba(255,59,48,.08);border:1px solid rgba(255,59,48,.35);color:#b5231a}
+.ok-box svg,.bad-box svg{width:20px;height:20px;stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;margin-top:1px}
+.ok-box svg{stroke:var(--green-d)} .bad-box svg{stroke:var(--red)}
+.bad-box .d{font-weight:500;margin-top:4px;line-height:1.5}
+
+.srcs{display:flex;gap:12px;flex-wrap:wrap}
+.src{display:inline-flex;align-items:center;gap:9px;background:var(--card);border:.5px solid rgba(0,0,0,.06);
+  border-radius:14px;padding:12px 18px;box-shadow:var(--shadow);font-size:14px;font-weight:600;color:var(--brand)}
+.src:hover{background:#f7f9fc}
+.src .k{font-size:12px;color:var(--ink2);font-weight:500}
+.hora{font-size:12.5px;color:var(--ink2);margin-top:14px}
+
+@media(max-width:900px){
+  .wrap{padding:26px 18px 60px}
+  h1{font-size:30px}
+  .big{gap:22px}.big .sep{display:none}.big .n{font-size:42px}
+  .nav{padding:10px 18px}
+}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <a href="/" style="display:flex;align-items:center"><img class="logo" src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetcr.com"></a>
+  <span class="sp"></span>
+  <a class="out" href="/">Volver al inicio</a>
+</div>
+
+<div class="wrap">
+  <a class="back" href="/">← Inicio</a>
+  {% block contenido %}{% endblock %}
+
+  {% if calculado_en %}
+  <div class="hora">
+    Calculado el {{ calculado_en|date:"d/m/Y" }} a las {{ calculado_en|time:"H:i" }}.
+    El Inicio puede mostrar un valor de hasta dos minutos antes: guarda los indicadores
+    en caché para no recalcularlos en cada carga, y esta pantalla no la usa.
+  </div>
+  {% endif %}
+</div>
+
+</body>
+</html>

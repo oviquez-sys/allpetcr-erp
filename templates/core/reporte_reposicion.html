@@ -1,0 +1,110 @@
+{% extends "core/_evidencia_base.html" %}
+
+{% block titulo %}Reposición{% endblock %}
+
+{% block contenido %}
+<h1>Qué reponer</h1>
+<div class="sub">
+  Calculado sobre lo que cada producto vendió de verdad en los últimos
+  {{ dias_ventana }} días, no sobre un mínimo fijo igual para todo el catálogo.
+</div>
+
+{% if sin_empresa %}
+  <div class="tbl"><div class="vacio">Todavía no hay empresa configurada.</div></div>
+{% else %}
+
+<div class="big">
+  <div>
+    <div class="nl">Agotados</div>
+    <div class="n" style="color:{% if num_agotados %}#b5231a{% else %}var(--green-d){% endif %}">{{ num_agotados }}</div>
+  </div>
+  <div class="sep"></div>
+  <div>
+    <div class="nl">Menos de {{ dias_criticos }} días de stock</div>
+    <div class="n" style="font-size:44px;color:{% if num_criticos %}#8a5700{% else %}var(--green-d){% endif %}">{{ num_criticos }}</div>
+  </div>
+  <div class="sep"></div>
+  <div>
+    <div class="nl">Por reponer este mes</div>
+    <div class="n" style="font-size:44px">{{ num_reponer }}</div>
+  </div>
+</div>
+
+{% comment %}
+  Se muestra la evidencia (unidades vendidas, venta diaria, cobertura) al lado
+  de la cantidad sugerida a propósito. Un número de compra sin la evidencia
+  con la que se calculó es una orden a ciegas, y este cálculo tiene supuestos
+  que fallan en casos concretos (estacionalidad, producto que estuvo agotado).
+  Quien compra tiene que poder discutirle al número.
+{% endcomment %}
+
+<div class="sec">
+  {% if solo_urgentes %}Productos que necesitan reposición{% else %}Todo el catálogo{% endif %}
+  · <a href="?filtro={% if solo_urgentes %}todos{% else %}urgentes{% endif %}" style="color:var(--brand);text-transform:none;letter-spacing:0">
+    {% if solo_urgentes %}ver todo el catálogo{% else %}ver solo los urgentes{% endif %} →</a>
+</div>
+<div class="tbl">
+  <div class="scroll">
+  <table>
+    <thead><tr>
+      <th>Producto</th><th>Estado</th>
+      <th class="num">Stock</th>
+      <th class="num">Vendidas<br><span style="font-weight:400;text-transform:none">({{ dias_ventana }} días)</span></th>
+      <th class="num">Venta<br><span style="font-weight:400;text-transform:none">por día</span></th>
+      <th class="num">Cobertura</th>
+      <th class="num">Sugerido<br><span style="font-weight:400;text-transform:none">pedir</span></th>
+    </tr></thead>
+    <tbody>
+      {% for f in filas %}
+      <tr>
+        <td>
+          {{ f.producto.nombre }}
+          <div class="mut" style="font-size:12.5px">{{ f.producto.sku }}{% if f.producto.categoria %} · {{ f.producto.categoria.nombre }}{% endif %}</div>
+        </td>
+        <td>
+          {% if f.urgencia == 'agotado' %}<span class="chip bad">Agotado</span>
+          {% elif f.urgencia == 'critico' %}<span class="chip bad">Crítico</span>
+          {% elif f.urgencia == 'reponer' %}<span class="chip warn">Reponer</span>
+          {% elif f.urgencia == 'bajo_minimo' %}<span class="chip warn">Bajo mínimo</span>
+          {% elif f.urgencia == 'sin_rotacion' %}<span class="chip mut">Sin rotación</span>
+          {% else %}<span class="chip ok">OK</span>{% endif %}
+          {% if f.hubo_quiebre %}<div class="mut" style="font-size:12px;margin-top:3px">Estuvo en cero: la venta real pudo ser mayor</div>{% endif %}
+        </td>
+        <td class="num">{{ f.producto.stock_actual|crc:0 }}</td>
+        <td class="num">{{ f.vendidas|crc:0 }}</td>
+        <td class="num">{{ f.diaria|crc:2 }}</td>
+        <td class="num">
+          {% if f.cobertura is None %}<span class="mut">—</span>
+          {% else %}{{ f.cobertura|crc:0 }} día{{ f.cobertura|crc:0|pluralize }}{% endif %}
+        </td>
+        <td class="num">{% if f.sugerido %}<b>{{ f.sugerido|crc:0 }}</b>{% else %}<span class="mut">—</span>{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="vacio">No hay ningún producto que necesite reposición ahora mismo.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="sec">Cómo leer estos números</div>
+<div class="note">
+  <div class="nh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> La sugerencia es una sugerencia, no una orden</div>
+  <ul>
+    <li><b>Cobertura</b> = stock actual ÷ venta por día. Responde "cuántos días aguanto".</li>
+    <li><b>Sugerido</b> = venta por día × {{ dias_objetivo }} días − stock actual. Asume que le comprás al proveedor una vez al mes.</li>
+    <li><b>Producto estacional:</b> el promedio de {{ dias_ventana }} días no distingue diciembre de febrero. Si vendiste mucho en una temporada corta, va a sugerir de más.</li>
+    <li><b>Producto que estuvo agotado:</b> si no había, no se vendió, y el promedio sale bajo justo donde más te faltó. Esas filas están marcadas, pero el número no se corrige solo.</li>
+    <li><b>Sin rotación</b> significa cero ventas en la ventana. Para esos se sigue usando el mínimo fijo del producto, que para algo que no rota alcanza.</li>
+  </ul>
+</div>
+
+<div class="sec">Ir a la fuente</div>
+<div class="srcs">
+  <a class="src" href="{% url 'core:reporte_stock' %}"><span class="k">Reporte</span> Stock contra mínimo (criterio viejo)</a>
+  <a class="src" href="/compras/"><span class="k">Acción</span> Registrar una compra →</a>
+  <a class="src" href="/admin/catalogo/producto/"><span class="k">Tabla</span> Productos</a>
+</div>
+
+{% endif %}
+{% endblock %}

@@ -1,4 +1,4 @@
-import json
+﻿import json
 from types import SimpleNamespace
 from unittest import mock
 
@@ -42,21 +42,21 @@ class ChatLoopHerramientasMockTest(TestCase):
         resp2 = SimpleNamespace(
             stop_reason="end_turn",
             usage=_usage(),
-            content=[_bloque_texto("Vendiste ₡0 hoy.")],
+            content=[_bloque_texto("Vendiste â‚¡0 hoy.")],
         )
         cliente_mock = MockAnthropic.return_value
         cliente_mock.messages.create.side_effect = [resp1, resp2]
 
-        r = self.client_django.post("/api/chat/", data=json.dumps({"message": "¿cuánto vendí hoy?"}),
+        r = self.client_django.post("/api/chat/", data=json.dumps({"message": "Â¿cuÃ¡nto vendÃ­ hoy?"}),
                                      content_type="application/json")
-        print("STATUS:", r.status_code, "BODY:", r.json())
+        # print de depuracion olvidado: el simbolo CRC rompe la consola cp1252 de Windows
         self.assertEqual(r.status_code, 200)
-        self.assertEqual(r.json()["response"], "Vendiste ₡0 hoy.")
+        self.assertEqual(r.json()["response"], "Vendiste â‚¡0 hoy.")
         self.assertEqual(cliente_mock.messages.create.call_count, 2)
 
         log = ChatMensaje.objects.get(usuario=self.user)
         print("Log:", log.pregunta, "->", log.respuesta, "tokens_in=", log.tokens_entrada, "tokens_out=", log.tokens_salida)
-        self.assertEqual(log.respuesta, "Vendiste ₡0 hoy.")
+        self.assertEqual(log.respuesta, "Vendiste â‚¡0 hoy.")
         self.assertEqual(log.tokens_entrada, 100)  # 50 + 50
         self.assertEqual(log.tokens_salida, 40)    # 20 + 20
 
@@ -66,14 +66,14 @@ class ChatLoopHerramientasMockTest(TestCase):
         resp = SimpleNamespace(
             stop_reason="end_turn",
             usage=_usage(),
-            content=[_bloque_texto("Para vender, andá a Vender en Acceso Rápido.")],
+            content=[_bloque_texto("Para vender, andÃ¡ a Vender en Acceso RÃ¡pido.")],
         )
         cliente_mock = MockAnthropic.return_value
         cliente_mock.messages.create.return_value = resp
 
-        r = self.client_django.post("/api/chat/", data=json.dumps({"message": "¿cómo vendo?"}),
+        r = self.client_django.post("/api/chat/", data=json.dumps({"message": "Â¿cÃ³mo vendo?"}),
                                      content_type="application/json")
-        print("STATUS:", r.status_code, "BODY:", r.json())
+        # print de depuracion olvidado: el simbolo CRC rompe la consola cp1252 de Windows
         self.assertEqual(r.status_code, 200)
         self.assertEqual(cliente_mock.messages.create.call_count, 1)
 
@@ -82,20 +82,20 @@ class ChatLoopHerramientasMockTest(TestCase):
     def test_memoria_manda_historial_a_claude(self, MockAnthropic):
         resp = SimpleNamespace(
             stop_reason="end_turn", usage=_usage(),
-            content=[_bloque_texto("Sí, ese fue el total de hoy.")],
+            content=[_bloque_texto("SÃ­, ese fue el total de hoy.")],
         )
         cliente_mock = MockAnthropic.return_value
         cliente_mock.messages.create.return_value = resp
 
         # El historial lo arma el SERVIDOR desde ChatMensaje, no el navegador
-        # (auditoría 2026-07-28, SEG-07). Se siembra un intercambio previo.
+        # (auditorÃ­a 2026-07-28, SEG-07). Se siembra un intercambio previo.
         from core.models import ChatMensaje
 
         ChatMensaje.objects.create(
-            usuario=self.user, pregunta="¿cuánto vendí hoy?", respuesta="Vendiste ₡24000 hoy."
+            usuario=self.user, pregunta="Â¿cuÃ¡nto vendÃ­ hoy?", respuesta="Vendiste â‚¡24000 hoy."
         )
         r = self.client_django.post("/api/chat/", data=json.dumps({
-            "message": "¿ese es el total correcto?",
+            "message": "Â¿ese es el total correcto?",
         }), content_type="application/json")
         self.assertEqual(r.status_code, 200)
 
@@ -103,16 +103,16 @@ class ChatLoopHerramientasMockTest(TestCase):
         _, kwargs = cliente_mock.messages.create.call_args
         mensajes_enviados = kwargs["messages"]
         self.assertEqual(len(mensajes_enviados), 3)
-        self.assertEqual(mensajes_enviados[0]["content"], "¿cuánto vendí hoy?")
-        self.assertEqual(mensajes_enviados[2]["content"], "¿ese es el total correcto?")
+        self.assertEqual(mensajes_enviados[0]["content"], "Â¿cuÃ¡nto vendÃ­ hoy?")
+        self.assertEqual(mensajes_enviados[2]["content"], "Â¿ese es el total correcto?")
 
     @mock.patch.dict("os.environ", {"ANTHROPIC_API_KEY": "sk-fake-para-test"})
     @mock.patch("core.views.anthropic.Anthropic")
     def test_el_historial_que_manda_el_cliente_se_ignora(self, MockAnthropic):
-        """SEG-07: el cliente ya no decide cuánto contexto se le paga al modelo.
+        """SEG-07: el cliente ya no decide cuÃ¡nto contexto se le paga al modelo.
 
-        Se manda un historial inflado a propósito; el servidor debe descartarlo
-        y enviar solo el mensaje nuevo, porque no hay conversación previa
+        Se manda un historial inflado a propÃ³sito; el servidor debe descartarlo
+        y enviar solo el mensaje nuevo, porque no hay conversaciÃ³n previa
         guardada para este usuario.
         """
         cliente_mock = MockAnthropic.return_value
@@ -130,7 +130,7 @@ class ChatLoopHerramientasMockTest(TestCase):
         _, kwargs = cliente_mock.messages.create.call_args
         self.assertEqual(
             len(kwargs["messages"]), 1,
-            "El historial del cliente se coló: el costo de contexto vuelve a "
+            "El historial del cliente se colÃ³: el costo de contexto vuelve a "
             "estar en manos del navegador.",
         )
 
@@ -138,7 +138,7 @@ class ChatLoopHerramientasMockTest(TestCase):
     @mock.patch("core.views.anthropic.Anthropic")
     def test_loop_infinito_de_herramientas_no_cuelga(self, MockAnthropic):
         # El modelo insiste en pedir herramientas sin parar -> debe frenar
-        # después de CHAT_MAX_RONDAS_HERRAMIENTAS y no reventar.
+        # despuÃ©s de CHAT_MAX_RONDAS_HERRAMIENTAS y no reventar.
         resp_tool = SimpleNamespace(
             stop_reason="tool_use", usage=_usage(),
             content=[_bloque_tool_use("indicadores_del_negocio", {})],
@@ -146,10 +146,10 @@ class ChatLoopHerramientasMockTest(TestCase):
         cliente_mock = MockAnthropic.return_value
         cliente_mock.messages.create.return_value = resp_tool
 
-        r = self.client_django.post("/api/chat/", data=json.dumps({"message": "insistí"}),
+        r = self.client_django.post("/api/chat/", data=json.dumps({"message": "insistÃ­"}),
                                      content_type="application/json")
         print("STATUS loop:", r.status_code, "BODY:", r.json())
         self.assertEqual(r.status_code, 200)
         self.assertIn("no pude", r.json()["response"].lower())
-        # No debió llamar infinitas veces, se frena en el tope.
+        # No debiÃ³ llamar infinitas veces, se frena en el tope.
         self.assertEqual(cliente_mock.messages.create.call_count, 4)

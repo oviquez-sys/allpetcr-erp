@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Recibir mercadería · ALLPETCR</title>
+{% comment %}
+  Mismo formato de moneda que el servidor y que el POS (2026-08-16).
+  Ver static/js/formato.js.
+{% endcomment %}
+<script src="{% static 'js/formato.js' %}"></script>
 <style>
 :root{
   --bg:#f5f5f7;--card:#fff;--ink:#1d1d1f;--ink2:#6e6e73;--line:#e5e5ea;
@@ -246,7 +251,7 @@ const porId = Object.fromEntries(productos.map(p=>[p.id,p]));
 let carrito = {}; // id -> {cantidad, costo}
 let formaPago = 'CON';
 
-const fmt = n => "₡" + n.toLocaleString("es-ES",{maximumFractionDigits:2});
+// `fmt` lo define static/js/formato.js, cargado en el <head>.
 
 // esc()/escUrl() — mismo motivo que en el POS (auditoría 2026-07-28, SEG-02):
 // el servidor entrega los datos escapados, pero innerHTML los vuelve a

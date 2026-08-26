@@ -71,7 +71,38 @@ def _calcular_indicadores(empresa):
     hace_7_dias = hoy - timedelta(days=7)
 
     ventas_emitidas = FacturaVenta.objects.filter(empresa=empresa, estado="EMI")
-    ventas_hoy = ventas_emitidas.filter(creado_en__date=hoy).aggregate(t=Sum("total"))["t"] or Decimal("0")
+    facturas_hoy = ventas_emitidas.filter(creado_en__date=hoy)
+    # Total y conteo del día en UNA consulta: el tablero necesita los dos y
+    # pedirlos por separado barre la tabla dos veces.
+    resumen_hoy = facturas_hoy.aggregate(t=Sum("total"), n=Count("id"))
+    ventas_hoy = resumen_hoy["t"] or Decimal("0")
+    tiquetes_hoy = resumen_hoy["n"] or 0
+    ticket_promedio_hoy = (ventas_hoy / tiquetes_hoy) if tiquetes_hoy else Decimal("0")
+
+    # Desglose del día por medio de pago. Es lo que explica por qué el efectivo
+    # de la gaveta no coincide con las ventas del día: SINPE y tarjeta no pasan
+    # por caja. Agrupado en la base, no iterando facturas.
+    por_medio = {
+        f["medio_pago"]: f
+        for f in facturas_hoy.values("medio_pago").annotate(t=Sum("total"), n=Count("id"))
+    }
+    ventas_hoy_por_medio = [
+        {
+            "codigo": codigo,
+            "etiqueta": etiqueta,
+            "total": (por_medio.get(codigo, {}).get("t") or Decimal("0")),
+            "tiquetes": (por_medio.get(codigo, {}).get("n") or 0),
+        }
+        for codigo, etiqueta in FacturaVenta.MedioPago.choices
+    ]
+    # El crédito es venta, NO es cobro. Separarlos evita el error de leer
+    # "ventas del día" como "plata que entró hoy".
+    ventas_hoy_credito = next(
+        (m["total"] for m in ventas_hoy_por_medio
+         if m["codigo"] == FacturaVenta.MedioPago.CREDITO),
+        Decimal("0"),
+    )
+    ventas_hoy_contado = ventas_hoy - ventas_hoy_credito
     ventas_mes = ventas_emitidas.filter(creado_en__date__gte=inicio_mes).aggregate(t=Sum("total"))["t"] or Decimal("0")
     ventas_mes_anterior = ventas_emitidas.filter(
         creado_en__date__gte=(inicio_mes - timedelta(days=30)), creado_en__date__lt=inicio_mes
@@ -109,6 +140,10 @@ def _calcular_indicadores(empresa):
     saldo_caja = monto_esperado(caja_abierta) if caja_abierta else Decimal("0")
 
     cxc_total = Cliente.objects.filter(empresa=empresa).aggregate(t=Sum("saldo"))["t"] or Decimal("0")
+    # Clientes con deuda y cuántos arrastran más de 30 días: sin esto, el KPI
+    # de crédito es un número sin urgencia. Se cuenta en la base.
+    cxc_resumen = Cliente.objects.filter(empresa=empresa, saldo__gt=0).aggregate(n=Count("id"))
+    cxc_clientes = cxc_resumen["n"] or 0
 
     # Stock bajo contado EN LA BASE: antes se cargaban todos los productos a
     # memoria para compararlos uno por uno.
@@ -130,6 +165,12 @@ def _calcular_indicadores(empresa):
 
     return {
         "ventas_hoy": ventas_hoy,
+        "tiquetes_hoy": tiquetes_hoy,
+        "ticket_promedio_hoy": ticket_promedio_hoy,
+        "ventas_hoy_por_medio": ventas_hoy_por_medio,
+        "ventas_hoy_contado": ventas_hoy_contado,
+        "ventas_hoy_credito": ventas_hoy_credito,
+        "cxc_clientes": cxc_clientes,
         "ventas_mes": ventas_mes,
         "ventas_ultimos_7": ventas_ultimos_7,
         "utilidad_mes": utilidad_mes,
@@ -137,6 +178,9 @@ def _calcular_indicadores(empresa):
         "variacion_mes": variacion_mes,
         "saldo_caja": saldo_caja,
         "caja_abierta": caja_abierta is not None,
+        # Solo el id: este diccionario se guarda en caché y meter una
+        # instancia de modelo ahí la dejaría vieja al recuperarla.
+        "sesion_caja_id": caja_abierta.pk if caja_abierta else None,
         "cxc_total": cxc_total,
         "num_stock_bajo": num_stock_bajo,
         "compras_anio": compras_anio,

@@ -52,9 +52,13 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
 
   <div class="rc-sec">Inventario</div>
   <div class="rc-grid">
+    <a class="rc-card" href="{% url 'core:reporte_reposicion' %}">
+      <div class="rc-ic i-scale"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div>
+      <div class="rc-tx"><div class="h">Qué reponer</div><div class="d">Cuánto pedir de cada producto según lo que vende de verdad, no según un mínimo igual para todo el catálogo.</div></div>
+    </a>
     <a class="rc-card" href="{% url 'core:reporte_stock' %}">
       <div class="rc-ic i-box"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div>
-      <div class="rc-tx"><div class="h">Stock y reposición</div><div class="d">Qué productos están en o bajo el mínimo y hay que reordenar ya.</div></div>
+      <div class="rc-tx"><div class="h">Stock contra el mínimo</div><div class="d">El criterio simple: qué está en o bajo el mínimo fijo del producto, sin mirar velocidad de venta.</div></div>
     </a>
     <a class="rc-card" href="{% url 'core:reporte_inventario' %}">
       <div class="rc-ic i-vault"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M12 8.5V6M12 18v-2.5"/></svg></div>
@@ -63,6 +67,14 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
     <a class="rc-card" href="{% url 'catalogo:precios' %}">
       <div class="rc-ic i-price"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/><path d="M9.5 9.5l5 5"/></svg></div>
       <div class="rc-tx"><div class="h">Precios y márgenes</div><div class="d">Precio, costo promedio y margen de cada producto, con su historial de cambios.</div></div>
+    </a>
+  </div>
+
+  <div class="rc-sec">Control interno</div>
+  <div class="rc-grid">
+    <a class="rc-card" href="{% url 'core:reporte_arqueo' %}">
+      <div class="rc-ic i-vault"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><circle cx="12" cy="12" r="3"/></svg></div>
+      <div class="rc-tx"><div class="h">Arqueo de caja por cajero</div><div class="d">Diferencias de cierre de los últimos 30 días. Un faltante aislado es ruido; el mismo faltante repetido, no.</div></div>
     </a>
   </div>
 

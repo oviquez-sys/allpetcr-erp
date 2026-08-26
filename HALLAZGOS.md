@@ -212,3 +212,144 @@ habría que reconsiderar primero — no la API.
 | `DASHBOARD_CACHE_SEG` | Vigencia de los indicadores | `120` (por defecto) |
 | `PG_DUMP_BIN` / `PG_RESTORE_BIN` | Ruta a los binarios de PostgreSQL si no están en el PATH | — |
 | `ALLPETCR_RESPALDOS` | Carpeta de respaldos **fuera** de OneDrive | ej. `D:\RespaldosAllpet` |
+
+---
+
+## Cambio del 16/08/2026 — Inicio del día a día y evidencia de los indicadores
+
+Trabajo hecho fuera de la lista de auditoría, a pedido. **320 pruebas en
+verde** (286 previas + 34 nuevas), `check --deploy` limpio en modo producción.
+Sin migraciones ni cambios de modelo.
+
+### Qué cambió
+
+| Cambio | Archivos | Por qué |
+|---|---|---|
+| El Inicio queda solo con datos del día | `templates/core/dashboard.html`, `core/dashboard.py` | Se abre decenas de veces al día desde el mostrador; la ganancia del mes no cambia ninguna decisión del mostrador y sepultaba lo operativo |
+| Resumen del mes, Códigos y Reportes pasan a `/admin/` | `core/admin_site.py`, `templates/admin/index.html`, `core/apps.py` | `/admin/` ya era el lugar del trabajo administrativo y ya tenía su botón en el acceso rápido |
+| Los 4 KPIs del día se abren y muestran su origen | `core/evidencia.py` + 4 plantillas | Un número que no se puede abrir enseña a desconfiar del número |
+| Reposición por velocidad de venta | `core/reposicion.py`, `templates/core/reporte_reposicion.html` | `stock_minimo` tiene `default=2` para todo el catálogo: con 532 productos es inservible |
+| Diferencias de arqueo por cajero | `core/arqueo.py`, `templates/core/reporte_arqueo.html` | `cerrar_caja` ya guardaba `diferencia` y nadie la miraba en conjunto |
+| El crédito se valida contra los documentos | `ventas/cxc.py` | Ver abajo: era un control que parecía existir y no existía |
+
+### NEW-05 — El crédito se autorizaba contra un valor denormalizado
+
+| Ref | Hallazgo | Sev. | Estado | Evidencia / nota |
+|---|---|---|---|---|
+| NEW-05 | `validar_credito` usaba `Cliente.saldo` (denormalizado) para decidir si autorizar una venta a crédito, cuando el propio docstring del modelo dice que la fuente de verdad son los documentos CxC. Si `saldo` quedaba por debajo de la deuda real, el sistema aprobaba ventas por encima del límite del cliente y nada lo detectaba hasta la próxima corrida de `reconciliar` — que sigue sin programarse. | Alta | **Cerrado** | `ventas/cxc.py:deuda_real()` calcula desde `DocumentoCxC` pendientes. `ventas/test_credito_documentos.py` (6 pruebas), incluida `test_bloquea_aunque_el_saldo_denormalizado_este_bajo`, que ensucia `saldo` a mano y verifica que igual rechaza. |
+
+Cuando el denormalizado difiere de los documentos, el mensaje de rechazo lo
+dice y pide correr `reconciliar`, en vez de sólo rechazar: si no, el cajero ve
+un rechazo que "no cuadra" con la ficha del cliente y asume que falló el
+sistema.
+
+### Riesgo de permisos, revisado
+
+Al mover el resumen del mes a `/admin/` había que confirmar quién lo ve: el
+admin exige `is_staff`, que **no** equivale a gerente. Verificado en el código:
+`core/middleware.py` ya cierra `/admin/` a quien no sea gerente, así que el
+riesgo estaba cubierto. Se agregó igual un segundo chequeo en
+`core/admin_site.py` — si mañana se decide dejar entrar al Contador, la
+ganancia y el margen no deberían viajar de regalo con ese cambio.
+
+### Consistencia del asistente de chat
+
+`SYSTEM_PROMPT_CHAT` en `core/views.py` describía el mapa de navegación viejo
+("Códigos" y "Reportes" en el Inicio, KPIs del mes en el Inicio). Se actualizó
+en el mismo cambio: un asistente que da instrucciones sobre botones que ya no
+existen es peor que no tenerlo.
+
+### Límites conocidos, sin tapar
+
+- **Reposición con producto estacional:** el promedio de 60 días no distingue
+  diciembre de febrero y va a sugerir de más. Documentado en la pantalla.
+- **Reposición con producto que estuvo agotado:** si no había, no se vendió, y
+  el promedio sale bajo justo donde más faltó. Se marca (`hubo_quiebre`) pero
+  no se corrige solo: corregirlo exige saber cuántos días estuvo en cero.
+- **Las pantallas de evidencia no usan la caché del tablero.** El Inicio puede
+  mostrar un valor de hasta 2 minutos atrás y el detalle se calcula al
+  instante. Cada pantalla informa la hora del cálculo — una diferencia
+  explicada es mejor que una coincidencia forzada.
+- **Probado contra SQLite, no contra PostgreSQL con datos reales.** Sin
+  migraciones ni cambios de modelo, el riesgo es bajo, pero no es lo mismo.
+
+### Variables de entorno nuevas
+
+| Variable | Para qué | Valor por defecto |
+|---|---|---|
+| `REPOSICION_DIAS_VENTANA` | Días de historial para medir la velocidad de venta | `60` |
+| `REPOSICION_DIAS_OBJETIVO` | Días de cobertura que se quieren tener tras reponer | `30` |
+| `REPOSICION_DIAS_CRITICOS` | Cobertura por debajo de la cual el producto es crítico | `7` |
+| `ARQUEO_DIAS_VENTANA` | Ventana del reporte de diferencias de caja | `30` |
+| `ARQUEO_TOLERANCIA` | Diferencia por debajo de la cual un cierre se considera cuadrado | `100` |
+
+---
+
+## Cambio del 16/08/2026 â€” Inicio del dÃ­a a dÃ­a y evidencia de los indicadores
+
+Trabajo hecho fuera de la lista de auditorÃ­a, a pedido. **320 pruebas en
+verde** (286 previas + 34 nuevas), `check --deploy` limpio en modo producciÃ³n.
+Sin migraciones ni cambios de modelo.
+
+### QuÃ© cambiÃ³
+
+| Cambio | Archivos | Por quÃ© |
+|---|---|---|
+| El Inicio queda solo con datos del dÃ­a | `templates/core/dashboard.html`, `core/dashboard.py` | Se abre decenas de veces al dÃ­a desde el mostrador; la ganancia del mes no cambia ninguna decisiÃ³n del mostrador y sepultaba lo operativo |
+| Resumen del mes, CÃ³digos y Reportes pasan a `/admin/` | `core/admin_site.py`, `templates/admin/index.html`, `core/apps.py` | `/admin/` ya era el lugar del trabajo administrativo y ya tenÃ­a su botÃ³n en el acceso rÃ¡pido |
+| Los 4 KPIs del dÃ­a se abren y muestran su origen | `core/evidencia.py` + 4 plantillas | Un nÃºmero que no se puede abrir enseÃ±a a desconfiar del nÃºmero |
+| ReposiciÃ³n por velocidad de venta | `core/reposicion.py`, `templates/core/reporte_reposicion.html` | `stock_minimo` tiene `default=2` para todo el catÃ¡logo: con 532 productos es inservible |
+| Diferencias de arqueo por cajero | `core/arqueo.py`, `templates/core/reporte_arqueo.html` | `cerrar_caja` ya guardaba `diferencia` y nadie la miraba en conjunto |
+| El crÃ©dito se valida contra los documentos | `ventas/cxc.py` | Ver abajo: era un control que parecÃ­a existir y no existÃ­a |
+
+### NEW-05 â€” El crÃ©dito se autorizaba contra un valor denormalizado
+
+| Ref | Hallazgo | Sev. | Estado | Evidencia / nota |
+|---|---|---|---|---|
+| NEW-05 | `validar_credito` usaba `Cliente.saldo` (denormalizado) para decidir si autorizar una venta a crÃ©dito, cuando el propio docstring del modelo dice que la fuente de verdad son los documentos CxC. Si `saldo` quedaba por debajo de la deuda real, el sistema aprobaba ventas por encima del lÃ­mite del cliente y nada lo detectaba hasta la prÃ³xima corrida de `reconciliar` â€” que sigue sin programarse. | Alta | **Cerrado** | `ventas/cxc.py:deuda_real()` calcula desde `DocumentoCxC` pendientes. `ventas/test_credito_documentos.py` (6 pruebas), incluida `test_bloquea_aunque_el_saldo_denormalizado_este_bajo`, que ensucia `saldo` a mano y verifica que igual rechaza. |
+
+Cuando el denormalizado difiere de los documentos, el mensaje de rechazo lo
+dice y pide correr `reconciliar`, en vez de sÃ³lo rechazar: si no, el cajero ve
+un rechazo que "no cuadra" con la ficha del cliente y asume que fallÃ³ el
+sistema.
+
+### Riesgo de permisos, revisado
+
+Al mover el resumen del mes a `/admin/` habÃ­a que confirmar quiÃ©n lo ve: el
+admin exige `is_staff`, que **no** equivale a gerente. Verificado en el cÃ³digo:
+`core/middleware.py` ya cierra `/admin/` a quien no sea gerente, asÃ­ que el
+riesgo estaba cubierto. Se agregÃ³ igual un segundo chequeo en
+`core/admin_site.py` â€” si maÃ±ana se decide dejar entrar al Contador, la
+ganancia y el margen no deberÃ­an viajar de regalo con ese cambio.
+
+### Consistencia del asistente de chat
+
+`SYSTEM_PROMPT_CHAT` en `core/views.py` describÃ­a el mapa de navegaciÃ³n viejo
+("CÃ³digos" y "Reportes" en el Inicio, KPIs del mes en el Inicio). Se actualizÃ³
+en el mismo cambio: un asistente que da instrucciones sobre botones que ya no
+existen es peor que no tenerlo.
+
+### LÃ­mites conocidos, sin tapar
+
+- **ReposiciÃ³n con producto estacional:** el promedio de 60 dÃ­as no distingue
+  diciembre de febrero y va a sugerir de mÃ¡s. Documentado en la pantalla.
+- **ReposiciÃ³n con producto que estuvo agotado:** si no habÃ­a, no se vendiÃ³, y
+  el promedio sale bajo justo donde mÃ¡s faltÃ³. Se marca (`hubo_quiebre`) pero
+  no se corrige solo: corregirlo exige saber cuÃ¡ntos dÃ­as estuvo en cero.
+- **Las pantallas de evidencia no usan la cachÃ© del tablero.** El Inicio puede
+  mostrar un valor de hasta 2 minutos atrÃ¡s y el detalle se calcula al
+  instante. Cada pantalla informa la hora del cÃ¡lculo â€” una diferencia
+  explicada es mejor que una coincidencia forzada.
+- **Probado contra SQLite, no contra PostgreSQL con datos reales.** Sin
+  migraciones ni cambios de modelo, el riesgo es bajo, pero no es lo mismo.
+
+### Variables de entorno nuevas
+
+| Variable | Para quÃ© | Valor por defecto |
+|---|---|---|
+| `REPOSICION_DIAS_VENTANA` | DÃ­as de historial para medir la velocidad de venta | `60` |
+| `REPOSICION_DIAS_OBJETIVO` | DÃ­as de cobertura que se quieren tener tras reponer | `30` |
+| `REPOSICION_DIAS_CRITICOS` | Cobertura por debajo de la cual el producto es crÃ­tico | `7` |
+| `ARQUEO_DIAS_VENTANA` | Ventana del reporte de diferencias de caja | `30` |
+| `ARQUEO_TOLERANCIA` | Diferencia por debajo de la cual un cierre se considera cuadrado | `100` |
+

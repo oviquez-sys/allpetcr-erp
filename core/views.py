@@ -12,7 +12,10 @@ from django.views.decorators.http import require_http_methods
 from compras.models import Compra
 from ventas.models import DevolucionVenta, FacturaVenta
 
+from . import arqueo as arq
+from . import evidencia as ev
 from . import reportes as rep
+from . import reposicion as repos
 from .chat_tools import ejecutar_herramienta, herramientas_para
 from .dashboard import indicadores
 from .models import ChatMensaje
@@ -139,6 +142,73 @@ def reporte_inventario(request):
     return render(request, "core/reporte_inventario.html", ctx)
 
 
+@rol_requerido(GERENTE)
+def reporte_reposicion(request):
+    """Qué reponer y cuánto, según la velocidad de venta real."""
+    empresa = empresa_actual(request)
+    if empresa is None:
+        return render(request, "core/reporte_reposicion.html", {"sin_empresa": True})
+    solo_urgentes = request.GET.get("filtro") != "todos"
+    ctx = repos.sugerencias(empresa, solo_urgentes=solo_urgentes)
+    ctx["solo_urgentes"] = solo_urgentes
+    return render(request, "core/reporte_reposicion.html", ctx)
+
+
+@rol_requerido(GERENTE)
+def reporte_arqueo(request):
+    """Diferencias de cierre de caja por cajero. Un faltante aislado es ruido;
+    el mismo faltante repetido, no."""
+    empresa = empresa_actual(request)
+    if empresa is None:
+        return render(request, "core/reporte_arqueo.html", {"sin_empresa": True})
+    ctx = arq.por_cajero(empresa)
+    ctx["descuadres"] = arq.sesiones_descuadradas(empresa)
+    return render(request, "core/reporte_arqueo.html", ctx)
+
+
+# ==========================================================================
+#  EVIDENCIA DE LOS INDICADORES
+#  Cada KPI del Inicio se puede abrir para ver de dónde sale. El patrón es
+#  siempre el mismo: el número, la fórmula, los registros, qué NO incluye y
+#  el enlace a la tabla cruda.
+#
+#  Estas vistas no leen la caché del tablero: el Inicio puede estar mostrando
+#  un valor de hasta dos minutos atrás y acá se calcula al instante. Por eso
+#  cada plantilla informa la hora del cálculo — una diferencia explicada es
+#  mejor que una coincidencia forzada.
+# ==========================================================================
+
+@rol_requerido(GERENTE)
+def evidencia_caja(request):
+    empresa = empresa_actual(request)
+    if empresa is None:
+        return render(request, "core/evidencia_caja.html", {"sin_empresa": True})
+    ctx = ev.efectivo_en_caja(empresa)
+    ctx["calculado_en"] = timezone.localtime()
+    return render(request, "core/evidencia_caja.html", ctx)
+
+
+@rol_requerido(GERENTE)
+def evidencia_medios(request):
+    empresa = empresa_actual(request)
+    if empresa is None:
+        return render(request, "core/evidencia_medios.html", {"sin_empresa": True})
+    fecha = _parse_fecha(request.GET.get("fecha"), timezone.localdate())
+    ctx = ev.ventas_por_medio(empresa, fecha)
+    ctx["calculado_en"] = timezone.localtime()
+    return render(request, "core/evidencia_medios.html", ctx)
+
+
+@rol_requerido(GERENTE)
+def evidencia_cxc(request):
+    empresa = empresa_actual(request)
+    if empresa is None:
+        return render(request, "core/evidencia_cxc.html", {"sin_empresa": True})
+    ctx = ev.por_cobrar(empresa)
+    ctx["calculado_en"] = timezone.localtime()
+    return render(request, "core/evidencia_cxc.html", ctx)
+
+
 # Mapa real de navegación del sistema. El chat de ayuda solo debe hablar de
 # lo que existe acá — nada de menús o pasos inventados.
 SYSTEM_PROMPT_CHAT = """Eres el asistente de ayuda del ERP AllPet (allpetcr.com), \
@@ -152,20 +222,39 @@ se mencionan acá.
 
 MAPA REAL DEL SISTEMA:
 
-Inicio (/) — Panel principal: KPIs del mes (ganancia, ventas, efectivo en caja, \
-por cobrar), accesos rápidos, gráfico de tendencia de ventas de los últimos 7 días.
+Inicio (/) — Panel del DÍA. Muestra: ventas de hoy con cantidad de tiquetes y \
+ticket promedio, y cuatro indicadores del día que se pueden tocar para ver de \
+dónde sale cada número: "Efectivo en caja", "Ventas de hoy por medio de pago", \
+"Por cobrar (crédito)" y "Stock bajo". Además: accesos rápidos, avisos \
+pendientes y el gráfico de ventas de los últimos 7 días.
+
+IMPORTANTE: los datos DEL MES (ganancia del mes, ventas del mes, margen, \
+monitor del régimen simplificado) YA NO están en el Inicio. Se ven en /admin/. \
+Si alguien los busca en el Inicio, hay que mandarlo al botón "Admin".
+
+Pantallas de evidencia (se abren tocando un indicador del Inicio, solo gerentes):
+- /evidencia/caja/ — De dónde sale el efectivo esperado en la gaveta: monto de \
+apertura, ventas en efectivo, ingresos, egresos y devoluciones, uno por uno. \
+Explica por qué el efectivo NO coincide con las ventas del día (SINPE y \
+tarjeta no pasan por la caja).
+- /evidencia/medios-de-pago/ — Las ventas del día abiertas por medio de pago, y \
+el puente hacia el dinero realmente recibido (resta el crédito, suma los abonos).
+- /evidencia/por-cobrar/ — Documentos de crédito abiertos con su antigüedad, y \
+el contraste entre los documentos y el saldo guardado en la ficha del cliente.
 
 Acceso Rápido desde Inicio:
 - "Vender" → /pos/ — Punto de venta (POS). Todos los cajeros pueden vender acá.
 - "Abrir caja" (/caja/abrir/) o "Cerrar caja" (/caja/cerrar/) según el estado actual.
-- "Códigos" → /inventario/etiquetas/ — Generar/imprimir etiquetas con código de barras.
 - "Recibir" → /compras/ — Registrar mercadería que llega de un proveedor \
 (solo gerentes).
-- "Reportes" → /reportes/ — Centro de reportes (solo gerentes).
-- "Admin" → /admin/ — Panel de administración de Django (gestión de usuarios, \
-productos, catálogo, configuración; solo gerentes).
+- "Admin" → /admin/ — Panel administrativo (solo gerentes). Acá están el \
+resumen del mes, el centro de reportes, los códigos de barras, precios y \
+márgenes, el arqueo de caja y todas las tablas del sistema.
 - "Reversas" → /actividad/ — Ver actividad reciente y anular ventas (reversar \
 una venta hecha por error).
+
+OJO: "Códigos" y "Reportes" YA NO son botones del Inicio. Se llega a los dos \
+desde /admin/.
 
 Ventas (dentro de /pos/):
 - Vender: se arma la venta en el POS, se elige medio de pago (efectivo, \
@@ -197,10 +286,17 @@ recalcula el costo promedio del producto.
 - Se puede dar de alta un producto nuevo desde ahí si no existe en el catálogo.
 - Las compras también se pueden anular.
 
-Reportes (/reportes/, solo gerentes):
+Reportes (/reportes/, solo gerentes — se llega desde /admin/):
 - Más vendidos.
-- Stock (niveles bajos de inventario).
+- Stock (niveles bajos de inventario, contra el mínimo fijo del producto).
 - Valor de inventario.
+- Qué reponer (/reportes/reposicion/) — cuánto pedir de cada producto según lo \
+que vende de verdad: mide la venta diaria promedio de los últimos 60 días, \
+calcula cuántos días de stock quedan y sugiere la cantidad a pedir. Es distinto \
+del reporte de Stock, que sólo compara contra un mínimo fijo igual para todos.
+- Arqueo de caja (/reportes/arqueo/) — diferencias de cierre por cajero en los \
+últimos 30 días. Sirve para ver si a alguien le falta plata siempre del mismo \
+lado, que es distinto de un error de conteo ocasional.
 
 Contabilidad (solo gerentes):
 - Libro diario, balance de comprobación, cierres de período, estado de \

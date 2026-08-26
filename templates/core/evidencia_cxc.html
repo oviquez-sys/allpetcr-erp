@@ -1,0 +1,109 @@
+{% extends "core/_evidencia_base.html" %}
+
+{% block titulo %}Por cobrar{% endblock %}
+
+{% block contenido %}
+<h1>Por cobrar (crédito)</h1>
+<div class="sub">Quién debe, desde cuándo, y contra qué factura.</div>
+
+{% if sin_empresa %}
+  <div class="tbl"><div class="vacio">Todavía no hay empresa configurada.</div></div>
+{% else %}
+
+<div class="big">
+  <div>
+    <div class="nl">Saldo pendiente de cobro</div>
+    <div class="n">₡{{ total|crc:0 }}</div>
+  </div>
+  <div class="sep"></div>
+  <div class="meta">
+    <b>{{ clientes }}</b> cliente{{ clientes|pluralize }} con saldo · <b>{{ filas|length }}</b> documento{{ filas|length|pluralize }} pendiente{{ filas|length|pluralize }}<br>
+    {% if filas %}El más antiguo: <b>{{ dias_mas_viejo }} día{{ dias_mas_viejo|pluralize }}</b> · vencido a más de 30 días: <b>₡{{ vencido|crc:0 }}</b>{% endif %}
+  </div>
+</div>
+
+{% comment %}
+  EL CONTRASTE ES EL MOTIVO DE ESTA PANTALLA.
+
+  El KPI del Inicio suma `Cliente.saldo`, que es un valor denormalizado. La
+  fuente de verdad son los documentos pendientes. Acá se calculan los dos por
+  caminos distintos y se comparan.
+
+  No es un detalle contable: hasta esta versión, `saldo` era el número contra
+  el que se AUTORIZABA crédito nuevo. Si se quedaba corto, el sistema aprobaba
+  ventas por encima del límite real del cliente. Eso ya se corrigió en
+  `validar_credito` (ahora autoriza contra los documentos), pero el descuadre
+  sigue siendo señal de que algo se guardó mal, y hay que verlo.
+{% endcomment %}
+{% if cuadra %}
+<div class="ok-box">
+  <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+  <div>Los documentos suman ₡{{ total|crc:0 }} y el saldo guardado en las fichas de los clientes suma lo mismo. Cuadran.</div>
+</div>
+{% else %}
+<div class="bad-box">
+  <svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+  <div>
+    Los documentos y las fichas de los clientes no cuadran.
+    <div class="d">
+      Documentos pendientes: ₡{{ total|crc:0 }} · fichas de clientes: ₡{{ total_denormalizado|crc:0 }} ·
+      diferencia: ₡{{ diferencia|crc:0 }}.<br>
+      No corrijas ningún saldo a mano. Corré <code>manage.py reconciliar</code> para que quede
+      registrado de dónde salió la diferencia.
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="sec">Evidencia · documentos por cobrar abiertos</div>
+<div class="tbl">
+  <div class="scroll">
+  <table>
+    <thead><tr>
+      <th>Cliente</th><th>Factura</th><th>Fecha</th><th>Antigüedad</th>
+      <th class="num">Original</th><th class="num">Abonado</th><th class="num">Saldo</th>
+    </tr></thead>
+    <tbody>
+      {% for f in filas %}
+      <tr>
+        <td>{{ f.doc.cliente.nombre }}</td>
+        <td><a href="/pos/factura/{{ f.doc.factura.pk }}/" style="color:var(--brand);font-weight:600">{{ f.doc.factura.numero }}</a></td>
+        <td class="mut">{{ f.doc.creado_en|date:"d/m/Y" }}</td>
+        <td><span class="chip {% if f.vencido %}bad{% elif f.dias > 15 %}warn{% else %}ok{% endif %}">{% if f.dias == 0 %}Hoy{% else %}{{ f.dias }} día{{ f.dias|pluralize }}{% endif %}</span></td>
+        <td class="num">₡{{ f.doc.monto_original|crc:0 }}</td>
+        <td class="num">₡{{ f.doc.abonado|crc:0 }}</td>
+        <td class="num">₡{{ f.doc.saldo|crc:0 }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="vacio">No hay documentos de crédito pendientes. Nadie te debe nada.</td></tr>
+      {% endfor %}
+      {% if filas %}
+      <tr class="tot">
+        <td colspan="4">{{ filas|length }} documento{{ filas|length|pluralize }} pendiente{{ filas|length|pluralize }}</td>
+        <td class="num">₡{{ total_original|crc:0 }}</td>
+        <td class="num">₡{{ total_abonado|crc:0 }}</td>
+        <td class="num">₡{{ total|crc:0 }}</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="sec">Cómo leer este número</div>
+<div class="note">
+  <div class="nh"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg> Es un saldo, no una venta del mes</div>
+  <ul>
+    <li><b>Arrastra crédito de meses anteriores.</b> No tiene relación con las ventas del mes en curso, así que compararlos no dice nada.</li>
+    {% for e in excluye %}<li><b>{{ e.titulo }}</b> — {{ e.detalle }}</li>{% endfor %}
+  </ul>
+</div>
+
+<div class="sec">Ir a la fuente</div>
+<div class="srcs">
+  <a class="src" href="/admin/ventas/documentocxc/"><span class="k">Tabla</span> Documentos por cobrar</a>
+  <a class="src" href="/admin/ventas/cliente/"><span class="k">Tabla</span> Clientes y sus límites</a>
+</div>
+
+{% endif %}
+{% endblock %}

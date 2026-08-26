@@ -75,6 +75,42 @@ body.dashboard #content-main{display:block}
 /* ---- Secciones ---- */
 .ax-sec{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;
   color:var(--ink2);margin:38px 4px 16px}
+
+/* ---- Resumen del mes (movido desde el Inicio) ---- */
+.ax-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.ax-kpi{background:var(--card);border-radius:20px;padding:22px 24px;box-shadow:var(--shadow);
+  border:.5px solid rgba(0,0,0,.05)}
+.ax-kpi .kl{font-size:13.5px;color:var(--ink2);font-weight:500;line-height:1.3}
+.ax-kpi .kv{font-size:30px;font-weight:700;letter-spacing:-.035em;line-height:1;margin-top:12px;
+  font-variant-numeric:tabular-nums;color:var(--ink)}
+.ax-kpi .kd{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;
+  padding:4px 10px;border-radius:var(--radius-pill);margin-top:14px}
+.ax-kpi .kd.up{color:#248a3d;background:rgba(52,199,89,.13)}
+.ax-kpi .kd.down{color:#ff3b30;background:rgba(255,59,48,.11)}
+.ax-kpi .ks{font-size:12.5px;color:var(--ink2);margin-top:14px}
+.ax-kpi .ks a{color:var(--brand);font-weight:600}
+.ax-kpi .kbar{height:7px;background:#ececf0;border-radius:var(--radius-pill);overflow:hidden;margin-top:14px}
+.ax-kpi .kbar>div{height:100%;border-radius:var(--radius-pill);background:linear-gradient(90deg,#0B3161,#1f5a8f)}
+.ax-kpi .kbar.warn>div{background:linear-gradient(90deg,#ff9f0a,#f59e0b)}
+
+/* ---- Herramientas (Códigos y Reportes, movidos desde el Inicio) ---- */
+.ax-tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+.ax-tool{display:flex;align-items:flex-start;gap:14px;background:var(--card);
+  border:.5px solid rgba(0,0,0,.05);border-radius:20px;padding:20px 22px;box-shadow:var(--shadow);
+  transition:transform .2s ease,box-shadow .2s ease}
+.ax-tool:hover{transform:translateY(-3px);box-shadow:var(--shadow-h)}
+.ax-tool .ti{width:44px;height:44px;border-radius:13px;flex-shrink:0;display:flex;
+  align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.13)}
+.ax-tool .ti svg{width:23px;height:23px;stroke:#fff;stroke-width:2;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+.ax-tool .th{font-size:16px;font-weight:700;letter-spacing:-.015em;color:var(--ink)}
+.ax-tool .td{font-size:13px;color:var(--ink2);line-height:1.45;margin-top:2px}
+.i-rep{background:linear-gradient(140deg,#ff9f0a,#f59e0b)}
+.i-repo{background:linear-gradient(140deg,#2d6bb0,#0B3161)}
+.i-cod{background:linear-gradient(140deg,#0B3161,#1f5a8f)}
+.i-pre{background:linear-gradient(140deg,#E0B24E,#CD963A)}
+.i-arq{background:linear-gradient(140deg,#34c759,#248a3d)}
+.i-act{background:linear-gradient(140deg,#5e5ce6,#3634a3)}
 .ax-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:18px;align-items:start}
 
 /* ---- Tarjeta de módulo ----
@@ -155,9 +191,84 @@ body.dashboard #content-main{display:block}
 
   <div class="ax-head">
     <div class="ax-h1">Administración</div>
-    <div class="ax-sub">Todas las tablas del sistema. Elegí una para ver o editar sus registros.</div>
+    <div class="ax-sub">Resultados del mes, herramientas de gestión y todas las tablas del sistema.</div>
   </div>
 
+  {% comment %}
+    RESUMEN DEL MES Y HERRAMIENTAS — 2026-08-16
+    -------------------------------------------------------------------------
+    Los indicadores del mes vivían en el Inicio. Se movieron acá porque el
+    Inicio se abre decenas de veces por día desde el mostrador, y la ganancia
+    del mes no cambia ninguna decisión del mostrador; mezclar los dos ritmos
+    hacía que no se leyera ninguno.
+
+    El contexto lo inyecta core/admin_site.py y viene VACÍO si el usuario no
+    es gerente. Eso es deliberado: el admin exige `is_staff`, que no equivale
+    a gerente — un cajero con permiso sobre una tabla entra igual, y sin ese
+    filtro este cambio le habría mostrado la ganancia y el margen, que en el
+    Inicio no veía. Un rediseño no debería ampliar permisos de callado.
+
+    Estas secciones llevan `ax-fijo` para que el buscador de tablas, que
+    esconde las secciones vacías, no las toque: no son tablas.
+  {% endcomment %}
+  {% if ax_indicadores %}
+  <div class="ax-sec ax-fijo">Resumen del mes</div>
+  <div class="ax-kpis ax-fijo">
+    <div class="ax-kpi">
+      <div class="kl">Ganancia del mes</div>
+      <div class="kv">₡{{ utilidad_mes|crc:0 }}</div>
+      <div class="kd {% if margen >= 35 %}up{% else %}down{% endif %}">{% if margen >= 35 %}▲{% else %}▼{% endif %} {{ margen|crc:1 }}% margen</div>
+    </div>
+    <div class="ax-kpi">
+      <div class="kl">Ventas este mes</div>
+      <div class="kv">₡{{ ventas_mes|crc:0 }}</div>
+      <div class="kd {% if variacion_mes >= 0 %}up{% else %}down{% endif %}">{% if variacion_mes >= 0 %}▲{% else %}▼{% endif %} {{ variacion_mes|crc:1 }}% vs mes anterior</div>
+    </div>
+    <div class="ax-kpi">
+      <div class="kl">Por cobrar (crédito)</div>
+      <div class="kv">₡{{ cxc_total|crc:0 }}</div>
+      <div class="ks"><a href="/evidencia/por-cobrar/">Ver el detalle →</a></div>
+    </div>
+    {% if es_rts %}
+    <div class="ax-kpi">
+      <div class="kl">Compras del año · régimen simplificado</div>
+      <div class="kv">₡{{ compras_anio|crc:0 }}</div>
+      <div class="kbar {% if alerta_rts %}warn{% endif %}"><div style="width:{{ pct_rts|crc:0 }}%"></div></div>
+      <div class="ks">{{ pct_rts|crc:1 }}% del límite anual (₡{{ limite_rts|crc:0 }})</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="ax-sec ax-fijo">Herramientas</div>
+  <div class="ax-tools ax-fijo">
+    <a class="ax-tool" href="/reportes/">
+      <div class="ti i-rep"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 9l-5 5-3-3-4 4"/></svg></div>
+      <div><div class="th">Centro de reportes</div><div class="td">Más vendidos, stock, valor de inventario, estado de resultados, IVA, libro diario y cierres.</div></div>
+    </a>
+    <a class="ax-tool" href="/reportes/reposicion/">
+      <div class="ti i-repo"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div>
+      <div><div class="th">Qué reponer</div><div class="td">Cuánto pedir de cada producto según lo que vende de verdad, no según un mínimo fijo.</div></div>
+    </a>
+    <a class="ax-tool" href="/inventario/etiquetas/">
+      <div class="ti i-cod"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></div>
+      <div><div class="th">Códigos de barras</div><div class="td">Generar e imprimir etiquetas de producto para el escáner del mostrador.</div></div>
+    </a>
+    <a class="ax-tool" href="/precios/">
+      <div class="ti i-pre"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/><path d="M9.5 9.5l5 5"/></svg></div>
+      <div><div class="th">Precios y márgenes</div><div class="td">Precio, costo promedio y margen de cada producto, con su historial de cambios.</div></div>
+    </a>
+    <a class="ax-tool" href="/reportes/arqueo/">
+      <div class="ti i-arq"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><circle cx="12" cy="12" r="3"/></svg></div>
+      <div><div class="th">Arqueo de caja</div><div class="td">Diferencias de cierre por cajero: un faltante aislado es ruido, el mismo faltante repetido no.</div></div>
+    </a>
+    <a class="ax-tool" href="/actividad/">
+      <div class="ti i-act"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg></div>
+      <div><div class="th">Actividad y reversas</div><div class="td">Bitácora de ventas y compras, anulaciones y devoluciones: quién, cuándo y por qué.</div></div>
+    </a>
+  </div>
+  {% endif %}
+
+  <div class="ax-sec ax-fijo">Tablas del sistema</div>
   <div class="ax-find">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     <input type="text" id="axFind" placeholder="Buscar una tabla… (productos, clientes, asientos)" autocomplete="off">

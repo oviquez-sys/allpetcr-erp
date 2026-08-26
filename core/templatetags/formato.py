@@ -30,3 +30,20 @@ def crc(value, decimales=0):
     # separadores para dejarlo al estilo CR.
     base = f"{num:,.{d}f}"
     return base.replace(",", "\x00").replace(".", ",").replace("\x00", ".")
+
+
+@register.filter(name="crc_abs")
+def crc_abs(value, decimales=0):
+    """Igual que `crc` pero sin el signo.
+
+    Es para las tablas de movimientos de caja, donde el egreso ya viene con
+    monto negativo desde la base: el signo se dibuja aparte (con su color) y
+    el número se imprime en limpio. Sin esto salía «−₡-500».
+    """
+    if value is None or value == "":
+        return ""
+    try:
+        num = Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError):
+        return value
+    return crc(abs(num), decimales)

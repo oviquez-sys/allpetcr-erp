@@ -12,20 +12,60 @@ Reglas:
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import models, transaction
 
 from .models import Abono, Cliente, DocumentoCxC, FacturaVenta
 
 
+def deuda_real(cliente) -> Decimal:
+    """Deuda del cliente calculada desde sus documentos pendientes.
+
+    `Cliente.saldo` es un valor denormalizado: rápido de leer, pero puede
+    quedar desfasado (una transacción a medias, una corrección hecha a mano en
+    el admin, un proceso interrumpido). La fuente de verdad son los documentos
+    — lo dice el propio docstring del modelo.
+
+    La diferencia importa porque `saldo` no se usaba sólo para mostrar: era el
+    número contra el que se AUTORIZABA crédito nuevo. Si se quedaba corto, el
+    sistema aprobaba ventas que superaban el límite real del cliente, y nada
+    lo detectaba hasta la próxima corrida de `manage.py reconciliar` — que
+    hasta hoy no está programada.
+    """
+    return (
+        DocumentoCxC.objects
+        .filter(cliente=cliente, estado=DocumentoCxC.Estado.PENDIENTE)
+        .aggregate(t=models.Sum("saldo"))["t"] or Decimal("0")
+    )
+
+
 def validar_credito(cliente, monto):
+    """Autoriza (o no) una venta a crédito.
+
+    Se valida contra la deuda calculada desde los documentos, NO contra el
+    campo denormalizado. Es una consulta agregada más por venta a crédito, que
+    no son el volumen del día — y el costo de equivocarse es dar fiado por
+    encima del límite.
+    """
     if cliente is None:
         raise ValidationError("Una venta a crédito requiere seleccionar un cliente.")
     if cliente.limite_credito <= 0:
         raise ValidationError(f"{cliente.nombre} no tiene crédito habilitado.")
-    if monto > cliente.credito_disponible:
+
+    deuda = deuda_real(cliente)
+    disponible = cliente.limite_credito - deuda
+    if monto > disponible:
+        # Si el denormalizado difiere, se dice en el mensaje: el cajero ve un
+        # rechazo que "no cuadra" con la ficha del cliente y necesita saber
+        # por qué, en vez de asumir que el sistema falló.
+        aviso = ""
+        if cliente.saldo != deuda:
+            aviso = (
+                f" (Atención: la ficha del cliente dice ₡{cliente.saldo} pero sus "
+                f"documentos suman ₡{deuda}. Hay que correr «reconciliar».)"
+            )
         raise ValidationError(
             f"Crédito insuficiente para {cliente.nombre}: disponible "
-            f"₡{cliente.credito_disponible}, venta ₡{monto}."
+            f"₡{disponible}, venta ₡{monto}.{aviso}"
         )
 
 
