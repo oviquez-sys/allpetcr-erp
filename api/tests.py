@@ -82,6 +82,38 @@ class CatalogoProductos(BaseAPI):
         self.assertEqual(producto["disponible"], True)
         self.assertNotIn("stock_actual", producto)
 
+    def test_categoria_id_no_categoria_nombre(self):
+        """La forma tiene que calzar con la que ya lee allpetcr-web/lib/data.ts
+        (misma forma que exportar_catalogo_web.py)."""
+        r = self.client_autenticado.get(reverse("api:catalogo_productos"))
+        producto = r.data["results"][0]
+        self.assertEqual(producto["categoria_id"], self.cat.pk)
+        self.assertNotIn("categoria_nombre", producto)
+
+
+class CategoriasAPI(BaseAPI):
+    def test_lista_sin_paginar(self):
+        from catalogo.models import Categoria
+        hija = Categoria.objects.create(nombre="Pelotas", padre=self.cat)
+        r = self.client_autenticado.get(reverse("api:catalogo_categorias"))
+        self.assertEqual(r.status_code, 200)
+        self.assertIsInstance(r.data, list)  # no es {"results": [...]}
+        nombres = {c["nombre"] for c in r.data}
+        self.assertIn("Juguetes", nombres)
+        self.assertIn("Pelotas", nombres)
+
+    def test_padre_id_es_null_para_categoria_raiz(self):
+        r = self.client_autenticado.get(reverse("api:catalogo_categorias"))
+        cat = next(c for c in r.data if c["nombre"] == "Juguetes")
+        self.assertIsNone(cat["padre_id"])
+
+    def test_padre_id_apunta_a_la_categoria_raiz(self):
+        from catalogo.models import Categoria
+        hija = Categoria.objects.create(nombre="Pelotas", padre=self.cat)
+        r = self.client_autenticado.get(reverse("api:catalogo_categorias"))
+        cat = next(c for c in r.data if c["nombre"] == "Pelotas")
+        self.assertEqual(cat["padre_id"], self.cat.pk)
+
 
 class CostoNuncaSaleDelERP(BaseAPI):
     """Regla dura del Bloque 3, ítem 18: si alguien agrega costo_promedio,

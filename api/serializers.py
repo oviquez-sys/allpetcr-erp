@@ -17,22 +17,31 @@ from pedidos.models import AvisoDisponibilidad
 
 
 class CategoriaSerializer(serializers.ModelSerializer):
+    # padre_id (no "padre") para calzar con la forma que ya exporta
+    # exportar_catalogo_web.py y que ya sabe leer allpetcr-web.
+    padre_id = serializers.IntegerField(source="padre.id", default=None, read_only=True)
+
     class Meta:
         model = Categoria
-        fields = ["id", "nombre", "padre"]
+        fields = ["id", "nombre", "padre_id"]
 
 
 class ProductoListaSerializer(serializers.ModelSerializer):
-    """Para el catálogo (lista): los campos que necesita una vitrina."""
+    """Para el catálogo (lista): los campos que necesita una vitrina.
+
+    `categoria_id` (no `categoria_nombre`) a propósito: es EXACTAMENTE la
+    forma que ya usa `exportar_catalogo_web.py` y que ya sabe leer
+    `allpetcr-web/lib/data.ts` — así conectar el sitio a esta API (Bloque 5)
+    no exige tocar la lógica de navegación por categorías, que ya arma el
+    árbol padre/hija a partir de ese id."""
 
     disponible = serializers.SerializerMethodField()
     imagen = serializers.SerializerMethodField()
-    categoria_nombre = serializers.CharField(source="categoria.nombre", default="", read_only=True)
 
     class Meta:
         model = Producto
         fields = [
-            "sku", "nombre", "marca", "categoria_nombre", "presentacion",
+            "sku", "nombre", "marca", "categoria_id", "presentacion",
             "mascota", "peso_valor", "peso_unidad", "precio_venta",
             "disponible", "imagen",
         ]

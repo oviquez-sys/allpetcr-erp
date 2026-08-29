@@ -19,13 +19,14 @@ from rest_framework.exceptions import NotFound, Throttled, ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from catalogo.models import Producto
+from catalogo.models import Categoria, Producto
 from core.tenancy import empresa_actual
 from pedidos import services as pedidos_services
 from pedidos.models import Pedido
 
 from .serializers import (
     AvisoDisponibilidadSerializer,
+    CategoriaSerializer,
     DisponibilidadSerializer,
     EstadoPedidoSerializer,
     PedidoEntradaSerializer,
@@ -59,6 +60,16 @@ class CatalogoProductosView(generics.ListAPIView):
         if parametros.get("disponible") == "1":
             qs = qs.filter(stock_actual__gt=0)
         return qs.order_by("nombre")
+
+
+class CategoriasView(generics.ListAPIView):
+    """Todo el árbol de categorías de una sola vez, sin paginar: el sitio
+    lo necesita completo para armar la navegación (padre/hija), igual que
+    hoy lee categorias.json completo."""
+
+    serializer_class = CategoriaSerializer
+    pagination_class = None
+    queryset = Categoria.objects.all().order_by("nombre")
 
 
 class ProductoDetalleView(generics.RetrieveAPIView):

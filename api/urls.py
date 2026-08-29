@@ -6,6 +6,7 @@ app_name = "api"
 
 urlpatterns = [
     path("catalogo/productos/", views.CatalogoProductosView.as_view(), name="catalogo_productos"),
+    path("catalogo/categorias/", views.CategoriasView.as_view(), name="catalogo_categorias"),
     path("catalogo/productos/<str:sku>/", views.ProductoDetalleView.as_view(), name="catalogo_producto_detalle"),
     path("catalogo/productos/<str:sku>/disponibilidad/", views.DisponibilidadView.as_view(), name="disponibilidad"),
     path("catalogo/avisos-disponibilidad/", views.AvisoDisponibilidadView.as_view(), name="aviso_disponibilidad"),
