@@ -55,7 +55,9 @@ def pos(request):
         .values("id", "nombre", "limite_credito", "saldo")
     )
     for c in clientes:
-        c["disponible"] = float(c["limite_credito"]) - float(c["saldo"])
+        # La resta se hace en Decimal (regla de dinero del proyecto) y solo se
+        # convierte a float al final, para no arrastrar imprecisión binaria.
+        c["disponible"] = float(c["limite_credito"] - c["saldo"])
         c["limite_credito"] = float(c["limite_credito"])
         c["saldo"] = float(c["saldo"])
     # Se pasan como objetos Python; el filtro json_script del template los

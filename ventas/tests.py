@@ -160,6 +160,20 @@ class PantallaPOS(BaseVentas):
         self.assertEqual(respuesta.status_code, 400)
         self.assertIn("Stock insuficiente", respuesta.json()["error"])
 
+    def test_credito_disponible_del_cliente_se_calcula_en_decimal(self):
+        """El crédito disponible se resta en Decimal antes de pasar a float.
+        Restar los float ya convertidos puede arrastrar imprecisión binaria
+        (ej. float(100000.10) - float(99999.99) da 0.10999999999985448 en vez
+        de 0.11), y esa cifra la ve el cajero en pantalla."""
+        Cliente.objects.create(
+            empresa=self.empresa, nombre="Cliente crédito",
+            limite_credito=Decimal("100000.10"), saldo=Decimal("99999.99"),
+        )
+        self.client.login(username="oscar", password="clave-test")
+        respuesta = self.client.get(reverse("ventas:pos"))
+        cliente = next(c for c in respuesta.context["clientes"] if c["nombre"] == "Cliente crédito")
+        self.assertEqual(cliente["disponible"], 0.11)
+
 
 class DescuentosYRegalias(BaseVentas):
     """Sprint A: descuento por línea y regalías (salida a costo sin ingreso).
