@@ -82,6 +82,21 @@ class CatalogoProductos(BaseAPI):
         self.assertEqual(producto["disponible"], True)
         self.assertNotIn("stock_actual", producto)
 
+    def test_precio_venta_es_number_no_string(self):
+        """DRF serializa DecimalField como string por defecto; el sitio
+        espera un número JSON (mismo contrato que el puente anterior)."""
+        r = self.client_autenticado.get(reverse("api:catalogo_productos"))
+        precio = r.data["results"][0]["precio_venta"]
+        self.assertIsInstance(precio, float)
+        self.assertEqual(precio, 3500.0)
+
+    def test_imagen_es_url_absoluta(self):
+        self.producto.imagen = "productos/api-1.jpg"
+        self.producto.save()
+        r = self.client_autenticado.get(reverse("api:catalogo_productos"))
+        imagen = r.data["results"][0]["imagen"]
+        self.assertTrue(imagen.startswith("http://testserver/"))
+
     def test_categoria_id_no_categoria_nombre(self):
         """La forma tiene que calzar con la que ya lee allpetcr-web/lib/data.ts
         (misma forma que exportar_catalogo_web.py)."""

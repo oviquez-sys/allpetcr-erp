@@ -37,6 +37,13 @@ class ProductoListaSerializer(serializers.ModelSerializer):
 
     disponible = serializers.SerializerMethodField()
     imagen = serializers.SerializerMethodField()
+    # DRF serializa DecimalField como STRING por defecto (para no perder
+    # precisión). El sitio espera un number (mismo contrato que ya tenía
+    # exportar_catalogo_web.py, que hacía float(p.precio_venta)) — los
+    # colones de este negocio son siempre enteros, así que el paso por
+    # float no pierde nada. Si algún día hay tarifas con centavos, este es
+    # el único lugar que hay que revisar.
+    precio_venta = serializers.SerializerMethodField()
 
     class Meta:
         model = Producto
@@ -52,7 +59,25 @@ class ProductoListaSerializer(serializers.ModelSerializer):
         return obj.stock_actual > 0
 
     def get_imagen(self, obj):
-        return url_imagen_producto(obj.imagen)
+        """URL ABSOLUTA (con dominio), no relativa.
+
+        `url_imagen_producto` devuelve "/media/productos/x.jpg" cuando el
+        almacenamiento es local — correcto para una plantilla del ERP, que
+        se resuelve contra el propio origen del ERP, pero roto para un
+        cliente en OTRO origen (el sitio web): ahí "/media/..." se
+        resolvería contra el dominio del sitio, no del ERP, y la imagen no
+        cargaría. `build_absolute_uri` la completa con host y protocolo.
+        Con almacenamiento S3-compatible ya viene absoluta y esto no
+        cambia nada.
+        """
+        ruta = url_imagen_producto(obj.imagen)
+        if not ruta:
+            return ""
+        request = self.context.get("request")
+        return request.build_absolute_uri(ruta) if request else ruta
+
+    def get_precio_venta(self, obj):
+        return float(obj.precio_venta)
 
 
 class ProductoDetalleSerializer(ProductoListaSerializer):
