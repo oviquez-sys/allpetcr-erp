@@ -36,7 +36,7 @@ es alcanzable. Si un hallazgo dice "del sitio web", no es de este repo.
 
 ## Estado (29/08/2026)
 
-- **432 pruebas** en verde · `check --deploy` sin advertencias (modo producción)
+- **435 pruebas** en verde · `check --deploy` sin advertencias (modo producción)
 - **PostgreSQL** (base `allpetcr` en localhost) desde el 28/07/2026
 - 532 productos reales en catálogo, con foto, descripción y taxonomía de
   dos niveles — ya aplicado, ya no es "pendiente"

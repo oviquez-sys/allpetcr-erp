@@ -684,3 +684,176 @@ prueba).
 6. Cuando definas régimen tradicional y/o pasarela de pago, avisame: son
    los dos interruptores que activan el Bloque 4 completo y los ítems 30/35
    del Bloque 5, ya construidos y esperando.
+
+---
+
+## 10. Adenda — 29/08/2026, tarde: chips del POS, correo de facturas y XSD de Hacienda
+
+Pediste cuatro cosas en un mensaje mientras salías: reducir los chips del
+POS a dos, seguir revisando en automático, arreglar el envío de la factura
+por correo ("dice que la manda pero no llega"), y una auditoría general.
+Esto es lo que hice con cada una.
+
+### 10.1 Chips del POS: de ~40 a Todas/Perro/Gato
+
+**Hecho y probado.** [templates/ventas/pos.html](templates/ventas/pos.html)
+generaba un chip por cada subcategoría del catálogo (Arneses, Bozales,
+Collares...). Ahora son tres: **Todas / Perro / Gato**, usando el campo
+`mascota` del producto (que ya existía en el modelo, solo no viajaba al
+navegador — lo agregué al `.values()` de `ventas/views.py::pos`). Un
+producto con mascota "Perro y gato" aparece en ambos chips. Mantuve
+"Todas" (no pediste quitarla): sin ella, un producto sin mascota asignada
+quedaría inalcanzable desde los chips, y hoy el catálogo tiene productos
+así. Si preferís que sean *exactamente* dos sin "Todas", decímelo y lo
+saco — es un cambio de una línea.
+
+Probado: 3 pruebas nuevas en `ventas/tests.py`
+(`ChipsDeEspecieEnElPOS`) que verifican que `mascota` llega al contexto,
+que un producto sin mascota no revienta la página, y que el HTML generado
+tiene exactamente `["Todas", "Perro", "Gato"]` y ya no el código viejo de
+un chip por categoría. Suite completa de `ventas` corrida después: verde.
+Reinicié el servidor del ERP para que tomara el cambio (`--noreload` no
+recarga `.py`, solo plantillas). Commit `d871300`.
+
+**Pendiente de tu decisión — no lo toqué:** `templates/compras/nueva.html`
+tiene el mismo patrón de chips por categoría (con lógica extra: agrega un
+chip nuevo cada vez que creás una categoría al vuelo). No es la pantalla
+que mostraste en la captura y no la mencionaste, así que no asumí que
+quisieras el mismo cambio ahí — la pantalla de compras la usa el gerente,
+no el cajero en el mostrador, y ahí *sí* puede tener sentido ver todas las
+subcategorías para encontrar rápido qué se está recibiendo. Decime si la
+igualo a Todas/Perro/Gato o la dejás como está.
+
+### 10.2 "La factura dice que se mandó pero no llega": causa real encontrada
+
+**No es un error de código — es una credencial que falta.** Revisé
+`ventas/views.py::factura_enviar` (la vista que manda el correo) y
+`config/settings.py` (la configuración de correo) completos. La vista está
+bien hecha: valida que haya destinatario, atrapa errores de SMTP y
+responde con el código de estado correcto en cada caso (400 si falta
+correo, 502 si el servidor de correo falla, 200 solo si de verdad se
+mandó). El problema es anterior a esa vista:
+
+**`config/settings.py` usa el backend de consola de correo cuando
+`EMAIL_HOST_PASSWORD` no está definida.** Es una decisión de diseño
+correcta (para no exigir SMTP real en cada máquina de desarrollo), pero
+tiene una consecuencia que no está documentada en ningún lado: con el
+backend de consola, el botón "Enviar por correo" **funciona sin error,
+la pantalla dice "Factura enviada a [correo]"**, y el correo completo se
+imprime en la terminal donde corre el servidor — nunca sale a Internet.
+Confirmé que `EMAIL_HOST_PASSWORD` no está definida en ningún lado: no en
+`.env` (no existe ese archivo todavía en esta máquina), no como variable
+de entorno de Windows (`setx`, revisé alcance Usuario y Máquina), no en
+ningún `.bat`.
+
+**Qué hice:** documenté el problema y la solución en
+[.env.example](.env.example), con instrucciones de cómo conseguir la
+contraseña de aplicación (App Password) de Office 365/Gmail — no es la
+contraseña normal de la cuenta. Commit `bafc673`.
+
+**Qué te falta hacer a vos (no lo puedo hacer yo — es una contraseña
+real):**
+1. Generá una "contraseña de aplicación" en la cuenta de correo que va a
+   mandar las facturas (Office 365: configuración de seguridad de la
+   cuenta Microsoft → "contraseñas de aplicación"; Gmail: lo mismo con
+   otro nombre).
+2. Copiá `.env.example` a `.env` si todavía no existe, o agregale estas
+   líneas si ya tenés uno:
+   ```
+   EMAIL_HOST_USER=el-correo-que-manda-facturas@tudominio.com
+   EMAIL_HOST_PASSWORD=la-contraseña-de-aplicación-que-generaste
+   ```
+3. Reiniciá el servidor del ERP. Probá "Enviar por correo" en cualquier
+   factura — ahora sí debería llegar de verdad.
+
+Esto también arregla `manage.py reporte_diario` (el resumen a los socios),
+que reutiliza el mismo SMTP y tiene el mismo problema hoy.
+
+### 10.3 Factura electrónica de Hacienda: encontré las URL exactas, pero no puedo bajar los archivos por vos
+
+Pediste que la revise "ya que debo hacer que el sistema la genere sí o
+sí". Antes de nada: **hoy el negocio está en régimen simplificado (RTS),
+no tradicional**, así que Hacienda no exige comprobante electrónico
+todavía (ver `Empresa.regimen` y el punto 4 de los pendientes al inicio de
+este archivo) — si ya cambiaste de régimen o lo vas a hacer pronto, avisame
+porque eso sí cambia la urgencia real.
+
+Lo que bloqueaba `facturacion_electronica` (reportado la noche anterior):
+faltan el Anexo de Estructuras v4.4 y los 6 XSD oficiales de Hacienda, y
+la llave criptográfica `.p12` para firmar. Esta tarde encontré y **verifiqué
+una por una** las URL oficiales correctas (la ruta obvia,
+`.../ATV/docs/esquemas/...`, da 404 — la ruta real tiene un segmento
+`/ComprobanteElectronico/` de más):
+
+```
+https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/FacturaElectronica_V4.4.xsd
+https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/TiqueteElectronico_V4.4.xsd
+https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/NotaCreditoElectronica_V4.4.xsd
+https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/NotaDebitoElectronica_V4.4.xsd
+https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/MensajeReceptor_V4.4.xsd
+https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/ReciboElectronicoPago_V4.4.xsd
+https://atv.hacienda.go.cr/ATV/ComprobanteElectronico/docs/esquemas/2024/v4.4/ANEXOS%20Y%20ESTRUCTURAS_V4.4.pdf
+```
+
+Confirmé que las tres primeras cargan de verdad (200, contenido real de
+schema XML — probé `FacturaElectronica` y `ReciboElectronicoPago` a fondo,
+verificando el elemento raíz de cada una) y que el PDF del Anexo también
+carga (98 páginas, 1.4 MB). Las otras tres XSD siguen el mismo patrón de
+nombre, no las probé una por una pero no hay razón para que fallen.
+
+**Por qué no descargué los archivos yo mismo ni construí el generador de
+XML esta noche, aunque el mandato original lo permitía si conseguía los
+archivos:** esta sesión no tiene acceso directo a Internet (la terminal no
+puede hacer `curl`/`wget` a nada externo) — solo puedo *leer* páginas web a
+través de una herramienta que las resume con IA para dármelas en la
+conversación, y esa herramienta no me entrega el archivo tal cual: para el
+PDF sí guardó una copia binaria exacta en disco, pero para los XSD (que
+son texto) solo me devolvió un resumen de su contenido, no el archivo
+byte por byte. Usar un resumen hecho por IA para reconstruir un schema
+XML real —donde un solo carácter mal copiado en una expresión regular o
+un valor de enumeración puede rechazar una factura real en Hacienda— viola
+directamente la regla que me diste anoche de no inventar la estructura del
+XML de Hacienda. Es exactamente el tipo de "dato inventado que se ve
+correcto" que esa regla existe para evitar.
+
+**Lo que sí gané hoy, en limpio:** antes la instrucción para vos era
+"buscá en el sitio de Hacienda"; ahora son 7 URL verificadas, listas para
+pegar en el navegador y descargar en un minuto. Guardalas en
+`facturacion_electronica/esquemas_hacienda/` (la carpeta que ya está
+prevista para esto) y decime cuando estén — ahí sí puedo construir el
+generador de XML real, validado contra el schema de verdad, con pruebas
+que fallen si el XML no cumple. La firma (XAdES-EPES) y el envío a
+Hacienda van a seguir bloqueados aparte hasta que tengas la llave `.p12`
+y las credenciales del ambiente de pruebas — eso no depende de los
+archivos, es un trámite tuyo con Hacienda.
+
+### 10.4 Auditoría general — todo lo que revisé, todo en verde
+
+- **Migraciones:** `makemigrations --check --dry-run` sin pendientes.
+- **`check --deploy`** (modo desarrollo): las mismas 6 advertencias
+  esperadas de siempre, ninguna nueva.
+- **`manage.py reconciliar`:** 534 registros de kardex, 0 diferencias.
+- **Contabilidad:** 114 asientos, 0 descuadrados (partida doble cuadra).
+- **Suite completa del ERP, corrida de nuevo tal cual la documenta
+  `CLAUDE.md`** (dos grupos, por límite de tiempo):
+  ```
+  python manage.py test core catalogo inventario pedidos api facturacion_electronica   # 283 OK
+  python manage.py test ventas caja compras contabilidad                                # 152 OK
+  ```
+  **435 pruebas, todas en verde** (432 de anoche + 3 nuevas de los chips
+  del POS). El `OSError: Servidor no responde` que aparece en la salida es
+  esperado: es la prueba que simula una falla de SMTP para verificar que
+  `factura_enviar` responde 502 correctamente, no una falla real.
+- **Middleware de seguridad** (`core/seguridad.py`): revisado completo,
+  bien diseñado y ya documentado (CSP en dos niveles: uno exigido, uno
+  solo de reporte para ir endureciendo sin romper nada). Nada nuevo que
+  alertar.
+- **Rutas del ERP:** probé `/inventario/` y `/contabilidad/` sin sub-ruta
+  y dan 404 — investigado y es *correcto por diseño* (esas apps no tienen
+  una ruta raíz `""`, solo rutas específicas con nombre), no es un bug.
+- **Sitio web (`allpetcr-web`):** no encontré nada para cambiar en este
+  bloque (no toqué código del sitio), así que no repetí `npm run
+  build`/`test` completos — ya habían quedado verdes al cierre de anoche
+  (sección 8) y nada cambió desde entonces.
+
+**Nada roto, nada regresivo, nada urgente sin documentar.**
