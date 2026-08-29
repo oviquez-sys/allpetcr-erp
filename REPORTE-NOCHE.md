@@ -239,7 +239,73 @@ en los límites duros). Conectar el sitio (en Vercel u otro lado) con esta
 API va a necesitar que decidas cómo: VPS con el ERP corriendo, un túnel, o
 algo intermedio. Es un pendiente de infraestructura, no de código.
 
-*(Bloque 4 en adelante se agrega abajo a medida que cierra.)*
+### Bloque 4 — Facturación electrónica
+
+**Busqué el Anexo de Estructuras v4.4 y los XSD oficiales en TODO el
+proyecto (los dos repos y toda la carpeta `AllPet`), no solo en el ERP. No
+están.** Por lo tanto, siguiendo la instrucción del encargo: **no escribí
+ningún generador de XML.** Lo que sí se construyó:
+
+- [x] 5 modelos (`FacturaElectronica`, `TiqueteElectronico`,
+  `NotaCreditoElectronica`, `NotaDebitoElectronica`,
+  `ReciboElectronicoPago`) sobre una base común. `clave` y `numero_interno`
+  como **texto**, nunca entero.
+- [x] `clave` queda **vacía a propósito**: no inventé su formato de 50
+  caracteres sin el Anexo delante (hard limit #9 del encargo).
+- [x] `numero_interno` sí se numera de verdad — es el consecutivo INTERNO
+  del ERP, no el consecutivo de 20 dígitos que Hacienda exige incrustado en
+  la clave (esa estructura tampoco se inventó). Reutiliza
+  `ventas.Consecutivo`, y quedó **probado con 20 hilos reales pidiendo
+  consecutivo al mismo tiempo: ninguno se repite** (ítem 23, corrido 4
+  veces seguidas sin fallos).
+- [x] Punto de conexión para la firma XAdES-EPES
+  (`facturacion_electronica/services.py::firmar_xades_epes`): lee
+  `HACIENDA_P12_PATH` / `HACIENDA_P12_PASSWORD` del entorno y avisa con
+  claridad si faltan, en vez de fallar con un traceback oscuro. No firma
+  nada de verdad todavía (no hay XML que firmar).
+- [x] Envío asíncrono real **en sus estados**: un comprobante `ENVIADO` NO
+  es válido (`comprobante.valido` es `False`) hasta que
+  `registrar_respuesta_hacienda()` lo marca `ACEPTADO`. Reintentos con
+  tope de 5 y estado `ERROR_ENVIO` al agotarse — probado.
+- [x] Conservación de XML con el mismo `default_storage` configurable del
+  Bloque 1 (local ahora, S3-compatible después sin tocar código).
+- [x] 18 pruebas + la de concurrencia, todas en verde. Suite completa al
+  cierre: **404 pruebas, todas en verde.**
+
+**Bug real que encontré y corregí en el camino:** la primera versión de
+`enviar_a_hacienda()` guardaba el estado `ERROR_ENVIO` y lanzaba la
+excepción de reintentos agotados TODO dentro del mismo
+`transaction.atomic()` — lanzar la excepción revertía también el guardado,
+así que el comprobante quedaba en `ENVIADO` aunque el mensaje dijera que se
+había agotado. Lo detectó una prueba que falló, no lo vi a ojo. Corregido:
+el guardado sale de un `with transaction.atomic()` que cierra limpio antes
+de lanzar el error.
+
+#### Lo que necesito que hagas vos antes de que esto se pueda terminar
+
+1. **Descargar del sitio de Hacienda** (Ministerio de Hacienda, Factura
+   Electrónica, versión 4.4 — el que mencionaste con la actualización del
+   22/04/2026, obligatoria desde el 1/11/2026):
+   - El **Anexo de Estructuras de comprobantes electrónicos v4.4** (documento
+     técnico que define cada campo, tipo de dato, tamaño y estructura de la
+     clave/consecutivo — es lo que hace falta para no inventar nada de esto).
+   - Los **XSD oficiales** de cada tipo de comprobante: factura, tiquete,
+     nota de crédito, nota de débito, mensaje de recepción, y el del REP
+     (Recibo Electrónico de Pago).
+2. **Ponerlos en el ERP** en una carpeta nueva, por ejemplo
+   `facturacion_electronica/esquemas_hacienda/` (no existe todavía — la
+   creo yo cuando lleguen los archivos, o la creás vos y avisás). Con eso
+   ahí, la próxima sesión puede escribir el generador de XML y validarlo
+   contra el XSD en la misma prueba automatizada, como pide el encargo.
+3. **La llave criptográfica (.p12)** para la firma XAdES-EPES — la tenés
+   que tramitar vos con Hacienda; no hay nada que yo pueda hacer al
+   respecto. Cuando la tengas, se configura por `HACIENDA_P12_PATH` y
+   `HACIENDA_P12_PASSWORD` (variables de entorno, nunca en el repo).
+4. Confirmar si el plan sigue siendo pasar a régimen tradicional (ver
+   alerta al principio de este reporte) — si no, todo este bloque queda
+   construido pero sin activarse nunca.
+
+*(Bloque 5 en adelante se agrega abajo a medida que cierra.)*
 
 ---
 
