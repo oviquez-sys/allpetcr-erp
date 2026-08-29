@@ -199,7 +199,47 @@ coincidencias de `.env`, `.p12`, `.pem`, `.key`, `secret`, `credential`).
   `core/test_arquitectura.py` extendido para que las reglas de
   aislamiento por empresa también cubran la app nueva.
 
-*(Bloque 3 en adelante se agrega abajo a medida que cierra.)*
+### Bloque 3 — API (Django REST Framework)
+
+- [x] DRF instalado, app nueva `api/` (serializers + vistas, separada de
+  `pedidos`/`catalogo` para no mezclar la capa HTTP con el dominio).
+- [x] Lectura: catálogo paginado con filtros (`categoria`, `mascota`,
+  `marca`, `q`, `disponible`), ficha por SKU, disponibilidad (booleano).
+- [x] Escritura: alta de pedido pagado, idempotente por `referencia_pago`
+  incluso bajo concurrencia real (reutiliza `pedidos.services.crear_pedido`
+  del Bloque 2, no duplica la lógica).
+- [x] Consulta de estado de pedido para el cliente: número + teléfono. Con
+  el teléfono equivocado responde 404, no 403 — no le confirma a quien
+  adivina un número que ese pedido existe.
+- [x] Autenticación por token (`rest_framework.authtoken`) en **toda** la
+  API — ver la decisión abajo. CORS cerrado por defecto, se habilita con
+  `CORS_ALLOWED_ORIGINS` (lista separada por comas). Límite de tasa con las
+  throttle classes propias de DRF (`anon` 60/min, `user` 120/min — valores
+  de arranque, no medición, mismo criterio que `ReservaStock.PLAZO_MINUTOS`).
+- [x] Regla dura del costo: `api/tests.py::CostoNuncaSaleDelERP` revisa la
+  **definición** de los serializers (no solo la respuesta de hoy) y falla
+  si alguien agrega `costo_promedio`/`margen_pct`/`markup_pct` — y de paso
+  cubre que tampoco se exponga el stock exacto.
+- [x] 30 pruebas nuevas, todas en verde. Suite completa al cierre: **386
+  pruebas, todas en verde**.
+
+**Decisión que tomé por vos:** toda la API pide token, incluida la lectura
+del catálogo (no dejé nada como público/`AllowAny`). Razón: dijiste que el
+ERP "corre solo en local" — no está pensado para recibir tráfico directo de
+un navegador en internet. Mientras eso sea así, la única forma legítima de
+llegar a esta API es el backend del sitio web llamándola servidor a
+servidor con un token, nunca el navegador del cliente. Si en algún momento
+publicás el ERP o ponés un proxy delante, ahí sí tendría sentido abrir la
+lectura del catálogo sin token — decilo y lo ajusto.
+
+**Importante para cuando conectes el sitio real:** esta API queda
+funcionando y probada, pero **nadie de internet puede llamarla todavía**
+porque el ERP no está desplegado (y esta noche no lo iba a desplegar — está
+en los límites duros). Conectar el sitio (en Vercel u otro lado) con esta
+API va a necesitar que decidas cómo: VPS con el ERP corriendo, un túnel, o
+algo intermedio. Es un pendiente de infraestructura, no de código.
+
+*(Bloque 4 en adelante se agrega abajo a medida que cierra.)*
 
 ---
 
