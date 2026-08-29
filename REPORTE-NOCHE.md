@@ -116,7 +116,45 @@ coincidencias de `.env`, `.p12`, `.pem`, `.key`, `secret`, `credential`).
   en vez de restar en `Decimal`. Corregido con prueba de regresión, suite de
   `ventas` corrida completa después del cambio (92/92 OK).
 
-*(Bloques 1 en adelante se agregan abajo a medida que cierran.)*
+### Bloque 1 — Modelo de datos y catálogo
+
+- [x] `Producto`: agregados `marca`, `peso_valor` + `peso_unidad` (kg/g/lb/oz/l/ml/unidad),
+  `cabys`. `imagen` ya existía (no se tocó su nombre). Migración
+  `catalogo/0005_...` aplicada contra la base real.
+- [x] `cabys` en texto, vacío por defecto, con validador de 13 dígitos
+  numéricos. **No se rellenó ni un solo valor** — queda para que lo cargues
+  vos desde el catálogo oficial de Hacienda.
+- [x] Almacenamiento de fotos configurable por variable de entorno
+  (`MEDIA_STORAGE_BACKEND=s3` + variables `AWS_*`). Nuevo `core/imagenes.py`
+  como único punto de lectura/escritura; los tres lugares que escribían
+  directo a `MEDIA_ROOT` (`importar_imagenes`, alta rápida de producto en
+  compras, y el puente `exportar_catalogo_web`) ahora pasan por ahí. En
+  local, sin esas variables, el comportamiento es idéntico a antes.
+  `django-storages` agregado a `requirements.txt` (boto3 ya estaba).
+- [x] Comando nuevo `cargar_fotos_por_sku`: carga una carpeta de archivos
+  nombrados por SKU exacto (distinto de `importar_imagenes`, que extrae
+  fotos embebidas del Excel por posición de fila). No pisa fotos existentes
+  salvo `--reemplazar`, no adivina coincidencias parciales.
+- [x] Comando `reporte_nombres_incompletos`: **corrido contra el catálogo
+  real (532 productos)**. Resultado: **0 nombres con abreviaturas tipo
+  "R.C.", solo 2 nombres cortos** ("Peluche Pizza", "Peluches Dona" — ninguno
+  parece realmente incompleto). El ejemplo de la consigna no representa el
+  estado real del catálogo; guardado en
+  `reportes/nombres_incompletos_2026-08-28.md`. No se corrigió nada — el
+  comando solo lista, según lo pedido.
+- [x] Historial de compras por cliente: no existía una pantalla dedicada
+  (`Cliente.compras` ya traía el dato vía `FacturaVenta.cliente`, pero
+  `estado_cuenta` solo muestra documentos de CxC). Vista nueva
+  `ventas:historial_compras`, con las anuladas visibles y marcadas.
+- [x] Prueba de regresión del POS: la vista `pos()` (`ventas/views.py`) se
+  tocó dos veces esta noche (fix de `disponible` + cambio de
+  `url_imagen_producto`). Suite completa corrida al cierre del bloque:
+  **334 pruebas, todas en verde** (antes 330; +4 netas de las pruebas
+  nuevas). `check --deploy` muestra las 6 advertencias esperadas de modo
+  desarrollo (HSTS, SSL, SECRET_KEY corta, cookies) — son las mismas que
+  desaparecen con `DJANGO_PRODUCTION=1`, no una regresión introducida hoy.
+
+*(Bloque 2 en adelante se agrega abajo a medida que cierra.)*
 
 ---
 
