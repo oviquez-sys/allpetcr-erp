@@ -1,7 +1,15 @@
 from django.conf import settings
+from django.core.validators import RegexValidator
 from django.db import models
 
 from core.models import Empresa
+
+validar_cabys = RegexValidator(
+    r"^\d{13}$",
+    "El código CABYS son 13 dígitos numéricos, tal cual lo publica Hacienda "
+    "(con ceros a la izquierda si los tiene). No se inventa: se copia del "
+    "catálogo oficial https://www.hacienda.go.cr/consultacabys/",
+)
 
 
 class Categoria(models.Model):
@@ -60,6 +68,30 @@ class Producto(models.Model):
     # en allpetcr-web/lib/navegacion.ts). Con este campo ya puede.
     mascota = models.CharField(max_length=30, blank=True, db_index=True, help_text="Especie destino: Perro, Gato, Perro y gato, Peces, Tortugas, Otros")
     imagen = models.CharField(max_length=200, blank=True, help_text="Ruta relativa dentro de media/ (ej. productos/75564.png)")
+    marca = models.CharField(max_length=80, blank=True, db_index=True, help_text="Marca del producto (ej. Royal Canin, Pedigree)")
+
+    class UnidadPeso(models.TextChoices):
+        KILOGRAMO = "kg", "kg"
+        GRAMO = "g", "g"
+        LIBRA = "lb", "lb"
+        ONZA = "oz", "oz"
+        LITRO = "l", "l"
+        MILILITRO = "ml", "ml"
+        UNIDAD = "un", "unidad"
+
+    peso_valor = models.DecimalField(
+        max_digits=8, decimal_places=3, null=True, blank=True,
+        help_text="Contenido neto del empaque (ej. 15 para una bolsa de 15 kg)",
+    )
+    peso_unidad = models.CharField(max_length=2, choices=UnidadPeso.choices, blank=True)
+    # Vacío a propósito: lo llena Oscar copiándolo del catálogo oficial de
+    # Hacienda. Un CABYS mal puesto rebota la factura electrónica, así que
+    # nadie lo adivina ni lo autocompleta — ver validar_cabys arriba.
+    cabys = models.CharField(
+        "código CABYS", max_length=13, blank=True, validators=[validar_cabys],
+        help_text="13 dígitos del Catálogo de Bienes y Servicios de Hacienda. "
+                  "Vacío hasta que se confirme a mano — no se inventa.",
+    )
     impuesto = models.ForeignKey(Impuesto, null=True, blank=True, on_delete=models.PROTECT)
     # Costo y stock: denormalizados para lectura rápida.
     # La fuente de verdad es el kardex (inventario.MovimientoInventario).

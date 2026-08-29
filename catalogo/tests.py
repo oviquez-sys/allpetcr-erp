@@ -293,3 +293,53 @@ class EntradaRapidaProductoAdmin(TestCase):
         self.assertEqual(r.status_code, 200)  # vuelve a mostrar el form con el error
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock_actual, Decimal("5"))  # intacto
+
+
+class CamposCatalogoBloque1(TestCase):
+    """Marca, peso y CABYS agregados a Producto (Bloque 1, 2026-08-28)."""
+
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
+
+    def _producto(self, **extra):
+        return Producto.objects.create(
+            empresa=self.empresa, sku="M-001", nombre="Producto de prueba",
+            precio_venta=Decimal("1000"), **extra,
+        )
+
+    def test_marca_y_peso_son_opcionales(self):
+        p = Producto.objects.create(
+            empresa=self.empresa, sku="M-002", nombre="Sin marca ni peso",
+            precio_venta=Decimal("1000"),
+        )
+        self.assertEqual(p.marca, "")
+        self.assertIsNone(p.peso_valor)
+        self.assertEqual(p.peso_unidad, "")
+        self.assertEqual(p.cabys, "")
+
+    def test_marca_y_peso_se_guardan(self):
+        p = self._producto(marca="Royal Canin", peso_valor=Decimal("15.000"), peso_unidad="kg")
+        p.refresh_from_db()
+        self.assertEqual(p.marca, "Royal Canin")
+        self.assertEqual(p.peso_valor, Decimal("15.000"))
+        self.assertEqual(p.peso_unidad, "kg")
+
+    def test_cabys_vacio_no_falla_la_validacion(self):
+        p = self._producto()
+        p.full_clean()  # no debe lanzar, aunque cabys esté vacío
+
+    def test_cabys_de_13_digitos_es_valido(self):
+        p = self._producto(cabys="8720100000000")
+        p.full_clean()  # no debe lanzar
+
+    def test_cabys_con_formato_invalido_se_rechaza(self):
+        # Instancias SIN guardar: full_clean() debe rechazarlas antes de que
+        # lleguen a la base (un valor de más de 13 caracteres ya ni cabría
+        # en la columna, pero la validación tiene que atajarlo antes).
+        for i, malo in enumerate(["123", "abcdefghijklm", "8720100000000X", "  8720100000000  "]):
+            p = Producto(
+                empresa=self.empresa, sku=f"M-BAD-{i}", nombre="Producto de prueba",
+                precio_venta=Decimal("1000"), cabys=malo,
+            )
+            with self.assertRaises(ValidationError, msg=f"debió rechazar {malo!r}"):
+                p.full_clean()
