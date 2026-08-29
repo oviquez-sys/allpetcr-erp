@@ -413,3 +413,57 @@ class CargarFotosPorSku(TestCase):
     def test_carpeta_inexistente_da_error_claro(self):
         with self.assertRaises(CommandError):
             call_command("cargar_fotos_por_sku", "/carpeta/que/no/existe/de/verdad", stdout=StringIO())
+
+
+class ReporteNombresIncompletos(TestCase):
+    """Comando reporte_nombres_incompletos (Bloque 1, 2026-08-28): solo
+    lista, nunca corrige."""
+
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
+
+    def _producto(self, sku, nombre):
+        return Producto.objects.create(
+            empresa=self.empresa, sku=sku, nombre=nombre, precio_venta=Decimal("1000"),
+        )
+
+    def test_detecta_abreviatura_con_puntos(self):
+        self._producto("1", "R.C. Adulto 15kg")
+        salida = StringIO()
+        call_command("reporte_nombres_incompletos", stdout=salida)
+        self.assertIn("R.C. Adulto 15kg", salida.getvalue())
+
+    def test_detecta_nombre_muy_corto(self):
+        self._producto("2", "Bozal M")
+        salida = StringIO()
+        call_command("reporte_nombres_incompletos", stdout=salida)
+        self.assertIn("Bozal M", salida.getvalue())
+
+    def test_nombre_completo_no_aparece(self):
+        self._producto("3", "Rascador para gatos con torre de tres niveles")
+        salida = StringIO()
+        call_command("reporte_nombres_incompletos", stdout=salida)
+        self.assertNotIn("Rascador para gatos", salida.getvalue())
+
+    def test_no_modifica_ningun_nombre(self):
+        """La regla explícita del encargo: listar, no corregir."""
+        p = self._producto("4", "R.C. Ad.")
+        call_command("reporte_nombres_incompletos", stdout=StringIO())
+        p.refresh_from_db()
+        self.assertEqual(p.nombre, "R.C. Ad.")
+
+    def test_ignora_productos_inactivos(self):
+        self._producto("5", "R.C. Descontinuado").activo = False
+        Producto.objects.filter(sku="5").update(activo=False)
+        salida = StringIO()
+        call_command("reporte_nombres_incompletos", stdout=salida)
+        self.assertNotIn("R.C. Descontinuado", salida.getvalue())
+
+    def test_salida_a_archivo(self):
+        import tempfile
+        self._producto("6", "R.C. Cachorro")
+        with tempfile.TemporaryDirectory() as tmp:
+            ruta = Path(tmp) / "reporte.md"
+            call_command("reporte_nombres_incompletos", "--salida", str(ruta), stdout=StringIO())
+            contenido = ruta.read_text(encoding="utf-8")
+        self.assertIn("R.C. Cachorro", contenido)
