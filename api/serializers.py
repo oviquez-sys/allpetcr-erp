@@ -41,9 +41,11 @@ class ProductoListaSerializer(serializers.ModelSerializer):
     # precisión). El sitio espera un number (mismo contrato que ya tenía
     # exportar_catalogo_web.py, que hacía float(p.precio_venta)) — los
     # colones de este negocio son siempre enteros, así que el paso por
-    # float no pierde nada. Si algún día hay tarifas con centavos, este es
-    # el único lugar que hay que revisar.
-    precio_venta = serializers.SerializerMethodField()
+    # float no pierde nada. `coerce_to_string=False` es la forma corta de
+    # pedir justo eso (mismo criterio en PedidoSalidaSerializer y
+    # EstadoPedidoSerializer, más abajo). Si algún día hay tarifas con
+    # centavos, estos son los lugares que hay que revisar.
+    precio_venta = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=False)
 
     class Meta:
         model = Producto
@@ -82,9 +84,6 @@ class ProductoListaSerializer(serializers.ModelSerializer):
             return ""
         request = self.context.get("request")
         return request.build_absolute_uri(ruta) if request else ruta
-
-    def get_precio_venta(self, obj):
-        return float(obj.precio_venta)
 
 
 class ProductoDetalleSerializer(ProductoListaSerializer):
@@ -156,12 +155,12 @@ class PedidoSalidaSerializer(serializers.Serializer):
 
     numero = serializers.CharField()
     estado = serializers.CharField()
-    total = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=False)
 
 
 class LineaEstadoPedidoSerializer(serializers.Serializer):
     producto_nombre = serializers.CharField()
-    cantidad = serializers.DecimalField(max_digits=12, decimal_places=2)
+    cantidad = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=False)
 
 
 class EstadoPedidoSerializer(serializers.Serializer):
@@ -173,5 +172,5 @@ class EstadoPedidoSerializer(serializers.Serializer):
     estado = serializers.CharField()
     estado_display = serializers.CharField()
     creado_en = serializers.DateTimeField()
-    total = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total = serializers.DecimalField(max_digits=12, decimal_places=2, coerce_to_string=False)
     lineas = LineaEstadoPedidoSerializer(many=True)

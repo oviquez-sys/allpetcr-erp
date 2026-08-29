@@ -95,9 +95,14 @@ class CatalogoProductos(BaseAPI):
 
     def test_precio_venta_es_number_no_string(self):
         """DRF serializa DecimalField como string por defecto; el sitio
-        espera un número JSON (mismo contrato que el puente anterior)."""
+        espera un número JSON (mismo contrato que el puente anterior).
+
+        Se verifica sobre el JSON ya renderizado (r.json()), no sobre
+        r.data: con coerce_to_string=False, r.data trae un Decimal de
+        Python (correcto puertas adentro, DRF lo convierte a número al
+        renderizar) — lo que le llega de verdad al sitio es el JSON."""
         r = self.client_autenticado.get(reverse("api:catalogo_productos"))
-        precio = r.data["results"][0]["precio_venta"]
+        precio = r.json()["results"][0]["precio_venta"]
         self.assertIsInstance(precio, float)
         self.assertEqual(precio, 3500.0)
 
@@ -246,6 +251,7 @@ class PedidosAPI(BaseAPI):
         r = self.client_autenticado.post(reverse("api:pedidos"), self._body(), format="json")
         self.assertEqual(r.status_code, 201)
         self.assertTrue(r.data["numero"].startswith("PED-"))
+        self.assertIsInstance(r.json()["total"], float)  # no string, mismo criterio que el catálogo
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock_actual, Decimal("18"))
 
@@ -288,6 +294,9 @@ class EstadoPedidoAPI(BaseAPI):
         self.assertEqual(r.status_code, 200)
         self.assertEqual(r.data["numero"], self.numero)
         self.assertEqual(len(r.data["lineas"]), 1)
+        datos = r.json()
+        self.assertIsInstance(datos["total"], float)
+        self.assertIsInstance(datos["lineas"][0]["cantidad"], float)
 
     def test_sin_telefono_no_muestra_nada(self):
         r = self.client_autenticado.get(reverse("api:pedido_estado", args=[self.numero]))
