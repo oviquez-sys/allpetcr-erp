@@ -84,6 +84,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "storages",  # backend de almacenamiento S3-compatible para fotos (ver MEDIA_STORAGE_BACKEND)
+    "rest_framework",
+    "rest_framework.authtoken",  # token de autenticación para el sitio web -> ERP (Bloque 3)
+    "corsheaders",
     # módulos del ERP
     "core",
     "catalogo",
@@ -93,10 +96,12 @@ INSTALLED_APPS = [
     "contabilidad",
     "compras",
     "pedidos",
+    "api",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",  # antes de CommonMiddleware, como pide django-cors-headers
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -107,6 +112,41 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# --- API del catálogo y pedidos (Bloque 3, 2026-08-28) ---
+#
+# CORS: cerrado por defecto (ninguna lista = ningún origen permitido). El
+# sitio web se habilita con CORS_ALLOWED_ORIGINS="https://allpetcr.com" (o
+# la lista que corresponda, separada por comas) por variable de entorno —
+# nunca "permitir cualquier origen" para una API que puede recibir pedidos
+# pagados.
+_cors_origenes = os.environ.get("CORS_ALLOWED_ORIGINS", "")
+CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origenes.split(",") if o.strip()]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+    # Por defecto nadie entra: cada vista declara su propio permiso
+    # (AllowAny para catálogo público, IsAuthenticated para lo que mueve
+    # inventario o dinero). Ver api/views.py.
+    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 24,
+    "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    # Valores de arranque, no una medición (mismo criterio que
+    # ReservaStock.PLAZO_MINUTOS): suficiente para navegar el catálogo con
+    # holgura, bajo para frenar un raspado agresivo o un abuso del endpoint
+    # de pedidos. Se ajustan acá si en producción resultan cortos o largos.
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "60/min",
+        "user": "120/min",
+    },
+}
 
 ROOT_URLCONF = "config.urls"
 
