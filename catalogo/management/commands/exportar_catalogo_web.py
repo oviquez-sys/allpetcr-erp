@@ -23,10 +23,9 @@ QUÉ NO SE EXPORTA (deliberado, no olvido)
 - Productos sin existencias: no se exportan (ver SOLO_EN_EXISTENCIA).
 """
 import json
-import shutil
 from pathlib import Path
 
-from django.conf import settings
+from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand, CommandError
 
 from catalogo.models import Categoria, Producto
@@ -228,9 +227,11 @@ class Command(BaseCommand):
 
         Se copia en vez de enlazar porque son dos proyectos independientes,
         cada uno con su despliegue: el sitio tiene que poder construirse sin
-        el ERP al lado.
+        el ERP al lado. Se lee con `default_storage` (no con Path directo a
+        MEDIA_ROOT) para que esto siga funcionando si las fotos del ERP
+        viven en un bucket S3-compatible en vez de en disco local — ver
+        MEDIA_STORAGE_BACKEND en config/settings.py.
         """
-        origen = Path(settings.MEDIA_ROOT) / "productos"
         destino = raiz_web / "public" / "productos"
         destino.mkdir(parents=True, exist_ok=True)
 
@@ -240,16 +241,19 @@ class Command(BaseCommand):
             if not fila["imagen"]:
                 continue
             nombre = Path(fila["imagen"]).name
+            ruta_storage = f"productos/{nombre}"
             esperados.add(nombre)
-            src = origen / nombre
-            if not src.exists():
-                # La ruta está en la base pero el archivo no está en media/:
-                # se publica sin foto en vez de dejar una imagen rota.
+            if not default_storage.exists(ruta_storage):
+                # La ruta está en la base pero el archivo no está en el
+                # almacenamiento: se publica sin foto en vez de dejar una
+                # imagen rota.
                 fila["imagen"] = ""
                 continue
             dst = destino / nombre
-            if not dst.exists() or dst.stat().st_size != src.stat().st_size:
-                shutil.copy2(src, dst)
+            tamano_origen = default_storage.size(ruta_storage)
+            if not dst.exists() or dst.stat().st_size != tamano_origen:
+                with default_storage.open(ruta_storage, "rb") as f:
+                    dst.write_bytes(f.read())
             copiadas += 1
 
         sobrantes = [f for f in destino.iterdir() if f.is_file() and f.name not in esperados]

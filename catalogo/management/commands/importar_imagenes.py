@@ -26,11 +26,11 @@ import zipfile
 from pathlib import Path
 
 import openpyxl
-from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from catalogo.models import Producto
+from core.imagenes import guardar_imagen_producto
 
 HOJA_POR_DEFECTO = "Inventario Claude"
 ARCHIVO_POR_DEFECTO = "data/INVENTARIO_ALLPETCR.xlsx"
@@ -100,8 +100,6 @@ class Command(BaseCommand):
             wb.close()
 
             por_sku = {p.sku: p for p in Producto.objects.all()}
-            destino = Path(settings.MEDIA_ROOT) / "productos"
-            destino.mkdir(parents=True, exist_ok=True)
 
             guardadas = sin_producto = 0
             con_foto = set()
@@ -117,8 +115,7 @@ class Command(BaseCommand):
                     continue
                 ext = Path(media).suffix.lower() or ".png"
                 nombre_archivo = f"{prod.sku}{ext}"
-                (destino / nombre_archivo).write_bytes(data)
-                rel = f"productos/{nombre_archivo}"
+                rel = guardar_imagen_producto(nombre_archivo, data)
                 if prod.imagen != rel:
                     prod.imagen = rel
                     prod.save(update_fields=["imagen"])

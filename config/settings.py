@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "storages",  # backend de almacenamiento S3-compatible para fotos (ver MEDIA_STORAGE_BACKEND)
     # módulos del ERP
     "core",
     "catalogo",
@@ -201,6 +202,47 @@ STATICFILES_DIRS = [BASE_DIR / "static"]  # logo y otros estáticos del proyecto
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"  # fotos de productos y otros archivos subidos
+
+# --- Almacenamiento de fotos de producto (Bloque 1, 2026-08-28) ---
+#
+# Por defecto: disco local (como siempre). Para apuntar a un bucket
+# S3-compatible (S3, Cloudflare R2, Backblaze B2) se define
+# MEDIA_STORAGE_BACKEND=s3 y las variables AWS_* de abajo — nada de código
+# cambia, solo configuración. boto3 ya era una dependencia (respaldo a B2);
+# django-storages es la única pieza nueva.
+#
+# El código NUNCA debe escribir archivos con Path()/open() directo en
+# MEDIA_ROOT: siempre a través de django.core.files.storage.default_storage
+# (ver core/imagenes.py), que es lo que hace que este interruptor funcione.
+if os.environ.get("MEDIA_STORAGE_BACKEND") == "s3":
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "bucket_name": os.environ["AWS_STORAGE_BUCKET_NAME"],
+                "endpoint_url": os.environ.get("AWS_S3_ENDPOINT_URL") or None,
+                "region_name": os.environ.get("AWS_S3_REGION_NAME") or None,
+                "access_key": os.environ.get("AWS_ACCESS_KEY_ID"),
+                "secret_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
+                "custom_domain": os.environ.get("AWS_S3_CUSTOM_DOMAIN") or None,
+                "default_acl": "public-read",
+                "querystring_auth": False,  # URLs públicas simples, sin firma que vence
+                "file_overwrite": False,
+            },
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+else:
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

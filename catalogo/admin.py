@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import path
 from django.utils.html import format_html
 
+from core.imagenes import url_imagen_producto
 from core.templatetags.formato import crc as _crc  # formato CR (miles con punto)
 
 from .models import CambioPrecio, Categoria, Impuesto, Producto
@@ -138,9 +139,9 @@ class ProductoAdmin(admin.ModelAdmin):
     def foto(self, obj):
         if obj.imagen:
             return format_html(
-                '<img src="/media/{}" class="clickable-product-img" '
+                '<img src="{}" class="clickable-product-img" '
                 'style="width:36px;height:36px;border-radius:7px;object-fit:cover">',
-                obj.imagen,
+                url_imagen_producto(obj.imagen),
             )
         return "🐾"
 
@@ -148,9 +149,9 @@ class ProductoAdmin(admin.ModelAdmin):
     def foto_grande(self, obj):
         if obj.imagen:
             return format_html(
-                '<img src="/media/{}" class="clickable-product-img" '
+                '<img src="{}" class="clickable-product-img" '
                 'style="width:140px;height:140px;border-radius:14px;object-fit:cover">',
-                obj.imagen,
+                url_imagen_producto(obj.imagen),
             )
         return "Sin foto"
 

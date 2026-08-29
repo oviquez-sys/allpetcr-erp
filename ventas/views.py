@@ -2,7 +2,6 @@ import json
 import logging
 import smtplib
 
-from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
@@ -15,6 +14,7 @@ from django.views.decorators.http import require_POST
 from caja.services import sesion_abierta_de
 from catalogo.consultas import productos_visibles
 from catalogo.models import Producto
+from core.imagenes import url_imagen_producto
 from core.roles import CAJERO, GERENTE, es_gerente, rol_requerido
 from core.tenancy import documento_de_empresa
 
@@ -49,7 +49,7 @@ def pos(request):
         p["stock_actual"] = float(p["stock_actual"])
         p["categoria"] = p.pop("categoria__nombre") or "Sin categoría"
         p["presentacion"] = p.get("presentacion") or ""
-        p["imagen"] = (settings.MEDIA_URL + p["imagen"]) if p.get("imagen") else ""
+        p["imagen"] = url_imagen_producto(p["imagen"])
     clientes = list(
         Cliente.objects.filter(activo=True, empresa=empresa)
         .values("id", "nombre", "limite_credito", "saldo")

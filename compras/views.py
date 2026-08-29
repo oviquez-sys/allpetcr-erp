@@ -2,9 +2,7 @@ import base64
 import json
 import logging
 from decimal import Decimal, InvalidOperation
-from pathlib import Path
 
-from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
@@ -13,6 +11,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from catalogo.models import Categoria, Producto
+from core.imagenes import guardar_imagen_producto, url_imagen_producto
 from core.models import Empresa, Sucursal
 from core.roles import GERENTE, rol_requerido
 from core.tenancy import documento_de_empresa, empresa_actual
@@ -126,7 +125,7 @@ def nueva(request):
         p["stock_actual"] = float(p["stock_actual"])
         p["categoria"] = p.pop("categoria__nombre") or "Sin categoría"
         p["presentacion"] = p.get("presentacion") or ""
-        p["imagen"] = (settings.MEDIA_URL + p["imagen"]) if p.get("imagen") else ""
+        p["imagen"] = url_imagen_producto(p["imagen"])
     proveedores = list(
         Proveedor.objects.filter(activo=True, empresa=empresa).values("id", "nombre").order_by("nombre")
     )
@@ -244,10 +243,7 @@ def producto_nuevo(request):
                 # El nombre lo arma el servidor a partir del SKU: el cliente no
                 # elige ni el nombre ni la extensión del archivo en disco.
                 archivo = f"{producto.sku}{ext}"
-                destino = Path(settings.MEDIA_ROOT) / "productos"
-                destino.mkdir(parents=True, exist_ok=True)
-                (destino / archivo).write_bytes(img_data)
-                producto.imagen = f"productos/{archivo}"
+                producto.imagen = guardar_imagen_producto(archivo, img_data)
                 producto.save(update_fields=["imagen"])
             except ValidationError as e:
                 aviso_foto = " ".join(e.messages)
@@ -269,6 +265,6 @@ def producto_nuevo(request):
             "codigo_barras": producto.codigo_barras, "costo_promedio": 0.0,
             "stock_actual": 0.0, "presentacion": producto.presentacion,
             "categoria": categoria.nombre if categoria else "Sin categoría",
-            "imagen": (settings.MEDIA_URL + producto.imagen) if producto.imagen else "",
+            "imagen": url_imagen_producto(producto.imagen),
         },
     })
