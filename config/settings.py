@@ -92,6 +92,7 @@ INSTALLED_APPS = [
     "ventas",
     "contabilidad",
     "compras",
+    "pedidos",
 ]
 
 MIDDLEWARE = [
