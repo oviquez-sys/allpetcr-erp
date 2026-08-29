@@ -154,7 +154,52 @@ coincidencias de `.env`, `.p12`, `.pem`, `.key`, `secret`, `credential`).
   desarrollo (HSTS, SSL, SECRET_KEY corta, cookies) — son las mismas que
   desaparecen con `DJANGO_PRODUCTION=1`, no una regresión introducida hoy.
 
-*(Bloque 2 en adelante se agrega abajo a medida que cierra.)*
+### Bloque 2 — Pedidos y disponibilidad
+
+- [x] App nueva `pedidos` (separada de `ventas`: un Pedido nace ya pagado,
+  con datos de envío que `FacturaVenta` no necesita — ver el porqué largo
+  en `pedidos/models.py`).
+- [x] `Pedido` con los 5 estados pedidos, transiciones válidas declaradas y
+  aplicadas en `pedidos/services.py::cambiar_estado` (no se puede saltar de
+  "pago confirmado" a "entregado", ni tocar un pedido ya entregado/cancelado).
+- [x] `CambioEstadoPedido`: bitácora con fecha y usuario en cada cambio,
+  igual criterio que `CambioPrecio`.
+- [x] `ReservaStock`: reserva temporal durante el checkout, **15 minutos**
+  (justificado en el modelo: tiempo de sobra para pagar, corto para no
+  bloquear un carrito abandonado). Usa `select_for_update()`, el mismo
+  patrón de concurrencia que ya usaba `inventario.services`.
+  **Prueba de concurrencia real** (`TransactionTestCase` + threads +
+  conexiones separadas a PostgreSQL): dos reservas simultáneas de la
+  última unidad, solo una gana — corrida 5 veces seguidas sin
+  intermitencias.
+- [x] `crear_pedido` idempotente por `referencia_pago`, **también bajo
+  concurrencia real** (no solo "si lo llamás dos veces seguidas"): un
+  índice único parcial en la base + captura de `IntegrityError` con
+  savepoint. Un `SELECT` antes del `INSERT` sin esto es una condición de
+  carrera clásica — dos webhooks a la vez pasarían el `SELECT` los dos
+  antes de que ninguno hubiera insertado nada. Probado con dos hilos
+  golpeando `crear_pedido` con la misma `referencia_pago` al mismo tiempo:
+  un solo pedido, el stock baja una sola vez.
+- [x] `AvisoDisponibilidad`: tabla correo + producto, con restricción única
+  para no duplicar el mismo aviso.
+- [ ] **Ítem 10 (agotado no se oculta, mantiene su página) — NO
+  implementado, es una decisión de negocio que ya estaba tomada en
+  sentido contrario.** `catalogo/management/commands/exportar_catalogo_web.py`
+  tiene la bandera `SOLO_EN_EXISTENCIA = True`, puesta por vos el
+  02/08/2026 a propósito, con el costo documentado en el propio archivo
+  (perder el posicionamiento de Google de la página de un agotado). El
+  puente actual literalmente NO exporta los agotados al sitio — ni
+  ocultos ni con insignia, no existen en el JSON que consume la web. Tu
+  pedido de esta noche es lo opuesto a esa decisión. No la cambié
+  (el archivo ya trae la instrucción de cómo revertirla: poner la bandera
+  en `False`), porque pesar el costo de SEO documentado es tuyo, no mío.
+  Decime y lo aplico.
+- [x] Prueba de regresión del POS + suite completa al cierre: **356
+  pruebas, todas en verde** (334 del Bloque 1 + 22 nuevas de `pedidos`).
+  `core/test_arquitectura.py` extendido para que las reglas de
+  aislamiento por empresa también cubran la app nueva.
+
+*(Bloque 3 en adelante se agrega abajo a medida que cierra.)*
 
 ---
 
