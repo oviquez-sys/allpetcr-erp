@@ -267,9 +267,22 @@ const escUrl = s => encodeURI(String(s ?? '')).replace(/["'()\\]/g, '');
 const msg = (t, err) => { const m=document.getElementById('msg'); m.textContent=t;
   m.className = err ? 'err show':'show'; clearTimeout(m._h); m._h=setTimeout(()=>m.className='',3800); };
 
-// Chips de categorías (tocar para explorar sin escribir)
+// Chips de especie (tocar para explorar sin escribir).
+//
+// Antes eran ~40 chips, uno por cada subcategoría del catálogo ("Arneses",
+// "Bozales", "Collares"...): con esa cantidad el cajero tenía que leer toda
+// la fila para encontrar el que buscaba, que es exactamente lo que un chip
+// de "explorar rápido" no debería exigir. Ahora son las dos que de verdad
+// separan el mostrador: Perro y Gato (más "Todas" para no perder la vista
+// completa — sin ella, un producto sin mascota asignada o para otra especie
+// quedaría inalcanzable desde los chips). Pedido de Oscar, 29/08/2026.
 let catActiva = "Todas";
-const cats = ["Todas", ...Array.from(new Set(productos.map(p=>p.categoria))).sort()];
+const cats = ["Todas", "Perro", "Gato"];
+// Un producto con mascota "Perro y gato" tiene que aparecer en los dos
+// chips: es justo el caso de un arnés o una cama que sirve para cualquiera.
+function coincideEspecie(p, especie){
+  return p.mascota === especie || p.mascota === "Perro y gato";
+}
 function pintarChips(){
   const cont = document.getElementById('chips');
   cont.textContent = '';
@@ -289,7 +302,7 @@ function setCat(c){ catActiva = c; pintarChips(); pintarGrid(); }
 function filtrar(){
   const q = document.getElementById('buscar').value.toLowerCase().trim();
   return productos.filter(p => {
-    if (catActiva !== "Todas" && p.categoria !== catActiva) return false;
+    if (catActiva !== "Todas" && !coincideEspecie(p, catActiva)) return false;
     if (!q) return true;
     return p.nombre.toLowerCase().includes(q) || p.sku.includes(q) || (p.codigo_barras||'').includes(q)
         || (p.presentacion||'').toLowerCase().includes(q);

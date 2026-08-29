@@ -851,3 +851,32 @@ class HistorialDeCompras(BaseVentas):
         r = self.client.get(reverse("ventas:historial_compras", args=[cliente.pk]))
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "todavía no tiene compras")
+
+
+class ChipsDeEspecieEnElPOS(BaseVentas):
+    """Pedido de Oscar, 29/08/2026: el POS mostraba un chip por cada
+    subcategoría del catálogo (~40). Ahora son solo Todas/Perro/Gato."""
+
+    def test_manda_mascota_al_navegador(self):
+        self.producto.mascota = "Perro"
+        self.producto.save()
+        self.client.login(username="oscar", password="clave-test")
+        r = self.client.get(reverse("ventas:pos"))
+        producto_js = next(p for p in r.context["productos"] if p["id"] == self.producto.pk)
+        self.assertEqual(producto_js["mascota"], "Perro")
+
+    def test_producto_sin_mascota_no_revienta(self):
+        # self.producto de BaseVentas no trae mascota asignada.
+        self.client.login(username="oscar", password="clave-test")
+        r = self.client.get(reverse("ventas:pos"))
+        self.assertEqual(r.status_code, 200)
+        producto_js = next(p for p in r.context["productos"] if p["id"] == self.producto.pk)
+        self.assertEqual(producto_js["mascota"], "")
+
+    def test_los_chips_son_solo_todas_perro_gato(self):
+        self.client.login(username="oscar", password="clave-test")
+        r = self.client.get(reverse("ventas:pos"))
+        self.assertContains(r, '["Todas", "Perro", "Gato"]')
+        # La lista vieja generaba los chips a partir de las categorías; no
+        # debe quedar ningún rastro de ese mecanismo.
+        self.assertNotContains(r, "productos.map(p=>p.categoria)")

@@ -42,13 +42,14 @@ def pos(request):
         productos_visibles(empresa)
         .select_related("categoria")
         .values("id", "sku", "nombre", "codigo_barras", "precio_venta",
-                "stock_actual", "presentacion", "categoria__nombre", "imagen")
+                "stock_actual", "presentacion", "categoria__nombre", "imagen", "mascota")
     )
     for p in productos:  # JSON-serializable + normalizar nombres de campos
         p["precio_venta"] = float(p["precio_venta"])
         p["stock_actual"] = float(p["stock_actual"])
         p["categoria"] = p.pop("categoria__nombre") or "Sin categoría"
         p["presentacion"] = p.get("presentacion") or ""
+        p["mascota"] = p.get("mascota") or ""
         p["imagen"] = url_imagen_producto(p["imagen"])
     clientes = list(
         Cliente.objects.filter(activo=True, empresa=empresa)
