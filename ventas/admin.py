@@ -9,13 +9,18 @@ from .services import anular_factura
 
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "identificacion", "telefono", "limite_credito", "saldo", "credito_disponible", "estado_cuenta", "activo")
+    list_display = ("nombre", "identificacion", "telefono", "limite_credito", "saldo", "credito_disponible", "estado_cuenta", "historial", "activo")
     search_fields = ("nombre", "identificacion", "telefono")
     readonly_fields = ("saldo",)  # el saldo lo mueven ventas y abonos, no la mano
 
     @admin.display(description="Estado de cuenta")
     def estado_cuenta(self, obj):
         url = reverse("ventas:estado_cuenta", args=[obj.pk])
+        return format_html('<a href="{}">Ver</a>', url)
+
+    @admin.display(description="Historial de compras")
+    def historial(self, obj):
+        url = reverse("ventas:historial_compras", args=[obj.pk])
         return format_html('<a href="{}">Ver</a>', url)
 
 

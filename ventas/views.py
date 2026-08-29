@@ -245,6 +245,29 @@ def estado_cuenta(request, cliente_id):
 
 
 @rol_requerido(CAJERO, GERENTE)
+def historial_compras(request, cliente_id):
+    """Todas las compras del cliente (contado y crédito), a diferencia de
+    `estado_cuenta` que solo muestra los documentos de CxC (venta a
+    crédito). Bloque 1, 2026-08-28: no existía una vista con el historial
+    completo — `Cliente.compras` (FacturaVenta.cliente, related_name
+    "compras") ya traía el dato, solo faltaba la pantalla."""
+    cliente = documento_de_empresa(Cliente, request, pk=cliente_id)
+    # Se muestran también las anuladas (marcadas con su insignia): un
+    # historial que las esconde no es un historial completo, y el resto del
+    # sistema (facturas, devoluciones) sigue el mismo criterio de dejar todo
+    # a la vista en vez de ocultarlo.
+    facturas = (
+        cliente.compras
+        .prefetch_related("lineas__producto")
+        .order_by("-creado_en")
+    )
+    return render(request, "ventas/historial_compras.html", {
+        "cliente": cliente,
+        "facturas": facturas,
+    })
+
+
+@rol_requerido(CAJERO, GERENTE)
 @require_POST
 def abonar(request, documento_id):
     # DocumentoCxC no tiene FK directa a empresa: se alcanza vía el cliente.

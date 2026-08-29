@@ -813,3 +813,41 @@ class VentaRegaliaAlta(BaseVentas):
         )
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.json()["ok"])
+
+
+class HistorialDeCompras(BaseVentas):
+    """Bloque 1, 2026-08-28: pantalla nueva con TODAS las compras del
+    cliente (contado y crédito), a diferencia de estado_cuenta que solo
+    muestra los documentos de CxC."""
+
+    def test_muestra_ventas_de_contado_y_credito(self):
+        cliente = Cliente.objects.create(empresa=self.empresa, nombre="Cliente historial", limite_credito=Decimal("50000"))
+        registrar_venta(
+            sesion_caja=self.sesion, medio_pago="EFE", usuario=self.usuario,
+            lineas=[{"producto_id": self.producto.pk, "cantidad": 1}],
+        )
+        registrar_venta(
+            sesion_caja=self.sesion, medio_pago="CRE", cliente=cliente, usuario=self.usuario,
+            lineas=[{"producto_id": self.producto.pk, "cantidad": 1}],
+        )
+        self.client.login(username="oscar", password="clave-test")
+        r = self.client.get(reverse("ventas:historial_compras", args=[cliente.pk]))
+        self.assertEqual(len(r.context["facturas"]), 1)  # solo la de este cliente
+
+    def test_incluye_anuladas_marcadas(self):
+        cliente = Cliente.objects.create(empresa=self.empresa, nombre="Cliente anulado", limite_credito=Decimal("50000"))
+        factura = registrar_venta(
+            sesion_caja=self.sesion, medio_pago="CRE", cliente=cliente, usuario=self.usuario,
+            lineas=[{"producto_id": self.producto.pk, "cantidad": 1}],
+        )
+        anular_factura(factura=factura, motivo="prueba", usuario=self.usuario)
+        self.client.login(username="oscar", password="clave-test")
+        r = self.client.get(reverse("ventas:historial_compras", args=[cliente.pk]))
+        self.assertContains(r, "Anulada")
+
+    def test_cliente_sin_compras_no_falla(self):
+        cliente = Cliente.objects.create(empresa=self.empresa, nombre="Cliente nuevo")
+        self.client.login(username="oscar", password="clave-test")
+        r = self.client.get(reverse("ventas:historial_compras", args=[cliente.pk]))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "todavía no tiene compras")

@@ -1,0 +1,59 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Historial de compras — {{ cliente.nombre }}{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:url('{% static "patterns/allpetcr-logo.png" %}');background-repeat:repeat;background-size:120px 120px;opacity:.045;pointer-events:none;z-index:-1}
+.hc-wrap{max-width:920px;margin:0 auto}
+.hc-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.hc-sub{font-size:14px;color:#86868b;margin-bottom:22px}
+.hc-card{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);border:.5px solid rgba(0,0,0,.04);margin-bottom:16px}
+.hc-head{padding:14px 18px;border-bottom:1px solid #f0f0f2;display:flex;justify-content:space-between;align-items:center}
+.hc-num{font-weight:700}
+.hc-fecha{color:#86868b;font-size:13px}
+.hc-total{font-weight:700;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td{padding:10px 18px;border-bottom:1px solid #f7f7f9}
+tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:4px 12px;border-radius:980px;font-size:12.5px;font-weight:600}
+.badge.PEN{background:rgba(255,159,10,.16);color:#8a5700}
+.badge.PAG{background:rgba(52,199,89,.14);color:#1c6b30}
+.badge.ANU{background:rgba(255,59,48,.1);color:#b5231a}
+.hc-back{display:inline-block;margin-top:8px;color:#86868b;font-size:14px}
+.hc-back:hover{color:var(--brand)}
+.hc-vacio{color:#86868b;padding:24px 18px}
+</style>{% endblock %}
+
+{% block content %}
+<div class="hc-wrap">
+  <div class="hc-title">Historial de compras</div>
+  <div class="hc-sub">{{ cliente.nombre }}</div>
+
+  {% for f in facturas %}
+    <div class="hc-card">
+      <div class="hc-head">
+        <div>
+          <span class="hc-num">{{ f.numero }}</span>
+          <span class="badge {{ f.estado_visual }}">{{ f.estado_visual_display }}</span>
+          <div class="hc-fecha">{{ f.creado_en|date:"d/m/Y H:i" }} · {{ f.get_medio_pago_display }}</div>
+        </div>
+        <div class="hc-total">₡{{ f.total|crc:2 }}</div>
+      </div>
+      <table>
+        {% for l in f.lineas.all %}
+        <tr>
+          <td>{{ l.cantidad|floatformat:0 }} × {{ l.producto.nombre }}</td>
+          <td style="text-align:right;font-variant-numeric:tabular-nums">₡{{ l.total|crc:2 }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  {% empty %}
+    <div class="hc-card"><div class="hc-vacio">Este cliente todavía no tiene compras registradas.</div></div>
+  {% endfor %}
+
+  <a class="hc-back" href="{% url 'ventas:estado_cuenta' cliente.pk %}">← Ver estado de cuenta</a>
+</div>
+{% endblock %}
