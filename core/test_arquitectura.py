@@ -22,7 +22,7 @@ from django.conf import settings
 from django.test import TestCase
 
 # Apps del proyecto (no las de terceros ni el entorno virtual).
-APPS = ["api", "caja", "catalogo", "compras", "contabilidad", "core", "inventario", "pedidos", "ventas"]
+APPS = ["api", "caja", "catalogo", "compras", "contabilidad", "core", "facturacion_electronica", "inventario", "pedidos", "ventas"]
 
 
 def _archivos_python():

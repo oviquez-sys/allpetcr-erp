@@ -96,6 +96,7 @@ INSTALLED_APPS = [
     "contabilidad",
     "compras",
     "pedidos",
+    "facturacion_electronica",
     "api",
 ]
 
