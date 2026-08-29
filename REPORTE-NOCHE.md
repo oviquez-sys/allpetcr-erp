@@ -305,13 +305,73 @@ de lanzar el error.
    alerta al principio de este reporte) — si no, todo este bloque queda
    construido pero sin activarse nunca.
 
-*(Bloque 5 en adelante se agrega abajo a medida que cierra.)*
+### Bloque 5 — Web
+
+**No se tocó nada.** Depende del Bloque 3 (listo), pero el repositorio
+`allpetcr-web` tiene el git corrupto (ver Alerta 🔴 arriba) y la regla del
+encargo es trabajar siempre en una rama nueva con tag de reversa — no lo
+puedo garantizar ahí. Además, aunque el git estuviera sano, la API de esta
+noche no es alcanzable desde internet (el ERP corre solo en local), así que
+conectar el sitio real requiere primero una decisión de infraestructura
+tuya.
+
+Reconocimiento igual hecho (sin tocar código), y con hallazgos que cambian
+lo que pensabas del estado del sitio:
+- `lib/negocio.ts` **no tiene marcadores `PENDIENTE` activos** — está casi
+  completo (cédula, WhatsApp, dirección, horario). Solo faltan
+  `direccion.lat`/`lng` (que es justo el ítem 33) y las redes sociales
+  (vacías, no bloqueante).
+- Ya existen `app/carrito`, `app/checkout`, `app/catalogo`,
+  `app/producto/[sku]`, `app/contacto`, `app/sobre-nosotros`,
+  `app/recompra`. **No existen las páginas legales** (términos, privacidad,
+  devoluciones) — sigue siendo un pendiente real.
+- `data/productos.json` tiene 184 productos; el ERP ya tiene 532 — hay que
+  correr `exportar_catalogo_web` de nuevo (esto ya estaba anotado en el
+  propio `CLAUDE.md` del ERP, no es un hallazgo nuevo).
+
+### Bloque 6 — Si sobra tiempo
+
+Los dos ítems de este bloque **ya estaban hechos antes de esta noche**;
+verificado, no asumido:
+
+- [x] Ítem 37 (estilo de `abrir.html`, `cerrar.html`, `ajuste.html`,
+  `precios.html`, `estado_cuenta.html`): los cinco archivos ya tienen el
+  mismo sistema de diseño (mismas variables CSS, misma paleta, mismos
+  radios y sombras) que el resto de pantallas del ERP. No hay nada
+  descuidado que corregir.
+- [x] Ítem 38 (llenar `mascota` donde se deduzca con seguridad): los 532
+  productos activos **ya tienen `mascota` cargada** (261 Perro, 174 Perro y
+  gato, 70 Gato, 24 Peces, 2 Otros, 1 Tortugas — cero vacíos). No hay nada
+  que completar ni que listar como dudoso.
+
+Con esto, **la lista completa de la noche quedó cerrada** salvo el Bloque 5
+(bloqueado por el git corrupto de `allpetcr-web`, no por falta de tiempo).
 
 ---
 
 ## 3. Qué no se pudo hacer y por qué
 
-*(pendiente — se completa a medida que avanza la noche)*
+1. **Bloque 5 completo (web)** — bloqueado por el git corrupto de
+   `allpetcr-web`. Ver Alerta 🔴 al principio y el detalle en la sección del
+   Bloque 5. No es falta de tiempo: es que no puedo cumplir la regla de
+   "rama nueva + tag de reversa" en un repositorio cuya base de objetos
+   está rota, y tocar código ahí sin esa red de seguridad va contra la
+   regla madre del encargo.
+2. **Bloque 4, la parte que genera el XML de verdad** — bloqueado porque el
+   Anexo de Estructuras v4.4 y los XSD oficiales de Hacienda no están en el
+   repo. Ver la lista exacta de qué descargar en la sección del Bloque 4.
+3. **Bloque 4, la firma XAdES-EPES real** — bloqueada porque no hay una
+   llave `.p12` (trámite tuyo con Hacienda, nada que yo pueda adelantar).
+4. **Ítem 10 del Bloque 2** (que un producto agotado mantenga su página en
+   el sitio en vez de desaparecer) — no lo apliqué porque choca con una
+   decisión de negocio tuya ya tomada y documentada (`SOLO_EN_EXISTENCIA =
+   True` en `exportar_catalogo_web.py`, con el costo de SEO explicado en el
+   propio archivo). Ver sección del Bloque 2 para los detalles y cómo
+   revertirlo si querés el comportamiento nuevo.
+5. **Conectar el sitio real con la API de esta noche** — no es un bloqueo
+   de código, es que el ERP no está desplegado ("corre solo en local", uno
+   de los límites duros del encargo) y por lo tanto no hay forma de que un
+   sitio en internet lo llame todavía. Es un pendiente de infraestructura.
 
 ## 4. Decisiones que tomé por vos, con la razón
 
@@ -324,10 +384,41 @@ de lanzar el error.
   mezclarlo con mis commits de esta noche habría hecho imposible revisar
   cada cosa por separado.
 - **No tocar `allpetcr-web` en absoluto**: ver alerta arriba.
+- **App nueva `pedidos` separada de `ventas`**, en vez de agregarle campos a
+  `FacturaVenta`: un pedido en línea nace ya pagado y con datos de envío que
+  una venta de mostrador no tiene ni necesita. Mezclarlos habría obligado a
+  llenar campos irrelevantes de un lado o del otro.
+- **`ReservaStock` con plazo de 15 minutos**: valor de arranque razonado
+  (ver `pedidos/models.py`), no una medición. Ajustable en una sola
+  constante si en producción resulta corto o largo.
+- **Toda la API pide token, incluida la lectura del catálogo**: ver el
+  detalle en la sección del Bloque 3. Es la lectura más estricta de "el ERP
+  corre solo en local, no lo iba a desplegar" — avisame si querés algo más
+  abierto.
+- **Reutilicé mecanismos existentes en vez de crear nuevos** donde ya
+  resolvían exactamente el mismo problema: `ventas.Consecutivo` para la
+  numeración de pedidos y de comprobantes electrónicos, y
+  `ventas.services._desglose_fiscal` para el IVA de los pedidos web. Menos
+  código nuevo, y la regla de "el impuesto se calcula en una sola función"
+  se sostiene sin esfuerzo extra.
+- **No implementé una tarea programada para limpiar `ReservaStock` vencidas**:
+  `reservar_stock` ya las descarta de oficio cada vez que alguien reserva
+  ese mismo producto (ver el servicio), así que la corrección es automática
+  aunque no haya un barrido periódico. Un `manage.py` dedicado sería una
+  mejora de housekeeping, no una necesidad de corrección — lo dejé fuera
+  para no inflar el bloque con algo que no pedías.
 
 ## 5. Marcadores `PENDIENTE` y qué dato falta
 
-*(pendiente — se completa en el Bloque 1 y 4, que son los que más los usan)*
+| Dónde | Qué falta | Por qué no lo puse yo |
+|---|---|---|
+| `catalogo.Producto.cabys` (todos los productos) | El código CABYS de cada producto, del catálogo oficial de Hacienda | Un CABYS mal puesto rebota la factura electrónica — hard limit #8 del encargo |
+| `core.Empresa.identificacion` | La cédula jurídica real | Está vacía en el ERP; el sitio web tiene `3-102-969361` pero no coincide con lo que dice `HALLAZGOS.md` que se había marcado como sospechoso (terminaba en `999999`) — hace falta que confirmes cuál es la correcta |
+| `facturacion_electronica.*.clave` (los 5 modelos) | La clave de 50 caracteres de Hacienda | No existe el Anexo v4.4 que define su formato exacto — hard limit #9 |
+| `HACIENDA_P12_PATH` / `HACIENDA_P12_PASSWORD` | La llave criptográfica para firmar XAdES-EPES | Trámite tuyo con Hacienda, no hay nada que yo pueda generar |
+| `MEDIA_STORAGE_BACKEND` / variables `AWS_*` | Configuración del bucket S3/R2/B2, si decidís usar uno | Sigue funcionando en disco local mientras no las definas — no es obligatorio, es la opción que dejé lista |
+| `allpetcr-web/lib/negocio.ts` → `direccion.lat` / `direccion.lng` | Coordenadas del local en el mapa | Es literalmente el ítem 33 del Bloque 5, que no se tocó esta noche (repo bloqueado) |
+| `CORS_ALLOWED_ORIGINS` | El dominio del sitio web real, cuando exista | Vacío = ningún origen permitido (seguro por defecto); se llena cuando haya un dominio real que necesite llamar a la API desde el navegador |
 
 ## 6. Qué necesita un trámite tuyo antes de poder avanzar
 
@@ -335,6 +426,15 @@ de lanzar el error.
 - Decidir cómo recuperar `allpetcr-web` (opción A o B arriba).
 - Confirmar si el plan sigue siendo pasar a régimen tradicional (para saber
   si el Bloque 4 se activa alguna vez o queda solo de reserva).
+- Descargar el Anexo de Estructuras v4.4 y los XSD oficiales de Hacienda
+  (lista exacta en la sección del Bloque 4) para poder escribir el
+  generador de XML.
+- Tramitar la llave `.p12` de Hacienda para la firma XAdES-EPES.
+- Decidir sobre el ítem 10 del Bloque 2 (¿los agotados dejan de ocultarse
+  en el sitio, revirtiendo tu decisión del 02/08? — no lo hice sin
+  preguntarte).
+- Decidir cómo va a llegar el sitio público (una vez reparado) hasta esta
+  API del ERP, ya que el ERP no está desplegado.
 
 ## 7. Problemas encontrados que no estaban en la lista
 
@@ -348,12 +448,47 @@ de lanzar el error.
   float`), con prueba de regresión nueva y la suite de `ventas` completa en
   verde después del cambio.
 
-## 8. Estado de la suite de pruebas
+## 8. Estado de la suite de pruebas (final)
 
-- **Línea base (antes de tocar nada):** 330/330 OK.
-- **Después del fix de `disponible`:** `ventas` 92/92 OK (no se volvió a
-  correr la suite completa todavía; se hará al cerrar cada bloque).
+**404 pruebas, todas en verde**, corridas en dos grupos justo antes de
+cerrar esta noche:
+
+```
+python manage.py test core catalogo inventario pedidos api facturacion_electronica
+python manage.py test ventas caja compras contabilidad --noinput
+```
+
+`check --deploy` (sin `DJANGO_PRODUCTION=1`, o sea en modo desarrollo):
+las mismas 6 advertencias esperadas de siempre (HSTS, SSL, SECRET_KEY de
+desarrollo, cookies) — ninguna nueva, ninguna es una regresión de esta
+noche.
+
+Progresión de la noche: 330 (línea base) → 334 (Bloque 1) → 356 (Bloque 2)
+→ 386 (Bloque 3) → 404 (Bloque 4).
+
+El POS se tocó dos veces (`ventas/views.py::pos`) y se re-verificó cada
+vez con la suite de `ventas` completa además de la suite general al cierre
+de cada bloque — sigue funcionando igual que antes de esta noche.
 
 ## 9. Qué recomiendo como primer paso cuando vuelvas
 
-*(pendiente — se completa al final)*
+1. **Primero, leé la Alerta 🔴 de `allpetcr-web` y decidí cómo recuperarlo**
+   (opción A o B, sección 1). Es lo único que de verdad bloquea seguir
+   avanzando — todo lo demás de esta noche quedó en un estado consistente
+   y sin prisa.
+2. **Confirmá la cédula jurídica** (discrepancia ERP/web) — es rápido y
+   desbloquea cargarla en `Empresa.identificacion`.
+3. Con el repo web resuelto, el Bloque 5 queda listo para arrancar: la API
+   del Bloque 3 ya está construida y probada del lado del ERP.
+4. Cuando tengas un rato con el contador o con Hacienda: bajá el Anexo
+   v4.4 + XSD (Bloque 4) y empezá el trámite de la llave `.p12`. Ninguno de
+   los dos es urgente esta semana —hoy seguís en RTS—, pero son los que más
+   tardan en resolverse por trámite externo, así que conviene arrancarlos
+   temprano si en algún momento vas a pasar a régimen tradicional.
+5. Corré `python manage.py reporte_nombres_incompletos` y
+   `exportar_catalogo_web` cuando quieras republicar el catálogo real al
+   sitio (184 → 532 productos) — ninguno de los dos depende de nada de lo
+   de arriba.
+6. Cuando quieras, decime si el `git stash` de tu trabajo previo
+   (`caja/forms.py`, `caja/views.py`, plantillas) lo recuperás con
+   `git stash pop` para seguir donde lo dejaste, o si ya no hace falta.
