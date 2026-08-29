@@ -76,6 +76,17 @@ class CatalogoProductos(BaseAPI):
         r = self.client_autenticado.get(reverse("api:catalogo_productos"))
         self.assertEqual(r.data["count"], 1)  # sigue siendo solo API-1
 
+    def test_descripcion_va_en_la_lista_no_solo_en_el_detalle(self):
+        """Bug real (2026-08-29): allpetcr-web arma la ficha de producto
+        filtrando el catálogo COMPLETO (getProductoPorSku en
+        lib/data.ts), no con una llamada aparte al detalle por SKU. Si
+        'descripcion' falta en el listado, la ficha la ve undefined y
+        rompe (se encontró probando la búsqueda en el navegador)."""
+        self.producto.descripcion = "Correa resistente para paseo diario."
+        self.producto.save()
+        r = self.client_autenticado.get(reverse("api:catalogo_productos"))
+        self.assertEqual(r.data["results"][0]["descripcion"], "Correa resistente para paseo diario.")
+
     def test_disponible_es_booleano_no_cantidad(self):
         r = self.client_autenticado.get(reverse("api:catalogo_productos"))
         producto = r.data["results"][0]

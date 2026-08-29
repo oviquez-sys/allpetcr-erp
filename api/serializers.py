@@ -47,10 +47,17 @@ class ProductoListaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Producto
+        # "descripcion" va en la LISTA (no solo en el detalle) porque el
+        # sitio arma la ficha de producto filtrando el catálogo completo
+        # (allpetcr-web/lib/data.ts::getProductoPorSku), no con una llamada
+        # aparte a /productos/<sku>/. Faltó en la primera versión de este
+        # serializer y rompía la ficha con "Cannot read properties of
+        # undefined (reading 'normalize')" al buscar — se encontró
+        # probando en el navegador, no a ojo.
         fields = [
             "sku", "nombre", "marca", "categoria_id", "presentacion",
-            "mascota", "peso_valor", "peso_unidad", "precio_venta",
-            "disponible", "imagen",
+            "descripcion", "mascota", "peso_valor", "peso_unidad",
+            "precio_venta", "disponible", "imagen",
         ]
 
     def get_disponible(self, obj):
@@ -81,10 +88,10 @@ class ProductoListaSerializer(serializers.ModelSerializer):
 
 
 class ProductoDetalleSerializer(ProductoListaSerializer):
-    """Para la ficha de producto: agrega la descripción larga."""
-
-    class Meta(ProductoListaSerializer.Meta):
-        fields = ProductoListaSerializer.Meta.fields + ["descripcion"]
+    """Para GET /productos/<sku>/. Hoy los mismos campos que la lista
+    (que ya incluye descripcion) — se mantiene como clase aparte para el
+    día que la ficha necesite algo que la lista no (ej. productos
+    relacionados calculados en el servidor)."""
 
 
 class DisponibilidadSerializer(serializers.Serializer):
