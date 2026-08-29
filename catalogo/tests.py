@@ -1,10 +1,12 @@
 """Pruebas de códigos de barras y etiquetas (S7)."""
 from decimal import Decimal
 from io import StringIO
+from pathlib import Path
 
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase
 from django.urls import reverse
 
@@ -343,3 +345,71 @@ class CamposCatalogoBloque1(TestCase):
             )
             with self.assertRaises(ValidationError, msg=f"debió rechazar {malo!r}"):
                 p.full_clean()
+
+
+class CargarFotosPorSku(TestCase):
+    """Comando cargar_fotos_por_sku (Bloque 1, 2026-08-28)."""
+
+    def setUp(self):
+        import tempfile
+
+        from django.test import override_settings
+
+        self.empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
+        self.tmp_media = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp_media.cleanup)
+        self._override_media = override_settings(MEDIA_ROOT=self.tmp_media.name)
+        self._override_media.enable()
+        self.addCleanup(self._override_media.disable)
+
+        self.tmp_fotos = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp_fotos.cleanup)
+        self.carpeta = Path(self.tmp_fotos.name)
+
+    def _escribir(self, nombre, contenido=b"foto-falsa"):
+        (self.carpeta / nombre).write_bytes(contenido)
+
+    def test_asigna_por_sku_exacto(self):
+        p = Producto.objects.create(empresa=self.empresa, sku="75564", nombre="Correa", precio_venta=Decimal("1000"))
+        self._escribir("75564.jpg")
+        call_command("cargar_fotos_por_sku", str(self.carpeta), stdout=StringIO())
+        p.refresh_from_db()
+        self.assertEqual(p.imagen, "productos/75564.jpg")
+
+    def test_archivo_sin_producto_coincidente_no_falla_y_se_reporta(self):
+        Producto.objects.create(empresa=self.empresa, sku="1", nombre="Otro", precio_venta=Decimal("1000"))
+        self._escribir("99999.jpg")
+        salida = StringIO()
+        call_command("cargar_fotos_por_sku", str(self.carpeta), stdout=salida)
+        self.assertIn("99999.jpg", salida.getvalue())
+
+    def test_no_pisa_foto_existente_sin_reemplazar(self):
+        p = Producto.objects.create(
+            empresa=self.empresa, sku="200", nombre="Con foto",
+            precio_venta=Decimal("1000"), imagen="productos/200-vieja.jpg",
+        )
+        self._escribir("200.jpg")
+        call_command("cargar_fotos_por_sku", str(self.carpeta), stdout=StringIO())
+        p.refresh_from_db()
+        self.assertEqual(p.imagen, "productos/200-vieja.jpg")  # intacta
+
+    def test_reemplazar_fuerza_la_sobreescritura(self):
+        p = Producto.objects.create(
+            empresa=self.empresa, sku="300", nombre="Con foto",
+            precio_venta=Decimal("1000"), imagen="productos/300-vieja.jpg",
+        )
+        self._escribir("300.jpg")
+        call_command("cargar_fotos_por_sku", str(self.carpeta), "--reemplazar", stdout=StringIO())
+        p.refresh_from_db()
+        self.assertEqual(p.imagen, "productos/300.jpg")
+
+    def test_no_adivina_coincidencia_parcial(self):
+        p = Producto.objects.create(empresa=self.empresa, sku="400", nombre="Producto", precio_venta=Decimal("1000"))
+        self._escribir("400-copia.jpg")  # el nombre completo NO es exactamente "400"
+        call_command("cargar_fotos_por_sku", str(self.carpeta), stdout=StringIO())
+        p.refresh_from_db()
+        self.assertEqual(p.imagen, "")
+
+    def test_carpeta_inexistente_da_error_claro(self):
+        with self.assertRaises(CommandError):
+            call_command("cargar_fotos_por_sku", "/carpeta/que/no/existe/de/verdad", stdout=StringIO())
