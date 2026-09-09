@@ -91,3 +91,22 @@ $RECYCLE.BIN/
 # patrón porque suelen tener nombres generados al azar.
 /ziP6XwC3
 *.zip.download
+
+# ---- Archivos de trabajo de sesión (NO son del proyecto) ----
+# Salidas de pruebas manuales, recibos de ensayo y respaldos sueltos que se
+# fueron acumulando en la raíz. No son código: son el resultado de correr algo
+# una vez. Además el repositorio es público, así que un recibo de prueba o una
+# carpeta de respaldo podría exponer datos reales del negocio.
+/resultado_*.txt
+/Recibo-prueba.*
+/codigos_anteriores.csv
+/manta_3x2.html
+/_comparar_*.py
+/_probar_*.py
+/_prueba_*.py
+/_verificar_*.py
+/_respaldo_programado.py
+/_programar_respaldos.ps1
+/_respaldo_*/
+/_to_delete/
+/_usuario_sync.txt

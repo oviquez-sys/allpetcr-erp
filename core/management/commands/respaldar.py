@@ -13,8 +13,14 @@ Puntos clave del diseño:
   * Todo queda en UN zip con fecha y hora en el nombre.
   * Se rotan los respaldos: se conservan los últimos N (por defecto 30) y los
     más viejos se borran solos, para no llenar el disco.
-  * La carpeta de respaldos vive dentro del proyecto (que OneDrive sincroniza),
-    así que además queda una copia fuera de la computadora.
+  * Por defecto la carpeta de respaldos vive dentro del proyecto, en el MISMO
+    disco que la base. Eso no protege del fallo que más importa —que el disco
+    muera— y este comentario decía lo contrario hasta el 01/09/2026: afirmaba
+    que la carpeta estaba dentro de OneDrive y subía sola. Había dejado de ser
+    cierto al cambiar el disco, y nadie se enteró en 29 días.
+    Quien saca la copia de esta computadora es `_respaldo_programado.py`, que
+    pasa --destino apuntando a OneDrive. Este comando solo escribe donde le
+    digan.
   * Si están definidas las variables B2_BUCKET/B2_KEY_ID/B2_APPLICATION_KEY/
     B2_ENDPOINT, el zip también se sube a Backblaze B2 (FRA-005, auditoría
     2026-08-15) — un tercero que ni siquiera un administrador del servidor
@@ -29,6 +35,7 @@ Uso:
     python manage.py respaldar
     python manage.py respaldar --conservar 60
     python manage.py respaldar --destino "D:\\RespaldosAllpet"
+    python manage.py respaldar --sin-fotos          # solo la base, <1 MB
 """
 import logging
 import os
@@ -89,6 +96,11 @@ class Command(BaseCommand):
                             help="Cuántos respaldos conservar (los más viejos se borran). Por defecto 30.")
         parser.add_argument("--destino", type=str, default=None,
                             help="Carpeta donde guardar los respaldos. Por defecto ./respaldos.")
+        parser.add_argument("--sin-fotos", action="store_true",
+                            help="Respalda solo la base de datos, sin las fotos de productos. "
+                                 "El archivo pasa de ~130 MB a menos de 1 MB, lo que permite "
+                                 "guardar un respaldo TODOS LOS DIAS sin llenar la nube. Las "
+                                 "fotos cambian poco: se respaldan completas una vez por semana.")
 
     def handle(self, *args, **opts):
         engine = settings.DATABASES["default"]["ENGINE"]
@@ -127,9 +139,19 @@ class Command(BaseCommand):
                 # motor: así `restaurar` sabe qué está leyendo.
                 z.write(ruta_dump, nombre_interno)
                 # Las fotos de productos (si existen).
+                #
+                # Con --sin-fotos se omiten a propósito (02/09/2026). El
+                # respaldo completo pesa unos 130 MB, casi todo fotos, y las
+                # fotos cambian poco. Guardar 130 MB todos los días llena
+                # cualquier nube en semanas; guardar solo la base pesa menos de
+                # 1 MB y permite tener un respaldo DIARIO. Las fotos van
+                # completas una vez por semana.
+                #
+                # La regla detrás: lo que cambia todos los días se respalda
+                # todos los días; lo que cambia poco, poco.
                 media = Path(settings.MEDIA_ROOT)
                 n_fotos = 0
-                if media.exists():
+                if media.exists() and not opts["sin_fotos"]:
                     for archivo in media.rglob("*"):
                         if archivo.is_file():
                             z.write(archivo, Path("media") / archivo.relative_to(media))

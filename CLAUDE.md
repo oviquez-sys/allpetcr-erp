@@ -65,6 +65,79 @@ python manage.py test core catalogo inventario pedidos api facturacion_electroni
 python manage.py test ventas caja compras contabilidad
 ```
 
+## Cómo correr comandos en la máquina de Oscar (01/09/2026)
+
+Oscar **no es programador**: es administrador de empresas. Hay que hablarle sin
+jerga, decidir lo técnico por él y consultarle solo lo del negocio.
+
+Claude puede **leer y escribir** archivos en su computadora, pero **no puede
+ejecutar comandos**: el uso de computadora solo concede las terminales en modo
+"clic" —se ven, no se puede teclear en ellas—. Se comprobó el 01/09/2026, no
+hace falta volver a intentarlo.
+
+El patrón que sí funciona, y que le deja a Oscar un solo doble clic:
+
+1. Escribirle un `.bat` en la carpeta del ERP que corra lo que haga falta y
+   redirija **toda** la salida (`>> "%LOG%" 2>&1`) a un `.txt`.
+2. Pedirle que le dé doble clic y avise.
+3. Leer el `.txt` desde la carpeta.
+
+Ya existen dos, reutilizables: `CORRER_PRUEBAS.bat` (migración + pruebas) y
+`VERIFICAR.bat` (estado de la base real, solo lectura).
+
+Los comandos que se le pasen a mano van **con la ruta completa**, listos para
+pegar en PowerShell, y usando `.\.venv\Scripts\python.exe` en vez de activar
+el entorno (así PowerShell no pide cambiar permisos de scripts):
+
+    cd "C:\Users\Usuario\Desktop\GRUPO VAYRU\AllPet\CLAUDE\allpetcr-erp"
+    .\.venv\Scripts\python.exe manage.py test compras
+
+**Ojo**: que las pruebas pasen NO prueba que la base real esté migrada —las
+pruebas arman su propia base temporal—. Para la base real, `VERIFICAR.bat`.
+
+## Impresoras de la tienda (05/09/2026)
+
+Tres aparatos, y solo dos necesitan código:
+
+| Aparato | Nombre en Windows | Cómo lo usa el ERP |
+|---|---|---|
+| Etiquetas Xprinter XP-360B (rollo 44,5 × 31,8 mm) | `Xprinter XP-360B` | imagen dibujada con Pillow, enviada **por el driver** |
+| Recibos Caysn/Cashino 80 mm | `Caysn 80mm` | ESC/POS **crudo**, corta el papel solo |
+| Pistola lectora (USB HJ Scanner) | — | es un teclado; el POS y "Recibir mercadería" ya la aprovechan |
+
+**Diseño de la etiqueta (09/09/2026).** De arriba abajo: logo AllPetcr.com,
+precio en grande, código de barras con su número, descripción corta. Lo eligió
+Oscar copiando la etiqueta de fábrica de un proveedor. El reparto vertical es a
+mano en `impresion/etiqueta.py` con alturas fijas en milímetros, para que todas
+las etiquetas del rollo se vean iguales; la prueba
+`test_nada_se_sale_de_la_etiqueta` es la que evita que un cambio de tamaño de
+letra empuje la descripción fuera del papel. El logotipo vive ya binarizado en
+`impresion/marca/` (la térmica solo imprime negro o nada) y si falta el archivo
+la etiqueta sale sin logo en vez de reventar.
+
+**El logo va en los dos.** Vive ya binarizado en `impresion/marca/` y lo carga
+`impresion/logotipo.py`, que es el único lugar donde se compone: la etiqueta lo
+dibuja dentro de la imagen y el tiquete lo manda como imagen de trama ESC/POS
+(`GS v 0`, ver `tiquete.bytes_logo`). Está en un módulo aparte justamente para
+que no se separen y un día el logo del recibo deje de ser el de la etiqueta. En
+el tiquete se rellena con blanco hasta el ancho del papel en vez de usar
+`ESC a 1`, porque no todos los firmwares centran las imágenes. Con
+`TIQUETE_LOGO_PUNTOS=0` el recibo vuelve a salir sin logo.
+
+**No volver a intentar comandos crudos con la XP-360B.** El 05/09/2026 se le
+mandaron TSPL, ZPL y EPL: no imprimió ninguno. Por el driver imprime perfecto.
+La térmica de recibos es al revés: ESC/POS crudo es lo correcto ahí.
+
+Todo vive en `impresion/`, y es el único módulo que habla con Windows
+(`impresion/windows.py`). Está aislado a propósito: el día que el ERP se mude
+al VPS, el servidor deja de ver el USB de la tienda y habrá que poner un
+agente en la caja — ese día se reemplaza ese archivo y nada más.
+
+- `INSTALAR_IMPRESION.bat` — instala pywin32 y Pillow, corre las pruebas y deja
+  el diagnóstico en `resultado_impresion.txt`.
+- `PROBAR_IMPRESORAS.bat` — saca una prueba en papel de cada impresora.
+- `/impresion/estado/` — la misma comprobación desde el navegador (gerente).
+
 ## Documentos del proyecto
 
 | Archivo | Para qué |

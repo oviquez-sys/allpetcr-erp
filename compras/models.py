@@ -1,3 +1,5 @@
+from decimal import ROUND_HALF_UP, Decimal
+
 from django.conf import settings
 from django.db import models
 
@@ -72,16 +74,72 @@ class Compra(models.Model):
 class LineaCompra(models.Model):
     compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name="lineas")
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
-    cantidad = models.DecimalField(max_digits=12, decimal_places=2)
-    costo_unitario = models.DecimalField(max_digits=12, decimal_places=2)
-    total = models.DecimalField(max_digits=12, decimal_places=2)
+    cantidad = models.DecimalField(max_digits=12, decimal_places=2, help_text="Unidades facturadas por el proveedor")
+    # Bonificación del proveedor: los "12+1", "100+20" que ofrecen los
+    # vendedores. Se guarda aparte de `cantidad` porque las dos cifras cumplen
+    # papeles que se contradicen si se mezclan:
+    #
+    #   - La FACTURA solo reconoce las facturadas. De `cantidad × costo_unitario`
+    #     sale `total`, y de ahí el asiento contable y la deuda con el
+    #     proveedor. Meter las 13 unidades acá descuadraría los libros contra
+    #     la factura que el proveedor va a cobrar.
+    #   - La BODEGA recibe las 13. Registrar solo 12 dejaría una unidad
+    #     entrando a la tienda sin existir en el sistema.
+    #
+    # Guardadas por separado, cada número va a donde corresponde y el costo
+    # real por unidad sale solo (ver `costo_real_unitario`).
+    cantidad_bonificada = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0,
+        verbose_name="cantidad bonificada",
+        help_text="Unidades que el proveedor regala y no factura (el +1 de un 12+1).",
+    )
+    costo_unitario = models.DecimalField(max_digits=12, decimal_places=2, help_text="Costo facturado por unidad")
+    total = models.DecimalField(max_digits=12, decimal_places=2, help_text="Lo que cobra la factura: cantidad × costo_unitario")
 
     class Meta:
         verbose_name = "línea de compra"
         verbose_name_plural = "líneas de compra"
         constraints = [
             models.CheckConstraint(condition=models.Q(cantidad__gt=0), name="cantidad_compra_positiva"),
+            models.CheckConstraint(
+                condition=models.Q(cantidad_bonificada__gte=0), name="bonificada_no_negativa"
+            ),
         ]
 
     def __str__(self):
+        if self.cantidad_bonificada:
+            return f"{self.cantidad}+{self.cantidad_bonificada} × {self.producto.nombre}"
         return f"{self.cantidad} × {self.producto.nombre}"
+
+    @property
+    def cantidad_recibida(self):
+        """Lo que de verdad entra a bodega: facturadas más bonificadas."""
+        return self.cantidad + self.cantidad_bonificada
+
+    @property
+    def costo_real_unitario(self):
+        """Lo que costó cada unidad recibida, con la bonificación repartida.
+
+        Es el número que importa para poner precio. En un 12+1 a ₡1.000 el
+        costo real no es ₡1.000: son ₡12.000 entre 13 unidades, o sea ₡923,08.
+        Tratar la unidad bonificada como "regalo a costo cero" dejaría las
+        otras doce valoradas a ₡1.000 y el inventario inflado en ₡1.000 —el
+        sistema creería tener ₡13.000 de mercadería habiendo pagado ₡12.000—.
+        """
+        recibida = self.cantidad_recibida
+        if recibida <= 0:
+            return Decimal("0")
+        return (self.total / recibida).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    @property
+    def descuento_efectivo_pct(self):
+        """A cuánto equivale la bonificación como descuento, en porcentaje.
+
+        Un 12+1 NO es 8,33% de descuento (1/12): es 7,69% (1/13), porque el
+        descuento se mide sobre lo que recibís, no sobre lo que pagás. La
+        diferencia importa al comparar la oferta de un proveedor contra el
+        descuento por pronto pago de otro.
+        """
+        if not self.cantidad_bonificada or self.cantidad_recibida <= 0:
+            return Decimal("0")
+        return (self.cantidad_bonificada / self.cantidad_recibida * 100).quantize(Decimal("0.01"))

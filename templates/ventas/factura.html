@@ -6,7 +6,9 @@
 <title>{{ f.numero }}</title>
 <style>
 /*
-  Factura electrónica premium (v2, pedido de Oscar, 28/07/2026).
+  Recibo a color premium (v2, pedido de Oscar, 28/07/2026; renombrado el
+  02/09/2026 de "Factura electrónica" a "Recibo", ver el comentario del
+  encabezado del documento).
   Referencia: Stripe Dashboard, Apple Wallet, Notion, Linear, Shopify, Vercel.
 
   Cambio estructural respecto a v1: panel lateral fijo (30%) en vez de tarjeta
@@ -314,10 +316,25 @@ td.tot{font-weight:600}
 
   <div class="head">
     <div class="marca">
-      <img src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetCR">
+      {% comment %} En pantalla el logo se pide a /static/ y anda. Dentro de un PDF o de
+         un correo esa direccion no existe para quien lo recibe: por eso, al
+         generar el PDF, la vista manda el logo ya embebido en `logo_src`.
+         Lo que se ve en el navegador no cambia en nada. {% endcomment %}
+      <img src="{% if logo_src %}{{ logo_src }}{% else %}{% static 'img/allpetcr-logo.png' %}{% endif %}" alt="AllPetCR">
     </div>
     <div class="doc">
-      <div class="tipo">Factura electrónica</div>
+      {% comment %} "Recibo", no "Factura electrónica" (02/09/2026).
+
+         Decía "FACTURA ELECTRÓNICA" en grande, y el pie del mismo documento
+         decía "no constituye comprobante electrónico". El documento se
+         contradecía a sí mismo, y encima AllPetCR está en Régimen de
+         Tributación Simplificada: no emite facturas electrónicas. Un cliente
+         podía guardarlo creyendo que tenía una y llevarse la sorpresa después.
+
+         El día que el negocio pase a régimen tradicional y el Bloque de
+         facturación electrónica se encienda, ESTA línea es una de las que hay
+         que volver a cambiar. {% endcomment %}
+      <div class="tipo">Recibo</div>
       <div class="num">{{ f.numero }}</div>
       <div class="fecha">{{ f.creado_en|date:"d \d\e F \d\e Y" }} · {{ f.creado_en|date:"h:i A" }}</div>
       {% if f.estado_visual == "PAG" %}

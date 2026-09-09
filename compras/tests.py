@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
-from catalogo.models import Producto
+from catalogo.models import CambioPrecio, Categoria, Producto
 from contabilidad.models import LineaAsiento
 from contabilidad.services import cuenta
 from core.models import Empresa, Sucursal
@@ -378,3 +378,234 @@ class AltaRapidaDeProducto(BaseCompras):
         producto = Producto.objects.get(pk=d["producto"]["id"])
         self.assertTrue(producto.imagen)
         self.assertTrue(producto.imagen.startswith("productos/"))
+
+
+class BonificacionDelProveedor(BaseCompras):
+    """Promociones "12+1", "100+20" (01/09/2026).
+
+    El proveedor factura 12 y manda 13. Las dos cifras tienen que ir a
+    lugares distintos: la factura y la contabilidad reconocen 12, la bodega
+    recibe 13, y el costo real por unidad baja porque el mismo dinero se
+    reparte entre más unidades.
+    """
+
+    def setUp(self):
+        super().setUp()
+        # Producto en cero para que la aritmética del costo promedio no
+        # arrastre la carga inicial del caso base.
+        self.saco = Producto.objects.create(
+            empresa=self.empresa, sku="SACO-15", nombre="Alimento perro 15 kg",
+            precio_venta=Decimal("25000"),
+        )
+
+    def _compra(self, cantidad, bonificada, costo, forma="CON"):
+        return crear_compra(
+            proveedor=self.proveedor, sucursal=self.sucursal, forma_pago=forma,
+            usuario=self.usuario,
+            lineas=[{
+                "producto": self.saco,
+                "cantidad": Decimal(cantidad),
+                "cantidad_bonificada": Decimal(bonificada),
+                "costo_unitario": Decimal(costo),
+            }],
+        )
+
+    # ── la factura ────────────────────────────────────────────────────
+    def test_el_total_es_solo_lo_facturado(self):
+        """13 sacos en bodega, pero el proveedor cobra 12."""
+        compra = self._compra("12", "1", "1000")
+        self.assertEqual(compra.total, Decimal("12000.00"))
+
+    def test_el_asiento_contable_cuadra_con_la_factura(self):
+        compra = self._compra("12", "1", "1000")
+        recibir_compra(compra=compra, usuario=self.usuario)
+        debe, _ = self.saldo("inventario")
+        # ₡12.000, no ₡13.000: el inventario vale lo que se pagó por él.
+        self.assertEqual(debe, Decimal("12000.00"))
+
+    # ── la bodega ─────────────────────────────────────────────────────
+    def test_entran_todas_las_unidades_que_llegaron(self):
+        compra = self._compra("12", "1", "1000")
+        recibir_compra(compra=compra, usuario=self.usuario)
+        self.saco.refresh_from_db()
+        self.assertEqual(self.saco.stock_actual, Decimal("13"))
+
+    def test_el_costo_real_reparte_la_bonificacion(self):
+        """₡12.000 entre 13 sacos = ₡923,08, no ₡1.000."""
+        compra = self._compra("12", "1", "1000")
+        recibir_compra(compra=compra, usuario=self.usuario)
+        self.saco.refresh_from_db()
+        self.assertEqual(self.saco.costo_promedio, Decimal("923.08"))
+
+    def test_el_costo_real_es_menor_que_el_facturado(self):
+        """La prueba que importa para el precio de venta: la promoción tiene
+        que llegar al costo, o el descuento se pierde en el camino."""
+        compra = self._compra("100", "20", "5000")
+        recibir_compra(compra=compra, usuario=self.usuario)
+        self.saco.refresh_from_db()
+        self.assertLess(self.saco.costo_promedio, Decimal("5000"))
+        # ₡500.000 entre 120 sacos
+        self.assertEqual(self.saco.costo_promedio, Decimal("4166.67"))
+        self.assertEqual(self.saco.stock_actual, Decimal("120"))
+
+    # ── el descuento equivalente ──────────────────────────────────────
+    def test_doce_mas_uno_equivale_a_769_por_ciento(self):
+        """No es 8,33% (1/12): es 7,69% (1/13). El descuento se mide sobre lo
+        que se recibe, no sobre lo que se paga."""
+        compra = self._compra("12", "1", "1000")
+        linea = compra.lineas.get()
+        self.assertEqual(linea.descuento_efectivo_pct, Decimal("7.69"))
+
+    def test_cien_mas_veinte_equivale_a_1667_por_ciento(self):
+        compra = self._compra("100", "20", "5000")
+        self.assertEqual(compra.lineas.get().descuento_efectivo_pct, Decimal("16.67"))
+
+    def test_sin_bonificacion_el_descuento_es_cero(self):
+        compra = self._compra("12", "0", "1000")
+        self.assertEqual(compra.lineas.get().descuento_efectivo_pct, Decimal("0"))
+
+    # ── anulación ─────────────────────────────────────────────────────
+    def test_anular_saca_tambien_las_bonificadas(self):
+        compra = self._compra("12", "1", "1000")
+        recibir_compra(compra=compra, usuario=self.usuario)
+        anular_compra(compra=compra, motivo="Llegó dañado", usuario=self.usuario)
+        self.saco.refresh_from_db()
+        self.assertEqual(self.saco.stock_actual, Decimal("0"))
+
+    # ── que nada de lo viejo se rompa ─────────────────────────────────
+    def test_una_compra_sin_bonificacion_se_comporta_igual_que_siempre(self):
+        compra = self._compra("10", "0", "1000")
+        recibir_compra(compra=compra, usuario=self.usuario)
+        self.saco.refresh_from_db()
+        self.assertEqual(compra.total, Decimal("10000.00"))
+        self.assertEqual(self.saco.stock_actual, Decimal("10"))
+        self.assertEqual(self.saco.costo_promedio, Decimal("1000.00"))
+
+    def test_bonificacion_negativa_se_rechaza(self):
+        with self.assertRaises(ValidationError):
+            self._compra("12", "-1", "1000")
+
+    # ── desde la pantalla ─────────────────────────────────────────────
+    def test_la_pantalla_registra_la_bonificacion(self):
+        self.client.force_login(self.usuario)
+        r = self.client.post(
+            reverse("compras:registrar"),
+            data=json.dumps({
+                "proveedor_id": self.proveedor.id,
+                "forma_pago": "CON",
+                "factura_proveedor": "F-777",
+                "lineas": [{
+                    "producto_id": self.saco.id, "cantidad": 12,
+                    "cantidad_bonificada": 1, "costo_unitario": 1000,
+                }],
+            }),
+            content_type="application/json",
+        )
+        d = r.json()
+        self.assertTrue(d["ok"], d)
+        self.assertEqual(d["total"], 12000.0)  # la factura, no la bodega
+        self.saco.refresh_from_db()
+        self.assertEqual(self.saco.stock_actual, Decimal("13"))
+        self.assertEqual(self.saco.costo_promedio, Decimal("923.08"))
+
+
+class RecibirMercaderiaMejoras(BaseCompras):
+    """Cambios pedidos por Oscar el 02/09/2026 en 'Recibir mercadería':
+    crear categorías desde la pantalla y fijar el precio por margen."""
+
+    def setUp(self):
+        super().setUp()
+        self.client.force_login(self.usuario)
+
+    # ── 1. categorías ──────────────────────────────────────────────────
+    def test_la_pantalla_manda_tambien_las_categorias_vacias(self):
+        """El caso que motivó el cambio: 'Alimento' existe pero no tiene ni un
+        producto, y aun así hay que poder elegirla. Antes la lista se armaba de
+        los productos, así que una categoría vacía era inalcanzable."""
+        Categoria.objects.create(nombre="Alimento", orden=10)
+        r = self.client.get(reverse("compras:nueva"))
+        nombres = [c["nombre"] for c in r.context["categorias"]]
+        self.assertIn("Alimento", nombres)
+
+    def test_las_categorias_vienen_en_el_orden_del_erp(self):
+        Categoria.objects.create(nombre="Alimento", orden=10)
+        Categoria.objects.create(nombre="Juguetes", orden=30)
+        r = self.client.get(reverse("compras:nueva"))
+        nombres = [c["nombre"] for c in r.context["categorias"]]
+        self.assertLess(nombres.index("Alimento"), nombres.index("Juguetes"))
+
+    def test_producto_nuevo_crea_la_categoria_colgando_de_su_madre(self):
+        madre = Categoria.objects.create(nombre="Alimento", orden=10)
+        r = self.client.post(
+            reverse("compras:producto_nuevo"),
+            data=json.dumps({
+                "nombre": "Dog Chow Adulto 15kg", "precio_venta": 18000,
+                "categoria": "Alimento seco", "categoria_padre": "Alimento",
+            }),
+            content_type="application/json",
+        )
+        self.assertTrue(r.json()["ok"], r.json())
+        hija = Categoria.objects.get(nombre="Alimento seco")
+        self.assertEqual(hija.padre_id, madre.id)
+        self.assertEqual(hija.orden, madre.orden + 1)  # queda pegada a su madre
+
+    def test_categoria_nueva_sin_madre_queda_como_principal(self):
+        self.client.post(
+            reverse("compras:producto_nuevo"),
+            data=json.dumps({"nombre": "Algo", "precio_venta": 1000, "categoria": "Farmacia"}),
+            content_type="application/json",
+        )
+        nueva = Categoria.objects.get(nombre="Farmacia")
+        self.assertIsNone(nueva.padre)
+        self.assertEqual(nueva.orden, 900)  # al final, para no colarse antes de las de siempre
+
+    # ── 2. precio por margen ───────────────────────────────────────────
+    def _recibir(self, **extra):
+        linea = {"producto_id": self.producto.id, "cantidad": 10, "costo_unitario": 12000}
+        linea.update(extra)
+        return self.client.post(
+            reverse("compras:registrar"),
+            data=json.dumps({"proveedor_id": self.proveedor.id, "forma_pago": "CON", "lineas": [linea]}),
+            content_type="application/json",
+        )
+
+    def test_sin_ganancia_el_precio_no_se_toca(self):
+        """Comportamiento de siempre: recibir mercadería no cambia precios."""
+        antes = self.producto.precio_venta
+        self.assertTrue(self._recibir().json()["ok"])
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.precio_venta, antes)
+        self.assertEqual(CambioPrecio.objects.count(), 0)
+
+    def test_con_precio_calculado_se_aplica_y_queda_firmado(self):
+        r = self._recibir(precio_venta=25200)
+        self.assertTrue(r.json()["ok"], r.json())
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.precio_venta, Decimal("25200"))
+        cambio = CambioPrecio.objects.get(producto=self.producto)
+        self.assertIn("Recepción de mercadería", cambio.motivo)
+        self.assertEqual(cambio.usuario, self.usuario)
+
+    def test_el_precio_se_aplica_despues_de_que_entro_el_stock(self):
+        """Si la recepción fallara, el precio tampoco debe haber cambiado."""
+        self.assertTrue(self._recibir(precio_venta=25200).json()["ok"])
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, Decimal("20"))   # 10 iniciales + 10
+        self.assertEqual(self.producto.precio_venta, Decimal("25200"))
+
+    def test_un_precio_igual_al_actual_no_rompe_la_compra(self):
+        """cambiar_precio rechaza un precio idéntico. Eso no puede tumbar una
+        recepción que ya entró bien al inventario."""
+        actual = self.producto.precio_venta
+        r = self._recibir(precio_venta=float(actual))
+        self.assertTrue(r.json()["ok"], r.json())
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, Decimal("20"))
+        self.assertEqual(CambioPrecio.objects.count(), 0)
+
+    def test_la_bonificacion_sigue_funcionando_junto_con_el_precio(self):
+        r = self._recibir(cantidad_bonificada=2, precio_venta=25200)
+        self.assertTrue(r.json()["ok"], r.json())
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock_actual, Decimal("22"))  # 10 + 10 + 2 gratis
+        self.assertEqual(self.producto.precio_venta, Decimal("25200"))

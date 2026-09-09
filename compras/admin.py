@@ -21,7 +21,7 @@ class LineaCompraInline(admin.TabularInline):
     def get_readonly_fields(self, request, obj=None):
         # Una compra recibida es inmutable.
         if obj and obj.estado != Compra.Estado.BORRADOR:
-            return ("producto", "cantidad", "costo_unitario", "total")
+            return ("producto", "cantidad", "cantidad_bonificada", "costo_unitario", "total")
         return ("total",)
 
     def has_add_permission(self, request, obj=None):

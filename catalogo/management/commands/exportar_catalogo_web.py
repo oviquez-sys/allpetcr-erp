@@ -140,9 +140,13 @@ class Command(BaseCommand):
                 ids_completos.add(padre.id)
                 padre = padre.padre
 
+        # `orden` viaja con la categoría desde el 01/09/2026: el menú del
+        # sitio se arma con él en vez de tener las categorías escritas a mano.
+        # Sin este campo, crear una categoría en el ERP no la hacía aparecer
+        # en la web hasta que alguien editara `lib/navegacion.ts`.
         datos_categorias = [
-            {"id": c.id, "nombre": c.nombre, "padre_id": c.padre_id}
-            for c in Categoria.objects.filter(id__in=ids_completos).order_by("nombre")
+            {"id": c.id, "nombre": c.nombre, "padre_id": c.padre_id, "orden": c.orden}
+            for c in Categoria.objects.filter(id__in=ids_completos).order_by("orden", "nombre")
         ]
 
         ruta_productos = destino / "productos.json"

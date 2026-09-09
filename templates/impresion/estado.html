@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Impresoras — ALLPETCR</title>
+<style>
+:root{--acc:#0B3161;--ok:#1b7f4b;--mal:#b3261e;--line:#e3e9ec;--ink:#17272e;--ink2:#5b6b73}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;color:var(--ink);background:#f6f8f9}
+.barra{background:var(--acc);color:#fff;padding:14px 22px;display:flex;gap:16px;align-items:center}
+.barra a{color:#cfe0e6;text-decoration:none;font-size:13px}
+main{max-width:760px;margin:22px auto;padding:0 18px;display:grid;gap:16px}
+.tarjeta{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+h2{font-size:15px;margin-bottom:10px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px}
+dt{color:var(--ink2)}
+.ok{color:var(--ok);font-weight:600}
+.mal{color:var(--mal);font-weight:600}
+ul{margin:8px 0 0 18px;font-size:13.5px;color:var(--ink2)}
+button{background:var(--acc);color:#fff;border:none;border-radius:9px;padding:9px 16px;font-size:14px;cursor:pointer}
+.msg{padding:10px 14px;border-radius:10px;font-size:14px;margin-bottom:4px}
+.msg.error{background:#fdecea;color:var(--mal)}
+.msg.success{background:#e8f5ee;color:var(--ok)}
+.msg.warning{background:#fdf3e2;color:#8a5a08}
+.nota{font-size:12.5px;color:var(--ink2);margin-top:10px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="barra"><b>🖨️ Impresoras</b><a href="/">← Inicio</a></div>
+<main>
+  {% if messages %}{% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}{% endif %}
+
+  <div class="tarjeta">
+    <h2>Lo que ve el ERP</h2>
+    <dl>
+      <dt>Componente de Windows</dt>
+      <dd>{% if d.disponible %}<span class="ok">instalado</span>{% else %}<span class="mal">falta — corré INSTALAR_IMPRESION.bat</span>{% endif %}</dd>
+      <dt>Recibos</dt>
+      <dd>{{ d.impresora_recibos }} — {% if d.recibos_ok %}<span class="ok">encontrada</span>{% else %}<span class="mal">no encontrada</span>{% endif %}</dd>
+      <dt>Etiquetas</dt>
+      <dd>{{ d.impresora_etiquetas }} — {% if d.etiquetas_ok %}<span class="ok">encontrada</span>{% else %}<span class="mal">no encontrada</span>{% endif %}</dd>
+      <dt>Tiquete al cobrar</dt>
+      <dd>{% if d.tiquete_automatico %}automático{% else %}solo a pedido{% endif %}</dd>
+    </dl>
+    {% if d.instaladas %}
+      <p class="nota">Impresoras instaladas en Windows:</p>
+      <ul>{% for i in d.instaladas %}<li>{{ i }}</li>{% endfor %}</ul>
+    {% endif %}
+  </div>
+
+  <div class="tarjeta">
+    <h2>Probar en papel</h2>
+    <form method="post" style="display:flex;gap:10px;flex-wrap:wrap">
+      {% csrf_token %}
+      <button name="probar" value="recibos">Probar impresora de recibos</button>
+      <button name="probar" value="etiquetas">Probar impresora de etiquetas</button>
+    </form>
+    <p class="nota">La prueba de recibos imprime una regla numerada. Si esa fila de
+    números se parte en dos renglones, hay que bajar <code>ANCHO_TIQUETE</code> en el
+    archivo <code>.env</code> (48 → 42) y reiniciar el ERP.</p>
+  </div>
+</main>
+{% include "core/includes/chat_widget.html" %}
+</body>
+</html>

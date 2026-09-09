@@ -16,6 +16,33 @@ de columnas son otros, y los comandos nuevos lo rechazan a propósito.
 
 
 ───────────────────────────────────────────────────────────────────────────
+ DESDE QUE LA TIENDA ABRA: SIEMPRE CON --sin-stock   (01/09/2026)
+───────────────────────────────────────────────────────────────────────────
+
+`sincronizar_inventario` hace dos cosas distintas:
+
+  1. Mantiene el CATÁLOGO (nombre, categoría, descripción, precio, mascota).
+     Esto es información. Puede venir de una hoja para siempre.
+
+  2. IGUALA el stock al conteo del Excel. Ojo con el verbo: no suma, iguala.
+     Si el Excel dice 40 y en bodega hay 3 porque se vendieron 37, el
+     comando mete un ajuste de +37 y el stock vuelve a 40. Sin error, sin
+     advertencia, con movimiento AJU y todo.
+
+Hoy (antes de abrir, sin una sola venta) (2) es inofensivo: todo el stock
+salió del Excel de todos modos. El día de la primera venta deja de serlo.
+
+    REGLA A PARTIR DE LA APERTURA:
+
+        python manage.py sincronizar_inventario --sin-stock
+
+    Sin la bandera, NO se corre. El stock entra por Compras (Recibir
+    mercadería), por ventas, o por Inventario › Ajuste con motivo.
+
+Con --sin-stock el comando reporta las diferencias contra el Excel y no
+aplica ninguna. Es a propósito: alguien las mira y decide.
+
+───────────────────────────────────────────────────────────────────────────
  CORRECCIÓN DE COSTOS DEL 02/08/2026 — LEER SI SE RECIBE UN EXCEL NUEVO
 ───────────────────────────────────────────────────────────────────────────
 

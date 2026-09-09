@@ -23,7 +23,10 @@ class CategoriaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Categoria
-        fields = ["id", "nombre", "padre_id"]
+        # `orden` (01/09/2026): el menú del sitio se ordena con este campo.
+        # Tiene que estar acá y en exportar_catalogo_web.py con el mismo
+        # nombre, porque el sitio consume los dos y no sabe de cuál vino.
+        fields = ["id", "nombre", "padre_id", "orden"]
 
 
 class ProductoListaSerializer(serializers.ModelSerializer):

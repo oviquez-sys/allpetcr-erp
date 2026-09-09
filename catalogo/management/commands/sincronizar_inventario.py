@@ -3,6 +3,10 @@
 Uso:
     python manage.py sincronizar_inventario --dry-run     # ver qué haría
     python manage.py sincronizar_inventario               # aplicarlo
+    python manage.py sincronizar_inventario --sin-stock   # catálogo sí, kardex no
+
+El día que la tienda abra, `--sin-stock` deja de ser una opción y pasa a ser la
+ÚNICA forma correcta de correr este comando. Ver la nota de abajo.
 
 Por qué existe (y por qué NO se reusó `importar_inventario`)
 ------------------------------------------------------------
@@ -32,6 +36,27 @@ Reglas del proyecto que este comando respeta (no son opcionales)
   trae un "precio mayorista" que puede no coincidir con el costo promedio
   real; corregirlo es un evento contable, no una importación. El comando
   reporta las diferencias y no hace nada más con ellas.
+
+Por qué existe `--sin-stock` (01/09/2026)
+-----------------------------------------
+Este comando hace dos trabajos que parecen uno solo y no lo son:
+
+1. **Mantener el catálogo** — nombre, categoría, descripción, precio, mascota.
+   Es información, no existencias. Actualizarla en masa desde una hoja es
+   legítimo y va a seguir siéndolo siempre: no toca el kardex.
+2. **Igualar el stock al conteo del Excel.** Esto no "actualiza": IGUALA. La
+   línea `diferencia = cantidad - producto.stock_actual` fuerza el número del
+   Excel, venga de donde venga el stock real.
+
+Mientras no se haya vendido nada, (2) es inofensivo: todo el stock salió del
+Excel de todas formas. Después de la primera venta, correr este comando pisa
+lo que pasó en caja —sin error, sin advertencia, con movimiento AJU y todo—.
+
+`--sin-stock` separa los dos trabajos. Con la bandera puesta el comando
+mantiene el catálogo y no escribe un solo movimiento de kardex: las
+diferencias se reportan para que alguien las mire y decida. El stock entra por
+donde debe entrar —Compras, ventas, o un ajuste con motivo— y el kardex vuelve
+a ser la única fuente de verdad del inventario.
 
 Qué se preserva de lo que ya hay
 --------------------------------
@@ -116,6 +141,12 @@ class Command(BaseCommand):
                  "el factor 1.25 (ver ACTUALIZAR_INVENTARIO.txt).",
         )
         parser.add_argument(
+            "--sin-stock", action="store_true",
+            help="Sincroniza el CATÁLOGO sin tocar el inventario: no escribe un solo "
+                 "movimiento de kardex (ni INI ni AJU). Las diferencias contra el Excel "
+                 "se reportan y no se aplican.",
+        )
+        parser.add_argument(
             "--desactivar-ausentes", action="store_true",
             help="Marca activo=False los productos de la base que ya no están en el Excel. "
                  "Por defecto solo se reportan: desaparecer un producto del ERP borra su "
@@ -157,12 +188,13 @@ class Command(BaseCommand):
         # "obvias" o deja de verificarse sola.
         with transaction.atomic():
             r = self._sincronizar(
-                filas, empresa, bodega, usuario, seco, sin_precios=op["sin_precios"]
+                filas, empresa, bodega, usuario, seco,
+                sin_precios=op["sin_precios"], sin_stock=op["sin_stock"],
             )
             if seco:
                 transaction.set_rollback(True)
 
-        self._reportar(r, seco, sin_precios=op["sin_precios"])
+        self._reportar(r, seco, sin_precios=op["sin_precios"], sin_stock=op["sin_stock"])
 
     # ── lectura ──────────────────────────────────────────────────────────
     def _leer(self, ruta, hoja):
@@ -209,9 +241,10 @@ class Command(BaseCommand):
             raise CommandError(f"No existe el usuario '{username}'.")
 
     # ── sincronización ───────────────────────────────────────────────────
-    def _sincronizar(self, filas, empresa, bodega, usuario, seco, sin_precios=False):
+    def _sincronizar(self, filas, empresa, bodega, usuario, seco, sin_precios=False, sin_stock=False):
         r = _Resultado()
         r.sin_precios = sin_precios
+        r.sin_stock = sin_stock
         vistos = set()
 
         for fila in filas:
@@ -253,13 +286,20 @@ class Command(BaseCommand):
                 producto.save()
                 r.creados += 1
                 if cantidad > 0 and bodega is not None:
-                    registrar_movimiento(
-                        producto=producto, bodega=bodega, tipo="INI",
-                        cantidad=cantidad, costo_unitario=costo_excel,
-                        referencia="SINC-INVENTARIO", motivo="Alta desde el Excel de inventario",
-                        usuario=usuario,
-                    )
-                    r.stock_alta += 1
+                    if sin_stock:
+                        # El producto SÍ se crea (con stock 0): lo que no entra
+                        # es la existencia. Así el catálogo se puede mantener
+                        # masivamente por hoja de cálculo sin que el Excel
+                        # vuelva a decidir cuánto hay en bodega.
+                        r.stock_omitido_alta.append((sku, cantidad))
+                    else:
+                        registrar_movimiento(
+                            producto=producto, bodega=bodega, tipo="INI",
+                            cantidad=cantidad, costo_unitario=costo_excel,
+                            referencia="SINC-INVENTARIO", motivo="Alta desde el Excel de inventario",
+                            usuario=usuario,
+                        )
+                        r.stock_alta += 1
                 continue
 
             # ── producto existente: campos descriptivos ──
@@ -300,20 +340,31 @@ class Command(BaseCommand):
             producto.refresh_from_db()
             diferencia = cantidad - producto.stock_actual
             if diferencia != 0 and bodega is not None:
-                try:
-                    registrar_movimiento(
-                        producto=producto, bodega=bodega, tipo="AJU",
-                        cantidad=diferencia,
-                        # Solo las entradas llevan costo; una salida no
-                        # recalcula el costo promedio (regla del servicio).
-                        costo_unitario=costo_excel if diferencia > 0 else Decimal("0"),
-                        referencia="SINC-INVENTARIO",
-                        motivo="Ajuste al conteo del Excel de inventario 02/08/2026",
-                        usuario=usuario,
-                    )
-                    r.ajustes.append((sku, diferencia))
-                except ValidationError as e:
-                    r.errores.append(f"{sku}: ajuste no aplicado — {'; '.join(e.messages)}")
+                if sin_stock:
+                    # Esta es la línea peligrosa del comando y la razón de ser
+                    # de --sin-stock: `diferencia` IGUALA el stock al número
+                    # del Excel. Antes de abrir la tienda eso es inofensivo
+                    # —todo el stock vino del Excel de todos modos—, pero
+                    # después de la primera venta pisa lo que pasó en caja sin
+                    # que nada falle ni avise. Con la bandera puesta la
+                    # diferencia se reporta y no se aplica: el stock solo se
+                    # mueve por compras, ventas y ajustes con motivo.
+                    r.stock_omitido_ajuste.append((sku, producto.stock_actual, cantidad))
+                else:
+                    try:
+                        registrar_movimiento(
+                            producto=producto, bodega=bodega, tipo="AJU",
+                            cantidad=diferencia,
+                            # Solo las entradas llevan costo; una salida no
+                            # recalcula el costo promedio (regla del servicio).
+                            costo_unitario=costo_excel if diferencia > 0 else Decimal("0"),
+                            referencia="SINC-INVENTARIO",
+                            motivo="Ajuste al conteo del Excel de inventario 02/08/2026",
+                            usuario=usuario,
+                        )
+                        r.ajustes.append((sku, diferencia))
+                    except ValidationError as e:
+                        r.errores.append(f"{sku}: ajuste no aplicado — {'; '.join(e.messages)}")
 
             # ── costo: se reporta, NO se corrige ──
             if costo_excel > 0 and producto.costo_promedio > 0:
@@ -362,7 +413,7 @@ class Command(BaseCommand):
         return hija
 
     # ── reporte ──────────────────────────────────────────────────────────
-    def _reportar(self, r, seco, sin_precios=False):
+    def _reportar(self, r, seco, sin_precios=False, sin_stock=False):
         w = self.stdout.write
         titulo = "SIMULACIÓN (no se escribió nada)" if seco else "Sincronización aplicada"
         w(self.style.SUCCESS(f"\n{titulo}"))
@@ -374,8 +425,15 @@ class Command(BaseCommand):
             ))
         else:
             w(f"  Precios cambiados ........ {len(r.precios)}")
-        w(f"  Altas de stock (INI) ..... {r.stock_alta}")
-        w(f"  Ajustes de stock (AJU) ... {len(r.ajustes)}")
+        if sin_stock:
+            omitidos = len(r.stock_omitido_alta) + len(r.stock_omitido_ajuste)
+            w(self.style.WARNING(
+                f"  Kardex NO tocado ......... {omitidos} diferencia(s) de stock omitida(s) "
+                "(por --sin-stock)"
+            ))
+        else:
+            w(f"  Altas de stock (INI) ..... {r.stock_alta}")
+            w(f"  Ajustes de stock (AJU) ... {len(r.ajustes)}")
         w(f"  Categorías creadas ....... {len(r.categorias_creadas)}")
 
         if r.precios and sin_precios:
@@ -395,6 +453,27 @@ class Command(BaseCommand):
                 w(f"    {sku}: ₡{antes:,.0f} → ₡{ahora:,.0f}  ({pct:+.0f}%)")
             if len(r.precios) > 10:
                 w(f"    … y {len(r.precios) - 10} más. Quedan todos en CambioPrecio.")
+
+        if sin_stock and (r.stock_omitido_alta or r.stock_omitido_ajuste):
+            w(self.style.WARNING(
+                f"\n  El Excel difiere del inventario en "
+                f"{len(r.stock_omitido_alta) + len(r.stock_omitido_ajuste)} producto(s). "
+                "NO se aplicó nada."
+            ))
+            if r.stock_omitido_alta:
+                w(f"    {len(r.stock_omitido_alta)} producto(s) nuevo(s) quedaron creados con stock 0:")
+                for sku, cantidad in r.stock_omitido_alta[:8]:
+                    w(f"      {sku}: el Excel dice {cantidad}")
+                if len(r.stock_omitido_alta) > 8:
+                    w(f"      … y {len(r.stock_omitido_alta) - 8} más.")
+            if r.stock_omitido_ajuste:
+                w(f"    {len(r.stock_omitido_ajuste)} producto(s) existente(s) con conteo distinto:")
+                for sku, erp, excel in r.stock_omitido_ajuste[:8]:
+                    w(f"      {sku}: ERP {erp} · Excel {excel}")
+                if len(r.stock_omitido_ajuste) > 8:
+                    w(f"      … y {len(r.stock_omitido_ajuste) - 8} más.")
+            w("  Para que entre stock: recibilo por Compras (sube el kardex y el costo")
+            w("  promedio), o registrá un ajuste con motivo en Inventario › Ajuste.")
 
         if r.costos:
             w(self.style.WARNING(
@@ -441,7 +520,10 @@ class _Resultado:
         self.stock_alta = 0
         self.saltados = 0
         self.sin_precios = False
+        self.sin_stock = False
         self.precios_omitidos = 0
+        self.stock_omitido_alta = []
+        self.stock_omitido_ajuste = []
         self.precios = []
         self.ajustes = []
         self.costos = []

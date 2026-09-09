@@ -1,0 +1,17 @@
+{% autoescape off %}Hola{% if f.cliente %} {{ f.cliente.nombre }}{% endif %},
+
+Gracias por tu compra en {{ f.empresa.nombre }}.
+
+Adjunto va tu recibo {{ f.numero }} por un total de ₡{{ f.total|floatformat:0 }}.
+
+Si tenés alguna consulta, escribinos por WhatsApp al +506 8856-2992 o
+respondé este mismo correo.
+
+—
+{{ f.empresa.nombre }}{% if f.empresa.identificacion %}
+Cédula jurídica: {{ f.empresa.identificacion }}{% endif %}
+www.allpetcr.com
+
+Comprobante del Régimen de Tributación Simplificada.
+Documento interno de control, no constituye comprobante electrónico.
+{% endautoescape %}

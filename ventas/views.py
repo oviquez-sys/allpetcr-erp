@@ -2,6 +2,7 @@ import json
 import logging
 import smtplib
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
@@ -15,8 +16,11 @@ from caja.services import sesion_abierta_de
 from catalogo.consultas import productos_visibles
 from catalogo.models import Producto
 from core.imagenes import url_imagen_producto
+from core.pdf import html_a_pdf, logo_data_uri
 from core.roles import CAJERO, GERENTE, es_gerente, rol_requerido
 from core.tenancy import documento_de_empresa
+from impresion import servicio as impresion
+from impresion.servicio import ErrorDeImpresion
 
 from . import services
 from .cxc import registrar_abono
@@ -96,11 +100,27 @@ def vender(request):
         return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)
     except (json.JSONDecodeError, KeyError, Producto.DoesNotExist, Cliente.DoesNotExist):
         return JsonResponse({"ok": False, "error": "Datos de venta inválidos."}, status=400)
+    # Tiquete automático (decisión de Oscar, 05/09/2026): sale del rollo sin
+    # que el cajero toque nada. Si la impresora falla —sin papel, apagada, el
+    # cable flojo— la venta YA está registrada y NO se revierte por eso: se
+    # avisa y el POS abre el tiquete en pantalla como respaldo. Anular una
+    # venta buena porque no había papel sería mucho peor que un tiquete menos.
+    impreso, error_impresion = False, ""
+    if settings.TIQUETE_AUTOMATICO:
+        try:
+            impresion.imprimir_tiquete(factura)
+            impreso = True
+        except ErrorDeImpresion as e:
+            error_impresion = str(e)
+            logger.warning("Venta %s registrada pero sin tiquete: %s", factura.numero, e)
+
     return JsonResponse({
         "ok": True,
         "numero": factura.numero,
         "total": float(factura.total),
         "tiquete_url": reverse("ventas:tiquete", args=[factura.pk]),
+        "impreso": impreso,
+        "error_impresion": error_impresion,
     })
 
 
@@ -130,7 +150,7 @@ def factura(request, factura_id):
 @rol_requerido(CAJERO, GERENTE)
 @require_POST
 def factura_enviar(request, factura_id):
-    """Manda la factura a color por correo, en vez de solo poder verla en
+    """Manda el recibo a color por correo, en vez de solo poder verlo en
     pantalla. Reusa la misma plantilla, oculta el botón de imprimir/enviar
     (que no tiene sentido dentro de un correo) con es_email=True."""
     f = documento_de_empresa(
@@ -154,13 +174,40 @@ def factura_enviar(request, factura_id):
         return render(request, "ventas/factura.html", ctx, status=400)
 
     try:
-        html = render_to_string("ventas/factura.html", {"f": f, "es_email": True})
-        correo = EmailMessage(
-            subject=f"Tu factura {f.numero} — {f.empresa.nombre}",
-            body=html,
-            to=[destinatario],
+        # El recibo va como PDF ADJUNTO, no como cuerpo del correo (02/09/2026).
+        #
+        # Antes el HTML del recibo era el cuerpo del mensaje. Se veía bien en el
+        # navegador y descuadrado en Outlook, que dibuja los correos con el
+        # motor de Word y no entiende flexbox: las columnas se montaban unas
+        # sobre otras y el logo salía como un cuadrito roto.
+        #
+        # En PDF el diseño llega idéntico a cualquier cliente de correo, en el
+        # celular y al imprimirlo. Y es lo que la gente espera de un recibo.
+        html = render_to_string(
+            "ventas/factura.html",
+            {"f": f, "es_email": True, "logo_src": logo_data_uri()},
         )
-        correo.content_subtype = "html"
+        pdf = html_a_pdf(html)
+
+        if pdf:
+            cuerpo = render_to_string("ventas/correo_recibo.txt", {"f": f})
+            correo = EmailMessage(
+                subject=f"Tu recibo {f.numero} — {f.empresa.nombre}",
+                body=cuerpo,
+                to=[destinatario],
+            )
+            correo.attach(f"Recibo-{f.numero}.pdf", pdf, "application/pdf")
+        else:
+            # Sin Chromium instalado se manda como antes: feo pero llega.
+            # Ver core/pdf.py para el porqué de no abortar.
+            logger.warning("Recibo %s enviado sin PDF: Chromium no disponible.", f.numero)
+            correo = EmailMessage(
+                subject=f"Tu recibo {f.numero} — {f.empresa.nombre}",
+                body=html,
+                to=[destinatario],
+            )
+            correo.content_subtype = "html"
+
         correo.send(fail_silently=False)
     except (smtplib.SMTPException, OSError) as e:
         # 502: el fallo no es del usuario ni de esta aplicación, sino del

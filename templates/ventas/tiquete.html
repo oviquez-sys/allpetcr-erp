@@ -50,8 +50,29 @@ td{padding:2px 0;vertical-align:top}
 <p class="c" style="font-size:9.5px">Documento interno de control.<br>
 Régimen de Tributación Simplificada —<br>no constituye comprobante electrónico.</p>
 <p class="c no-print" style="margin-top:12px">
-  <button onclick="window.print()" style="padding:8px 22px;font-size:13px">🖨️ Imprimir</button>
+  <button id="btnTermica" onclick="imprimirTermica()" style="padding:8px 22px;font-size:13px">🖨️ Imprimir en la térmica</button>
 </p>
+<p class="c no-print" id="avisoImp" style="font-size:11.5px;color:#5b6b73;min-height:16px"></p>
+<p class="c no-print" style="font-size:11.5px">
+  <a href="javascript:window.print()" style="color:#0B3161">o imprimir por el navegador</a>
+</p>
+<script>
+// Manda el tiquete a la impresora de recibos sin pasar por el diálogo del
+// navegador. Se deja además el enlace de arriba: si la térmica está fuera de
+// servicio, el cliente igual se lleva su comprobante.
+async function imprimirTermica(){
+  const b = document.getElementById('btnTermica'), a = document.getElementById('avisoImp');
+  b.disabled = true; a.textContent = 'Enviando…';
+  try{
+    const r = await fetch("{% url 'impresion:tiquete' f.pk %}", {
+      method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}
+    });
+    const d = await r.json();
+    a.textContent = d.ok ? '✅ Enviado a la impresora.' : '⛔ ' + d.error;
+  }catch(e){ a.textContent = '⛔ No se pudo conectar con el ERP.'; }
+  b.disabled = false;
+}
+</script>
 <p class="c no-print" style="margin-top:8px">
   <a href="{% url 'ventas:factura' f.pk %}" style="font-size:11px;color:#0B3161">Ver factura a color (hoja completa) →</a>
 </p>

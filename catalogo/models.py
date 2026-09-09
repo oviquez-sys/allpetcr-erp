@@ -4,6 +4,8 @@ from django.db import models
 
 from core.models import Empresa
 
+from .codigos import siguiente_interno
+
 validar_cabys = RegexValidator(
     r"^\d{13}$",
     "El código CABYS son 13 dígitos numéricos, tal cual lo publica Hacienda "
@@ -24,10 +26,31 @@ class Categoria(models.Model):
 
     nombre = models.CharField(max_length=80, unique=True)
     padre = models.ForeignKey("self", null=True, blank=True, on_delete=models.PROTECT, related_name="hijas")
+    # Orden de exhibición, compartido por el ERP y el sitio web (01/09/2026).
+    #
+    # Antes el menú del sitio tenía las categorías escritas a mano en
+    # `allpetcr-web/lib/navegacion.ts`: crear una categoría en el ERP no la
+    # hacía aparecer en la web hasta que alguien editara ese archivo. Dos
+    # listas separadas que se desincronizan es cuestión de tiempo.
+    #
+    # Con este campo el orden es un dato, no código: `exportar_catalogo_web`
+    # lo publica, el sitio ordena por él, y una categoría nueva aparece en el
+    # lugar correcto sin tocar una línea del sitio. El POS y "Recibir
+    # mercadería" usan el mismo orden, que es lo que hace que buscar un
+    # producto se sienta igual en las dos pantallas.
+    #
+    # Menor sale primero. Se dejan huecos de 10 en 10 para poder intercalar
+    # una categoría nueva sin renumerar las demás.
+    orden = models.PositiveSmallIntegerField(
+        default=100,
+        help_text="Posición en los menús del ERP y del sitio. Menor sale primero.",
+    )
 
     class Meta:
         verbose_name_plural = "categorías"
-        ordering = ["nombre"]
+        # `nombre` como segundo criterio: las categorías que nadie ordenó
+        # explícitamente (orden=100) siguen saliendo alfabéticas, igual que antes.
+        ordering = ["orden", "nombre"]
 
     def __str__(self):
         return self.nombre
@@ -114,18 +137,24 @@ class Producto(models.Model):
         return f"{self.sku} — {self.nombre}"
 
     def save(self, *args, **kwargs):
-        """Al crear un producto sin código de barras, se lo asigna solo usando
-        el SKU (único). Así CUALQUIER producto nuevo queda listo para imprimir
-        su etiqueta, sin importar por dónde se creó (Admin, Recibir mercadería o
-        importación). No toca productos que ya traen código (p. ej. el EAN del
-        proveedor), ni los ya existentes."""
-        if self._state.adding and not self.codigo_barras and self.sku:
-            base = codigo = str(self.sku).strip()
-            n = 1
-            while Producto.objects.filter(codigo_barras=codigo).exists():
-                codigo = f"{base}-{n}"  # colisión rarísima: desambigua
-                n += 1
-            self.codigo_barras = codigo
+        """Al crear un producto sin código de barras, le asigna uno interno.
+
+        Así CUALQUIER producto nuevo queda listo para imprimir su etiqueta, sin
+        importar por dónde se creó (Admin, Recibir mercadería o importación).
+        No toca los productos que ya traen código —el EAN de fábrica— ni los
+        que ya existen.
+
+        Antes se copiaba el SKU. Se cambió el 06/09/2026 por una razón física:
+        un SKU como "RC-15KG-001" son 156 módulos de Code128, y en la etiqueta
+        de 35 mm eso obliga a barras de 0,125 mm que la pistola no lee (se
+        comprobó en papel). El código interno es un EAN-8: 67 módulos, barras
+        de 0,375 mm. El porqué completo está en catalogo/codigos.py."""
+        if self._state.adding and not self.codigo_barras:
+            # Se traen todos los códigos: tienen que ser únicos en TODO el
+            # sistema —el escáner del POS no sabe de empresas— y con 532
+            # productos la consulta es una sola y barata.
+            usados = set(Producto.objects.values_list("codigo_barras", flat=True))
+            self.codigo_barras = siguiente_interno(usados)
         super().save(*args, **kwargs)
 
     @property

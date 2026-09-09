@@ -12,6 +12,7 @@ from django.urls import reverse
 
 from core.models import Empresa
 
+from .codigos import es_interno
 from .models import CambioPrecio, Categoria, Producto
 from .services import cambiar_precio
 
@@ -30,10 +31,14 @@ class AsignarCodigosBarras(TestCase):
     def test_rellena_solo_los_vacios(self):
         con = self._producto("100", barras="7850000000017")
         sin = self._producto("200")
+        Producto.objects.filter(pk=sin.pk).update(codigo_barras="")
         call_command("asignar_codigos_barras", stdout=StringIO())
         con.refresh_from_db(); sin.refresh_from_db()
         self.assertEqual(con.codigo_barras, "7850000000017")  # no se toca
-        self.assertEqual(sin.codigo_barras, "200")            # usa el SKU
+        # Desde el 06/09/2026 el vacío recibe un código interno (EAN-8 que
+        # abre con 2), no una copia del SKU: el SKU en barras sale ilegible en
+        # una etiqueta de 35 mm. Ver catalogo/codigos.py.
+        self.assertTrue(es_interno(sin.codigo_barras), sin.codigo_barras)
 
     def test_codigos_resultantes_son_unicos(self):
         # Colisión: un producto ya usa "500" como código; otro producto vacío
@@ -47,7 +52,12 @@ class AsignarCodigosBarras(TestCase):
 
 
 class PaginaEtiquetas(TestCase):
-    """Etiquetas imprimibles.
+    """La HOJA de etiquetas adhesivas: `inventario:etiquetas?hoja=1`.
+
+    Desde el 06/09/2026 la dirección sin `?hoja=1` muestra otra pantalla —la
+    del conteo físico, producto por producto (ver `PantallaDeConteo` más
+    abajo)—. La hoja siguió existiendo para las tandas grandes, y estas
+    pruebas la siguen cuidando; solo cambió por dónde se pide.
 
     Desde el 02/08/2026 esta pantalla respeta la regla "solo se lista lo que
     hay en existencia" (ver catalogo/consultas.py): una etiqueta es para
@@ -82,7 +92,7 @@ class PaginaEtiquetas(TestCase):
             stock_actual=Decimal("0"),
         )
         self.client.login(username="oscar", password="x")
-        r = self.client.get(reverse("inventario:etiquetas"))
+        r = self.client.get(reverse("inventario:etiquetas"), {"hoja": "1"})
         self.assertNotContains(r, "Agotado hace meses")
         self.assertContains(r, "Mochila higiénica")
 
@@ -95,7 +105,7 @@ class PaginaEtiquetas(TestCase):
             stock_actual=Decimal("0"),
         )
         self.client.login(username="oscar", password="x")
-        r = self.client.get(reverse("inventario:etiquetas"), {"agotados": "1"})
+        r = self.client.get(reverse("inventario:etiquetas"), {"agotados": "1", "hoja": "1"})
         self.assertContains(r, "Agotado hace meses")
 
     def test_solo_faltantes_levanta_el_filtro_de_existencias(self):
@@ -108,7 +118,7 @@ class PaginaEtiquetas(TestCase):
             stock_actual=Decimal("0"),
         )
         self.client.login(username="oscar", password="x")
-        r = self.client.get(reverse("inventario:etiquetas"), {"solo_faltantes": "1"})
+        r = self.client.get(reverse("inventario:etiquetas"), {"solo_faltantes": "1", "hoja": "1"})
         self.assertContains(r, "Agotado hace meses")
 
     def test_requiere_login(self):
@@ -117,7 +127,7 @@ class PaginaEtiquetas(TestCase):
 
     def test_genera_barra_svg(self):
         self.client.login(username="oscar", password="x")
-        r = self.client.get(reverse("inventario:etiquetas"))
+        r = self.client.get(reverse("inventario:etiquetas"), {"hoja": "1"})
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "Mochila higiénica")
         self.assertContains(r, "<svg")  # el código de barras se dibujó
@@ -125,7 +135,7 @@ class PaginaEtiquetas(TestCase):
 
     def test_copias_multiplica_etiquetas(self):
         self.client.login(username="oscar", password="x")
-        r = self.client.get(reverse("inventario:etiquetas"), {"copias": "3"})
+        r = self.client.get(reverse("inventario:etiquetas"), {"copias": "3", "hoja": "1"})
         self.assertEqual(r.context["total"], 3)
 
     def test_omite_productos_sin_codigo(self):
@@ -138,18 +148,18 @@ class PaginaEtiquetas(TestCase):
         )
         Producto.objects.filter(pk=p.pk).update(codigo_barras="")
         self.client.login(username="oscar", password="x")
-        r = self.client.get(reverse("inventario:etiquetas"))
+        r = self.client.get(reverse("inventario:etiquetas"), {"hoja": "1"})
         self.assertEqual(r.context["faltan_codigo"], 1)
         self.assertNotContains(r, "Sin código")
 
     def test_producto_nuevo_recibe_codigo_automatico(self):
-        """Todo producto creado sin código recibe uno solo (= su SKU), listo
-        para imprimir la etiqueta. Aplica a cualquier vía de creación."""
+        """Todo producto creado sin código recibe uno interno, listo para
+        imprimir la etiqueta. Aplica a cualquier vía de creación."""
         p = Producto.objects.create(
             empresa=self.empresa, sku="ABC123", nombre="Collar nuevo",
             categoria=self.cat, precio_venta=Decimal("3000"),
         )
-        self.assertEqual(p.codigo_barras, "ABC123")
+        self.assertTrue(es_interno(p.codigo_barras), p.codigo_barras)
 
     def test_no_pisa_codigo_de_proveedor(self):
         """Si el producto ya trae código (EAN del proveedor), no se toca."""
@@ -159,17 +169,75 @@ class PaginaEtiquetas(TestCase):
         )
         self.assertEqual(p.codigo_barras, "7501234567890")
 
-    def test_codigo_automatico_desambigua_colision(self):
-        """Si el SKU ya está usado como código de otro producto, agrega sufijo."""
-        Producto.objects.create(
-            empresa=self.empresa, sku="OTRO", nombre="Primero",
-            categoria=self.cat, codigo_barras="DUP", precio_venta=Decimal("100"),
-        )
-        p = Producto.objects.create(
-            empresa=self.empresa, sku="DUP", nombre="Segundo",
+    def test_dos_productos_nuevos_no_repiten_codigo(self):
+        """Dos productos creados seguidos reciben códigos internos distintos.
+
+        Es la propiedad que sostiene todo lo demás: si dos productos
+        compartieran código, la pistola del POS sería ambigua y cobraría el
+        artículo equivocado."""
+        primero = Producto.objects.create(
+            empresa=self.empresa, sku="UNO", nombre="Primero",
             categoria=self.cat, precio_venta=Decimal("100"),
         )
-        self.assertEqual(p.codigo_barras, "DUP-1")
+        segundo = Producto.objects.create(
+            empresa=self.empresa, sku="DOS", nombre="Segundo",
+            categoria=self.cat, precio_venta=Decimal("100"),
+        )
+        self.assertNotEqual(primero.codigo_barras, segundo.codigo_barras)
+        self.assertTrue(es_interno(primero.codigo_barras))
+        self.assertTrue(es_interno(segundo.codigo_barras))
+
+
+class PantallaDeConteo(TestCase):
+    """`inventario:etiquetas` sin parámetros: la pantalla del conteo físico.
+
+    Es la excepción a la regla "solo se lista lo que hay en existencia", y la
+    excepción es el punto: en un conteo, el producto que el sistema tiene en
+    cero es justamente el que hay que ir a ver al estante. Ocultarlo sería
+    esconder el error que se salió a buscar. La pantalla lo trae y lo deja
+    detrás de un interruptor.
+    """
+
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
+        self.cat = Categoria.objects.create(nombre="Accesorios")
+        self.staff = User.objects.create_user("oscar", password="x", is_staff=True, is_superuser=True)
+        Producto.objects.create(
+            empresa=self.empresa, sku="75564", nombre="Mochila higiénica",
+            categoria=self.cat, codigo_barras="75564", precio_venta=Decimal("700"),
+            stock_actual=Decimal("5"),
+        )
+        Producto.objects.create(
+            empresa=self.empresa, sku="88888", nombre="Agotado hace meses",
+            categoria=self.cat, codigo_barras="88888", precio_venta=Decimal("900"),
+            stock_actual=Decimal("0"),
+        )
+
+    def test_trae_tambien_los_que_estan_en_cero(self):
+        self.client.login(username="oscar", password="x")
+        r = self.client.get(reverse("inventario:etiquetas"))
+        self.assertEqual(r.status_code, 200)
+        nombres = [p["nombre"] for p in r.context["productos"]]
+        self.assertIn("Mochila higiénica", nombres)
+        self.assertIn("Agotado hace meses", nombres)
+
+    def test_manda_la_existencia_de_cada_producto(self):
+        """Sin la existencia en pantalla no hay contra qué comparar el conteo."""
+        self.client.login(username="oscar", password="x")
+        r = self.client.get(reverse("inventario:etiquetas"))
+        por_nombre = {p["nombre"]: p for p in r.context["productos"]}
+        self.assertEqual(por_nombre["Mochila higiénica"]["stock_actual"], 5.0)
+        self.assertEqual(por_nombre["Agotado hace meses"]["stock_actual"], 0.0)
+
+    def test_cuenta_los_que_no_tienen_codigo(self):
+        p = Producto.objects.create(
+            empresa=self.empresa, sku="999", nombre="Sin código",
+            categoria=self.cat, precio_venta=Decimal("500"), stock_actual=Decimal("3"),
+        )
+        Producto.objects.filter(pk=p.pk).update(codigo_barras="")
+        self.client.login(username="oscar", password="x")
+        r = self.client.get(reverse("inventario:etiquetas"))
+        self.assertEqual(r.context["sin_codigo"], 1)
 
 
 class HistorialDePrecios(TestCase):
@@ -467,3 +535,349 @@ class ReporteNombresIncompletos(TestCase):
             call_command("reporte_nombres_incompletos", "--salida", str(ruta), stdout=StringIO())
             contenido = ruta.read_text(encoding="utf-8")
         self.assertIn("R.C. Cachorro", contenido)
+
+
+class SincronizarInventarioSinStock(TestCase):
+    """Bandera --sin-stock del comando sincronizar_inventario (01/09/2026).
+
+    Separa los dos trabajos que el comando hacía juntos: mantener el catálogo
+    (información) e igualar el stock al conteo del Excel (existencias). Lo
+    primero puede seguir viniendo de una hoja para siempre; lo segundo tiene
+    que salir del kardex en cuanto la tienda venda algo.
+    """
+
+    # Se declaran acá a propósito, no se importan del comando: si alguien
+    # cambia COL o ENCABEZADOS_ESPERADOS allá, esta prueba falla y obliga a
+    # mirar el Excel real, que es exactamente lo que se quiere.
+    ENCABEZADOS = [
+        "", "Código (REF)", "Nombre", "Categoría web", "Subcategoría", "Mascota",
+        "Descripción", "Precio mayorista (CRC)", "Cantidad en inventario",
+        "", "", "", "Precio venta LOCAL sugerido (₡)",
+    ]
+
+    def setUp(self):
+        import tempfile
+
+        self.empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.archivo = Path(self.tmp.name) / "inventario.xlsx"
+
+    def _excel(self, filas):
+        import openpyxl
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Inventario Claude"
+        ws.append(self.ENCABEZADOS)
+        for f in filas:
+            ws.append(f)
+        wb.save(self.archivo)
+
+    def _fila(self, sku, nombre, cantidad, precio=1000, costo=500):
+        return ["", sku, nombre, "Alimentos", "Perro adulto", "Perro",
+                "Descripción", costo, cantidad, "", "", "", precio]
+
+    def _correr(self, *extra):
+        salida = StringIO()
+        call_command("sincronizar_inventario", "--archivo", str(self.archivo), *extra, stdout=salida)
+        return salida.getvalue()
+
+    def test_sin_stock_crea_el_producto_con_stock_cero(self):
+        from inventario.models import MovimientoInventario
+
+        self._excel([self._fila("A1", "Alimento perro 15 kg", 40)])
+        self._correr("--sin-stock")
+
+        p = Producto.objects.get(sku="A1")
+        self.assertEqual(p.nombre, "Alimento perro 15 kg")  # el catálogo SÍ entra
+        self.assertEqual(p.stock_actual, Decimal("0"))      # el inventario NO
+        self.assertEqual(MovimientoInventario.objects.count(), 0)
+
+    def test_sin_la_bandera_el_stock_entra_como_siempre(self):
+        """La bandera es opt-in: sin ella, el comportamiento histórico intacto."""
+        from inventario.models import MovimientoInventario
+
+        self._excel([self._fila("A1", "Alimento perro 15 kg", 40)])
+        self._correr()
+
+        self.assertEqual(Producto.objects.get(sku="A1").stock_actual, Decimal("40"))
+        self.assertEqual(MovimientoInventario.objects.filter(tipo="INI").count(), 1)
+
+    def test_sin_la_bandera_el_excel_pisa_lo_que_pasó_en_caja(self):
+        """Prueba de documentación del peligro, no de una funcionalidad deseada.
+
+        Si esta prueba empieza a fallar es porque alguien cambió el
+        comportamiento por defecto — y eso hay que mirarlo, no arreglarlo a
+        ciegas.
+        """
+        from inventario.models import Bodega, MovimientoInventario
+        from inventario.services import registrar_movimiento
+
+        self._excel([self._fila("A1", "Alimento perro 15 kg", 40)])
+        self._correr()
+        p = Producto.objects.get(sku="A1")
+        registrar_movimiento(
+            producto=p, bodega=Bodega.objects.first(), tipo="VEN",
+            cantidad=Decimal("-37"), referencia="V-1",
+        )
+        p.refresh_from_db()
+        self.assertEqual(p.stock_actual, Decimal("3"))
+
+        self._correr()  # el Excel sigue diciendo 40
+
+        p.refresh_from_db()
+        self.assertEqual(p.stock_actual, Decimal("40"))  # las 37 vendidas "volvieron"
+        self.assertEqual(MovimientoInventario.objects.filter(tipo="AJU").count(), 1)
+
+    def test_sin_stock_deja_intacto_el_inventario_real_y_lo_reporta(self):
+        """El mismo escenario de arriba, con la bandera: no toca nada y avisa."""
+        from inventario.models import Bodega, MovimientoInventario
+        from inventario.services import registrar_movimiento
+
+        self._excel([self._fila("A1", "Alimento perro 15 kg", 40)])
+        self._correr()
+        p = Producto.objects.get(sku="A1")
+        registrar_movimiento(
+            producto=p, bodega=Bodega.objects.first(), tipo="VEN",
+            cantidad=Decimal("-37"), referencia="V-1",
+        )
+
+        salida = self._correr("--sin-stock")
+
+        p.refresh_from_db()
+        self.assertEqual(p.stock_actual, Decimal("3"))
+        self.assertEqual(MovimientoInventario.objects.filter(tipo="AJU").count(), 0)
+        self.assertIn("A1", salida)  # la diferencia se reporta, no se esconde
+
+    def test_sin_stock_sigue_actualizando_nombre_y_precio(self):
+        """Lo que la bandera NO apaga: el catálogo se mantiene igual que antes."""
+        from inventario.models import MovimientoInventario
+
+        self._excel([self._fila("A1", "Nombre viejo", 40, precio=1000)])
+        self._correr("--sin-stock")
+
+        self._excel([self._fila("A1", "Nombre nuevo", 40, precio=1500)])
+        self._correr("--sin-stock")
+
+        p = Producto.objects.get(sku="A1")
+        self.assertEqual(p.nombre, "Nombre nuevo")
+        self.assertEqual(p.precio_venta, Decimal("1500"))
+        self.assertEqual(MovimientoInventario.objects.count(), 0)
+
+
+class ArbolDeCategorias(TestCase):
+    """Comando asegurar_categorias (01/09/2026).
+
+    Define el árbol oficial que comparten el ERP y el sitio. Es la única
+    definición: el sitio no la repite, la lee del `orden` exportado.
+    """
+
+    def _correr(self, *extra):
+        salida = StringIO()
+        call_command("asegurar_categorias", *extra, stdout=salida)
+        return salida.getvalue()
+
+    def test_crea_el_arbol_completo_desde_cero(self):
+        self._correr()
+        raices = list(Categoria.objects.filter(padre__isnull=True).values_list("nombre", flat=True))
+        for esperada in ("Alimento", "Snacks y premios", "Juguetes", "Paseo",
+                         "Ropa y accesorios", "Comederos y bebederos", "Descanso",
+                         "Higiene y aseo", "Salud y cuidado", "Arena y sanitarios",
+                         "Rascadores y muebles", "Transporte", "Acuario"):
+            self.assertIn(esperada, raices)
+
+    def test_no_recrea_las_categorias_viejas_del_excel(self):
+        """Regresión del error del 01/09/2026.
+
+        La primera versión del comando salió del Excel y creó "Ropa y paseo",
+        "Casa y comida" e "Higiene y salud" como raíces vacías, cuando en la
+        base esas cinco ya se habían renombrado y repartido en un árbol de dos
+        niveles. Recrearlas dejaba cascarones que habrían salido en el menú.
+        """
+        self._correr()
+        raices = set(Categoria.objects.filter(padre__isnull=True).values_list("nombre", flat=True))
+        for vieja in ("Ropa y paseo", "Casa y comida", "Higiene y salud"):
+            self.assertNotIn(vieja, raices)
+
+    def test_borrar_vacias_limpia_los_cascarones(self):
+        Categoria.objects.create(nombre="Cascarón viejo")
+        self._correr()
+        self.assertTrue(Categoria.objects.filter(nombre="Cascarón viejo").exists())
+        self._correr("--borrar-vacias")
+        self.assertFalse(Categoria.objects.filter(nombre="Cascarón viejo").exists())
+
+    def test_borrar_vacias_no_toca_una_categoria_con_productos(self):
+        empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
+        con_producto = Categoria.objects.create(nombre="Con producto")
+        Producto.objects.create(
+            empresa=empresa, sku="X-1", nombre="Algo", categoria=con_producto,
+            precio_venta=Decimal("1000"),
+        )
+        self._correr("--borrar-vacias")
+        self.assertTrue(Categoria.objects.filter(nombre="Con producto").exists())
+
+    def test_borrar_vacias_no_borra_las_categorias_del_arbol_oficial(self):
+        """Regresión del 01/09/2026: el comando creaba "Snacks y premios" y la
+        borraba en la misma corrida por estar vacía. Está vacía a propósito:
+        espera la mercadería que todavía no se ha comprado."""
+        self._correr("--borrar-vacias")
+        for oficial in ("Alimento", "Snacks y premios"):
+            self.assertTrue(
+                Categoria.objects.filter(nombre=oficial).exists(),
+                f"{oficial} se borró y no debía",
+            )
+
+    def test_borrar_vacias_no_toca_una_raiz_con_subcategorias(self):
+        """Las raíces reales no tienen productos directos: los tienen sus
+        hijas. Borrarlas por "vacías" habría arrasado el catálogo entero."""
+        raiz = Categoria.objects.create(nombre="Raíz con hijas")
+        Categoria.objects.create(nombre="Una hija", padre=raiz)
+        self._correr("--borrar-vacias")
+        self.assertTrue(Categoria.objects.filter(nombre="Raíz con hijas").exists())
+
+    def test_alimento_seco_y_humedo_cuelgan_de_alimento(self):
+        self._correr()
+        alimento = Categoria.objects.get(nombre="Alimento")
+        hijas = set(alimento.hijas.values_list("nombre", flat=True))
+        self.assertEqual(hijas, {"Alimento seco", "Alimento húmedo", "Dietas veterinarias"})
+
+    def test_alimento_sale_antes_que_juguetes(self):
+        """El orden no es alfabético: es el que decide el negocio."""
+        self._correr()
+        self.assertLess(
+            Categoria.objects.get(nombre="Alimento").orden,
+            Categoria.objects.get(nombre="Juguetes").orden,
+        )
+
+    def test_dietas_veterinarias_se_crea_vacia(self):
+        """Sin veterinario no hay producto que ponerle. Existe para que el día
+        que entre uno aparezca sola, sin tocar código."""
+        self._correr()
+        self.assertEqual(Categoria.objects.get(nombre="Dietas veterinarias").productos.count(), 0)
+
+    def test_correrlo_dos_veces_no_duplica_nada(self):
+        self._correr()
+        antes = Categoria.objects.count()
+        salida = self._correr()
+        self.assertEqual(Categoria.objects.count(), antes)
+        self.assertIn("Categorías creadas ....... 0", salida)
+
+    def test_no_duplica_una_categoria_que_ya_existia(self):
+        """Las categorías que ya existían se conservan con sus productos: se
+        les pone el orden, no se crean de nuevo."""
+        empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
+        vieja = Categoria.objects.create(nombre="Juguetes")
+        Producto.objects.create(
+            empresa=empresa, sku="J-1", nombre="Pelota", categoria=vieja,
+            precio_venta=Decimal("1000"),
+        )
+        self._correr()
+        self.assertEqual(Categoria.objects.filter(nombre="Juguetes").count(), 1)
+        vieja.refresh_from_db()
+        self.assertEqual(vieja.productos.count(), 1)  # no perdió su producto
+        self.assertNotEqual(vieja.orden, 100)  # sí recibió su orden
+
+    def test_dry_run_no_escribe_nada(self):
+        salida = self._correr("--dry-run")
+        self.assertEqual(Categoria.objects.count(), 0)
+        self.assertIn("SIMULACIÓN", salida)
+
+    def test_el_orden_por_defecto_de_las_consultas_respeta_el_arbol(self):
+        """Meta.ordering usa `orden` primero: cualquier listado del ERP sale
+        en el mismo orden que el menú del sitio. Es lo que hace que buscar un
+        producto se sienta igual en las dos pantallas."""
+        self._correr()
+        nombres = list(
+            Categoria.objects.filter(padre__isnull=True).values_list("nombre", flat=True)
+        )
+        self.assertEqual(nombres[0], "Alimento")
+        self.assertEqual(nombres[1], "Snacks y premios")
+
+
+class CodigosInternos(TestCase):
+    """El código interno de AllPetCR: EAN-8 que empieza con 2.
+
+    Las tres propiedades que sostienen todo lo demás: que sea un EAN válido
+    (si el verificador sale mal, el lector lee otro número), que sea único (si
+    no, la caja cobra el artículo equivocado) y que NO pise el código de
+    fábrica (que es el bueno y es gratis).
+    """
+
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
+        self.cat = Categoria.objects.create(nombre="Accesorios")
+
+    def _producto(self, sku, barras=""):
+        return Producto.objects.create(
+            empresa=self.empresa, sku=sku, nombre=f"Producto {sku}",
+            categoria=self.cat, codigo_barras=barras, precio_venta=Decimal("1000"),
+        )
+
+    def test_el_codigo_generado_es_un_ean8_valido_que_abre_con_2(self):
+        from .codigos import es_ean_valido, siguiente_interno
+
+        codigo = siguiente_interno(set())
+        self.assertEqual(len(codigo), 8)
+        self.assertTrue(codigo.startswith("2"))
+        self.assertTrue(es_ean_valido(codigo))
+
+    def test_no_repite_uno_ya_usado(self):
+        from .codigos import siguiente_interno
+
+        primero = siguiente_interno(set())
+        segundo = siguiente_interno({primero})
+        self.assertNotEqual(primero, segundo)
+
+    def test_reconoce_el_ean_de_fabrica_y_descarta_el_invalido(self):
+        from .codigos import es_ean_valido
+
+        self.assertTrue(es_ean_valido("7350053850019"))   # EAN-13 correcto
+        self.assertFalse(es_ean_valido("7352052794412"))  # verificador malo
+        self.assertFalse(es_ean_valido("RC-15KG-001"))    # sale del SKU
+
+    def test_la_conversion_respeta_el_ean_de_fabrica(self):
+        de_fabrica = self._producto("F1", barras="7350053850019")
+        del_sku = self._producto("RC-15KG-001", barras="RC-15KG-001")
+        call_command("convertir_codigos_internos", "--aplicar", stdout=StringIO())
+        de_fabrica.refresh_from_db(); del_sku.refresh_from_db()
+        self.assertEqual(de_fabrica.codigo_barras, "7350053850019")
+        self.assertTrue(es_interno(del_sku.codigo_barras), del_sku.codigo_barras)
+
+    def test_sin_aplicar_no_toca_nada(self):
+        """El ensayo tiene que ser de verdad un ensayo: 532 códigos cambiados
+        por error no se deshacen a mano."""
+        p = self._producto("SKU-LARGO-001", barras="SKU-LARGO-001")
+        call_command("convertir_codigos_internos", stdout=StringIO())
+        p.refresh_from_db()
+        self.assertEqual(p.codigo_barras, "SKU-LARGO-001")
+
+    def test_la_pantalla_del_erp_no_convierte_sin_confirmar(self):
+        """El botón exige la casilla marcada. Cambiar 532 códigos por un clic
+        de más no se deshace a mano."""
+        User.objects.create_user("jefe", password="x", is_staff=True, is_superuser=True)
+        p = self._producto("SIN-CONF", barras="SIN-CONF")
+        self.client.login(username="jefe", password="x")
+        r = self.client.post(reverse("inventario:codigos"), {})
+        self.assertEqual(r.status_code, 302)
+        p.refresh_from_db()
+        self.assertEqual(p.codigo_barras, "SIN-CONF")
+
+    def test_la_pantalla_del_erp_convierte_al_confirmar(self):
+        User.objects.create_user("jefa", password="x", is_staff=True, is_superuser=True)
+        p = self._producto("CON-CONF", barras="CON-CONF")
+        self.client.login(username="jefa", password="x")
+        self.client.post(reverse("inventario:codigos"), {"confirmar": "si"})
+        p.refresh_from_db()
+        self.assertTrue(es_interno(p.codigo_barras), p.codigo_barras)
+
+    def test_convertir_dos_veces_no_cambia_los_ya_convertidos(self):
+        """Correrlo de nuevo no debe reasignar: las etiquetas ya pegadas
+        dejarían de servir."""
+        p = self._producto("X1", barras="X1")
+        call_command("convertir_codigos_internos", "--aplicar", stdout=StringIO())
+        p.refresh_from_db()
+        primero = p.codigo_barras
+        call_command("convertir_codigos_internos", "--aplicar", stdout=StringIO())
+        p.refresh_from_db()
+        self.assertEqual(p.codigo_barras, primero)

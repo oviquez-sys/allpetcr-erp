@@ -1,24 +1,28 @@
-from decimal import Decimal
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from django.views.decorators.http import require_http_methods
 
-from catalogo.consultas import pidio_agotados, productos_visibles
-from catalogo.models import Categoria
+from catalogo.codigos import aplicar_conversion, plan_de_conversion
+from catalogo.consultas import productos_visibles
+from catalogo.models import Categoria, Producto
+from core.imagenes import url_imagen_producto
 from core.roles import CAJERO, GERENTE, rol_requerido
 from core.tenancy import empresa_actual
 
-from .etiquetas import svg_barcode
+from .etiquetas import TOPE_ETIQUETAS, seleccionar_para_etiquetas, svg_barcode
 from .forms import AjusteInventarioForm
 from .services import registrar_movimiento
 
-# Máximo de etiquetas que una sola petición puede generar. Cubre cualquier
-# tanda de impresión real; por encima de esto la página deja de ser imprimible
-# y el navegador se traba, así que recortar es mejor servicio que cumplir.
-TOPE_ETIQUETAS = 500
+# Tope de tarjetas dibujadas de una vez. Igual que en el POS: más allá de esto
+# el navegador de la caja se siente lento y nadie recorre 500 tarjetas a ojo
+# —se busca o se escanea—.
+TOPE_TARJETAS = 150
 
 
 @rol_requerido(GERENTE)
@@ -53,86 +57,124 @@ def ajuste_inventario(request):
 
 @rol_requerido(CAJERO, GERENTE)
 def etiquetas(request):
-    """Genera etiquetas imprimibles con código de barras.
+    """Etiquetas producto por producto, pensada para el conteo físico.
 
-    Filtros por querystring:
-      ?categoria=<id>   solo esa familia (por defecto: todas)
-      ?copias=<n>       n etiquetas por producto (por defecto 1)
-      ?segun_stock=1    una etiqueta por unidad en existencia
-      ?solo_faltantes=1 solo productos en/ bajo el mínimo
-      ?agotados=1       incluir también los que están sin existencias
+    El uso real (Oscar, 05/09/2026): se recorre la bodega con la pistola,
+    se escanea un artículo, se compara lo que dice el sistema con lo que hay
+    en el estante y se imprime la etiqueta de ese artículo antes de pasar al
+    siguiente. Por eso la pantalla muestra foto, código y existencia, y por
+    eso la cantidad se elige por producto y no para toda una tanda.
+
+    **Muestra también los agotados**, a diferencia del resto del ERP (regla
+    del 02/08/2026). En un conteo físico el producto en cero es justamente el
+    que hay que ir a verificar: si el sistema dice cero y en el estante hay
+    tres, ocultarlo es esconder el error que se salió a buscar. Es la misma
+    razón por la que la pantalla de ajuste tampoco filtra por existencia.
+
+    `?hoja=1` conserva la vista anterior: la hoja de etiquetas para imprimir
+    en papel adhesivo desde el navegador, útil cuando hay que sacar una tanda
+    grande de una sola categoría.
     """
-    # Solo lo que hay en existencia (regla del 02/08/2026, ver
-    # catalogo/consultas.py): una etiqueta es para pegarla en un artículo que
-    # está en la góndola. `?agotados=1` la levanta para el caso de imprimir
-    # por adelantado las etiquetas de un pedido que viene en camino.
-    solo_faltantes = bool(request.GET.get("solo_faltantes"))
-    # `solo_faltantes` levanta el filtro de existencias por su cuenta: un
-    # producto en cero es el más faltante de todos, y filtrarlo antes dejaría
-    # a "solo faltantes" mostrando justo lo que no falta. Los dos filtros
-    # miden lo mismo y en direcciones opuestas; gana el que el usuario pidió
-    # explícitamente.
-    agotados = pidio_agotados(request) or solo_faltantes
-    productos = (
-        productos_visibles(empresa_actual(request), incluir_agotados=agotados)
+    empresa = empresa_actual(request)
+
+    if request.GET.get("hoja") == "1":
+        return _hoja_de_etiquetas(request, empresa)
+
+    productos = list(
+        productos_visibles(empresa, incluir_agotados=True)
         .select_related("categoria")
+        .values("id", "sku", "nombre", "codigo_barras", "precio_venta", "stock_actual",
+                "presentacion", "marca", "categoria__nombre", "imagen")
         .order_by("nombre")
     )
+    for p in productos:  # JSON-serializable + nombres de campo para el navegador
+        p["precio_venta"] = float(p["precio_venta"])
+        p["stock_actual"] = float(p["stock_actual"])
+        p["categoria"] = p.pop("categoria__nombre") or "Sin categoría"
+        p["presentacion"] = p.get("presentacion") or ""
+        p["marca"] = p.get("marca") or ""
+        p["codigo_barras"] = p.get("codigo_barras") or ""
+        p["imagen"] = url_imagen_producto(p["imagen"])
 
-    cat_id = request.GET.get("categoria")
-    if cat_id:
-        productos = productos.filter(categoria_id=cat_id)
-    if solo_faltantes:
-        productos = [p for p in productos if p.stock_actual <= p.stock_minimo]
+    return render(request, "inventario/etiquetas.html", {
+        "productos": productos,
+        "tope": TOPE_TARJETAS,
+        "sin_codigo": sum(1 for p in productos if not p["codigo_barras"]),
+    })
 
-    segun_stock = request.GET.get("segun_stock") == "1"
-    try:
-        copias = max(1, min(50, int(request.GET.get("copias", "1"))))
-    except ValueError:
-        copias = 1
 
+def _hoja_de_etiquetas(request, empresa):
+    """Vista anterior: una hoja imprimible desde el navegador."""
+    seleccion = seleccionar_para_etiquetas(empresa, request.GET)
+
+    # Un SVG por producto, repetido por copia: generar el código de barras es
+    # lo caro, repetir el mismo texto no.
     etiquetas_render = []
-    faltan_codigo = 0
-    recortado = False
-    for p in productos:
-        # Tope global: sin él, "una etiqueta por unidad en existencia" sobre un
-        # producto con stock alto construye una página de cientos de MB que
-        # tumba el proceso (medido: stock 99.999 => 207 MB en una sola
-        # respuesta). El tope corta ahí y avisa, en vez de reventar.
-        if len(etiquetas_render) >= TOPE_ETIQUETAS:
-            recortado = True
-            break
-        if not p.codigo_barras:
-            faltan_codigo += 1
-            continue
-        pedidas = max(1, int(p.stock_actual) if segun_stock else copias)
-        # Nunca pasar del tope, aunque este producto solo pida más. Se compara
-        # ANTES de recortar: si se pidió más de lo que cabe, hubo recorte real
-        # aunque el bucle termine aquí y no vuelva a entrar (caso de un único
-        # producto con stock enorme, que es justo el que provocaba el fallo).
-        n = min(pedidas, TOPE_ETIQUETAS - len(etiquetas_render))
-        if n < pedidas:
-            recortado = True
-        if n <= 0:
-            break
-        svg = mark_safe(svg_barcode(p.codigo_barras))
-        for _ in range(n):
+    for producto, copias in seleccion.pares:
+        svg = mark_safe(svg_barcode(producto.codigo_barras))
+        for _ in range(copias):
             etiquetas_render.append({
-                "nombre": p.nombre,
-                "precio": p.precio_venta,
-                "sku": p.sku,
+                "nombre": producto.nombre,
+                "precio": producto.precio_venta,
+                "sku": producto.sku,
                 "svg": svg,
             })
 
-    return render(request, "inventario/etiquetas.html", {
+    return render(request, "inventario/etiquetas_hoja.html", {
         "etiquetas": etiquetas_render,
         "total": len(etiquetas_render),
-        "faltan_codigo": faltan_codigo,
-        "recortado": recortado,
+        "faltan_codigo": seleccion.faltan_codigo,
+        "recortado": seleccion.recortado,
         "tope": TOPE_ETIQUETAS,
         "categorias": Categoria.objects.all().order_by("nombre"),
-        "cat_actual": cat_id or "",
-        "copias": copias,
-        "segun_stock": segun_stock,
-        "solo_faltantes": bool(request.GET.get("solo_faltantes")),
+        "cat_actual": seleccion.categoria,
+        "copias": seleccion.copias,
+        "segun_stock": seleccion.segun_stock,
+        "solo_faltantes": seleccion.solo_faltantes,
+        "agotados": seleccion.agotados,
+    })
+
+
+@rol_requerido(GERENTE)
+@require_http_methods(["GET", "POST"])
+def codigos_barras(request):
+    """Censo y conversión de los códigos de barras del catálogo.
+
+    Vive dentro del ERP y no solo como comando de consola por una razón
+    práctica: en la máquina de la tienda el antivirus bloquea los .bat, así
+    que la consola no siempre está disponible. Esta pantalla corre en el
+    proceso que ya está encendido.
+
+    Qué hace: deja quietos los códigos que son un EAN legítimo —el de
+    fábrica, que la caja lee del empaque sin pegar nada— y cambia el resto por
+    un EAN-8 interno. El porqué del EAN-8 está en catalogo/codigos.py.
+    """
+    productos = list(
+        productos_visibles(empresa_actual(request), incluir_agotados=True)
+        .order_by("sku")
+    )
+    # Los códigos ocupados se miran en TODO el catálogo, incluidos los
+    # productos inactivos: el escáner no sabe de estados, y dos productos con
+    # el mismo código serían ambiguos en la caja.
+    usados = set(Producto.objects.values_list("codigo_barras", flat=True))
+    plan = plan_de_conversion(productos, usados)
+
+    if request.method == "POST":
+        if request.POST.get("confirmar") != "si":
+            messages.warning(request, "No se cambió nada: falta confirmar.")
+            return redirect("inventario:codigos")
+        destino = Path(settings.BASE_DIR) / "codigos_anteriores.csv"
+        cuantos = aplicar_conversion(plan, destino)
+        messages.success(
+            request,
+            f"Listo: {cuantos} producto(s) recibieron código interno. "
+            f"El respaldo del código anterior de cada uno quedó en {destino.name}.",
+        )
+        return redirect("inventario:codigos")
+
+    return render(request, "inventario/codigos.html", {
+        "conservados": plan["conservados"],
+        "ya_internos": plan["ya_internos"],
+        "cambios": plan["cambios"],
+        "total": len(productos),
     })

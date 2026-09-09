@@ -98,6 +98,7 @@ INSTALLED_APPS = [
     "pedidos",
     "facturacion_electronica",
     "api",
+    "impresion",
 ]
 
 MIDDLEWARE = [
@@ -367,6 +368,34 @@ LOGGING = {
 }
 
 # --- Correo (envío de facturas por email) ---
+# ── Certificados TLS: usar el almacen de Windows, no el de Python ──────────
+#
+# Python trae su propia lista de autoridades certificadoras y NO mira la de
+# Windows. Eso rompe cualquier conexion TLS en una maquina donde un antivirus
+# o un proxy corporativo inspecciona el trafico cifrado: esos programas se
+# meten en el medio y presentan su propio certificado. Windows confia en el
+# (el antivirus lo instalo al instalarse, por eso el navegador funciona), pero
+# Python no lo conoce y corta la conexion.
+#
+# Sintoma exacto que se vio el 02/09/2026 al mandar el primer correo:
+#     [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed:
+#     Basic Constraints of CA cert not marked critical
+#
+# `truststore` hace que Python valide contra el almacen de Windows. OJO con lo
+# que esto NO es: no desactiva la verificacion. El certificado se sigue
+# validando, solo que contra la lista en la que Windows ya confia. Desactivar
+# la verificacion (verify_mode = CERT_NONE) seria abrir la puerta a que
+# cualquiera lea las facturas en el camino, y por eso no se hace.
+try:
+    import truststore
+except ImportError:
+    # Sin la libreria, Python sigue usando su propia lista. Funciona en
+    # cualquier maquina limpia; falla donde haya antivirus con inspeccion TLS.
+    TRUSTSTORE_ACTIVO = False
+else:
+    truststore.inject_into_ssl()
+    TRUSTSTORE_ACTIVO = True
+
 # Sin EMAIL_HOST_PASSWORD configurado, Django usa el backend de consola: no
 # manda nada de verdad, solo imprime el correo en la terminal. Así el sistema
 # no se rompe si todavía no se configuró el correo.
@@ -381,7 +410,15 @@ if os.environ.get("EMAIL_HOST_PASSWORD"):
     # Sin esto, si el servidor de correo no responde (bloqueo de firewall,
     # SMTP AUTH desactivado sin avisar, red caída), Django puede quedarse
     # colgado esperando en vez de fallar rápido con un error claro.
-    EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "20"))
+    # 60 s, no 20 (02/09/2026). La prueba sin adjunto pasaba y el envio de una
+    # factura moria con "The read operation timed out": la diferencia es el PDF.
+    # En esta maquina el antivirus inspecciona el trafico cifrado, y para
+    # hacerlo tiene que descifrar, escanear y volver a cifrar cada adjunto.
+    # Eso agrega segundos que con 20 no alcanzaban.
+    #
+    # Subirlo es seguro: el timeout solo limita cuanto se ESPERA, no cuanto se
+    # tarda. Si el correo sale en dos segundos, sale en dos segundos.
+    EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "60"))
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
@@ -396,3 +433,57 @@ else:
 REPORTE_DIARIO_DESTINATARIOS = [
     d.strip() for d in os.environ.get("REPORTE_DIARIO_DESTINATARIOS", "").split(",") if d.strip()
 ]
+
+
+# --- Impresoras de la tienda (05/09/2026) ---
+# El ERP corre en la misma máquina donde están enchufadas las impresoras, así
+# que imprime el servidor y el cajero no pasa por el diálogo del navegador en
+# cada venta. Cuando el ERP se mude al VPS esto deja de alcanzar y hará falta
+# un agente en la caja: por eso toda la impresión está aislada en `impresion/`
+# y nada más del ERP habla con Windows.
+#
+# Los nombres son los que muestra Windows en "Impresoras y escáneres". Si se
+# cambian ahí, hay que cambiarlos acá (o en el .env) o el ERP no las encuentra.
+IMPRESORA_RECIBOS = os.environ.get("IMPRESORA_RECIBOS", "Caysn 80mm")
+IMPRESORA_ETIQUETAS = os.environ.get("IMPRESORA_ETIQUETAS", "Xprinter XP-360B")
+
+# Columnas de la térmica de recibos. 48 es lo normal en 80 mm; algunas traen
+# 42. Se comprueba con la regla numerada de /impresion/estado/: si esa fila se
+# parte en dos renglones, hay que bajarlo.
+ANCHO_TIQUETE = int(os.environ.get("ANCHO_TIQUETE", "48"))
+
+# Pie legal del tiquete. Mientras la empresa esté en Régimen de Tributación
+# Simplificada el tiquete NO es un comprobante electrónico y tiene que decirlo.
+PIE_TIQUETE = os.environ.get(
+    "PIE_TIQUETE",
+    "Documento interno de control. Regimen de Tributacion Simplificada: "
+    "no constituye comprobante electronico.",
+)
+
+# Decisión de Oscar (05/09/2026): el tiquete sale solo al cobrar. Se deja
+# apagable por si un día conviene ahorrar papel, pero el valor de fábrica es
+# imprimir: en caja, un clic de menos por venta se nota.
+TIQUETE_AUTOMATICO = os.environ.get("TIQUETE_AUTOMATICO", "1") != "0"
+
+# Logo del tiquete, en puntos de la impresora (203 por pulgada). 384 puntos son
+# 48 mm, que en el papel de 80 mm deja aire a los lados. En 0 el tiquete sale
+# sin logo, con el nombre de la empresa en letra grande como antes del
+# 09/09/2026.
+TIQUETE_LOGO_PUNTOS = int(os.environ.get("TIQUETE_LOGO_PUNTOS", "384"))
+# Puntos imprimibles a lo ancho del papel: 576 en las térmicas de 80 mm. Solo
+# hay que tocarlo si algún día se pasa a una de 58 mm, que son 384.
+TIQUETE_PAPEL_PUNTOS = int(os.environ.get("TIQUETE_PAPEL_PUNTOS", "576"))
+
+# Rollo de etiquetas de la tienda: 44,5 × 31,8 mm, con el precio impreso
+# (decisión de Oscar, 05/09/2026).
+#
+# El 08/09/2026 se cambió de 35 × 25 mm a 44,5 × 31,8 mm: es la única medida
+# que tiene el proveedor. La etiqueta más grande además mejora la lectura —
+# en 44,5 mm el código de barras entra con barras de 0,25 mm respetando la
+# zona de silencio completa, que en 35 mm no se lograba.
+#
+# Si algún día se compra otro rollo, se cambian estas dos medidas y la
+# etiqueta se redibuja sola: todo el dibujo es proporcional a ellas.
+ETIQUETA_ANCHO_MM = float(os.environ.get("ETIQUETA_ANCHO_MM", "44.5"))
+ETIQUETA_ALTO_MM = float(os.environ.get("ETIQUETA_ALTO_MM", "31.8"))
+ETIQUETA_CON_PRECIO = os.environ.get("ETIQUETA_CON_PRECIO", "1") != "0"

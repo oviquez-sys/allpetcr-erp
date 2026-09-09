@@ -190,14 +190,36 @@ class ReglaSoloEnExistenciaTest(TestCase):
         "inventario/forms.py": "corrige el conteo, filtrar por stock filtra el dato a corregir",
     }
     # Pantallas que listan productos y sí deben respetar la regla.
-    OBLIGADAS = ["ventas/views.py", "catalogo/views.py", "inventario/views.py"]
+    #
+    # El valor son los módulos en los que la pantalla DELEGA la selección. Se
+    # agregó el 05/09/2026: la pantalla de etiquetas dejó de filtrar por su
+    # cuenta y pasó a usar `inventario/etiquetas.py`, el mismo módulo que usa
+    # la impresión en rollo, justamente para que la pantalla y el rollo no
+    # puedan mostrar cosas distintas. La regla se sigue cumpliendo, solo que un
+    # archivo más adentro — y para que delegar no sea un portillo, abajo se
+    # exige además que la pantalla importe de verdad ese módulo.
+    OBLIGADAS = {
+        "ventas/views.py": (),
+        "catalogo/views.py": (),
+        "inventario/views.py": ("inventario/etiquetas.py",),
+    }
 
     def test_las_pantallas_de_listado_usan_productos_visibles(self):
         faltan = []
-        for relativa in self.OBLIGADAS:
+        for relativa, delegados in self.OBLIGADAS.items():
             texto = (Path(settings.BASE_DIR) / relativa).read_text(encoding="utf-8")
-            if "productos_visibles" not in texto:
+            textos = [texto] + [
+                (Path(settings.BASE_DIR) / d).read_text(encoding="utf-8") for d in delegados
+            ]
+            if not any("productos_visibles" in t for t in textos):
                 faltan.append(relativa)
+            for delegado in delegados:
+                # Delegar solo cuenta si la pantalla usa ese módulo de verdad;
+                # si no, la regla se estaría cumpliendo en un archivo muerto.
+                self.assertIn(
+                    Path(delegado).stem, texto,
+                    f"{relativa} declara que delega en {delegado}, pero no lo importa.",
+                )
         self.assertEqual(
             faltan,
             [],

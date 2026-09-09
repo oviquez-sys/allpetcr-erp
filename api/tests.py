@@ -60,8 +60,12 @@ class CatalogoProductos(BaseAPI):
         self.assertEqual(r.data["count"], 1)
 
     def test_filtro_por_mascota(self):
-        Producto.objects.create(
+        rascador = Producto.objects.create(
             empresa=self.empresa, sku="API-2", nombre="Rascador", mascota="Gato", precio_venta=Decimal("8000"),
+        )
+        registrar_movimiento(
+            producto=rascador, bodega=self.bodega, tipo="INI",
+            cantidad=Decimal("5"), costo_unitario=Decimal("2000"), referencia="INI",
         )
         r = self.client_autenticado.get(reverse("api:catalogo_productos"), {"mascota": "Gato"})
         self.assertEqual(r.data["count"], 1)
@@ -120,6 +124,28 @@ class CatalogoProductos(BaseAPI):
         producto = r.data["results"][0]
         self.assertEqual(producto["categoria_id"], self.cat.pk)
         self.assertNotIn("categoria_nombre", producto)
+
+    def test_agotado_no_aparece_por_defecto(self):
+        """Regla SOLO_EN_EXISTENCIA (Oscar, 02/08/2026): el sitio no debe
+        publicar productos sin stock. allpetcr-web pide esta ruta pelada,
+        sin `?disponible=1` ni ningún parámetro — la vista tiene que filtrar
+        por su cuenta, no solo cuando se lo piden."""
+        Producto.objects.create(
+            empresa=self.empresa, sku="API-AGOTADO", nombre="Sin stock", precio_venta=Decimal("1000"),
+        )
+        r = self.client_autenticado.get(reverse("api:catalogo_productos"))
+        skus = {p["sku"] for p in r.data["results"]}
+        self.assertEqual(r.data["count"], 1)  # sigue siendo solo API-1
+        self.assertNotIn("API-AGOTADO", skus)
+
+    def test_incluir_agotados_los_trae(self):
+        Producto.objects.create(
+            empresa=self.empresa, sku="API-AGOTADO", nombre="Sin stock", precio_venta=Decimal("1000"),
+        )
+        r = self.client_autenticado.get(reverse("api:catalogo_productos"), {"incluir_agotados": "1"})
+        skus = {p["sku"] for p in r.data["results"]}
+        self.assertEqual(r.data["count"], 2)
+        self.assertIn("API-AGOTADO", skus)
 
 
 class CategoriasAPI(BaseAPI):

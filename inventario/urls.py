@@ -7,4 +7,5 @@ app_name = "inventario"
 urlpatterns = [
     path("ajuste/", views.ajuste_inventario, name="ajuste"),
     path("etiquetas/", views.etiquetas, name="etiquetas"),
+    path("codigos/", views.codigos_barras, name="codigos"),
 ]

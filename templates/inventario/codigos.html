@@ -1,0 +1,109 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Códigos de barras · ALLPETCR</title>
+<link rel="stylesheet" href="{% static 'css/allpetcr.css' %}">
+<style>
+:root{--bg:#f5f5f7;--card:#fff;--ink:#1d1d1f;--ink2:#86868b;--line:#e8e8ed;
+  --brand:#0B3161;--green:#1b7f4b;--red:#b3261e;--shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--bg);color:var(--ink);letter-spacing:-.01em}
+a{text-decoration:none}
+.nav{display:flex;gap:16px;align-items:center;padding:11px 22px;background:rgba(255,255,255,.72);
+  border-bottom:1px solid rgba(0,0,0,.06)}
+.nav .logo{height:52px;object-fit:contain}
+.nav b{font-size:19px;font-weight:700}
+.nav .sp{flex:1}
+.nav a{font-size:13.5px;color:var(--brand);padding:7px 13px;border-radius:9px}
+main{max-width:900px;margin:22px auto;padding:0 18px;display:grid;gap:16px}
+.tarjeta{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow)}
+h2{font-size:16px;margin-bottom:12px}
+.cifras{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.cifra{border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.cifra .n{font-size:30px;font-weight:800;color:var(--brand);letter-spacing:-.03em}
+.cifra .q{font-size:13px;color:var(--ink2);margin-top:2px;line-height:1.35}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px}
+th{text-align:left;color:var(--ink2);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:6px 8px;border-bottom:1px solid #f2f2f5}
+td.mono{font-family:ui-monospace,Consolas,monospace}
+.flecha{color:var(--ink2)}
+.nuevo{color:var(--green);font-weight:600}
+p.nota{font-size:13px;color:var(--ink2);line-height:1.6;margin-top:10px}
+button{background:var(--brand);color:#fff;border:none;border-radius:11px;padding:12px 22px;
+  font-size:15px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.45;cursor:default}
+label.conf{display:flex;gap:9px;align-items:flex-start;font-size:14px;margin:14px 0;cursor:pointer}
+label.conf input{width:18px;height:18px;margin-top:1px;accent-color:var(--brand)}
+.msg{padding:11px 15px;border-radius:11px;font-size:14px}
+.msg.success{background:#e8f5ee;color:var(--green)}
+.msg.warning{background:#fdf3e2;color:#8a5a08}
+.msg.error{background:#fdecea;color:var(--red)}
+</style>
+</head>
+<body>
+<div class="nav">
+  <img class="logo" src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetcr.com">
+  <b>Códigos de barras</b>
+  <span class="sp"></span>
+  <a href="{% url 'inventario:etiquetas' %}">Etiquetas</a>
+  <a href="/">Inicio</a>
+</div>
+
+<main>
+  {% if messages %}{% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}{% endif %}
+
+  <div class="tarjeta">
+    <h2>Qué hay hoy en los {{ total }} productos</h2>
+    <div class="cifras">
+      <div class="cifra"><div class="n">{{ conservados|length }}</div>
+        <div class="q">EAN de fábrica.<br>Se conservan tal cual.</div></div>
+      <div class="cifra"><div class="n">{{ ya_internos|length }}</div>
+        <div class="q">Ya tienen código interno.<br>No se tocan.</div></div>
+      <div class="cifra"><div class="n">{{ cambios|length }}</div>
+        <div class="q">Se convertirían a EAN-8 interno.</div></div>
+    </div>
+    <p class="nota">Un EAN no se inventa: los números los administra GS1 y se asignan por empresa.
+    Lo que sí permite la norma es un rango de circulación restringida —códigos que una tienda usa
+    puertas adentro— y en EAN-8 son los que empiezan con <b>2</b>. Esos son los que se asignan acá.
+    El código de fábrica nunca se pisa: ese es el bueno y la caja lo lee del empaque sin pegar nada.</p>
+  </div>
+
+  {% if cambios %}
+  <div class="tarjeta">
+    <h2>Qué cambiaría (primeros 25 de {{ cambios|length }})</h2>
+    <table>
+      <tr><th>Producto</th><th>Código actual</th><th></th><th>Código nuevo</th></tr>
+      {% for producto, viejo, nuevo in cambios|slice:":25" %}
+        <tr>
+          <td>{{ producto.nombre|truncatechars:46 }}</td>
+          <td class="mono">{{ viejo|default:"(vacío)" }}</td>
+          <td class="flecha">→</td>
+          <td class="mono nuevo">{{ nuevo }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+
+    <form method="post">
+      {% csrf_token %}
+      <label class="conf">
+        <input type="checkbox" name="confirmar" value="si" onchange="document.getElementById('ir').disabled = !this.checked">
+        <span>Entiendo que esto cambia el código de barras de {{ cambios|length }} productos.
+        El código anterior de cada uno queda guardado en <b>codigos_anteriores.csv</b>, dentro de la
+        carpeta del ERP, por si alguna etiqueta ya impresa quedó pegada a un artículo.</span>
+      </label>
+      <button id="ir" type="submit" disabled>Convertir {{ cambios|length }} códigos</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="tarjeta">
+    <h2>No hay nada que convertir</h2>
+    <p class="nota">Todos los productos tienen ya un EAN de fábrica o un código interno.</p>
+  </div>
+  {% endif %}
+</main>
+{% include "core/includes/chat_widget.html" %}
+</body>
+</html>

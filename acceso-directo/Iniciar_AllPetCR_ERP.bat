@@ -1,6 +1,11 @@
 @echo off
 title AllPetCR ERP - Servidor local
-cd /d "C:\Users\oviqu\OneDrive\Desktop\GRUPO VAYRU\AllPet\CLAUDE\allpetcr-erp"
+REM %~dp0 es la carpeta de ESTE archivo; ".." sube a la raiz del ERP.
+REM Antes la ruta estaba escrita a mano y apuntaba al perfil viejo de
+REM Windows: al cambiar el disco el acceso directo dejo de funcionar y
+REM nadie sabia por que. Asi la carpeta se puede mover o renombrar sin
+REM que se rompa nada.
+cd /d "%~dp0.."
 
 echo Activando entorno virtual...
 call .venv\Scripts\activate

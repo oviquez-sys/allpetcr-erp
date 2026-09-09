@@ -2,106 +2,211 @@
    ALLPETCR ERP  —  RESPALDOS (COPIAS DE SEGURIDAD)
 ========================================================
 
-¿POR QUÉ IMPORTA?
--------------------------------------------------
-Toda la información del negocio (ventas, inventario, contabilidad,
-clientes, fotos de productos) vive en un solo archivo de base de datos.
-Si el disco de la computadora se daña, se moja, se lo roban o el archivo
-se corrompe, se pierde TODO. Un respaldo es una copia guardada aparte para
-poder recuperar el negocio si eso pasa.
+Actualizado: 02/09/2026
 
 
-¿QUÉ SE RESPALDA?
--------------------------------------------------
-En un solo archivo .zip con la fecha en el nombre, por ejemplo
-"respaldo_allpetcr_20260721_2000.zip", se guarda:
-  - La base de datos completa (ventas, inventario, contabilidad, clientes).
-  - Las fotos de los productos.
+========================================================
+  EN UNA LINEA
+========================================================
 
-Los respaldos quedan en la carpeta "respaldos" dentro del sistema. Como esa
-carpeta está en OneDrive, además se suben solos a la nube: si la computadora
-desaparece, los respaldos siguen en tu cuenta de OneDrive.
-
-El sistema conserva los últimos 30 respaldos y borra los más viejos solo,
-para no llenar el disco.
+Todas las noches a las 21:00 se guarda solo un respaldo de la
+base de datos en OneDrive; los domingos a las 21:30 se guarda
+ademas todas las fotos. Si algo falla, llega un correo.
 
 
--------------------------------------------------
-RESPALDAR AHORA (a mano, cuando quieras)
--------------------------------------------------
-Opción fácil:
-  Doble clic al archivo "respaldar.bat" (está en la carpeta del sistema).
-  Se abre una ventana, hace el respaldo y se cierra sola. Listo.
+========================================================
+  LO QUE HAY QUE SABER SIN LEER NADA MAS
+========================================================
 
-Opción por comando (si ya tenés el cmd abierto con (.venv)):
+  · Se hace solo. No hay que acordarse de nada.
+  · Se guarda FUERA de esta computadora (OneDrive).
+  · Si falla, avisa por correo. No falla en silencio.
+  · Se puede recuperar de verdad: hay un ensayo que lo prueba.
+
+Los tres archivos que importan, en la carpeta del ERP:
+
+  RESPALDO_AHORA.bat         Hacer un respaldo ya mismo, a mano.
+  PROBAR_RESTAURACION.bat    Comprobar que el respaldo SIRVE.
+  PROGRAMAR_RESPALDOS.bat    Volver a dejar las tareas programadas.
+
+
+========================================================
+  COMO ESTA ARMADO
+========================================================
+
+Dos ritmos, porque la base y las fotos cambian a velocidades
+distintas:
+
+  DIARIO   21:00, todos los dias
+           Solo la base de datos: ventas, inventario,
+           contabilidad, clientes. Pesa menos de 1 MB.
+           Se conservan las ultimas 30 copias.
+
+  SEMANAL  21:30, los domingos
+           Base + todas las fotos de productos. Unos 130 MB.
+           Se conservan las ultimas 4 copias.
+
+La logica: lo que cambia todos los dias se respalda todos los
+dias. Las fotos casi no cambian, y guardar 130 MB diarios
+llenaria la nube en pocas semanas.
+
+Como maximo se pierde un dia de ventas.
+
+DONDE QUEDAN:
+
+  OneDrive  ->  AllPetCR_Respaldos\diario\
+  OneDrive  ->  AllPetCR_Respaldos\semanal\
+
+Cada ritmo en SU carpeta, a proposito: el sistema borra los
+respaldos viejos de la carpeta donde escribe. Si compartieran
+carpeta, el respaldo semanal (que conserva 4) borraria los 30
+diarios cada domingo.
+
+SI LA COMPUTADORA ESTA APAGADA a la hora programada, la tarea
+no se saltea el dia: corre apenas se prende.
+
+
+========================================================
+  QUE PASA SI ALGO FALLA
+========================================================
+
+Llega un correo a servicioalcliente@allpetcr.com con el asunto
+"[AllPetCR] ...". Ese correo es para leer el mismo dia, no para
+dejar pasar.
+
+Hay tres avisos distintos:
+
+  "FALLO el respaldo"             No se pudo hacer.
+  "NO paso la verificacion"       Se hizo, pero el archivo no sirve.
+  "quedo solo en la computadora"  No encontro OneDrive.
+
+Cada respaldo se revisa apenas se crea:
+  1. que el zip abra,
+  2. que traiga la base adentro,
+  3. que PostgreSQL pueda LEER ese volcado (pg_restore --list),
+  4. que traiga las fotos, cuando corresponde.
+
+El registro de cada corrida queda en:
+  respaldos\log_respaldo_diario.txt
+  respaldos\log_respaldo_semanal.txt
+
+
+========================================================
+  RESPALDAR AHORA, A MANO
+========================================================
+
+Doble clic en RESPALDO_AHORA.bat. Revisa el respaldo que hay,
+crea uno nuevo y lo vuelve a revisar.
+
+Por comando, con el entorno activado:
   python manage.py respaldar
 
 
--------------------------------------------------
-QUE CORRA SOLO CADA DÍA (recomendado)
--------------------------------------------------
-Así no dependés de acordarte. Se agenda una vez y corre solo.
+========================================================
+  COMPROBAR QUE SE PUEDE RECUPERAR  (hacerlo cada mes)
+========================================================
 
-1. Abrí el menú de inicio y escribí:  Programador de tareas
-   (en inglés: "Task Scheduler"). Abrilo.
+Doble clic en PROBAR_RESTAURACION.bat.
 
-2. A la derecha, clic en "Crear tarea básica...".
+Agarra el respaldo mas nuevo, crea una base de datos de prueba
+aparte, restaura el respaldo ahi adentro, cuenta productos,
+ventas y movimientos, y despues borra la base de prueba.
 
-3. Nombre:  Respaldo AllPetcr
-   Clic en Siguiente.
+LA BASE REAL NO SE TOCA.
 
-4. Cuándo:  Diariamente.  Siguiente.
-   Elegí una hora en que la computadora esté encendida pero el negocio
-   tranquilo, por ejemplo 8:00 p. m.  Siguiente.
-
-5. Acción:  "Iniciar un programa".  Siguiente.
-
-6. En "Programa o script", clic en Examinar y buscá el archivo:
-   respaldar.bat
-   (dentro de la carpeta del sistema allpetcr-erp).
-   Clic en Siguiente y luego en Finalizar.
-
-Con eso, todas las noches se crea un respaldo solo. Para probar que quedó
-bien: en el Programador, clic derecho sobre "Respaldo AllPetcr" y "Ejecutar".
-Debería aparecer un zip nuevo en la carpeta "respaldos".
+Es la unica prueba que vale. Que un archivo se abra no dice nada
+sobre si el negocio se puede recuperar. Esto lo dice.
 
 
--------------------------------------------------
-RECUPERAR (RESTAURAR) UN RESPALDO
--------------------------------------------------
-Esto se hace SOLO si se dañó o perdió la información y querés volver a un
-respaldo. Reemplaza los datos actuales por los del respaldo elegido.
+========================================================
+  RECUPERAR DE VERDAD (cuando paso algo)
+========================================================
 
-IMPORTANTE: antes de restaurar, APAGÁ el sistema (en la ventana negra
-donde corre, apretá Ctrl + C). No se puede restaurar con el sistema
-encendido.
+Esto reemplaza los datos de HOY por los del respaldo elegido.
 
-1. Abrí el cmd en la carpeta del sistema y activá el entorno:
-     cd "C:\Users\oviqu\OneDrive\Desktop\GRUPO VAYRU\AllPet\CLAUDE\allpetcr-erp"
+ANTES: apaga el ERP (Ctrl + C en la ventana negra donde corre).
+No se puede restaurar con el sistema encendido.
+
+1. Abri el cmd en la carpeta del ERP y activa el entorno:
      .venv\Scripts\activate
 
-2. Mirá la lista de respaldos disponibles:
+2. Mira que respaldos hay. Sin opciones, el comando los lista:
+
      python manage.py restaurar
 
-   Te muestra los respaldos con su fecha. Copiá el nombre del que querés.
+   Eso busca en la carpeta "respaldos" de esta computadora.
+   Los respaldos automaticos estan en OneDrive, asi que para
+   verlos hay que decirle en cual carpeta buscar:
 
-3. Restaurá ese respaldo (poné el nombre real que copiaste):
-     python manage.py restaurar --archivo respaldo_allpetcr_20260721_2000.zip --confirmar
+     python manage.py restaurar --destino "%OneDrive%\AllPetCR_Respaldos\diario"
 
-   El sistema, ANTES de cambiar nada, guarda una copia del estado actual en
-   una carpeta "antes_de_restaurar_...". O sea: aunque restaures el respaldo
-   equivocado, no perdés lo de ahora, siempre hay marcha atrás.
+   Cambia "diario" por "semanal" si necesitas tambien las fotos.
+   Copia el nombre del archivo que quieras.
 
-4. Encendé el sistema de nuevo:
-     python manage.py runserver
+3. Primero SIN confirmar, para ver que haria (no cambia nada):
+
+     python manage.py restaurar --archivo "RUTA COMPLETA DEL ZIP"
+
+4. Cuando estes seguro, agregale --confirmar:
+
+     python manage.py restaurar --archivo "RUTA COMPLETA DEL ZIP" --confirmar
+
+   ANTES de tocar nada guarda como esta la base ahora, en la
+   carpeta "respaldos". Si restauras el respaldo equivocado, hay
+   marcha atras.
+
+   La bitacora del sistema (quien hizo que) NO se pisa con la del
+   respaldo: se conserva la de la base viva.
+
+5. Prende el ERP de nuevo.
 
 
--------------------------------------------------
-CONSEJOS
--------------------------------------------------
-- De vez en cuando, revisá que en la carpeta "respaldos" haya zips recientes.
-  Si el más nuevo es de hace semanas, algo falló y hay que revisar la tarea.
-- Un respaldo dentro de la misma computadora protege contra errores y borrados,
-  pero no contra que se dañe el disco. OneDrive cubre eso al subirlos a la nube.
-  Para máxima tranquilidad, de vez en cuando copiá algún zip a una llave USB.
-- Guardá SIEMPRE al menos un respaldo del cierre de cada mes, aparte.
+========================================================
+  LO QUE TODAVIA FALTA
+========================================================
+
+  · Subida automatica a un lugar que no dependa de OneDrive
+    (FRA-005: bucket Backblaze B2 con Object Lock). OneDrive
+    protege del disco que muere, pero NO de un borrado ni de un
+    ransomware: eso se sincroniza a la nube igual que todo lo
+    demas. Hoy la defensa contra eso son las 30 copias diarias.
+
+  · Una copia mensual en un disco o llave USB que no este
+    conectada. Guardar SIEMPRE el respaldo del cierre de cada mes.
+
+
+========================================================
+  HISTORIA — POR QUE ESTO QUEDO ASI
+========================================================
+
+Se deja escrito para no repetirlo.
+
+01/09/2026 — Se descubrio que el respaldo mas nuevo era del 3 de
+agosto. Veintinueve dias de trabajo sin ninguna copia: 532
+productos, la taxonomia completa, las ventas.
+
+Dos cosas fallaban a la vez, y ninguna daba error:
+
+  · La tarea automatica habia dejado de correr en algun momento
+    y no aviso. Una tarea que falla en silencio es peor que no
+    tenerla: da la sensacion de estar cubierto.
+
+  · Este mismo documento decia que la carpeta "respaldos" estaba
+    dentro de OneDrive y subia sola. Dejo de ser cierto al cambiar
+    el disco: la carpeta paso de
+    C:\Users\oviqu\OneDrive\Desktop\... a
+    C:\Users\Usuario\Desktop\..., fuera de OneDrive.
+    Los respaldos estaban en el MISMO disco que la base que
+    respaldaban.
+
+02/09/2026 — Se programaron las dos tareas, se agrego el aviso por
+correo, la verificacion del volcado con pg_restore, el ensayo de
+restauracion sobre el archivo real y una prueba automatica que
+comprueba que los comandos escritos en ESTE documento existan de
+verdad (core/test_manual_respaldos.py).
+
+La leccion, que aplica a todo el sistema y no solo a esto: algo
+que nadie prueba no esta funcionando, esta sin probar. El correo
+decia "enviado" sin enviar. El acceso directo apuntaba a una
+carpeta borrada. El respaldo decia estar en la nube y estaba al
+lado del original. Ninguno de los tres fallaba con un error.

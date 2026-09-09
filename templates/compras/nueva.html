@@ -52,11 +52,15 @@ main{flex:1;display:grid;grid-template-columns:1fr 400px;gap:16px;padding:14px 2
 .campo2 input:focus{border-color:var(--brand2)}
 .fila2{display:flex;gap:10px}
 .fila2 .campo2{flex:1}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.filtros-fila{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
 .chip-f{font-size:13px;padding:7px 15px;border-radius:20px;border:1px solid var(--line);background:#fff;
   color:var(--ink2);cursor:pointer;transition:all .15s;white-space:nowrap}
 .chip-f:hover{border-color:var(--brand2);color:var(--brand)}
 .chip-f.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
+.select-cat{font-size:13px;padding:8px 14px;border-radius:20px;border:1px solid var(--line);background:#fff;
+  color:var(--ink);cursor:pointer;outline:none;max-width:220px}
+.select-cat:focus{border-color:var(--brand2)}
 #grid{overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:11px;align-content:start;margin-top:14px;padding-right:4px}
 .pcard{border:1px solid var(--line);border-radius:16px;padding:10px;cursor:pointer;background:#fff;
   transition:transform .15s ease,box-shadow .15s ease,border-color .15s;display:flex;flex-direction:column}
@@ -84,10 +88,23 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
 #lineas{flex:1;overflow-y:auto;margin:8px -4px 0;padding:0 4px;border-top:1px solid var(--line)}
 .linea{display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
 .linea .nm{flex:1;font-weight:600;font-size:13px;line-height:1.25}
-.linea input[type=number]{width:56px;text-align:center;padding:7px 4px;border:1px solid var(--line);border-radius:8px;font-size:13px}
+.linea input[type=number]{width:52px;text-align:center;padding:7px 4px;border:1px solid var(--line);border-radius:8px;font-size:13px}
 .linea .x{width:26px;height:26px;border:none;background:none;color:var(--red);font-size:18px;cursor:pointer}
-.linea .mt{width:78px;text-align:right;font-weight:700;font-size:13px}
+.linea .mt{width:74px;text-align:right;font-weight:700;font-size:13px}
+.linea .bonif input{background:#FFF8E8;border-color:#E8CE96!important}
+.real{font-size:11px;color:var(--ink2);padding:0 0 9px 2px;margin-top:-6px;border-bottom:1px solid var(--line)}
+.real b{color:var(--ink)}
 .linea .lbl{font-size:10.5px;color:var(--ink2);display:block;text-align:center;margin-bottom:2px}
+.fila3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:520px){.fila3{grid-template-columns:1fr}}
+.np-aviso{font-size:12px;color:var(--ink2);background:#F6F7F9;border-radius:8px;padding:9px 12px;margin-top:10px;line-height:1.4}
+.np-aviso b{color:var(--ink)}
+.version-pag{font-size:11px;color:var(--ink2);border:1px solid var(--line);border-radius:20px;padding:2px 9px;margin-left:auto}
+.linea .gan input{background:#EAF4EE;border-color:#A9CDBA!important}
+.precio-linea{font-size:11px;color:var(--ink2);padding:0 0 9px 2px;margin-top:-6px;border-bottom:1px solid var(--line)}
+.precio-linea b{color:var(--ink)}
+.precio-linea .nuevo{color:#1E7A4B;font-weight:700}
+.chip-f.chip-m{font-weight:700}
 .empty{color:var(--ink2);padding:40px 10px;text-align:center;font-size:14px}
 .empty .big{font-size:34px;display:block;margin-bottom:8px}
 #totales{border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
@@ -148,7 +165,8 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
 </div>
 <div class="steps">
   <span><b>1.</b> Buscá el producto que llegó</span>
-  <span><b>2.</b> Poné cantidad y costo</span>
+  <span><b>2.</b> Poné cantidad, promoción, costo y ganancia</span>
+  <span class="version-pag" title="Si no ves este sello, la página está en caché: Ctrl+F5">v3 · 02-09-2026</span>
   <span><b>3.</b> Elegí el proveedor y registrá</span>
 </div>
 
@@ -158,7 +176,12 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
       <input id="buscar" placeholder="🔎 Escaneá el código de barras, o escribí el nombre del producto…" autofocus>
       <button type="button" class="btn-nuevo" onclick="abrirNuevoProducto()">➕ Producto nuevo</button>
     </div>
-    <div class="chips" id="chips"></div>
+    <div class="filtros-fila">
+      <div class="chips" id="chips"></div>
+      <select id="filtroCategoria" class="select-cat" onchange="pintarGrid()">
+        <option value="Todas">Todas las categorías</option>
+      </select>
+    </div>
     <div id="grid"></div>
   </div>
   <div class="col cart">
@@ -201,6 +224,8 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
     <h2>Cómo recibir mercadería</h2>
     <div class="step2"><div class="n">1</div><div class="st">Escaneá o buscá cada producto que llegó y tocalo para agregarlo a la lista de la derecha. Si es un producto que nunca habías comprado, tocá "➕ Producto nuevo" para crearlo al vuelo.</div></div>
     <div class="step2"><div class="n">2</div><div class="st">Ajustá la <b>cantidad</b> y el <b>costo</b> con el que te lo vendió el proveedor (no el precio de venta).</div></div>
+    <div class="step2"><div class="n">+</div><div class="st">Si te dieron una <b>promoción tipo 12+1 o 100+20</b>, poné las facturadas en "cant." y las regaladas en "<b>+ gratis</b>". La factura se registra por lo que te cobran, el inventario sube por todo lo que llegó, y el sistema calcula solo cuánto te costó de verdad cada unidad.</div></div>
+    <div class="step2"><div class="n">+</div><div class="st">Si querés <b>recalcular el precio de venta</b>, escribí en "<b>gan. %</b>" cuánto querés ganarle sobre el costo (110 = el precio queda en 2,1 veces el costo). El sistema lo calcula sobre el costo <i>real</i> —con la bonificación ya repartida— y lo redondea a la centena. Si lo dejás vacío, el precio no se toca.</div></div>
     <div class="step2"><div class="n">3</div><div class="st">Elegí el proveedor (o escribí uno nuevo si no está en la lista) y si es de contado o a crédito.</div></div>
     <div class="step2"><div class="n">4</div><div class="st">Tocá <b>Registrar compra</b>. El stock y la contabilidad se actualizan solos, no hay que hacer nada más.</div></div>
     <button class="close" onclick="document.getElementById('ayuda').classList.remove('on')">Entendido</button>
@@ -217,24 +242,32 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
     <div class="fila2">
       <div class="campo2">
         <label>Categoría</label>
-        <input id="npCategoria" list="catlist" placeholder="Ej. Collares, correas y arneses">
-        <datalist id="catlist"></datalist>
+        <select id="npCategoria" onchange="onNpCategoriaChange()">
+          <option value="">Sin categoría</option>
+        </select>
+        <input class="txt-in" id="npCategoriaNueva" placeholder="Nombre de la categoría nueva" style="display:none;margin-top:8px">
+        <select id="npCategoriaMadre" style="display:none;margin-top:8px"></select>
       </div>
       <div class="campo2">
         <label>Presentación (opcional)</label>
         <input id="npPresentacion" placeholder="Ej. Talla M">
       </div>
     </div>
-    <div class="fila2">
-      <div class="campo2">
-        <label>Precio de venta *</label>
-        <input id="npPrecio" type="number" min="0" step="any" placeholder="₡">
-      </div>
+    <div class="fila3">
       <div class="campo2">
         <label>Costo de esta compra</label>
-        <input id="npCosto" type="number" min="0" step="any" placeholder="₡">
+        <input id="npCosto" type="number" min="0" step="any" placeholder="₡" oninput="npRecalcularPrecio()">
+      </div>
+      <div class="campo2">
+        <label>Ganancia %</label>
+        <input id="npGanancia" type="number" min="0" step="any" placeholder="Ej. 110" oninput="npRecalcularPrecio()">
+      </div>
+      <div class="campo2">
+        <label>Precio de venta *</label>
+        <input id="npPrecio" type="number" min="0" step="any" placeholder="₡" oninput="npRecalcularGanancia()">
       </div>
     </div>
+    <div id="npAviso" class="np-aviso">Poné el costo y la ganancia, y el precio se calcula solo. O escribí el precio directo y te digo qué ganancia es.</div>
     <div class="campo2">
       <label>Foto del producto (opcional)</label>
       <input id="npFoto" type="file" accept="image/*" style="padding:8px 12px">
@@ -245,8 +278,10 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
 </div>
 
 {{ productos|json_script:"datos-productos" }}
+{{ categorias|json_script:"datos-categorias" }}
 <script>
 const productos = JSON.parse(document.getElementById('datos-productos').textContent);
+const CATEGORIAS = JSON.parse(document.getElementById('datos-categorias').textContent);
 const porId = Object.fromEntries(productos.map(p=>[p.id,p]));
 let carrito = {}; // id -> {cantidad, costo}
 let formaPago = 'CON';
@@ -276,38 +311,161 @@ function onProveedorChange(){
   document.getElementById('proveedorNuevo').style.display = (v === '__nuevo__') ? 'block' : 'none';
 }
 
-let catActiva = "Todas";
-let cats = ["Todas", ...Array.from(new Set(productos.map(p=>p.categoria))).sort()];
-function pintarChips(){
+// Filtro por animal, igual que el POS y que el menú del sitio (01/09/2026).
+// Quien recibe mercadería piensa "llegó comida de perro", no "llegó categoría
+// Alimento": el animal va primero acá también. Sin "Todas" a propósito
+// (pedido de Oscar, 01/09/2026): son solo dos botones, y tocar el que ya
+// está activo lo apaga y vuelve a mostrar los dos animales.
+let mascActiva = null;
+const MASCOTAS = ["Perro", "Gato"];
+
+/** Un producto "Perro y gato" cuenta para los dos filtros. Misma regla que
+ *  `esParaEspecie` en allpetcr-web/lib/navegacion.ts — si cambia una, cambia
+ *  la otra, o el mismo producto aparece en pantallas distintas. */
+function esDeMascota(p, m){
+  if (!m) return true;
+  return p.mascota === m || p.mascota === "Perro y gato";
+}
+
+// Las categorías salen en el orden del ERP (`Categoria.orden`), no alfabético:
+// es el mismo orden en que las muestra el sitio.
+let cats = ["Todas", ...Array.from(
+  new Map(productos.map(p => [p.categoria, p.categoria_orden])).entries()
+).sort((a,b) => a[1]-b[1] || a[0].localeCompare(b[0],'es')).map(x => x[0])];
+
+function pintarPills(){
   const cont = document.getElementById('chips');
   cont.textContent = '';
-  cats.forEach(c => {
+  MASCOTAS.forEach(m => {
     const b = document.createElement('button');
-    b.className = 'chip-f' + (c===catActiva ? ' on' : '');
-    b.textContent = c;
-    b.addEventListener('click', () => setCat(c));
+    b.className = 'chip-f chip-m' + (m===mascActiva ? ' on' : '');
+    b.textContent = m;
+    b.addEventListener('click', () => setMasc(m));
     cont.appendChild(b);
   });
-  const lista = document.getElementById('catlist');
-  lista.textContent = '';
-  cats.filter(c => c !== 'Todas' && c !== 'Sin categoría').forEach(c => {
+}
+// Reemplaza la pared de ~75 chips de categoría (una por cada categoría del
+// catálogo) por un select compacto: mismo filtrado, sin ensuciar la
+// pantalla. El select del alta rápida de producto usa la misma lista de
+// categorías reales, para no dejar tipear cualquier cosa y terminar con
+// "Collares", "collares" y "Collares " como tres categorías distintas.
+function poblarCategorias(){
+  const sel = document.getElementById('filtroCategoria');
+  const valorPrevio = sel.value || 'Todas';
+  sel.textContent = '';
+  cats.forEach(c => {
     const o = document.createElement('option');
     o.value = c;
-    lista.appendChild(o);
+    o.textContent = c === 'Todas' ? 'Todas las categorías' : c;
+    sel.appendChild(o);
   });
+  sel.value = cats.includes(valorPrevio) ? valorPrevio : 'Todas';
+
+  // El selector del producto nuevo usa TODAS las categorías del árbol, no las
+  // que salen de `cats` (que se arma a partir de los productos). Una categoría
+  // recién creada y todavía vacía —"Alimento"— no tiene productos, y si no
+  // aparece acá no hay manera de ponerle el primero. Es el pez mordiéndose la
+  // cola que había hasta el 02/09/2026.
+  const selNp = document.getElementById('npCategoria');
+  const valorNp = selNp.value;
+  selNp.textContent = '';
+  const sinCat = document.createElement('option');
+  sinCat.value = '';
+  sinCat.textContent = 'Sin categoría';
+  selNp.appendChild(sinCat);
+  CATEGORIAS.forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.nombre;
+    o.textContent = c.etiqueta;
+    selNp.appendChild(o);
+  });
+  const nueva = document.createElement('option');
+  nueva.value = '__nueva__';
+  nueva.textContent = '+ Crear una categoría nueva…';
+  selNp.appendChild(nueva);
+  if ([...selNp.options].some(o => o.value === valorNp)) selNp.value = valorNp;
+
+  // Dónde va a colgar la categoría nueva. Sin esto, cada una creada desde acá
+  // se volvía otra raíz suelta y ensuciaba el primer nivel del menú del sitio.
+  const selMadre = document.getElementById('npCategoriaMadre');
+  if (selMadre){
+    const valorMadre = selMadre.value;
+    selMadre.textContent = '';
+    const raiz = document.createElement('option');
+    raiz.value = '';
+    raiz.textContent = 'Que sea una categoría principal';
+    selMadre.appendChild(raiz);
+    CATEGORIAS.filter(c => !c.padre).forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.nombre;
+      o.textContent = 'Dentro de ' + c.nombre;
+      selMadre.appendChild(o);
+    });
+    if ([...selMadre.options].some(o => o.value === valorMadre)) selMadre.value = valorMadre;
+  }
 }
-function setCat(c){ catActiva = c; pintarChips(); pintarGrid(); }
+function setMasc(m){ mascActiva = (mascActiva === m) ? null : m; pintarPills(); pintarGrid(); }
+function onNpCategoriaChange(){
+  const v = document.getElementById('npCategoria').value;
+  const mostrar = (v === '__nueva__') ? 'block' : 'none';
+  document.getElementById('npCategoriaNueva').style.display = mostrar;
+  document.getElementById('npCategoriaMadre').style.display = mostrar;
+}
 
 function abrirNuevoProducto(){
   document.getElementById('npNombre').value = document.getElementById('buscar').value.trim();
   document.getElementById('npCategoria').value = '';
+  document.getElementById('npCategoriaNueva').value = '';
+  document.getElementById('npCategoriaNueva').style.display = 'none';
   document.getElementById('npPresentacion').value = '';
   document.getElementById('npPrecio').value = '';
   document.getElementById('npCosto').value = '';
+  document.getElementById('npGanancia').value = '';
+  npPintarAviso();
   document.getElementById('npFoto').value = '';
   document.getElementById('modalProducto').classList.add('on');
 }
 function cerrarNuevoProducto(){ document.getElementById('modalProducto').classList.remove('on'); }
+
+// El precio y la ganancia se calculan uno al otro, en las dos direcciones.
+// Quien recibe mercadería a veces piensa "quiero ganarle 110%" y a veces
+// "esto se vende a 25.000": las dos formas tienen que funcionar sin obligar a
+// nadie a sacar la calculadora.
+function npRecalcularPrecio(){
+  const costo = +(document.getElementById('npCosto').value || 0);
+  const gan = document.getElementById('npGanancia').value;
+  if (costo > 0 && gan !== '' && !isNaN(+gan)){
+    document.getElementById('npPrecio').value = redondear100(costo * (1 + (+gan)/100));
+  }
+  npPintarAviso();
+}
+function npRecalcularGanancia(){
+  const costo = +(document.getElementById('npCosto').value || 0);
+  const precio = +(document.getElementById('npPrecio').value || 0);
+  if (costo > 0 && precio > 0){
+    document.getElementById('npGanancia').value = ((precio/costo - 1) * 100).toFixed(0);
+  }
+  npPintarAviso();
+}
+function npPintarAviso(){
+  const costo = +(document.getElementById('npCosto').value || 0);
+  const precio = +(document.getElementById('npPrecio').value || 0);
+  const av = document.getElementById('npAviso');
+  if (costo > 0 && precio > 0){
+    const gan = (precio/costo - 1) * 100;
+    const margen = (precio - costo)/precio * 100;
+    if (precio <= costo){
+      av.innerHTML = `⚠️ Estás vendiendo en <b>${fmt(precio)}</b> algo que te costó <b>${fmt(costo)}</b>: perdés plata en cada unidad.`;
+      av.style.color = 'var(--red)';
+      return;
+    }
+    av.innerHTML = `Costo <b>${fmt(costo)}</b> → precio <b>${fmt(precio)}</b>. Le ganás <b>${gan.toFixed(0)}%</b> sobre el costo, que es un margen de <b>${margen.toFixed(0)}%</b> sobre la venta.`;
+    av.style.color = '';
+  } else {
+    av.textContent = 'Poné el costo y la ganancia, y el precio se calcula solo. O escribí el precio directo y te digo qué ganancia es.';
+    av.style.color = '';
+  }
+}
 async function guardarProductoNuevo(){
   const nombre = document.getElementById('npNombre').value.trim();
   const precio_venta = document.getElementById('npPrecio').value;
@@ -325,13 +483,20 @@ async function guardarProductoNuevo(){
     });
   }
 
+  const catSel = document.getElementById('npCategoria').value;
+  const esNueva = catSel === '__nueva__';
+  const categoria = esNueva
+    ? document.getElementById('npCategoriaNueva').value.trim()
+    : catSel;
+  const categoria_padre = esNueva ? document.getElementById('npCategoriaMadre').value : '';
+  if (esNueva && !categoria){ msg("Escribí el nombre de la categoría nueva.", true); return; }
+
   try {
     const r = await fetch("{% url 'compras:producto_nuevo' %}", {
       method:'POST',
       headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
       body: JSON.stringify({
-        nombre, precio_venta,
-        categoria: document.getElementById('npCategoria').value.trim(),
+        nombre, precio_venta, categoria, categoria_padre,
         presentacion: document.getElementById('npPresentacion').value.trim(),
         foto_base64,
       })
@@ -341,11 +506,22 @@ async function guardarProductoNuevo(){
     const p = d.producto;
     productos.push(p);
     porId[p.id] = p;
-    if (!cats.includes(p.categoria)) { cats.push(p.categoria); cats.sort((a,b)=> a==='Todas'?-1:b==='Todas'?1:a.localeCompare(b)); }
+    // La categoría creada al vuelo entra a la lista en el acto: si hubiera que
+    // recargar la página para verla, nadie la usaría dos veces seguidas.
+    if (p.categoria && p.categoria !== 'Sin categoría' && !CATEGORIAS.some(c => c.nombre === p.categoria)){
+      CATEGORIAS.push({ id: null, nombre: p.categoria, padre: categoria_padre || '',
+                        etiqueta: categoria_padre ? (categoria_padre + ' › ' + p.categoria) : p.categoria });
+    }
+    if (!cats.includes(p.categoria)) { cats.push(p.categoria); cats.sort((a,b)=> a==='Todas'?-1:b==='Todas'?1:a.localeCompare(b,'es')); }
     const costo = +(document.getElementById('npCosto').value || 0);
-    carrito[p.id] = { cantidad: 1, costo };
+    // La ganancia que se puso en el modal se hereda a la línea: si no, el
+    // producto entraría a la compra con el precio ya fijado pero la línea
+    // mostraría el campo vacío, y no se entendería de dónde salió.
+    const ganNp = document.getElementById('npGanancia').value;
+    carrito[p.id] = { cantidad: 1, bonif: 0, costo,
+                      gan: (ganNp === '' || isNaN(+ganNp)) ? null : +ganNp };
     cerrarNuevoProducto();
-    pintarChips(); pintarGrid(); pintarLineas();
+    poblarCategorias(); pintarGrid(); pintarLineas();
     // Si la foto se rechazó (no era imagen, pesaba de más), el producto SÍ se
     // creó pero sin imagen. Antes eso pasaba en silencio y el usuario no
     // entendía por qué faltaba la foto (auditoría 2026-07-28, BE-03/SEG-06).
@@ -356,8 +532,10 @@ async function guardarProductoNuevo(){
 
 function filtrar(){
   const q = document.getElementById('buscar').value.toLowerCase().trim();
+  const catSel = document.getElementById('filtroCategoria').value;
   return productos.filter(p => {
-    if (catActiva !== "Todas" && p.categoria !== catActiva) return false;
+    if (!esDeMascota(p, mascActiva)) return false;
+    if (catSel !== "Todas" && p.categoria !== catSel) return false;
     if (!q) return true;
     return p.nombre.toLowerCase().includes(q) || p.sku.includes(q) || (p.codigo_barras||'').includes(q)
         || (p.presentacion||'').toLowerCase().includes(q);
@@ -380,7 +558,7 @@ function pintarGrid(){
 }
 function agregar(id){
   const p = porId[id];
-  if (!carrito[id]) carrito[id] = { cantidad: 1, costo: p.costo_promedio || 0 };
+  if (!carrito[id]) carrito[id] = { cantidad: 1, bonif: 0, gan: null, costo: p.costo_promedio || 0 };
   else carrito[id].cantidad += 1;
   pintarLineas();
 }
@@ -395,22 +573,82 @@ function cambiarCosto(id, v){
   carrito[id].costo = (n >= 0 && !isNaN(n)) ? n : 0;
   pintarLineas();
 }
+// Bonificación del proveedor: los "12+1", "100+20". Son unidades que llegan
+// y no se facturan, así que no suman al total pero sí al inventario.
+function cambiarBonif(id, v){
+  const n = parseFloat(v);
+  carrito[id].bonif = (n >= 0 && !isNaN(n)) ? n : 0;
+  pintarLineas();
+}
+// Ganancia sobre el costo, en %. 110 significa que el precio es 2,1 veces el
+// costo. Vacío = no se toca el precio del producto, que es el comportamiento
+// de siempre: cambiar precios tiene que ser algo que se pide, no un efecto
+// secundario de recibir mercadería.
+function cambiarGanancia(id, v){
+  const n = parseFloat(v);
+  carrito[id].gan = (v === '' || isNaN(n) || n < 0) ? null : n;
+  pintarLineas();
+}
+// Redondeo comercial a la centena, medio hacia arriba: ₡2.475 -> ₡2.500.
+// Es la misma regla que usa el ERP para calcular precios (catalogo/precios.py)
+// y la que ya seguía el Excel de AllPetCR en sus 532 filas.
+function redondear100(x){ return Math.round(x/100)*100; }
 function pintarLineas(){
   const ids = Object.keys(carrito);
   document.getElementById('lineas').innerHTML = ids.length ? ids.map(id=>{
     const p = porId[id], l = carrito[id];
+    const bonif = +l.bonif || 0;
+    const recibidas = (+l.cantidad || 0) + bonif;
+    // Cuando hay bonificación, el costo que importa no es el facturado: es lo
+    // pagado repartido entre todo lo que llegó. Se muestra para que quien
+    // recibe vea el número real con el que se va a poner precio.
+    const costoReal = recibidas > 0 ? (l.cantidad*l.costo)/recibidas : 0;
+    const dtoPct = recibidas > 0 ? bonif/recibidas*100 : 0;
+    const aviso = bonif > 0
+      ? `<div class="real">Entran <b>${recibidas}</b> unidades a un costo real de <b>${fmt(costoReal)}</b> c/u — equivale a un <b>${dtoPct.toFixed(1)}%</b> de descuento.</div>`
+      : '';
+
+    // El precio se calcula sobre el costo REAL (con la bonificación repartida),
+    // no sobre el facturado: si el proveedor regaló unidades, ese descuento
+    // tiene que llegar al precio y no quedarse trabado en la bodega.
+    const gan = (l.gan === null || l.gan === undefined) ? null : +l.gan;
+    let precioNuevo = null, margen = 0;
+    if (gan !== null && costoReal > 0){
+      precioNuevo = redondear100(costoReal * (1 + gan/100));
+      margen = precioNuevo > 0 ? (precioNuevo - costoReal)/precioNuevo*100 : 0;
+    }
+    // Ganancia que tiene HOY el producto, para que se vea con qué se compara.
+    const ganActual = (p.costo_promedio > 0 && p.precio_venta > 0)
+      ? ((p.precio_venta/p.costo_promedio - 1) * 100) : null;
+    const precioInfo = precioNuevo !== null
+      ? `<div class="precio-linea">Precio de venta: <b>${fmt(p.precio_venta)}</b> → <span class="nuevo">${fmt(precioNuevo)}</span> · margen <b>${margen.toFixed(0)}%</b> sobre la venta</div>`
+      : `<div class="precio-linea">Precio actual <b>${fmt(p.precio_venta)}</b>${ganActual !== null ? ` · ganancia de hoy <b>${ganActual.toFixed(0)}%</b>` : ''} · escribí una ganancia para recalcularlo</div>`;
+
     return `<div class="linea">
       <span class="nm">${esc(p.nombre)}</span>
       <span><span class="lbl">cant.</span><input type="number" min="0.01" step="any" value="${l.cantidad}" onchange="cambiarCantidad(${id}, this.value)"></span>
+      <span class="bonif"><span class="lbl">+ gratis</span><input type="number" min="0" step="any" value="${bonif}" onchange="cambiarBonif(${id}, this.value)"></span>
       <span><span class="lbl">costo</span><input type="number" min="0" step="any" value="${l.costo}" onchange="cambiarCosto(${id}, this.value)"></span>
+      <span class="gan"><span class="lbl">gan. %</span><input type="number" min="0" step="any" value="${gan === null ? '' : gan}" placeholder="${ganActual !== null ? ganActual.toFixed(0) : '—'}" onchange="cambiarGanancia(${id}, this.value)"></span>
       <span class="mt">${fmt(l.cantidad*l.costo)}</span>
-      <button class="x" onclick="quitarLinea(${id})">✕</button></div>`;
+      <button class="x" onclick="quitarLinea(${id})">✕</button></div>${aviso}${precioInfo}`;
   }).join('') : '<div class="empty"><span class="big">📦</span>Buscá o tocá un producto<br>para empezar a recibir</div>';
   const total = ids.reduce((a,id)=>a + carrito[id].cantidad*carrito[id].costo, 0);
   document.getElementById('totales').innerHTML = `<div class="tot g"><span>Total</span><span>${fmt(total)}</span></div>`;
 }
 async function registrar(){
-  const lineas = Object.entries(carrito).map(([id,l])=>({producto_id:+id, cantidad:l.cantidad, costo_unitario:l.costo}));
+  const lineas = Object.entries(carrito).map(([id,l])=>{
+    const bonif = +l.bonif || 0;
+    const recibidas = (+l.cantidad || 0) + bonif;
+    const costoReal = recibidas > 0 ? (l.cantidad*l.costo)/recibidas : 0;
+    const gan = (l.gan === null || l.gan === undefined) ? null : +l.gan;
+    return {
+      producto_id:+id, cantidad:l.cantidad, cantidad_bonificada:bonif, costo_unitario:l.costo,
+      // Solo viaja si el usuario escribió una ganancia. Sin eso, el precio del
+      // producto no se toca.
+      precio_venta: (gan !== null && costoReal > 0) ? redondear100(costoReal * (1 + gan/100)) : null,
+    };
+  });
   if (!lineas.length){ msg("Todavía no agregaste productos.", true); return; }
   const provSel = document.getElementById('proveedor').value;
   let proveedor_id = null, proveedor_nuevo = "";
@@ -454,7 +692,8 @@ document.getElementById('buscar').addEventListener('keydown', e=>{
   else { msg("No encontré ese producto: " + q, true); }
 });
 document.getElementById('buscar').focus();
-pintarChips();
+pintarPills();
+poblarCategorias();
 pintarGrid();
 pintarLineas();
 </script>

@@ -39,7 +39,17 @@ from .serializers import (
 class CatalogoProductosView(generics.ListAPIView):
     """Catálogo con paginación (PageNumberPagination, ver settings) y
     filtros por querystring: ?categoria=<id>&mascota=Gato&marca=Royal
-    Canin&q=<texto en nombre o sku>&disponible=1"""
+    Canin&q=<texto en nombre o sku>&incluir_agotados=1
+
+    Sin existencias por defecto (regla SOLO_EN_EXISTENCIA de Oscar, del
+    02/08/2026 — ver exportar_catalogo_web.py). El puente JSON viejo la
+    aplicaba; esta vista, agregada después en el Bloque 3, se había quedado
+    filtrando por stock solo si el cliente pedía `?disponible=1` — algo que
+    allpetcr-web nunca manda (lib/data.ts pide la ruta pelada), así que el
+    sitio, al pasar del JSON a esta API en vivo (Bloque 5), volvió a publicar
+    agotados sin que nadie lo pidiera. `incluir_agotados=1` es el
+    equivalente de `--incluir-agotados` en el comando de exportación, para
+    quien de verdad necesite verlos (ej. un panel interno)."""
 
     serializer_class = ProductoListaSerializer
 
@@ -57,7 +67,7 @@ class CatalogoProductosView(generics.ListAPIView):
         if busqueda := parametros.get("q"):
             from django.db.models import Q
             qs = qs.filter(Q(nombre__icontains=busqueda) | Q(sku__iexact=busqueda))
-        if parametros.get("disponible") == "1":
+        if parametros.get("incluir_agotados") != "1":
             qs = qs.filter(stock_actual__gt=0)
         return qs.order_by("nombre")
 

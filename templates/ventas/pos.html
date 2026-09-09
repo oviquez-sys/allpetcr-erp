@@ -277,6 +277,12 @@ const msg = (t, err) => { const m=document.getElementById('msg'); m.textContent=
 // completa — sin ella, un producto sin mascota asignada o para otra especie
 // quedaría inalcanzable desde los chips). Pedido de Oscar, 29/08/2026.
 let catActiva = "Todas";
+// Al escanear, la parrilla deja de mostrar el catálogo entero y muestra solo
+// lo que lleva esta venta (pedido de Oscar, 06/09/2026). El cajero compara
+// contra lo que el cliente puso en el mostrador, y 532 tarjetas de productos
+// que no está cobrando son ruido. Se desarma solo: al cobrar, al escribir en
+// la búsqueda, al tocar un chip, o con "Ver todo el catálogo".
+let soloEscaneados = false;
 const cats = ["Todas", "Perro", "Gato"];
 // Un producto con mascota "Perro y gato" tiene que aparecer en los dos
 // chips: es justo el caso de un arnés o una cama que sirve para cualquiera.
@@ -296,11 +302,25 @@ function pintarChips(){
     b.addEventListener('click', () => setCat(c));
     cont.appendChild(b);
   });
+  if (soloEscaneados && Object.keys(carrito).length) {
+    const v = document.createElement('button');
+    v.className = 'chip-f';
+    v.textContent = '← Ver todo el catálogo';
+    v.addEventListener('click', verTodo);
+    cont.appendChild(v);
+  }
 }
-function setCat(c){ catActiva = c; pintarChips(); pintarGrid(); }
+function setCat(c){ catActiva = c; soloEscaneados = false; pintarChips(); pintarGrid(); }
+function verTodo(){ soloEscaneados = false; pintarGrid(); volverAlEscaner(); }
 
 function filtrar(){
   const q = document.getElementById('buscar').value.toLowerCase().trim();
+  // Con la búsqueda vacía y algo ya escaneado, la parrilla ES la venta en
+  // curso. Escribir en la búsqueda sigue buscando en TODO el catálogo: un
+  // producto sin código de barras se encuentra igual que siempre.
+  if (!q && soloEscaneados && Object.keys(carrito).length) {
+    return productos.filter(p => carrito[p.id]);
+  }
   return productos.filter(p => {
     if (catActiva !== "Todas" && !coincideEspecie(p, catActiva)) return false;
     if (!q) return true;
@@ -309,6 +329,7 @@ function filtrar(){
   });
 }
 function pintarGrid(){
+  pintarChips();   // el botón "Ver todo el catálogo" aparece y se va con el modo
   const vivos = filtrar().slice(0, 150);
   document.getElementById('grid').innerHTML = vivos.map(p => {
     const disp = p.stock_actual - (carrito[p.id]?.cantidad || 0);
@@ -322,7 +343,9 @@ function pintarGrid(){
       <div class="cat">${esc(p.categoria)}</div>${pres}
       <div class="p">${fmt(p.precio_venta)}</div>
       <div class="s" data-stock="${p.id}">quedan ${disp}</div></div>`;
-  }).join('') || '<p class="empty">No hay productos con ese filtro. Probá otra categoría o borrá la búsqueda.</p>';
+  }).join('') || (soloEscaneados
+      ? '<p class="empty">Escaneá el siguiente producto, o tocá «Ver todo el catálogo».</p>'
+      : '<p class="empty">No hay productos con ese filtro. Probá otra categoría o borrá la búsqueda.</p>');
 }
 
 // refrescarStock() — rendimiento del catálogo.
@@ -458,17 +481,30 @@ async function cobrar(medio){
     if (d.ok){
       Object.entries(carrito).forEach(([id,c])=>{ porId[id].stock_actual -= c.cantidad; });
       carrito = {};
+      soloEscaneados = false;   // la venta terminó: vuelve el catálogo entero
       pintar();
       pintarGrid();   // acá sí toca rearmar el catálogo: bajó el stock de varios productos
       document.getElementById('cliente').value = '';
-      msg(`✅ Venta ${d.numero} por ${fmt(d.total)}. Abriendo tiquete…`);
-      window.open(d.tiquete_url, '_blank', 'width=420,height=640');
+      if (d.impreso){
+        msg(`✅ Venta ${d.numero} por ${fmt(d.total)}. Tiquete impreso.`);
+      } else {
+        // La venta YA quedó registrada: si la térmica falló se abre el tiquete
+        // en pantalla para no dejar al cliente sin comprobante mientras se
+        // resuelve la impresora.
+        msg(`⚠️ Venta ${d.numero} por ${fmt(d.total)} registrada, pero no salió el tiquete. ${d.error_impresion||''}`, true);
+        window.open(d.tiquete_url, '_blank', 'width=420,height=640');
+      }
       volverAlEscaner();   // listo para la siguiente venta sin tocar el mouse
     } else { msg("⛔ " + d.error, true); }
   } catch(e){ msg("⛔ No se pudo conectar con el servidor.", true); }
   document.querySelectorAll('.pagos button, #btnCredito').forEach(b=>b.disabled=false);
 }
-document.getElementById('buscar').addEventListener('input', pintarGrid);
+document.getElementById('buscar').addEventListener('input', () => {
+  // Escribir es buscar en todo el catálogo; si no, un producto sin código de
+  // barras quedaría inalcanzable en medio de una venta.
+  if (document.getElementById('buscar').value.trim()) soloEscaneados = false;
+  pintarGrid();
+});
 document.getElementById('buscar').addEventListener('keydown', e=>{
   if (e.key !== 'Enter') return;
   const q = e.target.value.trim();
@@ -476,7 +512,7 @@ document.getElementById('buscar').addEventListener('keydown', e=>{
   // La pistola escanea el código y da Enter: coincidencia EXACTA primero.
   let prod = productos.find(p => p.codigo_barras === q || p.sku === q);
   if (!prod){ const r = filtrar(); if (r.length === 1) prod = r[0]; }
-  if (prod){ agregar(prod.id); e.target.value=''; pintarGrid(); }
+  if (prod){ soloEscaneados = true; agregar(prod.id); e.target.value=''; pintarGrid(); }
   else { msg("No encontré ese producto: " + q, true); }
 });
 // Atajos de cobro. Con la pistola en una mano, las teclas de función evitan

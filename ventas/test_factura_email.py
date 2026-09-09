@@ -33,19 +33,32 @@ class FacturaEnviarTest(TestCase):
         self.client_django = Client()
         self.client_django.force_login(self.user)
 
-    def test_envio_exitoso(self):
+    @mock.patch("ventas.views.html_a_pdf", return_value=b"%PDF-1.4 recibo de prueba")
+    def test_envio_exitoso(self, _pdf):
+        """El recibo viaja como PDF adjunto y el cuerpo es texto (02/09/2026).
+
+        Antes el cuerpo era el HTML del recibo; Outlook lo dibuja con el motor
+        de Word y las columnas se montaban unas sobre otras. La prueba se
+        quedó pidiendo el comportamiento viejo y falló hasta el 05/09/2026.
+
+        El PDF se sustituye por un doble a propósito: si dependiera de que
+        Chromium esté instalado, la prueba pasaría o fallaría según la máquina
+        y dejaría de decir nada sobre el código.
+        """
         resp = self.client_django.post(f"/pos/factura/{self.factura.pk}/enviar/",
                                         {"destinatario": "cliente@ejemplo.com"})
-        print("STATUS:", resp.status_code)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
         enviado = mail.outbox[0]
-        print("Para:", enviado.to, "Asunto:", enviado.subject)
         self.assertEqual(enviado.to, ["cliente@ejemplo.com"])
         self.assertIn(self.factura.numero, enviado.subject)
         self.assertIn(self.factura.numero, enviado.body)
-        self.assertIn("3-101-999999", enviado.body)  # cédula en el cuerpo
-        self.assertEqual(enviado.content_subtype, "html")
+        # La cédula jurídica va en el cuerpo: es lo que identifica al emisor
+        # ante el cliente y ante Hacienda.
+        self.assertIn("3-101-999999", enviado.body)
+        self.assertEqual(enviado.content_subtype, "plain")
+        adjuntos = [nombre for nombre, _, _ in enviado.attachments]
+        self.assertEqual(adjuntos, [f"Recibo-{self.factura.numero}.pdf"])
         self.assertContains(resp, "Factura enviada a cliente@ejemplo.com")
 
     def test_sin_destinatario_no_manda_nada(self):

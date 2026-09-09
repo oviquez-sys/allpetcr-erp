@@ -25,7 +25,16 @@ from .models import Compra, LineaCompra, Proveedor
 
 @transaction.atomic
 def crear_compra(*, proveedor, sucursal, lineas, forma_pago="CON", factura_proveedor="", usuario=None) -> Compra:
-    """Crea la compra en borrador. lineas: dicts {producto, cantidad, costo_unitario}."""
+    """Crea la compra en borrador.
+
+    lineas: dicts {producto, cantidad, costo_unitario, cantidad_bonificada?}.
+
+    `cantidad` y `costo_unitario` son los de la FACTURA del proveedor, y de
+    ellos sale el total: así el asiento contable y la deuda con el proveedor
+    cuadran contra el papel que él va a cobrar. Las unidades bonificadas
+    (los "12+1") entran a bodega pero no suman al total, porque nadie las
+    cobra.
+    """
     if not lineas:
         raise ValidationError("La compra no tiene líneas.")
     empresa = sucursal.empresa
@@ -38,12 +47,17 @@ def crear_compra(*, proveedor, sucursal, lineas, forma_pago="CON", factura_prove
     for l in lineas:
         cantidad = Decimal(str(l["cantidad"]))
         costo = Decimal(str(l["costo_unitario"]))
+        bonificada = Decimal(str(l.get("cantidad_bonificada") or 0))
         if cantidad <= 0 or costo < 0:
             raise ValidationError("Cantidad o costo inválidos en una línea.")
+        if bonificada < 0:
+            raise ValidationError("La bonificación no puede ser negativa.")
+        # El total sale SOLO de lo facturado. Las bonificadas entran a bodega
+        # más abajo (recibir_compra), no acá.
         total_l = (cantidad * costo).quantize(Decimal("0.01"))
         LineaCompra.objects.create(
             compra=compra, producto=l["producto"], cantidad=cantidad,
-            costo_unitario=costo, total=total_l,
+            cantidad_bonificada=bonificada, costo_unitario=costo, total=total_l,
         )
         total += total_l
     compra.total = total
@@ -64,10 +78,20 @@ def recibir_compra(*, compra, usuario=None) -> Compra:
         raise ValidationError("La sucursal no tiene bodega configurada.")
 
     for linea in compra.lineas.select_related("producto"):
+        # Entra a bodega TODO lo que llegó (facturado + bonificado), valorado
+        # al costo real por unidad. Con una bonificación, ese costo es menor
+        # que el facturado: es el descuento repartido entre todas las
+        # unidades. Si en vez de esto entraran las facturadas a su costo y las
+        # bonificadas a cero, el costo promedio del producto quedaría inflado
+        # —y como el precio de venta se calcula sobre el costo, el descuento
+        # que consiguió el vendedor nunca llegaría al precio—.
         registrar_movimiento(
             producto=linea.producto, bodega=bodega, tipo="COM",
-            cantidad=linea.cantidad, costo_unitario=linea.costo_unitario,
-            referencia=compra.numero, usuario=usuario,
+            cantidad=linea.cantidad_recibida, costo_unitario=linea.costo_real_unitario,
+            referencia=compra.numero,
+            motivo=(f"Incluye {linea.cantidad_bonificada:g} bonificada(s) del proveedor"
+                    if linea.cantidad_bonificada else ""),
+            usuario=usuario,
         )
 
     empresa = compra.empresa
@@ -114,9 +138,12 @@ def anular_compra(*, compra, motivo, usuario=None) -> Compra:
 
     # Saca del kardex lo que había entrado (revienta si ya no hay stock).
     for linea in compra.lineas.select_related("producto"):
+        # Sale lo mismo que entró: facturado + bonificado. Sacar solo lo
+        # facturado dejaría las unidades regaladas en bodega sin compra que
+        # las respalde.
         registrar_movimiento(
             producto=linea.producto, bodega=bodega, tipo="DEV",
-            cantidad=-linea.cantidad, referencia=f"ANU-{compra.numero}",
+            cantidad=-linea.cantidad_recibida, referencia=f"ANU-{compra.numero}",
             motivo=f"Anulación de compra: {motivo.strip()}", usuario=usuario,
         )
 

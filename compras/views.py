@@ -11,6 +11,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from catalogo.models import Categoria, Producto
+from catalogo.services import cambiar_precio
 from core.imagenes import guardar_imagen_producto, url_imagen_producto
 from core.models import Empresa, Sucursal
 from core.roles import GERENTE, rol_requerido
@@ -117,21 +118,46 @@ def nueva(request):
     productos = list(
         Producto.objects.filter(activo=True, empresa=empresa)
         .select_related("categoria")
+        # `mascota` y `categoria__orden` viajan desde el 01/09/2026: la
+        # pantalla filtra primero por animal y después por categoría, igual
+        # que el POS y que el sitio web. Que las tres se recorran igual es lo
+        # que hace que el personal no tenga que aprender tres pantallas.
         .values("id", "sku", "nombre", "codigo_barras", "costo_promedio",
-                "stock_actual", "presentacion", "categoria__nombre", "imagen")
+                "stock_actual", "presentacion", "categoria__nombre",
+                "categoria__orden", "mascota", "precio_venta", "imagen")
     )
     for p in productos:
         p["costo_promedio"] = float(p["costo_promedio"])
+        p["precio_venta"] = float(p["precio_venta"])
         p["stock_actual"] = float(p["stock_actual"])
         p["categoria"] = p.pop("categoria__nombre") or "Sin categoría"
+        # Sin categoría al final: 999 es mayor que cualquier `orden` del árbol.
+        p["categoria_orden"] = p.pop("categoria__orden") or 999
+        p["mascota"] = p.get("mascota") or ""
         p["presentacion"] = p.get("presentacion") or ""
         p["imagen"] = url_imagen_producto(p["imagen"])
     proveedores = list(
         Proveedor.objects.filter(activo=True, empresa=empresa).values("id", "nombre").order_by("nombre")
     )
+    # TODAS las categorías del árbol, no solo las que hoy tienen productos
+    # (01/09/2026). Antes la lista se armaba a partir de `productos`, así que
+    # una categoría recién creada y todavía vacía —"Alimento", por ejemplo— no
+    # aparecía por ningún lado y no se le podía asignar nada. El pez que se
+    # muerde la cola: para salir en la lista necesitaba productos, y para
+    # tener productos necesitaba salir en la lista.
+    categorias = [
+        {
+            "id": c.id,
+            "nombre": c.nombre,
+            "padre": c.padre.nombre if c.padre else "",
+            "etiqueta": f"{c.padre.nombre} › {c.nombre}" if c.padre else c.nombre,
+        }
+        for c in Categoria.objects.select_related("padre").order_by("orden", "nombre")
+    ]
     return render(request, "compras/nueva.html", {
         "productos": productos,
         "proveedores": proveedores,
+        "categorias": categorias,
     })
 
 
@@ -158,11 +184,22 @@ def registrar(request):
         if not lineas_in:
             return JsonResponse({"ok": False, "error": "Agregá al menos un producto."}, status=400)
         lineas = []
+        precios_nuevos = []
         for l in lineas_in:
             producto = Producto.objects.get(pk=l["producto_id"], empresa=empresa)
+            # Precio de venta nuevo, si la pantalla lo calculó a partir del
+            # margen que puso el usuario. Se aplica DESPUÉS de recibir la
+            # compra (más abajo), nunca antes: si la recepción falla, el
+            # precio tampoco tiene que haber cambiado.
+            precio_nuevo = l.get("precio_venta")
+            if precio_nuevo:
+                precios_nuevos.append((producto, Decimal(str(precio_nuevo))))
             lineas.append({
                 "producto": producto,
                 "cantidad": l["cantidad"],
+                # Los "12+1" del proveedor. Ausente = 0: las compras sin
+                # bonificación siguen funcionando igual que siempre.
+                "cantidad_bonificada": l.get("cantidad_bonificada") or 0,
                 "costo_unitario": l["costo_unitario"],
             })
 
@@ -175,6 +212,24 @@ def registrar(request):
             usuario=request.user,
         )
         services.recibir_compra(compra=compra, usuario=request.user)
+
+        # Los precios, al final y uno por uno. Pasan por cambiar_precio para
+        # que cada uno quede firmado en el historial; si uno falla —precio
+        # igual al actual, por ejemplo— no arrastra a los demás ni tira abajo
+        # una compra que ya entró bien al inventario.
+        for producto, precio in precios_nuevos:
+            try:
+                cambiar_precio(
+                    producto=producto, nuevo_precio=precio, usuario=request.user,
+                    motivo=f"Recepción de mercadería {compra.numero}: margen aplicado al recibir",
+                )
+            except ValidationError as e:
+                # El caso normal: el precio calculado es igual al que ya tenía.
+                # No es un error, pero tampoco se calla (regla del proyecto,
+                # verificada en core/test_arquitectura.py).
+                logger.info("Precio de %s sin cambios en %s: %s", producto.sku, compra.numero, "; ".join(e.messages))
+            except Exception:  # noqa: BLE001
+                logger.exception("No se pudo actualizar el precio de %s en %s", producto.sku, compra.numero)
     except ValidationError as e:
         return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)
     except (json.JSONDecodeError, KeyError, Producto.DoesNotExist, Proveedor.DoesNotExist):
@@ -212,10 +267,25 @@ def producto_nuevo(request):
         if precio_venta <= 0:
             return JsonResponse({"ok": False, "error": "Poné un precio de venta válido."}, status=400)
 
+        # La categoría nueva puede colgar de una madre: así "Alimento seco"
+        # entra debajo de "Alimento" y no como otra raíz suelta. Sin esto, cada
+        # categoría creada desde acá ensuciaba el primer nivel del menú del
+        # sitio, que es justo lo que se acaba de ordenar.
         categoria = None
         cat_nombre = (datos.get("categoria") or "").strip()
         if cat_nombre:
-            categoria, _ = Categoria.objects.get_or_create(nombre=cat_nombre)
+            madre = None
+            madre_nombre = (datos.get("categoria_padre") or "").strip()
+            if madre_nombre:
+                madre = Categoria.objects.filter(nombre=madre_nombre).first()
+            categoria, creada = Categoria.objects.get_or_create(
+                nombre=cat_nombre,
+                # `orden` heredado de la madre + 1 para que quede pegada a
+                # ella; las raíces nuevas van al final (900).
+                defaults={"padre": madre, "orden": (madre.orden + 1) if madre else 900},
+            )
+            if creada:
+                logger.info("Categoría creada desde Recibir mercadería: %s (madre: %s)", cat_nombre, madre_nombre or "—")
 
         # Código interno autogenerado: el usuario no tiene que inventar un SKU.
         sku = _generar_sku()
