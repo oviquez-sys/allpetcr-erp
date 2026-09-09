@@ -13,5 +13,9 @@ djangorestframework>=3.15  # API del catálogo y pedidos para el sitio web, Bloq
 django-cors-headers>=4.4   # CORS de la API por variable de entorno, Bloque 3
 truststore>=0.9        # TLS contra el almacen de Windows: sin esto, un antivirus con inspeccion SSL rompe el envio de correos
 playwright>=1.47      # Chromium para imprimir el recibo a PDF con el diseno intacto (core/pdf.py)
-pywin32>=306          # imprimir en las impresoras de Windows (tiquete y etiquetas); solo Windows
+pywin32>=306; sys_platform == "win32"   # imprimir en las impresoras de Windows (tiquete y
+                       # etiquetas). El marcador sys_platform es obligatorio: pywin32 NO existe
+                       # para Linux y sin él "pip install -r requirements.txt" falla en el
+                       # servidor. impresion/windows.py ya lo importa solo al momento de
+                       # imprimir, así que el ERP levanta igual en un servidor sin impresora.
 Pillow>=10.0          # dibuja la etiqueta de 35x25 mm que se manda a la Xprinter

@@ -92,21 +92,18 @@ $RECYCLE.BIN/
 /ziP6XwC3
 *.zip.download
 
-# ---- Archivos de trabajo de sesión (NO son del proyecto) ----
-# Salidas de pruebas manuales, recibos de ensayo y respaldos sueltos que se
-# fueron acumulando en la raíz. No son código: son el resultado de correr algo
-# una vez. Además el repositorio es público, así que un recibo de prueba o una
-# carpeta de respaldo podría exponer datos reales del negocio.
+# ---- Salidas de pruebas manuales (NO son del proyecto) ----
+# Son el resultado de correr algo una vez, no código. Y como el repositorio es
+# público, un recibo de prueba o una carpeta de respaldo expondría datos reales
+# del negocio.
+#
+# OJO: los scripts _*.py y _*.ps1 de la raíz SÍ van al repositorio. No son
+# basura: los .bat de operación (RESPALDO_DIARIO, PROBAR_PDF, VERIFICAR_...)
+# los invocan por nombre, y core/test_manual_respaldos.py exige que
+# _prueba_restauracion.py exista. Excluirlos rompe el sistema de respaldos.
 /resultado_*.txt
 /Recibo-prueba.*
-/codigos_anteriores.csv
-/manta_3x2.html
-/_comparar_*.py
-/_probar_*.py
-/_prueba_*.py
-/_verificar_*.py
-/_respaldo_programado.py
-/_programar_respaldos.ps1
-/_respaldo_*/
-/_to_delete/
 /_usuario_sync.txt
+/_respaldo_20260825_2333/
+/_respaldo_previo_claude/
+/_to_delete/

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AllPetCR - Manta 3m x 2m</title>
+    <meta name="hz:slide-selector" content=".slide">
+    <meta name="hz:canvas-width" content="3000">
+    <meta name="hz:canvas-height" content="2000">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            background: #2a2a2a;
+        }
+
+        .slide {
+            width: 3000px;
+            height: 2000px;
+            background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Decoración de fondo sutil */
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 50%, rgba(218, 165, 32, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .contenido {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 60px;
+            padding: 100px;
+        }
+
+        .texto-proximo {
+            font-size: 120px;
+            font-weight: 300;
+            letter-spacing: 8px;
+            color: #ffffff;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 80px;
+            margin: 40px 0;
+        }
+
+        .logo-svg {
+            width: 400px;
+            height: 400px;
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
+        }
+
+        .marca {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 30px;
+        }
+
+        .marca-nombre {
+            font-size: 140px;
+            font-weight: 700;
+            color: #1a3a52;
+            letter-spacing: -2px;
+            line-height: 1;
+        }
+
+        .marca-dominio {
+            font-size: 60px;
+            color: #666666;
+            font-weight: 400;
+            margin-left: 10px;
+        }
+
+        .tagline {
+            font-size: 60px;
+            color: #daa520;
+            font-weight: 500;
+            letter-spacing: 2px;
+            margin-top: 40px;
+            font-style: italic;
+        }
+
+        /* Separador decorativo */
+        .separador {
+            width: 400px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #daa520, transparent);
+            margin: 60px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide">
+        <div class="contenido">
+            <!-- PRÓXIMAMENTE -->
+            <div class="texto-proximo">PRÓXIMAMENTE</div>
+
+            <!-- Logo + Marca -->
+            <div class="logo-container">
+                <!-- Logo SVG -->
+                <svg class="logo-svg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- P amarillo con perro y gato -->
+                    <defs>
+                        <linearGradient id="gradienteP" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#daa520;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#b8860b;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Fondo P -->
+                    <path d="M 80 60 Q 120 60 150 90 L 150 280 Q 120 310 80 310 L 80 60 Z M 150 60 Q 200 60 240 100 Q 260 120 260 160 Q 240 140 200 140 L 150 140 L 150 60 Z" fill="url(#gradienteP)" stroke="#b8860b" stroke-width="3"/>
+
+                    <!-- Perro blanco (lado izquierdo) -->
+                    <g transform="translate(120, 130)">
+                        <!-- Cabeza perro -->
+                        <circle cx="0" cy="-40" r="35" fill="white"/>
+                        <!-- Oreja izquierda -->
+                        <ellipse cx="-25" cy="-65" rx="15" ry="28" fill="white"/>
+                        <!-- Hocico -->
+                        <ellipse cx="0" cy="-25" rx="20" ry="18" fill="white"/>
+                        <!-- Ojos -->
+                        <circle cx="-12" cy="-45" r="5" fill="#1a3a52"/>
+                        <!-- Nariz -->
+                        <ellipse cx="0" cy="-20" rx="6" ry="5" fill="#1a3a52"/>
+                        <!-- Cuerpo -->
+                        <ellipse cx="0" cy="30" rx="28" ry="45" fill="white"/>
+                        <!-- Pata delantera -->
+                        <rect x="-15" y="70" width="12" height="35" fill="white" rx="6"/>
+                    </g>
+
+                    <!-- Gato azul oscuro (lado derecho) -->
+                    <g transform="translate(240, 160)">
+                        <!-- Cabeza gato -->
+                        <circle cx="0" cy="-35" r="32" fill="#1a3a52"/>
+                        <!-- Orejas triangulares -->
+                        <polygon points="0,-65 -18,-45 18,-45" fill="#1a3a52"/>
+                        <!-- Hocico -->
+                        <ellipse cx="0" cy="-15" rx="18" ry="16" fill="#1a3a52"/>
+                        <!-- Ojos -->
+                        <circle cx="-10" cy="-35" r="6" fill="white"/>
+                        <circle cx="10" cy="-35" r="6" fill="white"/>
+                        <!-- Pupilas -->
+                        <circle cx="-10" cy="-35" r="3" fill="#1a3a52"/>
+                        <circle cx="10" cy="-35" r="3" fill="#1a3a52"/>
+                        <!-- Nariz -->
+                        <polygon points="0,-10 -4,-5 4,-5" fill="#daa520"/>
+                        <!-- Bigotes -->
+                        <line x1="-15" y1="-10" x2="-35" y2="-12" stroke="white" stroke-width="2"/>
+                        <line x1="15" y1="-10" x2="35" y2="-12" stroke="white" stroke-width="2"/>
+                        <!-- Cuerpo sentado -->
+                        <ellipse cx="0" cy="25" rx="26" ry="40" fill="#1a3a52"/>
+                        <!-- Cola curva -->
+                        <path d="M 20 15 Q 45 20 50 -10" stroke="#1a3a52" stroke-width="18" fill="none" stroke-linecap="round"/>
+                        <!-- Barriguita blanca -->
+                        <ellipse cx="0" cy="30" rx="12" ry="25" fill="white" opacity="0.9"/>
+                    </g>
+                </svg>
+
+                <!-- Marca texto -->
+                <div class="marca">
+                    <div>
+                        <div class="marca-nombre">AllPet</div>
+                        <div class="marca-dominio">cr.com</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Separador -->
+            <div class="separador"></div>
+
+            <!-- Tagline -->
+            <div class="tagline">Todo para ellos, todo en un solo lugar 🐾</div>
+        </div>
+    </div>
+</body>
+</html>
