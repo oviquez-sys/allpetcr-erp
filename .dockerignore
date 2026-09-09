@@ -1,0 +1,25 @@
+# Lo que NO se copia al servidor. Sin esto la imagen se llena de cosas que
+# solo sirven en la computadora de la tienda y tarda mucho más en construirse.
+# Los patrones con / al inicio son solo de la carpeta raíz, para no borrar por
+# accidente archivos con la misma extensión que sí hacen falta adentro
+# (por ejemplo templates/ventas/correo_recibo.txt).
+.git
+.venv
+__pycache__
+*.pyc
+respaldos/
+media/
+logs/
+staticfiles/
+db.sqlite3*
+.env
+acceso-directo/
+auditoria/
+/_respaldo_*/
+/_to_delete/
+/*.bat
+/*.ps1
+/*.md
+/*.txt
+!requirements.txt
+/Recibo-prueba.*
