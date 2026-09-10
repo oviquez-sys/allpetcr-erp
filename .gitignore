@@ -107,3 +107,8 @@ $RECYCLE.BIN/
 /_respaldo_20260825_2333/
 /_respaldo_previo_claude/
 /_to_delete/
+
+# ---- Llaves y secretos (NUNCA a GitHub: el repositorio es público) ----
+# _subir_fotos_a_s3.py sí se versiona; las llaves que usa, no.
+/_llaves_spaces.py
+/_respaldo_traslado/
