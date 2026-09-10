@@ -47,10 +47,7 @@ USER allpet
 
 EXPOSE 8080
 
-# 2 procesos x 4 hilos. Suficiente para el equipo de la tienda; se sube
-# cuando haga falta. El timeout largo aguanta un reporte pesado.
-CMD ["gunicorn", "config.wsgi:application", \
-     "--bind", "0.0.0.0:8080", \
-     "--workers", "2", "--threads", "4", \
-     "--timeout", "120", \
-     "--access-logfile", "-", "--error-logfile", "-"]
+# El arranque (migraciones + servidor) vive en entrypoint.sh, versionado con
+# el código. Se invoca con "sh" para no depender del permiso de ejecución,
+# que Windows no conserva al subir a git.
+CMD ["sh", "/app/entrypoint.sh"]
