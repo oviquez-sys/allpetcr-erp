@@ -19,6 +19,7 @@ import os
 import shutil
 import sqlite3
 import subprocess
+import time
 import zipfile
 from datetime import datetime
 from pathlib import Path
@@ -165,6 +166,21 @@ class Command(BaseCommand):
             "Ya podés encender el sistema (python manage.py runserver)."
         ))
 
+    # Fragmentos del texto de error de pg_restore que indican un corte de
+    # conexión (red inestable, servidor administrado que reinició el backend,
+    # etc.) y no un problema real con el respaldo o los datos. Vale la pena
+    # reintentar automáticamente: exigirle a Oscar que vuelva a escribir la
+    # contraseña por un problema que se resuelve solo es fricción evitable.
+    _ERRORES_TRANSITORIOS = (
+        "servidor ha cerrado la conexión inesperadamente",
+        "server closed the connection unexpectedly",
+        "could not connect to server",
+        "no se pudo conectar con el servidor",
+        "connection reset by peer",
+        "connection timed out",
+        "terminating connection due to administrator command",
+    )
+
     def _restaurar_postgres(self, dump: Path):
         """Restaura el volcado con pg_restore, reemplazando lo que haya.
 
@@ -175,6 +191,16 @@ class Command(BaseCommand):
         pg_restore devuelve código distinto de cero por advertencias que no son
         errores reales (por ejemplo, intentar borrar algo que no existía). Por
         eso se revisa el texto del error en vez de confiar solo en el código.
+
+        Antes de restaurar se cierran las demás conexiones a esta base (por
+        ejemplo, las del ERP en línea) para que `--clean` no tenga que esperar
+        —o chocar— con algo que tiene una tabla abierta. Es inofensivo: Django
+        vuelve a conectarse solo en la siguiente consulta.
+
+        Si el corte fue de red (ver `_ERRORES_TRANSITORIOS`), se reintenta un
+        par de veces antes de rendirse — un raro corte momentáneo entre esta
+        computadora y el servidor no debería obligar a repetir todo el proceso
+        a mano.
         """
         cfg = settings.DATABASES["default"]
         entorno = os.environ.copy()
@@ -192,24 +218,75 @@ class Command(BaseCommand):
             f"--dbname={cfg['NAME']}",
             str(dump),
         ]
+
+        self._cerrar_otras_conexiones(cfg)
+
+        intentos = 3
+        espera = 5
+        for intento in range(1, intentos + 1):
+            try:
+                proceso = subprocess.run(
+                    comando, env=entorno, capture_output=True, text=True, timeout=1800
+                )
+            except FileNotFoundError:
+                raise CommandError(
+                    "No se encontró 'pg_restore'. Viene con PostgreSQL, en la misma\n"
+                    "carpeta que pg_dump. Agregala al PATH o definí PG_RESTORE_BIN."
+                )
+            except subprocess.TimeoutExpired:
+                raise CommandError("pg_restore tardó más de 30 minutos y se canceló.")
+
+            error_texto = (proceso.stderr or "").strip()
+            hubo_error_real = proceso.returncode != 0 and "error" in error_texto.lower()
+
+            if not hubo_error_real:
+                if error_texto:
+                    self.stdout.write(self.style.WARNING(
+                        "pg_restore reportó avisos (normalmente inofensivos):\n"
+                        + error_texto[:1000]
+                    ))
+                return
+
+            es_transitorio = any(p in error_texto.lower() for p in self._ERRORES_TRANSITORIOS)
+            if es_transitorio and intento < intentos:
+                self.stdout.write(self.style.WARNING(
+                    f"Se cortó la conexión durante la subida (intento {intento} de "
+                    f"{intentos}). Parece un corte de red momentáneo, no un problema "
+                    f"con los datos — reintentando en {espera} s...\n"
+                    f"  Detalle: {error_texto[:300]}"
+                ))
+                time.sleep(espera)
+                espera *= 3
+                self._cerrar_otras_conexiones(cfg)
+                continue
+
+            raise CommandError(f"pg_restore falló:\n{error_texto}")
+
+    def _cerrar_otras_conexiones(self, cfg):
+        """Cierra cualquier otra conexión abierta a esta base (p. ej. el ERP en
+        línea) antes de restaurar. Es un intento de cortesía, no crítico: si
+        falla (permisos, base recién creada, lo que sea), la restauración
+        sigue igual — pg_restore ya venía funcionando sin esto."""
         try:
-            proceso = subprocess.run(
-                comando, env=entorno, capture_output=True, text=True, timeout=1800
+            import psycopg2
+
+            con = psycopg2.connect(
+                host=cfg.get("HOST") or "localhost", port=cfg.get("PORT") or "5432",
+                user=cfg.get("USER") or "", password=cfg.get("PASSWORD") or "",
+                dbname=cfg["NAME"], connect_timeout=10,
             )
-        except FileNotFoundError:
-            raise CommandError(
-                "No se encontró 'pg_restore'. Viene con PostgreSQL, en la misma\n"
-                "carpeta que pg_dump. Agregala al PATH o definí PG_RESTORE_BIN."
-            )
-        except subprocess.TimeoutExpired:
-            raise CommandError("pg_restore tardó más de 30 minutos y se canceló.")
-        if proceso.returncode != 0 and "error" in (proceso.stderr or "").lower():
-            raise CommandError(f"pg_restore falló:\n{proceso.stderr.strip()}")
-        if proceso.stderr and proceso.stderr.strip():
-            self.stdout.write(self.style.WARNING(
-                "pg_restore reportó avisos (normalmente inofensivos):\n"
-                + proceso.stderr.strip()[:1000]
-            ))
+            con.autocommit = True
+            try:
+                cur = con.cursor()
+                cur.execute(
+                    "SELECT pg_terminate_backend(pid) FROM pg_stat_activity "
+                    "WHERE datname = %s AND pid <> pg_backend_pid()",
+                    (cfg["NAME"],),
+                )
+            finally:
+                con.close()
+        except Exception:
+            pass
 
     # --- FRA-003: la bitácora de la base viva no se pisa con la del respaldo ---
     #

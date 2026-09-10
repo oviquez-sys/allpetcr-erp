@@ -1,0 +1,5 @@
+Respaldo AllPetcr ERP
+Fecha: 09/09/2026 21:56:23
+Motor: PostgreSQL
+Base: allpetcr
+Fotos incluidas: 0
