@@ -14,7 +14,7 @@ from django.utils import timezone
 
 from . import etiqueta as _etiqueta
 from . import tiquete as _tiquete
-from . import windows
+from .models import TrabajoImpresion
 
 
 def prueba_recibos() -> None:
@@ -40,7 +40,15 @@ def prueba_recibos() -> None:
         _tiquete._texto("Acentos y simbolo: aeiou con tilde -> áéíóú ñ ¢1.000"), _tiquete.SALTO,
         _tiquete.SALTO, _tiquete.SALTO, _tiquete.CORTAR,
     ]
-    windows.enviar_crudo(settings.IMPRESORA_RECIBOS, b"".join(partes), "Prueba de recibos")
+    # Pasa por `servicio` y no por `windows` a propósito (10/09/2026): la
+    # prueba tiene que recorrer exactamente el mismo camino que un tiquete de
+    # verdad. Si la prueba imprimiera directo y la venta fuera por la cola del
+    # agente, una prueba en verde no probaría nada de lo que importa.
+    from . import servicio
+    servicio.enviar_crudo(
+        settings.IMPRESORA_RECIBOS, b"".join(partes),
+        "Prueba de recibos", TrabajoImpresion.PRUEBA,
+    )
 
 
 @dataclass
@@ -59,8 +67,9 @@ def prueba_etiquetas() -> None:
         alto_mm=settings.ETIQUETA_ALTO_MM,
         con_precio=settings.ETIQUETA_CON_PRECIO,
     )
-    windows.imprimir_imagen(
+    from . import servicio
+    servicio.enviar_imagen(
         settings.IMPRESORA_ETIQUETAS, imagen,
         settings.ETIQUETA_ANCHO_MM, settings.ETIQUETA_ALTO_MM,
-        "Etiqueta de prueba",
+        "Etiqueta de prueba", TrabajoImpresion.PRUEBA,
     )

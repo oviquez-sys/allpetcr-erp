@@ -15,6 +15,7 @@ Uso:
     python manage.py restaurar --archivo respaldo_allpetcr_20260721_200000.zip
     python manage.py restaurar --archivo ...zip --confirmar
 """
+import logging
 import os
 import shutil
 import sqlite3
@@ -286,7 +287,14 @@ class Command(BaseCommand):
             finally:
                 con.close()
         except Exception:
-            pass
+            # Seguir adelante está bien —pg_restore funcionaba sin esto—, pero
+            # en silencio no: si un día las restauraciones se traban esperando
+            # un candado, este aviso es el que dice que el intento de cerrar
+            # las otras conexiones nunca llegó a hacerse.
+            logging.getLogger(__name__).warning(
+                "No se pudieron cerrar las otras conexiones a la base antes de "
+                "restaurar; se sigue igual.", exc_info=True,
+            )
 
     # --- FRA-003: la bitácora de la base viva no se pisa con la del respaldo ---
     #

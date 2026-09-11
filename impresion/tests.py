@@ -20,7 +20,10 @@ from inventario.etiquetas import seleccionar_para_etiquetas
 from inventario.models import Bodega
 from inventario.services import registrar_movimiento
 
-from impresion import servicio
+from django.utils import timezone
+
+from impresion import cola, servicio
+from impresion.models import TrabajoImpresion
 from impresion.tiquete import bytes_tiquete
 
 
@@ -147,6 +150,17 @@ class SeleccionDeEtiquetas(TestCase):
 
 @override_settings(IMPRESORA_RECIBOS="Recibos de prueba", IMPRESORA_ETIQUETAS="Etiquetas de prueba")
 class ServicioDeImpresion(TestCase):
+    """El camino DIRECTO: el ERP corriendo en la misma máquina que las
+    impresoras. Desde el 10/09/2026 hay que decírselo explícitamente, porque
+    el servicio decide solo según si la máquina ve impresoras — y la máquina
+    donde corren las pruebas (Linux) no ve ninguna, así que sin este parche
+    los trabajos se irían a la cola del agente."""
+
+    def setUp(self):
+        parche = mock.patch("impresion.windows.disponible", return_value=True)
+        parche.start()
+        self.addCleanup(parche.stop)
+
     def test_el_tiquete_va_a_la_impresora_configurada(self):
         factura = _Factura([_Linea(_Producto("Snack"))])
         with mock.patch("impresion.windows.enviar_crudo") as enviado:
@@ -399,10 +413,15 @@ class EtiquetaDibujada(TestCase):
 
     def test_lleva_el_logo_arriba(self):
         """La franja de arriba trae el logotipo, no el nombre del producto."""
-        from impresion.etiqueta import ALTO_LOGO_MM, _logo, _mm_a_px, imagen_etiqueta
+        # El logo se movió a impresion/logotipo.py el 09/09/2026, cuando el
+        # tiquete empezó a usar el mismo que la etiqueta. Esta prueba siguió
+        # importándolo de etiqueta.py y quedó en rojo sin que nadie lo notara;
+        # corregido el 11/09/2026.
+        from impresion.etiqueta import ALTO_LOGO_MM, _mm_a_px, imagen_etiqueta
+        from impresion.logotipo import _pieza
 
-        self.assertIsNotNone(_logo("marca", 40), "falta impresion/marca/logo_marca.png")
-        self.assertIsNotNone(_logo("texto", 40), "falta impresion/marca/logo_texto.png")
+        self.assertIsNotNone(_pieza("marca", 40), "falta impresion/marca/logo_marca.png")
+        self.assertIsNotNone(_pieza("texto", 40), "falta impresion/marca/logo_texto.png")
 
         imagen = imagen_etiqueta(_Producto("Collar rojo", codigo_barras="ET-001"))
         franja = imagen.convert("L").crop((0, 0, imagen.width, _mm_a_px(ALTO_LOGO_MM + 2)))
@@ -417,13 +436,16 @@ class EtiquetaDibujada(TestCase):
         from pathlib import Path
 
         from impresion import etiqueta as modulo
+        from impresion import logotipo
 
-        original = modulo.CARPETA_MARCA
-        modulo.CARPETA_MARCA = Path(original) / "no-existe"
+        # La carpeta de la marca se movió a logotipo.py junto con el resto del
+        # logo (09/09/2026). Ver la nota de la prueba de arriba.
+        original = logotipo.CARPETA
+        logotipo.CARPETA = Path(original) / "no-existe"
         try:
             imagen = modulo.imagen_etiqueta(_Producto("Collar", codigo_barras="ET-001"))
         finally:
-            modulo.CARPETA_MARCA = original
+            logotipo.CARPETA = original
         self.assertEqual(imagen.size, (356, 254))
 
     def test_el_codigo_de_barras_cabe_en_el_ancho(self):
@@ -474,3 +496,137 @@ class PantallaDeEtiquetasSeDibuja(TestCase):
             "segun_stock": False, "solo_faltantes": False, "agotados": False,
         })
         self.assertIn("Collar rojo", html)
+
+
+# --------------------------------------------------------------------------
+# El camino del AGENTE (10/09/2026): el ERP corre en DigitalOcean y no ve las
+# impresoras de la tienda, así que deja el trabajo en una cola y el agente que
+# corre en el mostrador lo recoge.
+#
+# Estas pruebas corren SIN parchar `windows.disponible`: la máquina de pruebas
+# es Linux y no ve impresoras, que es exactamente la situación del servidor.
+# --------------------------------------------------------------------------
+@override_settings(IMPRESORA_RECIBOS="Recibos de prueba",
+                   IMPRESORA_ETIQUETAS="Etiquetas de prueba")
+class ColaDeImpresion(TestCase):
+    def test_sin_impresoras_el_tiquete_queda_en_la_cola(self):
+        """Lo importante es que NO reviente: la venta ya se registró."""
+        factura = _Factura([_Linea(_Producto("Snack"))])
+        servicio.imprimir_tiquete(factura)
+
+        trabajo = TrabajoImpresion.objects.get()
+        self.assertEqual(trabajo.tipo, TrabajoImpresion.TIQUETE)
+        self.assertEqual(trabajo.formato, TrabajoImpresion.CRUDO)
+        self.assertEqual(trabajo.estado, TrabajoImpresion.PENDIENTE)
+        self.assertEqual(trabajo.impresora, "Recibos de prueba")
+        # Los bytes son los mismos que saldrían por el camino directo.
+        self.assertIn(b"FE-0001", bytes(trabajo.contenido))
+
+    def test_cada_copia_de_etiqueta_es_un_trabajo(self):
+        """El agente imprime de a un papel: cuatro copias, cuatro trabajos."""
+        producto = _Producto("Snack", codigo_barras="7501234567890")
+        salidas = servicio.imprimir_etiqueta(producto, copias=4)
+
+        self.assertEqual(salidas, 4)
+        trabajos = TrabajoImpresion.objects.all()
+        self.assertEqual(trabajos.count(), 4)
+        primero = trabajos.first()
+        self.assertEqual(primero.formato, TrabajoImpresion.IMAGEN)
+        # El tamaño del papel viaja con el trabajo: es del diseño de la
+        # etiqueta, no de la máquina donde corre el agente.
+        self.assertAlmostEqual(primero.ancho_mm, 44.5)
+        self.assertAlmostEqual(primero.alto_mm, 31.8)
+        self.assertTrue(bytes(primero.contenido).startswith(b"\x89PNG"))
+
+    def test_un_trabajo_viejo_no_sale_a_destiempo(self):
+        """Encender la computadora a mediodía no debe escupir los tiquetes de
+        toda la mañana: el trabajo vencido se descarta, no se imprime."""
+        factura = _Factura([_Linea(_Producto("Snack"))])
+        servicio.imprimir_tiquete(factura)
+        TrabajoImpresion.objects.update(
+            vence_en=timezone.now() - timezone.timedelta(minutes=1)
+        )
+
+        self.assertEqual(cola.tomar_pendientes(), [])
+        self.assertEqual(
+            TrabajoImpresion.objects.get().estado, TrabajoImpresion.VENCIDO
+        )
+
+    def test_lo_que_se_toma_no_se_vuelve_a_entregar(self):
+        """Si el mismo trabajo se entregara dos veces, saldría impreso dos
+        veces y el cliente se llevaría dos tiquetes."""
+        servicio.imprimir_tiquete(_Factura([_Linea(_Producto("Snack"))]))
+
+        primera = cola.tomar_pendientes()
+        segunda = cola.tomar_pendientes()
+        self.assertEqual(len(primera), 1)
+        self.assertEqual(segunda, [])
+
+    def test_reportar_cierra_el_trabajo(self):
+        servicio.imprimir_tiquete(_Factura([_Linea(_Producto("Snack"))]))
+        trabajo = cola.tomar_pendientes()[0]
+
+        self.assertTrue(cola.reportar(trabajo.pk, ok=False, detalle="Sin papel"))
+        trabajo.refresh_from_db()
+        self.assertEqual(trabajo.estado, TrabajoImpresion.ERROR)
+        self.assertEqual(trabajo.detalle, "Sin papel")
+        self.assertIsNotNone(trabajo.terminado_en)
+
+
+@override_settings(IMPRESION_AGENTE_TOKEN="llave-de-prueba",
+                   IMPRESORA_RECIBOS="Recibos de prueba")
+class PuertasDelAgente(TestCase):
+    """La cola queda expuesta a internet: lo único que la protege es la llave."""
+
+    def setUp(self):
+        servicio.imprimir_tiquete(_Factura([_Linea(_Producto("Snack"))]))
+
+    def test_sin_llave_no_entrega_nada(self):
+        r = self.client.get(reverse("impresion:agente_pendientes"))
+        self.assertEqual(r.status_code, 401)
+        self.assertEqual(
+            TrabajoImpresion.objects.get().estado, TrabajoImpresion.PENDIENTE
+        )
+
+    def test_con_llave_equivocada_tampoco(self):
+        r = self.client.get(reverse("impresion:agente_pendientes"),
+                            headers={"x-agente-token": "otra-llave"})
+        self.assertEqual(r.status_code, 401)
+
+    @override_settings(IMPRESION_AGENTE_TOKEN="")
+    def test_sin_llave_configurada_la_puerta_queda_cerrada(self):
+        """Un despliegue al que se le olvidó la variable NO debe quedar con la
+        cola abierta a cualquiera."""
+        r = self.client.get(reverse("impresion:agente_pendientes"),
+                            headers={"x-agente-token": ""})
+        self.assertEqual(r.status_code, 401)
+
+    def test_con_la_llave_se_lleva_el_trabajo(self):
+        import base64
+
+        r = self.client.get(reverse("impresion:agente_pendientes"),
+                            headers={"x-agente-token": "llave-de-prueba"})
+        self.assertEqual(r.status_code, 200)
+        datos = r.json()
+        self.assertEqual(len(datos["trabajos"]), 1)
+        trabajo = datos["trabajos"][0]
+        self.assertEqual(trabajo["impresora"], "Recibos de prueba")
+        self.assertIn(b"FE-0001", base64.b64decode(trabajo["contenido_b64"]))
+        self.assertEqual(
+            TrabajoImpresion.objects.get().estado, TrabajoImpresion.TOMADO
+        )
+
+    def test_el_agente_reporta_como_le_fue(self):
+        import json
+
+        trabajo_id = TrabajoImpresion.objects.get().pk
+        r = self.client.post(
+            reverse("impresion:agente_resultado"),
+            data=json.dumps({"id": trabajo_id, "ok": True}),
+            content_type="application/json",
+            headers={"x-agente-token": "llave-de-prueba"},
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(
+            TrabajoImpresion.objects.get().estado, TrabajoImpresion.IMPRESO
+        )

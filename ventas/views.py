@@ -105,7 +105,14 @@ def vender(request):
     # cable flojo— la venta YA está registrada y NO se revierte por eso: se
     # avisa y el POS abre el tiquete en pantalla como respaldo. Anular una
     # venta buena porque no había papel sería mucho peor que un tiquete menos.
+    #
+    # Desde el 10/09/2026 el ERP corre en la nube y no ve la térmica: el
+    # tiquete queda en una cola y lo saca el agente de la tienda. Por eso hay
+    # que distinguir «impreso» de «encolado». Decirle al cajero «Tiquete
+    # impreso» cuando en realidad quedó en cola sería mentirle: si el agente
+    # está cerrado, él se entera cuando el cliente pide el comprobante.
     impreso, error_impresion = False, ""
+    encolado = impresion.por_agente()
     if settings.TIQUETE_AUTOMATICO:
         try:
             impresion.imprimir_tiquete(factura)
@@ -120,6 +127,7 @@ def vender(request):
         "total": float(factura.total),
         "tiquete_url": reverse("ventas:tiquete", args=[factura.pk]),
         "impreso": impreso,
+        "encolado": impreso and encolado,
         "error_impresion": error_impresion,
     })
 

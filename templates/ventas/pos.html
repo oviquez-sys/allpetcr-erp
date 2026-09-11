@@ -486,7 +486,11 @@ async function cobrar(medio){
       pintarGrid();   // acá sí toca rearmar el catálogo: bajó el stock de varios productos
       document.getElementById('cliente').value = '';
       if (d.impreso){
-        msg(`✅ Venta ${d.numero} por ${fmt(d.total)}. Tiquete impreso.`);
+        // "Enviado" y no "impreso" cuando pasa por el agente de la tienda: el
+        // ERP está en la nube y lo único que sabe es que lo dejó en la cola.
+        msg(d.encolado
+          ? `✅ Venta ${d.numero} por ${fmt(d.total)}. Tiquete enviado a la impresora.`
+          : `✅ Venta ${d.numero} por ${fmt(d.total)}. Tiquete impreso.`);
       } else {
         // La venta YA quedó registrada: si la térmica falló se abre el tiquete
         // en pantalla para no dejar al cliente sin comprobante mientras se

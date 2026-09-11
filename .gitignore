@@ -111,4 +111,5 @@ $RECYCLE.BIN/
 # ---- Llaves y secretos (NUNCA a GitHub: el repositorio es público) ----
 # _subir_fotos_a_s3.py sí se versiona; las llaves que usa, no.
 /_llaves_spaces.py
+/_llaves_agente.py
 /_respaldo_traslado/

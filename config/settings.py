@@ -491,3 +491,30 @@ TIQUETE_PAPEL_PUNTOS = int(os.environ.get("TIQUETE_PAPEL_PUNTOS", "576"))
 ETIQUETA_ANCHO_MM = float(os.environ.get("ETIQUETA_ANCHO_MM", "44.5"))
 ETIQUETA_ALTO_MM = float(os.environ.get("ETIQUETA_ALTO_MM", "31.8"))
 ETIQUETA_CON_PRECIO = os.environ.get("ETIQUETA_CON_PRECIO", "1") != "0"
+
+# --- Agente de impresión de la tienda (10/09/2026) ---
+#
+# Desde que el ERP vive en DigitalOcean, el servidor no ve el USB del
+# mostrador. Cuando el ERP detecta que no puede imprimir por sí mismo, deja el
+# trabajo en una cola y un programita en la computadora de la tienda
+# (AGENTE_IMPRESION.bat) lo recoge y lo manda a la impresora. Ver
+# impresion/models.py para el diseño completo.
+#
+# La llave la comparten el servidor y ese programita, y es lo único que
+# protege la cola: sin ella, las puertas del agente quedan CERRADAS (no
+# abiertas) — ver impresion/agente.py.
+IMPRESION_AGENTE_TOKEN = os.environ.get("IMPRESION_AGENTE_TOKEN", "")
+
+# Cuánto vale un trabajo antes de descartarse. Un tiquete que no salió en el
+# momento ya no sirve: la venta está registrada y el comprobante se puede
+# volver a mandar desde la factura. Sin esto, encender la computadora a
+# mediodía escupiría los tiquetes de toda la mañana de golpe.
+IMPRESION_VIGENCIA_MINUTOS = int(os.environ.get("IMPRESION_VIGENCIA_MINUTOS", "15"))
+
+# Cuántos días se guardan los trabajos ya terminados. Cada uno pesa cientos de
+# kilobytes (la imagen de la etiqueta); sin límite engordan todos los respaldos.
+IMPRESION_CONSERVAR_DIAS = int(os.environ.get("IMPRESION_CONSERVAR_DIAS", "7"))
+
+# Solo para probar el camino del agente desde una computadora que SÍ tiene las
+# impresoras conectadas. En el servidor no hace falta: allá se detecta solo.
+IMPRESION_FORZAR_AGENTE = os.environ.get("IMPRESION_FORZAR_AGENTE") == "1"

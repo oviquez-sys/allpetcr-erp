@@ -30,15 +30,41 @@ button{background:var(--acc);color:#fff;border:none;border-radius:9px;padding:9p
 <main>
   {% if messages %}{% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}{% endif %}
 
+  {% if d.por_agente %}
+  <div class="tarjeta">
+    <h2>🏪 La impresión pasa por la computadora de la tienda</h2>
+    <p class="nota" style="margin-top:0">
+      Este ERP corre en internet, así que no ve las impresoras del mostrador.
+      Los tiquetes y las etiquetas quedan en una cola y el programa
+      <b>AGENTE_IMPRESION.bat</b>, abierto en la computadora de la tienda, es
+      el que los saca en papel. Si esa ventana está cerrada, no sale nada.
+    </p>
+    {% if d.cola %}
+    <dl style="margin-top:12px">
+      <dt>Esperando ahora</dt>
+      <dd>{% if d.cola.pendientes %}<span class="mal">{{ d.cola.pendientes }} sin imprimir</span>
+          — revisá que el agente esté abierto en la tienda
+          {% else %}<span class="ok">nada pendiente</span>{% endif %}</dd>
+      {% if d.cola.ultimo_en %}
+      <dt>Último trabajo</dt>
+      <dd>{{ d.cola.ultimo_en|date:"d/m/Y H:i" }} — {{ d.cola.ultimo_estado }}</dd>
+      {% endif %}
+      <dt>Impresos (últimos días)</dt>
+      <dd>{{ d.cola.conteos.impreso }} · fallaron {{ d.cola.conteos.error }} · vencieron {{ d.cola.conteos.vencido }}</dd>
+    </dl>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <div class="tarjeta">
     <h2>Lo que ve el ERP</h2>
     <dl>
       <dt>Componente de Windows</dt>
-      <dd>{% if d.disponible %}<span class="ok">instalado</span>{% else %}<span class="mal">falta — corré INSTALAR_IMPRESION.bat</span>{% endif %}</dd>
+      <dd>{% if d.disponible %}<span class="ok">instalado</span>{% elif d.por_agente %}<span class="ok">no hace falta — imprime el agente</span>{% else %}<span class="mal">falta — corré INSTALAR_IMPRESION.bat</span>{% endif %}</dd>
       <dt>Recibos</dt>
-      <dd>{{ d.impresora_recibos }} — {% if d.recibos_ok %}<span class="ok">encontrada</span>{% else %}<span class="mal">no encontrada</span>{% endif %}</dd>
+      <dd>{{ d.impresora_recibos }}{% if d.recibos_ok %} — <span class="ok">encontrada</span>{% elif d.por_agente %} <span style="color:var(--ink2)">(la busca el agente en la tienda)</span>{% else %} — <span class="mal">no encontrada</span>{% endif %}</dd>
       <dt>Etiquetas</dt>
-      <dd>{{ d.impresora_etiquetas }} — {% if d.etiquetas_ok %}<span class="ok">encontrada</span>{% else %}<span class="mal">no encontrada</span>{% endif %}</dd>
+      <dd>{{ d.impresora_etiquetas }}{% if d.etiquetas_ok %} — <span class="ok">encontrada</span>{% elif d.por_agente %} <span style="color:var(--ink2)">(la busca el agente en la tienda)</span>{% else %} — <span class="mal">no encontrada</span>{% endif %}</dd>
       <dt>Tiquete al cobrar</dt>
       <dd>{% if d.tiquete_automatico %}automático{% else %}solo a pedido{% endif %}</dd>
     </dl>
