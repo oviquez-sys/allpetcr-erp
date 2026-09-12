@@ -63,7 +63,19 @@ def pendientes(request):
     except (TypeError, ValueError):
         cuantos = 5
 
-    trabajos = cola.tomar_pendientes(cuantos)
+    # Qué impresoras tiene realmente la máquina que pregunta. El agente las
+    # manda en cada consulta; así el trabajo espera a la computadora del
+    # mostrador en vez de que se lo lleve otra que no tiene el aparato
+    # (ver cola.tomar_pendientes).
+    #
+    # Si el parámetro no viene, no se filtra: es lo que permite probar la
+    # puerta a mano desde el navegador sin tener que inventarse la lista. El
+    # agente de verdad siempre lo manda.
+    impresoras = None
+    if "impresoras" in request.GET:
+        impresoras = [i.strip() for i in request.GET["impresoras"].split(",") if i.strip()]
+
+    trabajos = cola.tomar_pendientes(cuantos, impresoras)
     return JsonResponse({
         "ok": True,
         "trabajos": [

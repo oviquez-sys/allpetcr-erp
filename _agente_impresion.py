@@ -33,6 +33,7 @@ import json
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime
 from io import BytesIO
@@ -101,9 +102,28 @@ def imprimir(trabajo: dict) -> tuple[bool, str]:
         return False, f"{type(e).__name__}: {e}"
 
 
+def impresoras_de_esta_maquina() -> list:
+    """Las colas que esta computadora tiene instaladas ahora mismo.
+
+    Se le mandan al ERP en cada consulta para que solo le dé los trabajos que
+    esta máquina puede imprimir de verdad. Sin esto, el agente abierto en la
+    casa de Oscar se llevaría el tiquete de una venta hecha en la tienda y el
+    cliente se quedaría sin comprobante (ver cola.tomar_pendientes)."""
+    from impresion import windows
+
+    try:
+        return windows.listar_impresoras()
+    except Exception:
+        return []
+
+
 def una_vuelta() -> int:
     """Pide trabajos, los imprime y reporta. Devuelve cuántos imprimió."""
-    respuesta = _pedir("/impresion/agente/pendientes/?cuantos=5")
+    lista = ",".join(impresoras_de_esta_maquina())
+    respuesta = _pedir(
+        "/impresion/agente/pendientes/?cuantos=5&impresoras="
+        + urllib.parse.quote(lista)
+    )
     trabajos = respuesta.get("trabajos", []) if respuesta else []
     for t in trabajos:
         ok, detalle = imprimir(t)
@@ -143,8 +163,15 @@ def main():
 
     # Comprobación de arranque: es mejor enterarse acá de que la llave está
     # mal que descubrirlo con un cliente esperando el tiquete.
+    vistas = impresoras_de_esta_maquina()
+    if vistas:
+        anotar("Impresoras que veo en esta computadora: " + ", ".join(vistas))
+    else:
+        anotar("⚠ Esta computadora no tiene ninguna impresora instalada. "
+               "El agente igual se conecta, pero no va a recibir trabajos.")
+
     try:
-        _pedir("/impresion/agente/pendientes/?cuantos=1")
+        _pedir("/impresion/agente/pendientes/?cuantos=1&impresoras=")
         anotar("Conectado al ERP. Esperando trabajos…")
     except urllib.error.HTTPError as e:
         if e.code == 401:

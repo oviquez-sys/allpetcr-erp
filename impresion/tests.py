@@ -562,6 +562,57 @@ class ColaDeImpresion(TestCase):
         self.assertEqual(len(primera), 1)
         self.assertEqual(segunda, [])
 
+    # ---- Varias computadoras, unas solas impresoras (12/09/2026) ----------
+    # Oscar tiene su computadora, Francisco la suya, y más adelante habrá una
+    # de un empleado; las impresoras son las del mostrador. Si el agente que
+    # Oscar dejó abierto en la casa se lleva el tiquete de una venta hecha en
+    # la tienda, el cliente se queda sin comprobante y nadie se entera.
+
+    def test_una_maquina_sin_impresoras_no_se_lleva_nada(self):
+        """El agente de la casa de Oscar: ve cero impresoras, recibe cero
+        trabajos, y el tiquete sigue esperando a la máquina del mostrador."""
+        servicio.imprimir_tiquete(_Factura([_Linea(_Producto("Snack"))]))
+
+        self.assertEqual(cola.tomar_pendientes(impresoras=[]), [])
+        self.assertEqual(
+            TrabajoImpresion.objects.get().estado, TrabajoImpresion.PENDIENTE
+        )
+
+    def test_una_maquina_con_otras_impresoras_tampoco(self):
+        """Tener impresoras no alcanza: tiene que tener LA del trabajo."""
+        servicio.imprimir_tiquete(_Factura([_Linea(_Producto("Snack"))]))
+
+        tomados = cola.tomar_pendientes(impresoras=["Microsoft Print to PDF"])
+        self.assertEqual(tomados, [])
+        self.assertEqual(
+            TrabajoImpresion.objects.get().estado, TrabajoImpresion.PENDIENTE
+        )
+
+    def test_la_maquina_del_mostrador_si_se_lo_lleva(self):
+        servicio.imprimir_tiquete(_Factura([_Linea(_Producto("Snack"))]))
+
+        tomados = cola.tomar_pendientes(
+            impresoras=["Microsoft Print to PDF", "Recibos de prueba"]
+        )
+        self.assertEqual(len(tomados), 1)
+        self.assertEqual(
+            TrabajoImpresion.objects.get().estado, TrabajoImpresion.TOMADO
+        )
+
+    def test_cada_maquina_se_lleva_lo_suyo(self):
+        """Si un día el rollo de etiquetas queda en otra computadora, cada una
+        se lleva lo que puede imprimir y ninguna bloquea a la otra."""
+        servicio.imprimir_tiquete(_Factura([_Linea(_Producto("Snack"))]))
+        servicio.imprimir_etiqueta(
+            _Producto("Snack", codigo_barras="7501234567890"), copias=1
+        )
+
+        recibos = cola.tomar_pendientes(impresoras=["Recibos de prueba"])
+        etiquetas = cola.tomar_pendientes(impresoras=["Etiquetas de prueba"])
+
+        self.assertEqual([t.tipo for t in recibos], [TrabajoImpresion.TIQUETE])
+        self.assertEqual([t.tipo for t in etiquetas], [TrabajoImpresion.ETIQUETA])
+
     def test_reportar_cierra_el_trabajo(self):
         servicio.imprimir_tiquete(_Factura([_Linea(_Producto("Snack"))]))
         trabajo = cola.tomar_pendientes()[0]
@@ -615,6 +666,37 @@ class PuertasDelAgente(TestCase):
         self.assertEqual(
             TrabajoImpresion.objects.get().estado, TrabajoImpresion.TOMADO
         )
+
+    def test_la_puerta_respeta_la_lista_de_impresoras(self):
+        """Lo mismo que prueba la cola, pero por la puerta que usa el agente:
+        una máquina que no tiene la impresora se va con las manos vacías."""
+        r = self.client.get(
+            reverse("impresion:agente_pendientes"),
+            {"impresoras": "Microsoft Print to PDF"},
+            headers={"x-agente-token": "llave-de-prueba"},
+        )
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["trabajos"], [])
+        self.assertEqual(
+            TrabajoImpresion.objects.get().estado, TrabajoImpresion.PENDIENTE
+        )
+
+    def test_una_lista_vacia_no_es_lo_mismo_que_no_mandarla(self):
+        """`impresoras=` (máquina sin impresoras) da cero trabajos; no mandar
+        el parámetro los da todos, que es lo que permite probar a mano desde el
+        navegador. Confundir esos dos casos es justo el error que dejaría al
+        agente de la casa llevándose los tiquetes de la tienda."""
+        vacia = self.client.get(
+            reverse("impresion:agente_pendientes"), {"impresoras": ""},
+            headers={"x-agente-token": "llave-de-prueba"},
+        )
+        self.assertEqual(vacia.json()["trabajos"], [])
+
+        sin_parametro = self.client.get(
+            reverse("impresion:agente_pendientes"),
+            headers={"x-agente-token": "llave-de-prueba"},
+        )
+        self.assertEqual(len(sin_parametro.json()["trabajos"]), 1)
 
     def test_el_agente_reporta_como_le_fue(self):
         import json

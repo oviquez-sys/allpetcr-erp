@@ -55,8 +55,22 @@ def vencer_atrasados() -> int:
     ).update(estado=TrabajoImpresion.VENCIDO, terminado_en=ahora)
 
 
-def tomar_pendientes(cuantos: int = 5) -> list[TrabajoImpresion]:
+def tomar_pendientes(cuantos: int = 5, impresoras=None) -> list[TrabajoImpresion]:
     """Entrega los siguientes trabajos y los marca como tomados.
+
+    `impresoras` son las colas que la máquina que pregunta tiene realmente
+    instaladas. Solo se le dan los trabajos que esa máquina puede imprimir.
+
+    POR QUÉ ESE FILTRO (12/09/2026)
+        El ERP no lo usa una sola computadora: Oscar tiene la suya, Francisco
+        la suya, y más adelante habrá una de un empleado. Las impresoras son
+        UNAS, en el mostrador. Sin este filtro, el agente que Oscar dejó
+        abierto en su casa podía llevarse el tiquete de una venta hecha en la
+        tienda, fallar por no tener impresora, y dejar al cliente sin
+        comprobante — en silencio y sin que nadie entendiera por qué.
+
+        Con el filtro se acomoda solo: el trabajo espera hasta que pregunte la
+        máquina que tiene la impresora enchufada, sea cual sea.
 
     El bloqueo de filas es lo que evita que dos agentes —o el mismo agente con
     dos ventanas abiertas por error— se lleven el mismo tiquete y salga
@@ -70,6 +84,11 @@ def tomar_pendientes(cuantos: int = 5) -> list[TrabajoImpresion]:
     vencer_atrasados()
     with transaction.atomic():
         consulta = TrabajoImpresion.objects.filter(estado=TrabajoImpresion.PENDIENTE)
+        if impresoras is not None:
+            # `impresoras=[]` (una máquina sin ninguna impresora) tiene que
+            # dar cero trabajos, no todos: por eso se compara contra None y
+            # no contra lista vacía.
+            consulta = consulta.filter(impresora__in=list(impresoras))
         if connection.features.has_select_for_update_skip_locked:
             consulta = consulta.select_for_update(skip_locked=True)
         pendientes = list(consulta.order_by("creado_en")[:cuantos])

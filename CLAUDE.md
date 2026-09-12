@@ -138,6 +138,39 @@ agente en la caja — ese día se reemplaza ese archivo y nada más.
 - `PROBAR_IMPRESORAS.bat` — saca una prueba en papel de cada impresora.
 - `/impresion/estado/` — la misma comprobación desde el navegador (gerente).
 
+## El agente de impresión (10-12/09/2026)
+
+Ese día llegó: el ERP corre en DigitalOcean y el servidor de Nueva York no ve
+el USB del mostrador. El ERP ya no imprime: **encola**. `_agente_impresion.py`
+corre en la tienda, le pregunta al ERP cada 3 segundos si hay algo y lo manda a
+la impresora que tiene al lado.
+
+- El agente pregunta hacia afuera; nadie le abre un puerto a la tienda.
+- Es tonto a propósito: recibe bytes y los entrega. El diseño del tiquete y de
+  la etiqueta se arma en el servidor, así que cambiarlos no obliga a
+  actualizar nada en la tienda.
+- Los trabajos **vencen a los 15 minutos** (`IMPRESION_VIGENCIA_MINUTOS`):
+  encender la computadora a mediodía no debe escupir los tiquetes de la mañana.
+- Se protege con `IMPRESION_AGENTE_TOKEN` (en `_llaves_agente.py`, que NO se
+  sube: el repo es público). Sin la variable, las puertas quedan **cerradas**.
+
+**Hay varias computadoras y unas solas impresoras (12/09/2026).** Oscar tiene
+la suya, Francisco la suya y más adelante habrá una de un empleado; las
+impresoras viven en el mostrador. Por eso el agente manda en cada consulta la
+lista de impresoras que esa máquina tiene instaladas y el ERP solo le entrega
+los trabajos que puede imprimir de verdad (`cola.tomar_pendientes`). Sin ese
+filtro, el agente que Oscar dejó abierto en la casa se llevaba el tiquete de
+una venta hecha en la tienda, fallaba, y el cliente se quedaba sin comprobante
+sin que nadie entendiera por qué. Con el filtro, el agente se puede instalar en
+las tres computadoras sin pensarlo: cada una se lleva solo lo suyo.
+
+Cuidado con un detalle: en esa función `impresoras=[]` (máquina sin ninguna
+impresora) tiene que dar cero trabajos y `impresoras=None` (no se mandó la
+lista) tiene que darlos todos. Confundirlos revive el problema entero.
+
+- `AGENTE_IMPRESION.bat` — doble clic en la computadora de la tienda; se deja
+  abierto todo el día.
+
 ## Documentos del proyecto
 
 | Archivo | Para qué |
