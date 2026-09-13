@@ -19,11 +19,19 @@ echo   Al final corre el respaldo diario UNA VEZ para comprobar que
 echo   la tarea funciona de verdad, no solo que quedo escrita.
 echo.
 
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0_programar_respaldos.ps1"
+REM Toda la salida va tambien a un archivo (13/09/2026). Si la ventana se
+REM cierra sola —porque Windows la mata, porque el .ps1 revienta al arrancar o
+REM porque se abrio con doble clic sobre el archivo equivocado— sin esto no
+REM queda rastro de que paso y hay que adivinar. Con el archivo, se lee.
+set LOG=resultado_programar.txt
+
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0_programar_respaldos.ps1" > "%LOG%" 2>&1
+type "%LOG%"
 
 echo.
 echo   ------------------------------------------------------------
-echo   Copiale a Claude TODO lo que salio arriba.
+echo   Si la ventana se cerro antes de que leyeras esto, abri el
+echo   archivo resultado_programar.txt que quedo en esta carpeta.
 echo   ------------------------------------------------------------
 echo.
 pause
