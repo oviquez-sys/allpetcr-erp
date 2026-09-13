@@ -73,11 +73,22 @@ if (Registrar "AllPetCR - Respaldo semanal" "RESPALDO_SEMANAL.bat" `
     $hechas++
 }
 
+# 12/09/2026. Las dos tareas de arriba respaldan la base de ESTA computadora.
+# Desde que el ERP corre en DigitalOcean, las ventas del dia ya no pasan por
+# aca: el servidor se respalda solo y deja la copia en el bucket. Esta tercera
+# tarea es la que la baja a OneDrive, para que quede en otra empresa y otra
+# cuenta. Sin ella, el respaldo de la nube vive solo dentro de DigitalOcean.
+if (Registrar "AllPetCR - Traer respaldos del servidor" "TRAER_RESPALDOS_NUBE.bat" `
+      (New-ScheduledTaskTrigger -Daily -At "22:15") `
+      "Baja a OneDrive los respaldos que el servidor hace solo. Falla a proposito si dejan de llegar.") {
+    $hechas++
+}
+
 Write-Host ""
-if ($hechas -ne 2) {
-    Write-Host "No se pudieron registrar las dos tareas." -ForegroundColor Red
+if ($hechas -ne 3) {
+    Write-Host "No se pudieron registrar las tres tareas." -ForegroundColor Red
     Write-Host "Este archivo tiene que estar dentro de la carpeta del ERP,"
-    Write-Host "junto a RESPALDO_DIARIO.bat y RESPALDO_SEMANAL.bat."
+    Write-Host "junto a RESPALDO_DIARIO.bat, RESPALDO_SEMANAL.bat y TRAER_RESPALDOS_NUBE.bat."
     return
 }
 

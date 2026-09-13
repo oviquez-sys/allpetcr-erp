@@ -30,6 +30,13 @@ Puntos clave del diseño:
     PRODUCCION.txt para cómo crear el bucket y la llave. Sin esas variables,
     esta parte simplemente no corre — el respaldo local sigue igual que
     siempre.
+  * Si B2 no está configurado pero sí el bucket de fotos (variables AWS_*),
+    la copia sale para allá, a la carpeta "respaldos/" y con permiso privado
+    (12/09/2026). Es el destino que existe hoy sin abrir cuenta en ningún
+    lado, y es lo que permite que el SERVIDOR se respalde solo todos los días.
+  * Cuando corre en el servidor (DJANGO_PRODUCTION=1) y no hay ninguno de los
+    dos destinos, el comando FALLA. El disco del contenedor se borra en cada
+    despliegue: terminar "bien" ahí sería dar por protegido lo que no lo está.
 
 Uso:
     python manage.py respaldar
@@ -58,6 +65,17 @@ PREFIJO = "respaldo_allpetcr_"
 
 _VARIABLES_B2 = ("B2_BUCKET", "B2_KEY_ID", "B2_APPLICATION_KEY", "B2_ENDPOINT")
 
+# Segundo destino fuera de esta máquina: el bucket S3-compatible donde ya viven
+# las fotos (DigitalOcean Spaces, en este despliegue). Son las MISMAS variables
+# que usa el almacenamiento de fotos en config/settings.py, así que en el
+# servidor no hay nada nuevo que configurar.
+_VARIABLES_SPACES = ("AWS_STORAGE_BUCKET_NAME", "AWS_S3_ENDPOINT_URL",
+                     "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY")
+
+# Carpeta dentro del bucket. Separada de "productos/" para que se vea de un
+# vistazo qué es cada cosa y para poder rotar sin tocar las fotos.
+CARPETA_EN_LA_NUBE = "respaldos/"
+
 
 def carpeta_respaldos(destino=None) -> Path:
     if destino:
@@ -72,6 +90,20 @@ def _b2_configurado() -> bool:
     """Ausencia de configuración apaga el envío a B2, no lo rompe — mismo
     criterio que EMAIL_HOST_PASSWORD en config/settings.py."""
     return all(os.environ.get(v) for v in _VARIABLES_B2)
+
+
+def _spaces_configurado() -> bool:
+    return all(os.environ.get(v) for v in _VARIABLES_SPACES)
+
+
+def _corre_en_el_servidor() -> bool:
+    """En el servidor el disco del contenedor se borra en cada despliegue.
+
+    Ahí un respaldo que solo queda en disco NO es un respaldo: es un archivo
+    que desaparece con el próximo cambio que se suba. Por eso, cuando el
+    comando corre en producción, exige tener un destino fuera de la máquina
+    (ver handle)."""
+    return os.environ.get("DJANGO_PRODUCTION") == "1"
 
 
 def _copia_consistente_sqlite(db_path: Path, salida: Path):
@@ -173,6 +205,16 @@ class Command(BaseCommand):
         if borrados:
             self.stdout.write(f"Se borraron {borrados} respaldo(s) viejo(s); se conservan los últimos {opts['conservar']}.")
 
+        # A dónde sale la copia de esta máquina (12/09/2026)
+        #
+        # Orden a propósito: B2 primero porque es el destino más fuerte —otra
+        # empresa, llave "Write Only" y Object Lock, o sea que ni un
+        # administrador del servidor puede borrar lo ya subido—. Spaces es el
+        # segundo mejor: está en la misma cuenta de DigitalOcean, así que
+        # protege contra el borrado por error y contra perder el contenedor,
+        # pero no contra alguien con la cuenta entera. Se usa porque existe hoy
+        # y no requiere abrir cuenta en ningún lado: un respaldo bueno hoy vale
+        # más que uno perfecto el mes que viene.
         if _b2_configurado():
             try:
                 self._subir_a_b2(zip_path)
@@ -185,6 +227,30 @@ class Command(BaseCommand):
                     f"pudo subir a Backblaze B2: {e}"
                 )
             self.stdout.write(self.style.SUCCESS(f"Copia enviada a Backblaze B2: {zip_path.name}"))
+        elif _spaces_configurado():
+            try:
+                borrados_nube = self._subir_a_spaces(zip_path, opts["conservar"])
+            except (BotoCoreError, ClientError) as e:
+                raise CommandError(
+                    f"El respaldo local quedó bien ({zip_path.name}), pero no se "
+                    f"pudo subir al bucket de fotos: {e}"
+                )
+            self.stdout.write(self.style.SUCCESS(
+                f"Copia enviada a la nube: {CARPETA_EN_LA_NUBE}{zip_path.name}"
+            ))
+            if borrados_nube:
+                self.stdout.write(f"Se borraron {borrados_nube} copia(s) vieja(s) de la nube.")
+        elif _corre_en_el_servidor():
+            # Falla a propósito, y con código de salida distinto de cero, para
+            # que la tarea programada aparezca en rojo en el panel. Terminar
+            # "bien" dejando el zip en un disco que se va a borrar sería peor
+            # que no respaldar: daría por protegido lo que no lo está.
+            raise CommandError(
+                "Este respaldo corrió en el servidor y no hay a dónde mandarlo: "
+                "faltan las variables de Backblaze B2 o las del bucket de fotos. "
+                "El archivo se pierde con el próximo despliegue. Revisá la "
+                "configuración del trabajo programado."
+            )
 
     # --- respaldo a Backblaze B2 (FRA-005) ---
     def _subir_a_b2(self, zip_path: Path):
@@ -203,6 +269,52 @@ class Command(BaseCommand):
             aws_secret_access_key=os.environ["B2_APPLICATION_KEY"],
         )
         cliente.upload_file(str(zip_path), os.environ["B2_BUCKET"], zip_path.name)
+
+    # --- respaldo al bucket de fotos (Spaces) ---
+    def _subir_a_spaces(self, zip_path: Path, conservar: int) -> int:
+        """Sube el zip al bucket y borra las copias viejas. Devuelve cuántas borró.
+
+        ACL privado, no "public-read" como las fotos: en ese mismo bucket las
+        fotos de producto se sirven a internet, y este archivo lleva ventas,
+        clientes y contabilidad. Un descuido acá publicaría el negocio entero.
+        """
+        cliente = self._cliente_spaces()
+        bucket = os.environ["AWS_STORAGE_BUCKET_NAME"]
+        cliente.upload_file(
+            str(zip_path), bucket, CARPETA_EN_LA_NUBE + zip_path.name,
+            ExtraArgs={"ACL": "private"},
+        )
+        return self._rotar_en_spaces(cliente, bucket, conservar)
+
+    def _cliente_spaces(self):
+        return boto3.client(
+            "s3",
+            endpoint_url=os.environ["AWS_S3_ENDPOINT_URL"],
+            region_name=os.environ.get("AWS_S3_REGION_NAME") or None,
+            aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+        )
+
+    def _rotar_en_spaces(self, cliente, bucket: str, conservar: int) -> int:
+        """Deja solo las 'conservar' copias más nuevas en el bucket.
+
+        Sin esto la carpeta crece todos los días para siempre y la factura del
+        almacenamiento con ella. Un fallo al borrar se anota y no interrumpe:
+        el respaldo del día YA está subido, que es lo que importa."""
+        if conservar <= 0:
+            return 0
+        try:
+            pagina = cliente.list_objects_v2(Bucket=bucket, Prefix=CARPETA_EN_LA_NUBE)
+            objetos = [o for o in pagina.get("Contents", [])
+                       if o["Key"].endswith(".zip")]
+            objetos.sort(key=lambda o: o["LastModified"], reverse=True)
+            viejos = objetos[conservar:]
+            for o in viejos:
+                cliente.delete_object(Bucket=bucket, Key=o["Key"])
+            return len(viejos)
+        except (BotoCoreError, ClientError):
+            logger.warning("No se pudieron rotar los respaldos del bucket", exc_info=True)
+            return 0
 
     # --- respaldo de PostgreSQL ---
     def _volcar_postgres(self, tmp: Path):

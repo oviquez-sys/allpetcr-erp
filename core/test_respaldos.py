@@ -137,8 +137,9 @@ class RespaldoB2Test(RespaldoBase):
     comando arma la llamada correcta y que el respaldo local no depende
     de que B2 funcione."""
 
-    def test_sin_variables_b2_no_llama_a_boto3(self):
-        with mock.patch("core.management.commands.respaldar.boto3.client") as cliente_mock:
+    def test_sin_ningun_destino_configurado_no_llama_a_boto3(self):
+        with _sin_destinos_en_la_nube(), \
+             mock.patch("core.management.commands.respaldar.boto3.client") as cliente_mock:
             self._respaldar()
         cliente_mock.assert_not_called()
 
@@ -175,3 +176,92 @@ class RespaldoB2Test(RespaldoBase):
         self.assertEqual(len(zips), 1)
         with zipfile.ZipFile(zips[0]) as z:
             self.assertIn("db.sqlite3", z.namelist())
+
+
+_VARS_SPACES = {
+    "AWS_STORAGE_BUCKET_NAME": "allpetcr-fotos-prueba",
+    "AWS_S3_ENDPOINT_URL": "https://nyc3.digitaloceanspaces.com",
+    "AWS_S3_REGION_NAME": "nyc3",
+    "AWS_ACCESS_KEY_ID": "llave-de-prueba",
+    "AWS_SECRET_ACCESS_KEY": "secreto-de-prueba",
+}
+
+# Las variables de los dos destinos pueden estar puestas en la máquina donde
+# corren las pruebas (la de Oscar tiene las de Spaces en el entorno). Quitarlas
+# explícitamente es lo que hace que estas pruebas den lo mismo acá, en el
+# servidor y en la computadora de la tienda.
+def _sin_destinos_en_la_nube():
+    from core.management.commands.respaldar import _VARIABLES_B2, _VARIABLES_SPACES
+
+    return mock.patch.dict(
+        os.environ,
+        {v: "" for v in (*_VARIABLES_B2, *_VARIABLES_SPACES, "DJANGO_PRODUCTION")},
+    )
+
+
+class RespaldoALaNubeTest(RespaldoBase):
+    """El respaldo del SERVIDOR (12/09/2026).
+
+    El ERP dejó de correr en la tienda: corre en un contenedor que se borra
+    entero en cada despliegue. Un respaldo que solo queda en ese disco no
+    existe. Estas pruebas cuidan las tres reglas de esa decisión."""
+
+    def test_manda_la_copia_al_bucket_con_permiso_privado(self):
+        """En ese bucket las fotos son públicas. Si el zip saliera con el mismo
+        permiso, ventas, clientes y contabilidad quedarían en internet."""
+        with _sin_destinos_en_la_nube(), mock.patch.dict(os.environ, _VARS_SPACES), \
+             mock.patch("core.management.commands.respaldar.boto3.client") as cliente_mock:
+            cliente_mock.return_value.list_objects_v2.return_value = {"Contents": []}
+            self._respaldar()
+
+        zip_name = next(self.resp.glob("*.zip")).name
+        subir = cliente_mock.return_value.upload_file
+        subir.assert_called_once()
+        args, kwargs = subir.call_args
+        self.assertEqual(args[1], "allpetcr-fotos-prueba")
+        self.assertEqual(args[2], "respaldos/" + zip_name)
+        self.assertEqual(kwargs["ExtraArgs"]["ACL"], "private")
+
+    def test_b2_manda_y_el_bucket_no(self):
+        """Con los dos configurados gana B2: es el único destino que ni un
+        administrador del servidor puede borrar."""
+        with _sin_destinos_en_la_nube(), \
+             mock.patch.dict(os.environ, {**_VARS_SPACES, **_VARS_B2}), \
+             mock.patch("core.management.commands.respaldar.boto3.client") as cliente_mock:
+            self._respaldar()
+
+        args, kwargs = cliente_mock.return_value.upload_file.call_args
+        self.assertEqual(args[1], "allpetcr-respaldos-prueba")
+        self.assertNotIn("ExtraArgs", kwargs)
+
+    def test_borra_las_copias_viejas_del_bucket(self):
+        """Sin rotación la carpeta crece todos los días para siempre."""
+        viejos = [{"Key": f"respaldos/respaldo_allpetcr_2026090{i}_000000.zip",
+                   "LastModified": i} for i in range(1, 6)]
+        with _sin_destinos_en_la_nube(), mock.patch.dict(os.environ, _VARS_SPACES), \
+             mock.patch("core.management.commands.respaldar.boto3.client") as cliente_mock:
+            cliente_mock.return_value.list_objects_v2.return_value = {"Contents": viejos}
+            self._respaldar(conservar=2)
+
+        borradas = [k["Key"] for _, k in
+                    [(c.args, c.kwargs) for c in
+                     cliente_mock.return_value.delete_object.call_args_list]]
+        self.assertEqual(len(borradas), 3)
+        # Se borran los MÁS VIEJOS, nunca los recientes.
+        self.assertIn("respaldos/respaldo_allpetcr_20260901_000000.zip", borradas)
+        self.assertNotIn("respaldos/respaldo_allpetcr_20260905_000000.zip", borradas)
+
+    def test_en_el_servidor_sin_destino_el_respaldo_falla(self):
+        """La trampa que esto evita: la tarea programada diría "listo" todos los
+        días mientras el archivo se borra con el siguiente despliegue. Mejor en
+        rojo y a la vista."""
+        with _sin_destinos_en_la_nube(), \
+             mock.patch.dict(os.environ, {"DJANGO_PRODUCTION": "1"}):
+            with self.assertRaises(CommandError):
+                self._respaldar()
+
+    def test_en_la_computadora_de_la_tienda_sin_destino_sigue_estando_bien(self):
+        """Ahí el disco no se borra solo: el zip local ES el respaldo."""
+        with _sin_destinos_en_la_nube():
+            self._respaldar()
+        self.assertEqual(len(list(self.resp.glob("*.zip"))), 1)

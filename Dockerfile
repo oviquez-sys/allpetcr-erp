@@ -21,8 +21,22 @@ WORKDIR /app
 
 # Dependencias del sistema. libpq5 es lo que psycopg necesita para hablar con
 # PostgreSQL; las libjpeg/zlib son para que Pillow dibuje las etiquetas.
+#
+# postgresql-client-18 trae `pg_dump`, que es con lo que `manage.py respaldar`
+# saca la copia de la base (12/09/2026: antes no estaba y el respaldo diario
+# del servidor no habría podido correr). Tiene que ser la versión 18, la misma
+# del servidor de base de datos: pg_dump se niega a volcar una base más nueva
+# que él. Viene del repositorio oficial de PostgreSQL porque Debian 12 solo
+# trae la 15.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        libpq5 libjpeg62-turbo zlib1g \
+        libpq5 libjpeg62-turbo zlib1g curl ca-certificates gnupg \
+    && install -d /usr/share/postgresql-common/pgdg \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+         -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
+https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
+         > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update && apt-get install -y --no-install-recommends postgresql-client-18 \
     && rm -rf /var/lib/apt/lists/*
 
 # Las dependencias primero y solas: así, mientras requirements.txt no cambie,

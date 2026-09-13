@@ -171,6 +171,42 @@ lista) tiene que darlos todos. Confundirlos revive el problema entero.
 - `AGENTE_IMPRESION.bat` — doble clic en la computadora de la tienda; se deja
   abierto todo el día.
 
+## Respaldos, después de la mudanza al servidor (12/09/2026)
+
+Hasta esta fecha los respaldos los sacaba la computadora de Oscar. Eso dejó de
+proteger el negocio el día que el ERP se mudó a DigitalOcean: las ventas pasaron
+a ocurrir en la base de la nube, y la tarea de su computadora seguía copiando la
+base **local** —la vieja— en verde todos los días. Un respaldo que no falla y no
+protege es peor que no tener ninguno: da por cubierto lo que no lo está.
+
+Ahora hay tres capas, y cada una cubre lo que la anterior no:
+
+| Capa | Qué protege | Dónde vive | Cuánto dura |
+|---|---|---|---|
+| Respaldo automático de DigitalOcean | que se caiga la base | misma cuenta | 7 días |
+| `manage.py respaldar` en el servidor, diario | borrado por error, mudanza | bucket Spaces, carpeta `respaldos/` | 30 copias |
+| `TRAER_RESPALDOS_NUBE.bat` en la tienda, diario | perder la cuenta de DigitalOcean entera | OneDrive de Oscar | 60 copias |
+
+Detalles que no hay que perder:
+
+- El respaldo del servidor va **sin fotos** (`--sin-fotos`): las fotos ya viven
+  en el bucket y pesan 130 MB. Lo que cambia todos los días se respalda todos
+  los días; lo que cambia poco, poco.
+- El zip sube con permiso **privado**. En ese mismo bucket las fotos de producto
+  son públicas; el zip lleva ventas, clientes y contabilidad.
+- Si el comando corre en el servidor y no hay a dónde mandar la copia, **falla a
+  propósito**. El disco del contenedor se borra en cada despliegue: terminar
+  "bien" ahí sería mentir.
+- `pg_dump` tiene que ser de PostgreSQL **18**, igual que el servidor de base.
+  Por eso el Dockerfile agrega el repositorio oficial de PostgreSQL; Debian 12
+  solo trae la 15 y pg_dump se niega a volcar una base más nueva que él.
+- Backblaze B2 sigue siendo el destino preferido (llave "Write Only" + Object
+  Lock: ni un administrador puede borrar lo subido). Si esas variables están
+  puestas, gana B2 y el bucket no se usa. Falta abrir la cuenta.
+- La tarea de la tienda **falla a propósito** si el respaldo más reciente del
+  servidor tiene más de 36 horas, y manda un correo. Es la única señal de que
+  el trabajo del servidor dejó de correr.
+
 ## Documentos del proyecto
 
 | Archivo | Para qué |
