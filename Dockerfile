@@ -26,18 +26,29 @@ WORKDIR /app
 # saca la copia de la base (12/09/2026: antes no estaba y el respaldo diario
 # del servidor no habría podido correr). Tiene que ser la versión 18, la misma
 # del servidor de base de datos: pg_dump se niega a volcar una base más nueva
-# que él. Viene del repositorio oficial de PostgreSQL porque Debian 12 solo
-# trae la 15.
+# que él, y Debian no trae la 18, así que viene del repositorio oficial de
+# PostgreSQL.
+#
+# El nombre de la versión de Debian se LEE de la propia imagen
+# ($VERSION_CODENAME) en vez de escribirlo a mano. El 13/09/2026 estaba escrito
+# "bookworm" (Debian 12) y el despliegue falló: python:3.12-slim ya venía sobre
+# Debian 13, y los paquetes de bookworm pedían una librería (libldap-2.5) que
+# ahí no existe. Escribir a mano la versión del sistema operativo es una bomba
+# de tiempo — se rompe sola el día que la imagen base avanza.
+#
+# `pg_dump --version` al final no es adorno: si algún día el repositorio deja
+# de tener la versión 18, es preferible que el despliegue falle acá, a la vista,
+# y no a las 3 de la mañana cuando le toque al respaldo.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        libpq5 libjpeg62-turbo zlib1g curl ca-certificates gnupg \
+        libpq5 libjpeg62-turbo zlib1g curl ca-certificates \
     && install -d /usr/share/postgresql-common/pgdg \
     && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc \
          -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
-    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] \
-https://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(. /etc/os-release && echo $VERSION_CODENAME)-pgdg main" \
          > /etc/apt/sources.list.d/pgdg.list \
     && apt-get update && apt-get install -y --no-install-recommends postgresql-client-18 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && pg_dump --version
 
 # Las dependencias primero y solas: así, mientras requirements.txt no cambie,
 # reconstruir la imagen no vuelve a bajar todo (los despliegues son rápidos).
