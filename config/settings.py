@@ -186,6 +186,23 @@ if os.environ.get("POSTGRES_HOST"):
             "USER": os.environ.get("POSTGRES_USER", "allpetcr"),
             "PASSWORD": os.environ.get("POSTGRES_PASSWORD", ""),
             "PORT": os.environ.get("POSTGRES_PORT", "5432"),
+            # Keepalives de TCP (19/09/2026). Los scripts "_..._en_servidor.py"
+            # abren UNA conexión larga desde la casa de Oscar hasta el
+            # servidor en Nueva York y hacen cientos de operaciones una por
+            # una; sin paquetes de keepalive, un router/NAT casero puede dar
+            # por muerta una conexión que estuvo un rato sin tráfico visible
+            # para él y cortarla en silencio. Postgres entonces la ve
+            # "cerrada de golpe" (`server closed the connection
+            # unexpectedly`) a mitad de una operación cualquiera — pasó dos
+            # veces, en dos comandos distintos, siempre a mitad de un loop
+            # largo. Con esto el sistema operativo manda un paquete cada 30s
+            # de inactividad para mantener la conexión viva de verdad.
+            "OPTIONS": {
+                "keepalives": 1,
+                "keepalives_idle": 30,
+                "keepalives_interval": 10,
+                "keepalives_count": 5,
+            },
         }
     }
 else:

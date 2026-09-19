@@ -1,0 +1,10 @@
+# Los .bat los ejecuta cmd.exe leyendo el archivo del disco, y necesita el
+# salto de línea de Windows. Con saltos de línea de Linux, un bloque
+# "if (...)" de varias líneas se parte y la ventana se cierra SIN ejecutar
+# nada y sin dejar registro — pasó el 13/09/2026 con TRAER_RESPALDOS_NUBE.bat
+# y costó una hora encontrarlo, porque el síntoma es "no hace nada".
+#
+# Con esta regla, git entrega siempre esos archivos con CRLF al sacarlos del
+# repositorio, sin depender de la configuración de la computadora.
+*.bat text eol=crlf
+*.ps1 text eol=crlf

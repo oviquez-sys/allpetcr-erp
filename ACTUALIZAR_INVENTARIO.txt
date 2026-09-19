@@ -16,6 +16,39 @@ de columnas son otros, y los comandos nuevos lo rechazan a propósito.
 
 
 ───────────────────────────────────────────────────────────────────────────
+ OJO: PARA UNA COMPRA NUEVA NO SE USA ESTE COMANDO   (18/09/2026)
+───────────────────────────────────────────────────────────────────────────
+
+`sincronizar_inventario` mantiene el CATÁLOGO COMPLETO contra el Excel
+maestro (`data/INVENTARIO_ALLPETCR.xlsx`, hoja "Inventario Claude").
+
+Cuando lo que llega es UNA COMPRA —una factura del proveedor con sus
+líneas— el comando correcto es otro:
+
+    python manage.py cargar_compra_19_09 --dry-run --con-existencias
+    python manage.py cargar_compra_19_09 --con-existencias
+
+Lee `data/PRECIOS_AllPetCR.xlsx`, hoja "Precios" (columnas de la factura y
+del trabajo de márgenes, otra forma completamente distinta), y:
+
+  · Crea los productos nuevos y los que vuelven; actualiza los que ya
+    estaban SIN borrarles categoría, mascota ni descripción con celdas
+    vacías.
+  · Traduce las 12 categorías DE MARGEN del Excel a las raíces oficiales
+    del árbol. Nunca crea una raíz: si falta, se detiene.
+  · Mete la mercadería como COMPRA RECIBIDA (kardex tipo COM, costo
+    promedio recalculado, asiento contable, documento con el n.º de
+    factura). Recibir SUMA, no iguala. Se reversa anulando la compra.
+  · Se niega a correr si ya hay una compra con el mismo número de factura:
+    recibir dos veces la misma factura duplicaría las existencias.
+
+Desde la computadora de Oscar, con doble clic y apuntando al servidor:
+`CARGAR_COMPRA_19_09.bat` y después `CARGAR_FOTOS_EDITADAS.bat`.
+
+Detalle completo, decisiones y pendientes: doc del proyecto
+"Carga de la compra del 19/09/2026 al ERP".
+
+───────────────────────────────────────────────────────────────────────────
  DESDE QUE LA TIENDA ABRA: SIEMPRE CON --sin-stock   (01/09/2026)
 ───────────────────────────────────────────────────────────────────────────
 
