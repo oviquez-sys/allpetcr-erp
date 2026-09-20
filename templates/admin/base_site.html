@@ -16,6 +16,8 @@
 
 {% block extrahead %}
 <link rel="stylesheet" href="{% static 'css/allpetcr.css' %}">
+<link rel="stylesheet" href="{% static 'css/fotos.css' %}">
+<script src="{% static 'js/fotos.js' %}"></script>
 <style>
 /* --- Tema ALLPETCR sobre el admin de Django: barra blanca, acentos azules.
    Los colores/sombras/radios NO se redeclaran acá: vienen de allpetcr.css
@@ -102,6 +104,9 @@ body.dashboard #content-main .module{margin-bottom:0}
 input[type=text],input[type=number],input[type=email],input[type=password],input[type=url],textarea,select{
   border:1px solid var(--line) !important;border-radius:10px !important;padding:9px 12px !important
 }
+/* El admin de Django fija la altura del select y el texto salía cortado por
+   abajo al sumarle este padding (visto en Ajuste de inventario, 20/09/2026). */
+select{height:auto !important;min-height:38px;line-height:1.3}
 input:focus,textarea:focus,select:focus{border-color:var(--brand) !important;box-shadow:0 0 0 3px rgba(11,49,97,.12)}
 .submit-row{background:transparent;border:none;padding:18px 0 0}
 
@@ -111,34 +116,14 @@ ul.messagelist li.success{background:rgba(52,199,89,.12);color:#1c6b30}
 ul.messagelist li.warning{background:rgba(255,159,10,.14);color:#8a5700}
 ul.messagelist li.error{background:rgba(255,59,48,.1);color:#b5231a}
 
-.product-img-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;padding:20px}
-.product-img-modal.open{display:flex}
-.product-img-modal img{max-width:96vw;max-height:92vh;min-width:min(480px,90vw);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
-.product-img-modal-close{position:absolute;top:20px;right:30px;font-size:40px;color:#fff;cursor:pointer;background:none;border:none;padding:0;font-weight:300;line-height:1}
-.product-img-modal-close:hover{opacity:.7}
-.clickable-product-img{cursor:pointer;transition:opacity .2s}
-.clickable-product-img:hover{opacity:.8}
 </style>
 {% endblock %}
 
 {% block extrabody %}
-<!-- Modal global para imágenes de productos -->
-<div class="product-img-modal" id="productImgModal" onclick="if(event.target === this) this.classList.remove('open')">
-  <button class="product-img-modal-close" onclick="document.getElementById('productImgModal').classList.remove('open')">×</button>
-  <img id="productImgModalContent" alt="">
-</div>
+<!-- Fotos de producto: el modal para ampliarlas y el respaldo si una
+     miniatura no carga viven en static/js/fotos.js (20/09/2026). -->
 <script>
 (function() {
-  var modal = document.getElementById('productImgModal');
-  var imgContent = document.getElementById('productImgModalContent');
-  if(modal && imgContent){
-    document.addEventListener('click', function(e) {
-      if(e.target && e.target.classList && e.target.classList.contains('clickable-product-img')) {
-        modal.classList.add('open');
-        imgContent.src = e.target.src;
-      }
-    });
-  }
   // La miga "Inicio" del admin lleva al panel principal del ERP, no al índice de Django.
   document.querySelectorAll('div.breadcrumbs a').forEach(function(a){
     var t = (a.textContent || '').trim().toLowerCase();

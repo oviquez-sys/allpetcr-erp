@@ -54,11 +54,7 @@ tbody tr:hover{background:#f9fafb}
         <tr onclick="window.location='/admin/catalogo/producto/{{ p.pk }}/change/'">
           <td>
             <div class="st-cell">
-              {% if p.imagen %}
-                <img src="{{ MEDIA_URL }}{{ p.imagen }}" alt="" class="st-img">
-              {% else %}
-                <div class="st-img ph">🐾</div>
-              {% endif %}
+              {% foto_producto p 42 "clickable-product-img" %}
               <div>
                 <div class="st-name">{{ p.nombre }}</div>
                 <div class="st-cat">{% if p.categoria %}{{ p.categoria.nombre }}{% else %}Sin categoría{% endif %}</div>

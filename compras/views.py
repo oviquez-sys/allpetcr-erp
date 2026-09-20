@@ -12,7 +12,7 @@ from django.views.decorators.http import require_POST
 
 from catalogo.models import Categoria, Producto
 from catalogo.services import cambiar_precio
-from core.imagenes import guardar_imagen_producto, url_imagen_producto
+from core.imagenes import completar_foto, datos_foto, guardar_imagen_producto
 from core.models import Empresa, Sucursal
 from core.roles import GERENTE, rol_requerido
 from core.tenancy import documento_de_empresa, empresa_actual
@@ -124,7 +124,7 @@ def nueva(request):
         # que hace que el personal no tenga que aprender tres pantallas.
         .values("id", "sku", "nombre", "codigo_barras", "costo_promedio",
                 "stock_actual", "presentacion", "categoria__nombre",
-                "categoria__orden", "mascota", "precio_venta", "imagen")
+                "categoria__orden", "mascota", "precio_venta", "imagen", "actualizado_en")
     )
     for p in productos:
         p["costo_promedio"] = float(p["costo_promedio"])
@@ -135,7 +135,7 @@ def nueva(request):
         p["categoria_orden"] = p.pop("categoria__orden") or 999
         p["mascota"] = p.get("mascota") or ""
         p["presentacion"] = p.get("presentacion") or ""
-        p["imagen"] = url_imagen_producto(p["imagen"])
+        completar_foto(p)
     proveedores = list(
         Proveedor.objects.filter(activo=True, empresa=empresa).values("id", "nombre").order_by("nombre")
     )
@@ -335,6 +335,6 @@ def producto_nuevo(request):
             "codigo_barras": producto.codigo_barras, "costo_promedio": 0.0,
             "stock_actual": 0.0, "presentacion": producto.presentacion,
             "categoria": categoria.nombre if categoria else "Sin categoría",
-            "imagen": url_imagen_producto(producto.imagen),
+            **datos_foto(producto),
         },
     })

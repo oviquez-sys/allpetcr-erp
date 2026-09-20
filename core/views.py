@@ -16,7 +16,7 @@ from . import arqueo as arq
 from . import evidencia as ev
 from . import reportes as rep
 from . import reposicion as repos
-from .chat_tools import ejecutar_herramienta, herramientas_para
+from .chat_tools import ejecutar_herramienta, herramientas_para, skus_mencionados, tarjetas_de_productos
 from .dashboard import indicadores
 from .models import ChatMensaje
 from .tenancy import empresa_actual
@@ -314,7 +314,9 @@ inventario, anular ventas/compras, y entrar al panel de administración.
 DATOS REALES: Además de explicar cómo se usa el sistema, tenés herramientas \
 para consultar los números REALES del negocio (ventas de hoy, margen del \
 mes, productos más vendidos, stock bajo, productos con menor margen, valor \
-de inventario). Usalas cuando la pregunta sea sobre datos concretos del \
+de inventario) y para buscar un producto por nombre o código (precio y \
+existencia). Cuando la pregunta sea sobre un producto concreto, buscalo: la \
+pantalla muestra la foto de cada producto que devuelvan tus herramientas. Usalas cuando la pregunta sea sobre datos concretos del \
 negocio, no solo sobre cómo navegar el sistema. Nunca inventes una cifra —
 si la herramienta no cubre lo que preguntan, decilo.
 
@@ -415,6 +417,7 @@ def chat_claude(request):
     tokens_entrada = 0
     tokens_salida = 0
     texto_final = ""
+    skus = []  # productos que salieron en las herramientas → fotos en pantalla
 
     try:
         client = anthropic.Anthropic(api_key=api_key)
@@ -448,6 +451,9 @@ def chat_claude(request):
                 salida = ejecutar_herramienta(
                     bloque.name, bloque.input or {}, usuario=request.user
                 )
+                for sku in skus_mencionados(salida):
+                    if sku not in skus:
+                        skus.append(sku)
                 resultados.append({
                     "type": "tool_result",
                     "tool_use_id": bloque.id,
@@ -461,7 +467,8 @@ def chat_claude(request):
             usuario=request.user, pregunta=mensaje, respuesta=texto_final,
             tokens_entrada=tokens_entrada, tokens_salida=tokens_salida,
         )
-        return JsonResponse({"response": texto_final})
+        productos = tarjetas_de_productos(skus, empresa_actual(request)) if skus else []
+        return JsonResponse({"response": texto_final, "productos": productos})
 
     except anthropic.APIError as e:
         ChatMensaje.objects.create(usuario=request.user, pregunta=mensaje, error=str(e))

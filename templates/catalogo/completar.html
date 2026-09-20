@@ -35,9 +35,14 @@
           <tr>
             <td>
               <input type="hidden" name="producto" value="{{ p.pk }}">
-              <div class="cc-name">{{ p.nombre }}</div>
-              <div class="cc-sku">{{ p.sku }} · existencia {{ p.stock_actual|crc:0 }}</div>
-              {% for e in f.etiquetas %}<span class="cc-tag">sin {{ e }}</span>{% endfor %}
+              <div style="display:flex;gap:12px;align-items:flex-start">
+                {% foto_producto p 64 "clickable-product-img" %}
+                <div>
+                  <div class="cc-name">{{ p.nombre }}</div>
+                  <div class="cc-sku">{{ p.sku }} · existencia {{ p.stock_actual|crc:0 }}</div>
+                  {% for e in f.etiquetas %}<span class="cc-tag">sin {{ e }}</span>{% endfor %}
+                </div>
+              </div>
             </td>
             <td>
               <select name="m_{{ p.pk }}" class="{% if 'mascota' in f.falta %}vacio{% endif %}">

@@ -51,7 +51,7 @@ main{flex:1;display:flex;padding:14px 22px 20px;overflow:hidden}
 .pcard{border:.5px solid rgba(0,0,0,.05);border-radius:18px;padding:13px;background:#fff;
   box-shadow:0 1px 3px rgba(0,0,0,.04),0 6px 16px rgba(0,0,0,.05);display:flex;flex-direction:column;gap:7px}
 .pcard.marcada{box-shadow:0 0 0 3px var(--brand),0 10px 28px rgba(0,0,0,.14)}
-.pcard .foto{width:100%;aspect-ratio:1/1;border-radius:14px;background:#f2f2f5 center/cover no-repeat;
+.pcard .foto{width:100%;aspect-ratio:1/1;border-radius:14px;background:#f2f2f5 center/cover no-repeat;overflow:hidden;
   display:flex;align-items:center;justify-content:center;color:#9fb3cc}
 .pcard .foto.ph{background:linear-gradient(140deg,#eef3fb,#e2ebf7)}
 .pcard .foto svg{width:44px;height:44px;fill:currentColor;opacity:.7}
@@ -89,6 +89,8 @@ main{flex:1;display:flex;padding:14px 22px 20px;overflow:hidden}
   .pcard .p{font-size:19px}
 }
 </style>
+<link rel="stylesheet" href="{% static 'css/fotos.css' %}">
+<script src="{% static 'js/fotos.js' %}"></script>
 </head>
 <body>
 <div class="nav">
@@ -182,8 +184,8 @@ function pintarGrid(){
       : `${encontrados.length} producto(s)`) + cola;
 
   document.getElementById('grid').innerHTML = vivos.map(p => {
-    const foto = p.imagen
-      ? `<div class="foto" style="background-image:url('${escUrl(p.imagen)}')"></div>`
+    const foto = p.miniatura
+      ? `<div class="foto">${fotoHTML(p, null, 'clickable-product-img')}</div>`
       : `<div class="foto ph"><svg viewBox="0 0 24 24"><circle cx="8" cy="9.5" r="1.9"/><circle cx="16" cy="9.5" r="1.9"/><circle cx="4.7" cy="13.2" r="1.8"/><circle cx="19.3" cy="13.2" r="1.8"/><path d="M12 14.2c2.6 0 4.7 1.7 4.7 3.4 0 1.6-2.1 2.2-4.7 2.2s-4.7-.6-4.7-2.2c0-1.7 2.1-3.4 4.7-3.4z"/></svg></div>`;
     const meta = [p.marca, p.presentacion].filter(Boolean).map(esc).join(' · ');
     // El código se pide como imagen y perezosa: dibujar los 532 dentro del

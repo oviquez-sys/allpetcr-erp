@@ -11,7 +11,7 @@ from django.views.decorators.http import require_http_methods
 from catalogo.codigos import aplicar_conversion, plan_de_conversion
 from catalogo.consultas import productos_visibles
 from catalogo.models import Categoria, Producto
-from core.imagenes import url_imagen_producto
+from core.imagenes import completar_foto, datos_foto
 from core.roles import CAJERO, GERENTE, rol_requerido
 from core.tenancy import empresa_actual
 
@@ -52,7 +52,15 @@ def ajuste_inventario(request):
             return redirect("inventario:ajuste")
         except ValidationError as e:
             form.add_error(None, e)
-    return render(request, "inventario/ajuste.html", {"form": form, "title": "Ajuste de inventario"})
+    # Foto del producto elegido (20/09/2026): con ~500 nombres parecidos en
+    # la lista, ver la foto evita ajustar el producto equivocado.
+    fotos = {
+        str(p.pk): {**datos_foto(p), "nombre": p.nombre, "stock": float(p.stock_actual)}
+        for p in form.fields["producto"].queryset
+    }
+    return render(request, "inventario/ajuste.html", {
+        "form": form, "title": "Ajuste de inventario", "fotos": fotos,
+    })
 
 
 @rol_requerido(CAJERO, GERENTE)
@@ -84,7 +92,7 @@ def etiquetas(request):
         productos_visibles(empresa, incluir_agotados=True)
         .select_related("categoria")
         .values("id", "sku", "nombre", "codigo_barras", "precio_venta", "stock_actual",
-                "presentacion", "marca", "categoria__nombre", "imagen")
+                "presentacion", "marca", "categoria__nombre", "imagen", "actualizado_en")
         .order_by("nombre")
     )
     for p in productos:  # JSON-serializable + nombres de campo para el navegador
@@ -94,7 +102,7 @@ def etiquetas(request):
         p["presentacion"] = p.get("presentacion") or ""
         p["marca"] = p.get("marca") or ""
         p["codigo_barras"] = p.get("codigo_barras") or ""
-        p["imagen"] = url_imagen_producto(p["imagen"])
+        completar_foto(p)
 
     return render(request, "inventario/etiquetas.html", {
         "productos": productos,

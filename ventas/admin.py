@@ -3,6 +3,8 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils.html import format_html
 
+from core.admin_fotos import columna_foto
+
 from .models import Abono, Cliente, DevolucionVenta, DocumentoCxC, FacturaVenta, LineaVenta
 from .services import anular_factura
 
@@ -28,7 +30,8 @@ class LineaVentaInline(admin.TabularInline):
     model = LineaVenta
     extra = 0
     can_delete = False
-    readonly_fields = ("producto", "cantidad", "precio_unitario", "costo_unitario", "total")
+    foto = columna_foto("producto", 40)
+    readonly_fields = ("foto", "producto", "cantidad", "precio_unitario", "costo_unitario", "total")
 
     def has_add_permission(self, request, obj=None):
         return False
@@ -73,7 +76,8 @@ class LineaDevolucionInline(admin.TabularInline):
     model = DevolucionVenta.lineas.rel.related_model
     extra = 0
     can_delete = False
-    readonly_fields = ("linea_venta", "cantidad", "monto")
+    foto = columna_foto("linea_venta.producto", 40)
+    readonly_fields = ("foto", "linea_venta", "cantidad", "monto")
 
     def has_add_permission(self, request, obj=None):
         return False

@@ -116,11 +116,7 @@ tbody tr:hover{background:#f9fafb}
         <tr>
           <td>
             <div class="pr-cell">
-              {% if p.imagen %}
-                <img src="{{ MEDIA_URL }}{{ p.imagen }}" alt="" class="pr-img clickable-product-img">
-              {% else %}
-                <div class="pr-img ph">🐾</div>
-              {% endif %}
+              {% foto_producto p 42 "clickable-product-img" %}
               <div>
                 <div class="pr-name">{{ p.nombre }}</div>
                 <div class="pr-sku">{{ p.sku }}</div>

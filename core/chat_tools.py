@@ -39,6 +39,26 @@ HERRAMIENTAS_FINANCIERAS = {
 # lo que Claude lee para decidir CUÁNDO usar cada una — hay que ser preciso.
 TOOLS_SCHEMA = [
     {
+        "name": "buscar_producto",
+        "description": (
+            "Busca productos del catálogo por nombre, código (SKU) o código de "
+            "barras y devuelve precio de venta, existencia, categoría y mascota. "
+            "Usar SIEMPRE que la persona pregunte por un producto concreto "
+            "('¿cuánto cuesta el Royal Canin de 15 kg?', '¿quedan collares?', "
+            "'¿qué arena para gato tenemos?'). La pantalla muestra la foto de "
+            "cada producto encontrado debajo de tu respuesta, así que no hace "
+            "falta describir cómo se ve."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "texto": {"type": "string", "description": "Palabras del nombre, SKU o código de barras."},
+                "limite": {"type": "integer", "description": "Máximo de productos, hasta 12. Por defecto 6."},
+            },
+            "required": ["texto"],
+        },
+    },
+    {
         "name": "indicadores_del_negocio",
         "description": (
             "Devuelve los indicadores clave de hoy y del mes: ventas de hoy, "
@@ -165,6 +185,39 @@ def ejecutar_herramienta(nombre, entrada, usuario=None):
                 "moneda": empresa.moneda,
             }
 
+        if nombre == "buscar_producto":
+            from django.db.models import Q
+
+            from catalogo.models import Producto
+
+            texto = str(entrada.get("texto") or "").strip()[:80]
+            limite = max(1, min(int(entrada.get("limite", 6) or 6), 12))
+            if not texto:
+                return {"productos": []}
+            filtro = Q(sku__iexact=texto) | Q(codigo_barras=texto)
+            palabras = Q()
+            for palabra in texto.split()[:6]:
+                palabras &= Q(nombre__icontains=palabra)
+            qs = (
+                Producto.objects.filter(empresa=empresa, activo=True)
+                .filter(filtro | palabras)
+                .select_related("categoria")
+                .order_by("-stock_actual", "nombre")[:limite]
+            )
+            return {
+                "productos": [
+                    {
+                        "nombre": p.nombre,
+                        "sku": p.sku,
+                        "precio_venta": _num(p.precio_venta),
+                        "existencia": _num(p.stock_actual),
+                        "categoria": p.categoria.nombre if p.categoria else "",
+                        "mascota": p.mascota,
+                    }
+                    for p in qs
+                ],
+            }
+
         if nombre == "productos_mas_vendidos":
             limite = min(int(entrada.get("limite", 5) or 5), 20)
             r = rep.mas_vendidos(empresa, limite=limite)
@@ -240,3 +293,35 @@ def ejecutar_herramienta(nombre, entrada, usuario=None):
         # el único síntoma sería que el asistente "responde raro".
         logger.exception("Fallo la herramienta de chat '%s'", nombre)
         return {"error": f"No se pudo consultar '{nombre}': {e}"}
+
+
+def skus_mencionados(salida) -> list:
+    """SKUs de los productos que devolvió una herramienta, en orden y sin
+    repetir. La vista los usa para mostrar la foto de cada producto debajo
+    de la respuesta (regla del 20/09/2026: si se habla de un producto, se ve
+    su foto)."""
+    vistos = []
+    for fila in (salida or {}).get("productos") or []:
+        sku = isinstance(fila, dict) and fila.get("sku")
+        if sku and sku not in vistos:
+            vistos.append(sku)
+    return vistos
+
+
+def tarjetas_de_productos(skus, empresa, *, limite=12) -> list:
+    """Lo que el chat necesita para dibujar la foto de cada producto."""
+    from catalogo.models import Producto
+    from core.imagenes import datos_foto
+
+    skus = list(skus)[:limite]
+    por_sku = {p.sku: p for p in Producto.objects.filter(empresa=empresa, sku__in=skus)}
+    salida = []
+    for sku in skus:
+        p = por_sku.get(sku)
+        if p is None:
+            continue
+        salida.append({
+            "sku": p.sku, "nombre": p.nombre, "precio": _num(p.precio_venta),
+            "existencia": _num(p.stock_actual), **datos_foto(p),
+        })
+    return salida

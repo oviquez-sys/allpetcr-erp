@@ -57,6 +57,14 @@ def mas_vendidos(empresa, desde=None, hasta=None, limite=50):
         )
         .order_by("-unidades")[:limite]
     )
+    filas = list(filas)
+    # El objeto Producto de cada fila, para que el reporte muestre la foto
+    # (20/09/2026). Una sola consulta extra para las N filas, no una por fila.
+    from catalogo.models import Producto
+
+    por_id = Producto.objects.in_bulk([f["producto_id"] for f in filas])
+    for f in filas:
+        f["producto"] = por_id.get(f["producto_id"])
     total_unidades = sum((f["unidades"] or Decimal("0")) for f in filas)
     total_ingreso = sum((f["ingreso"] or Decimal("0")) for f in filas)
     return {

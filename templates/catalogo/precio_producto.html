@@ -17,11 +17,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 
 <p><a href="{% url 'catalogo:precios' %}" style="color:#0B3161">← Volver a precios</a></p>
 
 <div style="display:flex;align-items:center;gap:16px;margin:14px 0">
-  {% if producto.imagen %}
-    <img src="{{ MEDIA_URL }}{{ producto.imagen }}" alt="" class="clickable-product-img" style="width:72px;height:72px;border-radius:14px;object-fit:cover;flex-shrink:0;background:#f2f5f6">
-  {% else %}
-    <div style="width:72px;height:72px;border-radius:14px;background:#f2f5f6;display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0">🐾</div>
-  {% endif %}
+  {% foto_producto producto 96 "clickable-product-img" %}
   <div>
     <h1 style="margin:0">{{ producto.nombre }}</h1>
     <p style="color:#999;margin:2px 0 0">{{ producto.sku }}{% if producto.presentacion %} · {{ producto.presentacion }}{% endif %}</p>

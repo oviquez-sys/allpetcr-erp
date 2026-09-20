@@ -100,7 +100,9 @@ class PermisosHerramientasTest(TestCase):
 
     def test_al_cajero_no_se_le_ofrecen_las_financieras(self):
         nombres = {t["name"] for t in herramientas_para(self.cajero)}
-        self.assertEqual(nombres, {"productos_stock_bajo"})
+        # buscar_producto (20/09/2026) da precio de venta y existencia: lo
+        # mismo que el cajero ya ve en el POS. Sin costos ni márgenes.
+        self.assertEqual(nombres, {"productos_stock_bajo", "buscar_producto"})
 
     def test_gerente_y_contador_conservan_acceso(self):
         for usuario in (self.gerente, self.contador):

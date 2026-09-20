@@ -42,6 +42,8 @@ label.conf input{width:18px;height:18px;margin-top:1px;accent-color:var(--brand)
 .msg.warning{background:#fdf3e2;color:#8a5a08}
 .msg.error{background:#fdecea;color:var(--red)}
 </style>
+<link rel="stylesheet" href="{% static 'css/fotos.css' %}">
+<script src="{% static 'js/fotos.js' %}"></script>
 </head>
 <body>
 <div class="nav">
@@ -78,7 +80,7 @@ label.conf input{width:18px;height:18px;margin-top:1px;accent-color:var(--brand)
       <tr><th>Producto</th><th>Código actual</th><th></th><th>Código nuevo</th></tr>
       {% for producto, viejo, nuevo in cambios|slice:":25" %}
         <tr>
-          <td>{{ producto.nombre|truncatechars:46 }}</td>
+          <td><span style="display:inline-flex;align-items:center;gap:8px">{% foto_producto producto 32 "clickable-product-img" %}{{ producto.nombre|truncatechars:46 }}</span></td>
           <td class="mono">{{ viejo|default:"(vacío)" }}</td>
           <td class="flecha">→</td>
           <td class="mono nuevo">{{ nuevo }}</td>

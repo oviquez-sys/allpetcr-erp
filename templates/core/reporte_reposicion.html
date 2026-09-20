@@ -58,8 +58,13 @@
       {% for f in filas %}
       <tr>
         <td>
-          {{ f.producto.nombre }}
-          <div class="mut" style="font-size:12.5px">{{ f.producto.sku }}{% if f.producto.categoria %} · {{ f.producto.categoria.nombre }}{% endif %}</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            {% foto_producto f.producto 40 "clickable-product-img" %}
+            <div>
+              {{ f.producto.nombre }}
+              <div class="mut" style="font-size:12.5px">{{ f.producto.sku }}{% if f.producto.categoria %} · {{ f.producto.categoria.nombre }}{% endif %}</div>
+            </div>
+          </div>
         </td>
         <td>
           {% if f.urgencia == 'agotado' %}<span class="chip bad">Agotado</span>

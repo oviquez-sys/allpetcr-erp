@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from core.admin_fotos import columna_foto
+
 from .models import Bodega, MovimientoInventario
 
 
@@ -13,8 +15,10 @@ class MovimientoInventarioAdmin(admin.ModelAdmin):
     """Kardex de solo lectura: los movimientos se crean por operaciones
     (ventas, compras, ajustes vía servicio), nunca digitados aquí."""
 
-    list_display = ("fecha", "tipo", "producto", "cantidad", "costo_unitario", "stock_resultante", "referencia")
+    foto = columna_foto("producto", 32)
+    list_display = ("fecha", "tipo", "foto", "producto", "cantidad", "costo_unitario", "stock_resultante", "referencia")
     list_filter = ("tipo", "bodega")
+    list_select_related = ("producto",)
     search_fields = ("producto__sku", "producto__nombre", "referencia")
     date_hierarchy = "fecha"
     list_per_page = 50

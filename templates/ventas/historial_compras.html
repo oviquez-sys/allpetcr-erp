@@ -44,7 +44,7 @@ tr:last-child td{border-bottom:none}
       <table>
         {% for l in f.lineas.all %}
         <tr>
-          <td>{{ l.cantidad|floatformat:0 }} × {{ l.producto.nombre }}</td>
+          <td><span style="display:inline-flex;align-items:center;gap:8px">{% foto_producto l.producto 32 "clickable-product-img" %}{{ l.cantidad|floatformat:0 }} × {{ l.producto.nombre }}</span></td>
           <td style="text-align:right;font-variant-numeric:tabular-nums">₡{{ l.total|crc:2 }}</td>
         </tr>
         {% endfor %}

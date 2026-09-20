@@ -18,6 +18,12 @@ set -e
 echo "==> Aplicando migraciones pendientes"
 python manage.py migrate --noinput
 
+# Miniaturas de las fotos (20/09/2026): en segundo plano, para no demorar
+# el arranque. Si falla no pasa nada grave: cada miniatura que falte se
+# genera sola la primera vez que alguien la ve (ver core/imagenes.py).
+echo "==> Generando miniaturas faltantes (en segundo plano)"
+( python manage.py generar_miniaturas || echo "!! generar_miniaturas falló; se repararán al verse" ) &
+
 echo "==> Levantando el servidor"
 exec gunicorn config.wsgi:application \
     --bind 0.0.0.0:8080 \

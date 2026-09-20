@@ -97,6 +97,7 @@
 }
 .chat-message { display: flex; }
 .chat-message.user { justify-content: flex-end; }
+.chat-message.assistant { flex-direction: column; align-items: flex-start; }
 .chat-bubble {
   max-width: 82%;
   padding: 11px 15px;
@@ -113,6 +114,12 @@
 .chat-bubble ul, .chat-bubble ol { margin: 4px 0 4px 18px; padding: 0; }
 .chat-bubble li { margin-bottom: 2px; }
 .chat-bubble p { margin: 0 0 6px; }
+/* Fotos de los productos de la respuesta (20/09/2026) */
+.chat-prods { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; max-width: 100%; }
+.chat-prod { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e8e8ed; border-radius: 12px; padding: 6px 10px 6px 6px; max-width: 260px; }
+.chat-prod .t { font-size: 12.5px; line-height: 1.25; }
+.chat-prod .t b { display: block; font-weight: 600; color: #1d1d1f; }
+.chat-prod .t span { color: #6e6e73; }
 .chat-bubble p:last-child { margin-bottom: 0; }
 .chat-loading { display: inline-flex; gap: 4px; padding: 2px 0; }
 .chat-loading span {
@@ -207,6 +214,15 @@
       const assistantMsg = document.createElement('div');
       assistantMsg.className = 'chat-message assistant';
       assistantMsg.innerHTML = `<div class="chat-bubble">${renderMarkdown(data.response)}</div>`;
+      if (Array.isArray(data.productos) && data.productos.length && window.fotoHTML) {
+        const caja = document.createElement('div');
+        caja.className = 'chat-prods';
+        caja.innerHTML = data.productos.map(p =>
+          `<div class="chat-prod">${fotoHTML(p, 48, 'clickable-product-img')}` +
+          `<div class="t"><b>${escapeHtml(p.nombre)}</b><span>${escapeHtml(p.sku)} · hay ${escapeHtml(String(p.existencia))}</span></div></div>`
+        ).join('');
+        assistantMsg.appendChild(caja);
+      }
       messagesDiv.appendChild(assistantMsg);
 
       // Memoria: se guarda el turno completo para las próximas preguntas.

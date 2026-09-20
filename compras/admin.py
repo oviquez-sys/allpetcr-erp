@@ -1,6 +1,8 @@
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 
+from core.admin_fotos import columna_foto
+
 from .models import Compra, LineaCompra, Proveedor
 from .services import recibir_compra
 
@@ -16,13 +18,14 @@ class LineaCompraInline(admin.TabularInline):
     model = LineaCompra
     extra = 1
     autocomplete_fields = ("producto",)
+    foto = columna_foto("producto", 40)
     can_delete = False
 
     def get_readonly_fields(self, request, obj=None):
         # Una compra recibida es inmutable.
         if obj and obj.estado != Compra.Estado.BORRADOR:
-            return ("producto", "cantidad", "cantidad_bonificada", "costo_unitario", "total")
-        return ("total",)
+            return ("foto", "producto", "cantidad", "cantidad_bonificada", "costo_unitario", "total")
+        return ("foto", "total")
 
     def has_add_permission(self, request, obj=None):
         return False

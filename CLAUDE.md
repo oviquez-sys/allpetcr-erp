@@ -221,6 +221,26 @@ Detalles que no hay que perder:
 | `RESPALDOS.txt` | Cómo respaldar y restaurar |
 | `../Auditoria_2026-07-28/` | Auditoría integral, 8 documentos (F0–F7) |
 
+## Fotos de producto (20/09/2026)
+
+Regla de Oscar: **donde se hable de un producto, se ve su foto.**
+
+- En plantillas, SIEMPRE `{% foto_producto p 44 "clickable-product-img" %}`
+  (tag builtin, `core/templatetags/fotos.py`). En pantallas armadas en
+  JavaScript, `fotoHTML(p, tam, clase)` de `static/js/fotos.js`, con los datos
+  de `core.imagenes.completar_foto` / `datos_foto`. En el admin,
+  `core.admin_fotos.columna_foto("producto")`.
+- **Nunca** `{{ MEDIA_URL }}{{ p.imagen }}` ni `/media/...`: en el servidor
+  las fotos viven en el bucket y esa URL da 404. Eso dejó fotos rotas en
+  Precios, Stock, Devolver y "Registrar entrada" hasta el 20/09.
+  `core/test_fotos.py` lo verifica solo.
+- Se muestran **miniaturas** (`productos/min/<sku>.webp`, 240 px, ~10 KB),
+  no el original de ~1024 px. Se crean al guardar la foto; si falta una, el
+  navegador pide `/foto/<id>/`, que la genera y redirige. `entrypoint.sh`
+  corre `generar_miniaturas` en segundo plano en cada despliegue.
+- El chat de ayuda tiene la herramienta `buscar_producto` y la respuesta trae
+  la foto de cada producto que devolvieron las herramientas.
+
 ## Reglas del proyecto
 
 **Los comentarios explican el *porqué*, no el *qué*.** Es la característica

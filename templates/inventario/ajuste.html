@@ -52,6 +52,23 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
       <div class="aj-row">
         <label for="{{ form.producto.id_for_label }}">{{ form.producto.label }}</label>
         {{ form.producto }}
+        <div id="ajFoto" style="display:flex;align-items:center;gap:12px;margin-top:10px;min-height:8px"></div>
+        {{ fotos|json_script:"aj-fotos" }}
+        <script>
+        (function(){
+          var fotos = JSON.parse(document.getElementById('aj-fotos').textContent);
+          var sel = document.getElementById('{{ form.producto.id_for_label }}');
+          var caja = document.getElementById('ajFoto');
+          function pintar(){
+            var p = fotos[sel.value];
+            if (!p){ caja.innerHTML = ''; return; }
+            caja.innerHTML = fotoHTML(p, 72, 'clickable-product-img') +
+              '<div style="font-size:14px;color:#6e6e73">Existencia en sistema: <b style="color:#0B3161"></b></div>';
+            caja.querySelector('b').textContent = p.stock;
+          }
+          sel.addEventListener('change', pintar); pintar();
+        })();
+        </script>
         {% if form.producto.errors %}<div class="aj-help" style="color:#b5231a">{{ form.producto.errors|join:", " }}</div>{% endif %}
       </div>
 

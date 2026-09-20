@@ -31,7 +31,7 @@
       <tbody>
       {% for c in revision.cambios %}
         <tr>
-          <td><div class="cc-name">{{ c.nombre }}</div><div class="cc-sku">{{ c.sku }}</div></td>
+          <td><div style="display:flex;gap:10px;align-items:center">{% foto_producto c.producto 44 "clickable-product-img" %}<div><div class="cc-name">{{ c.nombre }}</div><div class="cc-sku">{{ c.sku }}</div></div></div></td>
           <td>{% for k, v in etiqueta_campo.items %}{% if k == c.campo %}{{ v }}{% endif %}{% endfor %}</td>
           <td>{% if c.antes %}<div class="antes">{{ c.antes|truncatechars:160 }}</div>{% else %}<div class="antes" style="text-decoration:none">(vacío)</div>{% endif %}<div class="despues">{{ c.despues }}</div></td>
         </tr>

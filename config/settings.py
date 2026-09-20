@@ -170,7 +170,7 @@ TEMPLATES = [
             ],
             # Filtro de formato CR (miles con punto, decimales con coma)
             # disponible en TODAS las plantillas sin {% load %}.
-            "builtins": ["core.templatetags.formato"],
+            "builtins": ["core.templatetags.formato", "core.templatetags.fotos"],
         },
     },
 ]

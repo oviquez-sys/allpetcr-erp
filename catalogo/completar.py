@@ -168,6 +168,7 @@ class Cambio:
     antes: str
     despues: str
     categoria_id: int | None = None  # solo para campo == "categoria"
+    producto: object = None  # para mostrar la foto; no viaja en la firma
 
     def a_dict(self):
         return {"sku": self.sku, "campo": self.campo, "despues": self.despues,
@@ -185,14 +186,14 @@ def proponer(producto, *, mascota="", categoria=None, descripcion="") -> list[Ca
     """Lista de cambios para un producto. Vacío = no tocar (la regla)."""
     cambios = []
     if mascota and mascota != producto.mascota:
-        cambios.append(Cambio(producto.sku, producto.nombre, "mascota", producto.mascota, mascota))
+        cambios.append(Cambio(producto.sku, producto.nombre, "mascota", producto.mascota, mascota, producto=producto))
     if categoria is not None and categoria.id != producto.categoria_id:
         cambios.append(Cambio(producto.sku, producto.nombre, "categoria",
                               etiqueta_categoria(producto.categoria), etiqueta_categoria(categoria),
-                              categoria_id=categoria.id))
+                              categoria_id=categoria.id, producto=producto))
     descripcion = (descripcion or "").strip()
     if descripcion and descripcion != (producto.descripcion or "").strip():
-        cambios.append(Cambio(producto.sku, producto.nombre, "descripcion", producto.descripcion or "", descripcion))
+        cambios.append(Cambio(producto.sku, producto.nombre, "descripcion", producto.descripcion or "", descripcion, producto=producto))
     return cambios
 
 

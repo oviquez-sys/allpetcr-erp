@@ -41,6 +41,8 @@ Mientras tanto, la protección real contra el XSS del POS es escapar los datos
 antes de insertarlos en el DOM (hallazgo SEG-02), que ya está hecho. La CSP
 es defensa en profundidad, no el arreglo principal.
 """
+import os
+
 from django.conf import settings
 
 # Sin cámara, micrófono, ubicación, sensores ni pagos: el ERP no usa ninguna
@@ -57,9 +59,12 @@ CSP_BLOQUEO = "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-
 
 # Grupo 2: solo reporte. Chart.js se sirve desde cdnjs en el dashboard.
 _CDN = "https://cdnjs.cloudflare.com"
+# Las fotos de producto viven en el bucket (20/09/2026): sin su dominio en
+# img-src, el día que la CSP pase a bloqueo desaparecerían todas las fotos.
+_FOTOS = f"https://{os.environ['AWS_S3_CUSTOM_DOMAIN']}" if os.environ.get("AWS_S3_CUSTOM_DOMAIN") else ""
 CSP_OBJETIVO = (
     f"default-src 'self'; script-src 'self' {_CDN}; style-src 'self'; "
-    "img-src 'self' data:; font-src 'self'; connect-src 'self'; "
+    f"img-src 'self' data: {_FOTOS}; font-src 'self'; connect-src 'self'; "
     f"{CSP_BLOQUEO}"
 )
 

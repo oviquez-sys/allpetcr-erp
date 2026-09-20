@@ -4,9 +4,9 @@ from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import path
-from django.utils.html import format_html
 
-from core.imagenes import url_imagen_producto
+from core.admin_fotos import columna_foto
+from core.templatetags.fotos import foto_producto
 from core.templatetags.formato import crc as _crc  # formato CR (miles con punto)
 
 from .models import CambioPrecio, Categoria, Impuesto, Producto
@@ -137,23 +137,11 @@ class ProductoAdmin(admin.ModelAdmin):
 
     @admin.display(description="")
     def foto(self, obj):
-        if obj.imagen:
-            return format_html(
-                '<img src="{}" class="clickable-product-img" '
-                'style="width:36px;height:36px;border-radius:7px;object-fit:cover">',
-                url_imagen_producto(obj.imagen),
-            )
-        return "🐾"
+        return foto_producto(obj, 40, "clickable-product-img")
 
     @admin.display(description="Foto")
     def foto_grande(self, obj):
-        if obj.imagen:
-            return format_html(
-                '<img src="{}" class="clickable-product-img" '
-                'style="width:140px;height:140px;border-radius:14px;object-fit:cover">',
-                url_imagen_producto(obj.imagen),
-            )
-        return "Sin foto"
+        return foto_producto(obj, 160, "clickable-product-img")
 
     def has_delete_permission(self, request, obj=None):
         # Los productos no se borran (integridad histórica); se desactivan.
@@ -164,7 +152,8 @@ class ProductoAdmin(admin.ModelAdmin):
 class CambioPrecioAdmin(admin.ModelAdmin):
     """Bitácora de solo lectura de cambios de precio de venta."""
 
-    list_display = ("producto", "valor_anterior", "valor_nuevo", "costo_al_momento", "usuario", "fecha")
+    foto = columna_foto("producto", 32)
+    list_display = ("foto", "producto", "valor_anterior", "valor_nuevo", "costo_al_momento", "usuario", "fecha")
     search_fields = ("producto__sku", "producto__nombre", "motivo")
     date_hierarchy = "fecha"
     readonly_fields = [f.name for f in CambioPrecio._meta.fields]

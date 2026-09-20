@@ -15,7 +15,7 @@ from django.views.decorators.http import require_POST
 from caja.services import sesion_abierta_de
 from catalogo.consultas import productos_visibles
 from catalogo.models import Producto
-from core.imagenes import url_imagen_producto
+from core.imagenes import completar_foto
 from core.pdf import html_a_pdf, logo_data_uri
 from core.roles import CAJERO, GERENTE, es_gerente, rol_requerido
 from core.tenancy import documento_de_empresa
@@ -46,7 +46,7 @@ def pos(request):
         productos_visibles(empresa)
         .select_related("categoria")
         .values("id", "sku", "nombre", "codigo_barras", "precio_venta",
-                "stock_actual", "presentacion", "categoria__nombre", "imagen", "mascota")
+                "stock_actual", "presentacion", "categoria__nombre", "imagen", "mascota", "actualizado_en")
     )
     for p in productos:  # JSON-serializable + normalizar nombres de campos
         p["precio_venta"] = float(p["precio_venta"])
@@ -54,7 +54,7 @@ def pos(request):
         p["categoria"] = p.pop("categoria__nombre") or "Sin categoría"
         p["presentacion"] = p.get("presentacion") or ""
         p["mascota"] = p.get("mascota") or ""
-        p["imagen"] = url_imagen_producto(p["imagen"])
+        completar_foto(p)
     clientes = list(
         Cliente.objects.filter(activo=True, empresa=empresa)
         .values("id", "nombre", "limite_credito", "saldo")

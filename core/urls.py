@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import fotos_views, views
 
 app_name = "core"
 
@@ -19,4 +19,5 @@ urlpatterns = [
     path("evidencia/medios-de-pago/", views.evidencia_medios, name="evidencia_medios"),
     path("evidencia/por-cobrar/", views.evidencia_cxc, name="evidencia_cxc"),
     path("api/chat/", views.chat_claude, name="chat_claude"),
+    path("foto/<int:pk>/", fotos_views.foto_producto, name="foto_producto"),
 ]

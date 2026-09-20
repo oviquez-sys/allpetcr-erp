@@ -66,7 +66,7 @@ main{flex:1;display:grid;grid-template-columns:1fr 400px;gap:16px;padding:14px 2
   transition:transform .15s ease,box-shadow .15s ease,border-color .15s;display:flex;flex-direction:column}
 .pcard:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.09);border-color:transparent}
 .pcard:active{transform:scale(.97)}
-.pcard .foto{width:100%;aspect-ratio:1/1;border-radius:11px;background:#f2f2f5 center/cover no-repeat;
+.pcard .foto{width:100%;aspect-ratio:1/1;border-radius:11px;background:#f2f2f5 center/cover no-repeat;overflow:hidden;
   margin-bottom:9px;display:flex;align-items:center;justify-content:center;font-size:30px;color:#c7c7cc}
 .pcard .n{font-size:13px;font-weight:600;line-height:1.3;padding:0 4px}
 .pcard .cat{font-size:11px;color:#fff;background:var(--brand2);border-radius:6px;padding:2px 7px;
@@ -155,6 +155,8 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
   .fila2{flex-direction:column}
 }
 </style>
+<link rel="stylesheet" href="{% static 'css/fotos.css' %}">
+<script src="{% static 'js/fotos.js' %}"></script>
 </head>
 <body>
 <div class="nav">
@@ -545,8 +547,8 @@ function pintarGrid(){
   const vivos = filtrar().slice(0, 150);
   document.getElementById('grid').innerHTML = vivos.map(p => {
     const pres = p.presentacion ? `<div class="pres">${esc(p.presentacion)}</div>` : '';
-    const foto = p.imagen
-      ? `<div class="foto" style="background-image:url('${escUrl(p.imagen)}')"></div>`
+    const foto = p.miniatura
+      ? `<div class="foto">${fotoHTML(p)}</div>`
       : `<div class="foto">🐾</div>`;
     return `<div class="pcard" onclick="agregar(${p.id})" title="${esc(p.nombre)}">
       ${foto}
@@ -625,6 +627,7 @@ function pintarLineas(){
       : `<div class="precio-linea">Precio actual <b>${fmt(p.precio_venta)}</b>${ganActual !== null ? ` · ganancia de hoy <b>${ganActual.toFixed(0)}%</b>` : ''} · escribí una ganancia para recalcularlo</div>`;
 
     return `<div class="linea">
+      ${fotoHTML(p, 40, 'clickable-product-img')}
       <span class="nm">${esc(p.nombre)}</span>
       <span><span class="lbl">cant.</span><input type="number" min="0.01" step="any" value="${l.cantidad}" onchange="cambiarCantidad(${id}, this.value)"></span>
       <span class="bonif"><span class="lbl">+ gratis</span><input type="number" min="0" step="any" value="${bonif}" onchange="cambiarBonif(${id}, this.value)"></span>

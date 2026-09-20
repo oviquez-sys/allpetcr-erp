@@ -35,11 +35,7 @@ body{background-color:#f5f5f7 !important}
 
   <div class="en-card">
     <div class="en-prod">
-      {% if producto.imagen %}
-        <img class="img" src="/media/{{ producto.imagen }}" alt="">
-      {% else %}
-        <div class="img">🐾</div>
-      {% endif %}
+      {% foto_producto producto 72 "clickable-product-img" %}
       <div>
         <div class="nm">{{ producto.nombre }}</div>
         <div class="meta">Código {{ producto.sku }} · en stock: <b>{{ producto.stock_actual|crc:0 }}</b> · costo actual: <b>₡{{ producto.costo_promedio|crc:2 }}</b></div>

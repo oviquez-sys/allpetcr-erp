@@ -58,7 +58,7 @@ main{flex:1;display:grid;grid-template-columns:1fr 440px;gap:16px;padding:14px 2
   transition:transform .18s ease,box-shadow .18s ease;display:flex;flex-direction:column}
 .pcard:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(0,0,0,.12)}
 .pcard:active{transform:translateY(-1px) scale(.98)}
-.pcard .foto{width:100%;aspect-ratio:1/1;border-radius:14px;background:#f2f2f5 center/cover no-repeat;
+.pcard .foto{width:100%;aspect-ratio:1/1;border-radius:14px;background:#f2f2f5 center/cover no-repeat;overflow:hidden;
   margin-bottom:12px;display:flex;align-items:center;justify-content:center;color:#b8c4d0}
 .pcard .foto.ph{background:linear-gradient(140deg,#eef3fb,#e2ebf7)}
 .pcard .foto svg{width:44px;height:44px;fill:currentColor;opacity:.7}
@@ -165,6 +165,8 @@ main{flex:1;display:grid;grid-template-columns:1fr 440px;gap:16px;padding:14px 2
   .pagos button:nth-child(3){grid-column:span 1}
 }
 </style>
+<link rel="stylesheet" href="{% static 'css/fotos.css' %}">
+<script src="{% static 'js/fotos.js' %}"></script>
 </head>
 <body>
 <div class="nav">
@@ -334,8 +336,10 @@ function pintarGrid(){
   document.getElementById('grid').innerHTML = vivos.map(p => {
     const disp = p.stock_actual - (carrito[p.id]?.cantidad || 0);
     const pres = p.presentacion ? `<div class="pres">${esc(p.presentacion)}</div>` : '';
-    const foto = p.imagen
-      ? `<div class="foto" style="background-image:url('${escUrl(p.imagen)}')"></div>`
+    // Miniatura <img loading="lazy"> (20/09/2026). Antes era la foto GRANDE
+    // como fondo CSS: las 150 tarjetas pedían ~1 MB cada una, todas a la vez.
+    const foto = p.miniatura
+      ? `<div class="foto">${fotoHTML(p)}</div>`
       : `<div class="foto ph"><svg viewBox="0 0 24 24"><circle cx="8" cy="9.5" r="1.9"/><circle cx="16" cy="9.5" r="1.9"/><circle cx="4.7" cy="13.2" r="1.8"/><circle cx="19.3" cy="13.2" r="1.8"/><path d="M12 14.2c2.6 0 4.7 1.7 4.7 3.4 0 1.6-2.1 2.2-4.7 2.2s-4.7-.6-4.7-2.2c0-1.7 2.1-3.4 4.7-3.4z"/></svg></div>`;
     return `<div class="pcard ${disp<=0?'agotado':''}" data-id="${p.id}" onclick="agregar(${p.id})" title="${esc(p.nombre)}">
       ${foto}
@@ -430,7 +434,7 @@ function pintar(){
          <span class="descbox">Motivo <input type="text" maxlength="200" value="${esc(it.motivo_regalia||'')}" placeholder="obligatorio" onchange="setMotivoRegalia(${id}, this.value)"></span>`
       : `<button class="toggle" onclick="toggleRegalo(${id})">🎁 Regalo</button>
          <span class="descbox">Descuento <input type="number" min="0" max="100" step="0.01" value="${it.descuento_pct||''}" placeholder="0" onchange="setDescuentoPct(${id}, this.value)"> %</span>`;
-    return `<div class="linea"><span class="nm">${esc(p.nombre)}</span>
+    return `<div class="linea">${fotoHTML(p, 46, 'clickable-product-img')}<span class="nm">${esc(p.nombre)}</span>
       <span class="qtn"><button onclick="quitar(${id})">−</button><b>${it.cantidad}</b><button onclick="agregar(${id})">＋</button></span>
       <span class="mt">${mt}</span></div>
       <div class="linea-x">${ctrl}</div>`;
