@@ -1,0 +1,89 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Completar catálogo{% endblock %}
+{% block extrahead %}{{ block.super }}{% include "catalogo/_completar_estilos.html" %}{% endblock %}
+
+{% block content %}
+<div class="cc-wrap">
+  <div class="cc-title">Completar catálogo</div>
+  <div class="cc-sub">
+    Productos a los que les falta algo para verse bien en la web. <b>Sin mascota</b> no salen en los menús
+    Perros/Gatos; <b>sin categoría</b> no salen en ningún menú; <b>sin descripción</b> la ficha sale vacía.
+    Un campo que dejés vacío no borra nada.
+  </div>
+
+  {% if messages %}{% for m in messages %}<div class="cc-msg {{ m.tags }}">{{ m }}</div>{% endfor %}{% endif %}
+
+  <div class="cc-chips">
+    <a class="cc-chip {% if not falta %}on{% endif %} {% if not conteos.total %}cero{% endif %}" href="?{% if agotados %}agotados=1{% endif %}"><b>{{ conteos.total }}</b><span>por completar (de {{ conteos.catalogo }})</span></a>
+    <a class="cc-chip {% if falta == 'mascota' %}on{% endif %} {% if not conteos.mascota %}cero{% endif %}" href="?falta=mascota{% if agotados %}&amp;agotados=1{% endif %}"><b>{{ conteos.mascota }}</b><span>sin mascota</span></a>
+    <a class="cc-chip {% if falta == 'categoria' %}on{% endif %} {% if not conteos.categoria %}cero{% endif %}" href="?falta=categoria{% if agotados %}&amp;agotados=1{% endif %}"><b>{{ conteos.categoria }}</b><span>sin categoría</span></a>
+    <a class="cc-chip {% if falta == 'descripcion' %}on{% endif %} {% if not conteos.descripcion %}cero{% endif %}" href="?falta=descripcion{% if agotados %}&amp;agotados=1{% endif %}"><b>{{ conteos.descripcion }}</b><span>sin descripción</span></a>
+  </div>
+  <div class="cc-nota">
+    {% if agotados %}Incluye productos <b>sin existencias</b>.<a href="?{% if falta %}falta={{ falta }}{% endif %}">Ver solo lo que hay</a>
+    {% else %}Solo productos <b>con existencias</b> (los que publica la web).<a href="?agotados=1{% if falta %}&amp;falta={{ falta }}{% endif %}">Incluir agotados</a>{% endif %}
+  </div>
+
+  {% if filas %}
+  <form method="post">{% csrf_token %}
+    <div class="cc-card">
+      <table>
+        <thead><tr><th style="width:26%">Producto</th><th style="width:14%">Mascota</th><th style="width:22%">Categoría</th><th>Descripción</th></tr></thead>
+        <tbody>
+        {% for f in filas %}{% with p=f.p %}
+          <tr>
+            <td>
+              <input type="hidden" name="producto" value="{{ p.pk }}">
+              <div class="cc-name">{{ p.nombre }}</div>
+              <div class="cc-sku">{{ p.sku }} · existencia {{ p.stock_actual|crc:0 }}</div>
+              {% for e in f.etiquetas %}<span class="cc-tag">sin {{ e }}</span>{% endfor %}
+            </td>
+            <td>
+              <select name="m_{{ p.pk }}" class="{% if 'mascota' in f.falta %}vacio{% endif %}">
+                <option value="">Elegí…</option>
+                {% for m in mascotas %}<option value="{{ m }}" {% if p.mascota == m %}selected{% endif %}>{{ m }}</option>{% endfor %}
+              </select>
+              {% if p.mascota and 'mascota' in f.falta %}<div class="cc-old">Tiene «{{ p.mascota }}», que la web no reconoce.</div>{% endif %}
+            </td>
+            <td>
+              <select name="c_{{ p.pk }}" class="{% if 'categoria' in f.falta %}vacio{% endif %}">
+                <option value="">Elegí…</option>
+                {% for id, etq in categorias %}<option value="{{ id }}" {% if p.categoria_id == id %}selected{% endif %}>{{ etq }}</option>{% endfor %}
+              </select>
+            </td>
+            <td><textarea name="d_{{ p.pk }}" class="{% if 'descripcion' in f.falta %}vacio{% endif %}" placeholder="Texto que verá el cliente en la web">{{ p.descripcion }}</textarea></td>
+          </tr>
+        {% endwith %}{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="cc-barra">
+      <button type="submit" class="cc-btn">Guardar cambios de esta página</button>
+      {% if pagina.paginator.num_pages > 1 %}
+      <div class="cc-pag">
+        {% if pagina.has_previous %}<a href="?pagina={{ pagina.previous_page_number }}{% if falta %}&amp;falta={{ falta }}{% endif %}{% if agotados %}&amp;agotados=1{% endif %}">← Anterior</a>{% endif %}
+        <span>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+        {% if pagina.has_next %}<a href="?pagina={{ pagina.next_page_number }}{% if falta %}&amp;falta={{ falta }}{% endif %}{% if agotados %}&amp;agotados=1{% endif %}">Siguiente →</a>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </form>
+  {% else %}
+    <div class="cc-card" style="padding:28px;color:#1c6b30;font-weight:600">Nada pendiente con este filtro. 🎉</div>
+  {% endif %}
+
+  <div class="cc-excel">
+    <h3>Llenar muchos de una vez con Excel</h3>
+    <p>1) Descargá los pendientes. 2) Llená las columnas amarillas (Mascota y Categoría traen lista desplegable).
+       3) Subí el archivo: el ERP te muestra cada cambio antes de guardar nada.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+      <a class="cc-btn sec" href="{% url 'catalogo:completar_excel' %}?{% if falta %}falta={{ falta }}&amp;{% endif %}{% if agotados %}agotados=1{% endif %}">Descargar pendientes (.xlsx)</a>
+      <form method="post" action="{% url 'catalogo:completar_subir' %}" enctype="multipart/form-data" style="display:flex;gap:10px;align-items:center">{% csrf_token %}
+        <input type="file" name="archivo" accept=".xlsx" required>
+        <button type="submit" class="cc-btn">Subir y revisar</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

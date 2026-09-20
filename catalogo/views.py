@@ -1,17 +1,23 @@
-"""Pantallas de precios: cambiar el precio de venta (solo gerente) y ver el
-historial de cambios de precio y de costo (este último, desde el kardex)."""
+"""Pantallas de catálogo: precios (cambiar el precio de venta y ver el
+historial de precio y costo) y completar datos faltantes (mascota,
+categoría, descripción — ver catalogo/completar.py). Solo gerente."""
 import logging
 
 from django.contrib import messages
+from django.core import signing
 from django.core.exceptions import ValidationError
+from django.core.paginator import Paginator
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
+from django.views.decorators.http import require_POST
 
 from core.roles import GERENTE, rol_requerido
 from core.tenancy import documento_de_empresa, empresa_actual
 
+from . import completar
 from .consultas import pidio_agotados, productos_visibles
-from .models import Producto
+from .models import Categoria, Producto
 from .services import cambiar_precio
 
 logger = logging.getLogger(__name__)
@@ -79,3 +85,105 @@ def precio_producto(request, pk):
         "cambios": cambios,
         "movimientos_costo": movimientos_costo,
     })
+
+
+# --------------------------------------------------------------------------
+# Completar catálogo (20/09/2026) — ver catalogo/completar.py
+# --------------------------------------------------------------------------
+
+_SAL_FIRMA = "catalogo.completar"
+_VIGENCIA_FIRMA = 60 * 60  # una hora para revisar la vista previa y confirmar
+_POR_PAGINA = 40
+
+
+def _filtros(request):
+    falta = request.GET.get("falta") or ""
+    return (falta if falta in completar.CAMPOS else ""), pidio_agotados(request)
+
+
+@rol_requerido(GERENTE)
+def completar_catalogo(request):
+    """Lista de productos con datos incompletos, editable en la misma tabla."""
+    empresa = empresa_actual(request)
+    falta, agotados = _filtros(request)
+
+    if request.method == "POST":
+        categorias = {c.pk: c for c in Categoria.objects.select_related("padre")}
+        ids = [int(x) for x in request.POST.getlist("producto") if x.isdigit()]
+        cambios = []
+        for p in Producto.objects.filter(empresa=empresa, pk__in=ids).select_related("categoria", "categoria__padre"):
+            cat_id = request.POST.get(f"c_{p.pk}") or ""
+            cambios += completar.proponer(
+                p,
+                mascota=completar.normalizar_mascota(request.POST.get(f"m_{p.pk}")) or "",
+                categoria=categorias.get(int(cat_id)) if cat_id.isdigit() else None,
+                descripcion=request.POST.get(f"d_{p.pk}") or "",
+            )
+        tocados = completar.aplicar(empresa, [c.a_dict() for c in cambios])
+        if tocados:
+            messages.success(request, f"Listo: se actualizaron {tocados} producto(s). Los que quedaron completos ya no aparecen en la lista.")
+        else:
+            messages.info(request, "No había cambios que guardar.")
+        return redirect(request.get_full_path())
+
+    pagina = Paginator(completar.pendientes(empresa, falta=falta, incluir_agotados=agotados), _POR_PAGINA).get_page(request.GET.get("pagina"))
+    filas = []
+    for p in pagina:
+        f = completar.faltantes(p)
+        filas.append({"p": p, "falta": f, "etiquetas": [completar.ETIQUETA_CAMPO[x].lower() for x in f]})
+    return render(request, "catalogo/completar.html", {
+        "pagina": pagina,
+        "filas": filas,
+        "falta": falta,
+        "agotados": agotados,
+        "conteos": completar.conteos(empresa, incluir_agotados=agotados),
+        "mascotas": completar.MASCOTAS,
+        "categorias": completar.opciones_categoria(),
+        "etiqueta_campo": completar.ETIQUETA_CAMPO,
+    })
+
+
+@rol_requerido(GERENTE)
+def completar_excel(request):
+    """Descarga los pendientes (con el mismo filtro de la pantalla)."""
+    empresa = empresa_actual(request)
+    falta, agotados = _filtros(request)
+    contenido = completar.exportar_excel(completar.pendientes(empresa, falta=falta, incluir_agotados=agotados))
+    respuesta = HttpResponse(contenido, content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    respuesta["Content-Disposition"] = 'attachment; filename="catalogo_por_completar.xlsx"'
+    return respuesta
+
+
+@rol_requerido(GERENTE)
+@require_POST
+def completar_subir(request):
+    """Paso 1 de 2: lee el Excel y muestra qué cambiaría. No guarda nada."""
+    archivo = request.FILES.get("archivo")
+    if archivo is None:
+        messages.error(request, "Elegí el archivo de Excel antes de subirlo.")
+        return redirect("catalogo:completar")
+    revision = completar.revisar_excel(empresa_actual(request), archivo)
+    firma = signing.dumps([c.a_dict() for c in revision.cambios], salt=_SAL_FIRMA, compress=True)
+    return render(request, "catalogo/completar_revision.html", {
+        "revision": revision,
+        "firma": firma,
+        "productos_afectados": len({c.sku for c in revision.cambios}),
+        "etiqueta_campo": completar.ETIQUETA_CAMPO,
+    })
+
+
+@rol_requerido(GERENTE)
+@require_POST
+def completar_confirmar(request):
+    """Paso 2 de 2: aplica exactamente lo que se mostró en la vista previa."""
+    try:
+        cambios = signing.loads(request.POST.get("firma") or "", salt=_SAL_FIRMA, max_age=_VIGENCIA_FIRMA)
+    except signing.SignatureExpired:
+        messages.error(request, "La vista previa venció (más de una hora). Subí el Excel de nuevo.")
+        return redirect("catalogo:completar")
+    except signing.BadSignature:
+        messages.error(request, "No se pudo leer la vista previa. Subí el Excel de nuevo.")
+        return redirect("catalogo:completar")
+    tocados = completar.aplicar(empresa_actual(request), cambios)
+    messages.success(request, f"Listo: se actualizaron {tocados} producto(s) desde el Excel.")
+    return redirect("catalogo:completar")

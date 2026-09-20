@@ -1,0 +1,51 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Revisar cambios del Excel{% endblock %}
+{% block extrahead %}{{ block.super }}{% include "catalogo/_completar_estilos.html" %}{% endblock %}
+
+{% block content %}
+<div class="cc-wrap">
+  <div class="cc-title">Revisar antes de guardar</div>
+  <div class="cc-sub">Todavía <b>no se guardó nada</b>. Esto es lo que cambiaría si confirmás.</div>
+
+  <div class="cc-chips">
+    <div class="cc-chip"><b>{{ productos_afectados }}</b><span>productos cambian</span></div>
+    <div class="cc-chip"><b>{{ revision.cambios|length }}</b><span>datos nuevos</span></div>
+    <div class="cc-chip"><b>{{ revision.sin_cambio }}</b><span>filas sin cambios</span></div>
+    <div class="cc-chip {% if not revision.errores %}cero{% endif %}"><b>{{ revision.errores|length }}</b><span>avisos</span></div>
+  </div>
+
+  {% if revision.errores %}
+  <div class="cc-msg error">
+    <b>Avisos</b> — estos datos NO se van a aplicar (el resto de la fila sí, si está bien):
+    <ul style="margin:8px 0 0 18px;padding:0">
+      {% for fila, sku, msg in revision.errores %}<li>{% if fila %}Fila {{ fila }}{% endif %}{% if sku %} · {{ sku }}{% endif %}: {{ msg }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if revision.cambios %}
+  <div class="cc-card">
+    <table>
+      <thead><tr><th style="width:28%">Producto</th><th style="width:12%">Dato</th><th>Antes → Después</th></tr></thead>
+      <tbody>
+      {% for c in revision.cambios %}
+        <tr>
+          <td><div class="cc-name">{{ c.nombre }}</div><div class="cc-sku">{{ c.sku }}</div></td>
+          <td>{% for k, v in etiqueta_campo.items %}{% if k == c.campo %}{{ v }}{% endif %}{% endfor %}</td>
+          <td>{% if c.antes %}<div class="antes">{{ c.antes|truncatechars:160 }}</div>{% else %}<div class="antes" style="text-decoration:none">(vacío)</div>{% endif %}<div class="despues">{{ c.despues }}</div></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <form method="post" action="{% url 'catalogo:completar_confirmar' %}" class="cc-barra">{% csrf_token %}
+    <input type="hidden" name="firma" value="{{ firma }}">
+    <button type="submit" class="cc-btn">Confirmar y guardar {{ revision.cambios|length }} dato(s)</button>
+    <a href="{% url 'catalogo:completar' %}" style="color:#6e6e73">Cancelar, no guardar nada</a>
+  </form>
+  {% else %}
+    <div class="cc-card" style="padding:24px">El Excel no trae nada nuevo para guardar. <a href="{% url 'catalogo:completar' %}">Volver</a></div>
+  {% endif %}
+</div>
+{% endblock %}
