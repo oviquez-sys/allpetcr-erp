@@ -40,11 +40,11 @@ es alcanzable. Si un hallazgo dice "del sitio web", no es de este repo.
 - **PostgreSQL** (base `allpetcr` en localhost) desde el 28/07/2026
 - 532 productos reales en catálogo, con foto, descripción y taxonomía de
   dos niveles — ya aplicado, ya no es "pendiente"
-- Régimen fiscal real: **RTS** (Régimen de Tributación Simplificada).
-  `Empresa.regimen` ya soporta cambiar a `TRAD` (tradicional) el día que
-  corresponda; el motor de IVA (`ventas/services.py::_desglose_fiscal`) y
-  el Bloque de facturación electrónica ya están construidos para ese
-  cambio, apagados mientras tanto.
+- Régimen fiscal real: **tradicional desde el primer día** (lo confirmó el
+  contador el 18-20/09/2026; hasta entonces se creía RTS). Todo lo que vende
+  la tienda lleva IVA 13 %. Márgenes y ganancia ya se calculan sin IVA
+  (20/09/2026). Faltan el IVA de compras, la declaración mensual y la
+  factura electrónica — ver la sección del 20/09/2026 en `HALLAZGOS.md`.
 - Repos en GitHub: `oviquez-sys/allpetcr-erp` y `oviquez-sys/allpetcr-web`
   (este último recuperado de una corrupción de git el 29/08/2026 — ver
   `REPORTE-NOCHE.md`)
@@ -300,8 +300,8 @@ fundamentada, decilo con la evidencia — ya pasó con el hallazgo PERF-02.
 2. Sacar los respaldos de OneDrive (`ALLPETCR_RESPALDOS`) y probar una
    restauración completa.
 3. Decidir sobre monitoreo en producción (Sentry u otro).
-4. Confirmar si el plan sigue siendo pasar a régimen tradicional (activa el
-   Bloque de facturación electrónica, ya construido).
+4. ~~Confirmar si el plan sigue siendo pasar a régimen tradicional~~ —
+   resuelto el 20/09/2026: la empresa ES tradicional desde el día 1.
 5. Descargar el Anexo de Estructuras v4.4 y los XSD oficiales de Hacienda,
    y tramitar la llave `.p12` — sin eso, `facturacion_electronica` no
    puede generar ni firmar XML de verdad. Detalle exacto de qué bajar y

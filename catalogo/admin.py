@@ -59,6 +59,8 @@ class ProductoAdmin(admin.ModelAdmin):
     list_filter = ("categoria", "activo")
     search_fields = ("sku", "nombre", "codigo_barras", "categoria_original")
     list_per_page = 50
+    # El margen de cada fila necesita empresa (régimen) e impuesto (tarifa).
+    list_select_related = ("categoria", "empresa", "impuesto")
     # Stock y costo solo cambian por movimientos de inventario (kardex),
     # nunca editados a mano: única fuente de verdad.
     readonly_fields = ("stock_actual", "costo_promedio", "creado_en", "actualizado_en", "foto_grande")

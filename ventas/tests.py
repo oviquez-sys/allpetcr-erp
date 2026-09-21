@@ -880,3 +880,45 @@ class ChipsDeEspecieEnElPOS(BaseVentas):
         # La lista vieja generaba los chips a partir de las categorías; no
         # debe quedar ningún rastro de ese mecanismo.
         self.assertNotContains(r, "productos.map(p=>p.categoria)")
+
+
+class VentaEnRegimenTradicional(BaseVentas):
+    """20/09/2026: AllPetCR resultó ser régimen tradicional desde el día 1."""
+
+    def setUp(self):
+        super().setUp()
+        self.empresa.regimen = Empresa.Regimen.TRADICIONAL
+        self.empresa.save()
+
+    def test_producto_sin_tarifa_paga_la_general(self):
+        """Antes un producto sin impuesto se vendía con 0 % de IVA, sin aviso."""
+        factura = self.vender()  # 5.000 con IVA incluido, tarifa general 13 %
+        self.assertEqual(factura.impuesto, Decimal("575.22"))
+
+    def test_piso_de_costo_se_mide_sin_iva(self):
+        """₡2.200 con IVA son ₡1.946,90 para el negocio: menos que el costo de ₡2.000."""
+        self.producto.precio_venta = Decimal("2200")
+        self.producto.save()
+        with self.assertRaises(ValidationError):
+            self.vender()
+
+    def test_tiquete_no_menciona_el_regimen_simplificado(self):
+        factura = self.vender()
+        self.client.login(username="oscar", password="clave-test")
+        html = self.client.get(reverse("ventas:tiquete", args=[factura.pk])).content.decode()
+        self.assertNotIn("Simplificada", html)
+        self.assertIn("no constituye comprobante electrónico", html)
+        html = self.client.get(reverse("ventas:factura", args=[factura.pk])).content.decode()
+        self.assertNotIn("Simplificada —", html)
+
+    def test_tiquete_termico_usa_el_pie_del_regimen(self):
+        from unittest import mock
+
+        from impresion import servicio
+        factura = self.vender()
+        with mock.patch.object(servicio, "por_agente", return_value=True), \
+             mock.patch.object(servicio.cola, "encolar_crudo") as encolar:
+            servicio.imprimir_tiquete(factura)
+        datos = encolar.call_args[0][1]
+        self.assertNotIn(b"Simplificada", datos)
+        self.assertIn(b"Documento interno de control: no constituye", datos)

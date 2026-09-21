@@ -215,14 +215,14 @@ body.dashboard #content-main{display:block}
   <div class="ax-sec ax-fijo">Resumen del mes</div>
   <div class="ax-kpis ax-fijo">
     <div class="ax-kpi">
-      <div class="kl">Ganancia del mes</div>
+      <div class="kl">Ganancia del mes{% if not es_rts %} <span style="font-weight:400">(sin IVA)</span>{% endif %}</div>
       <div class="kv">₡{{ utilidad_mes|crc:0 }}</div>
       <div class="kd {% if margen >= 35 %}up{% else %}down{% endif %}">{% if margen >= 35 %}▲{% else %}▼{% endif %} {{ margen|crc:1 }}% margen</div>
     </div>
     <div class="ax-kpi">
-      <div class="kl">Ventas este mes</div>
+      <div class="kl">Ventas este mes{% if not es_rts %} <span style="font-weight:400">(sin IVA)</span>{% endif %}</div>
       <div class="kv">₡{{ ventas_mes|crc:0 }}</div>
-      <div class="kd {% if variacion_mes >= 0 %}up{% else %}down{% endif %}">{% if variacion_mes >= 0 %}▲{% else %}▼{% endif %} {{ variacion_mes|crc:1 }}% vs mes anterior</div>
+      <div class="kd {% if variacion_mes >= 0 %}up{% else %}down{% endif %}">{% if variacion_mes >= 0 %}▲{% else %}▼{% endif %} {{ variacion_mes|crc:1 }}% vs mismos días del mes anterior</div>
     </div>
     <div class="ax-kpi">
       <div class="kl">Por cobrar (crédito)</div>

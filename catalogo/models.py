@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import models
@@ -54,6 +56,19 @@ class Categoria(models.Model):
 
     def __str__(self):
         return self.nombre
+
+
+# Tarifa general del IVA en Costa Rica (Ley 9635, art. 10). Se usa cuando un
+# producto no tiene tarifa asignada. Por qué 13 y no 0: en la ley, cualquier
+# bien que no esté expresamente en una tarifa reducida o exento paga la
+# general. Suponer 0 (lo que hacía el motor antes del 20/09/2026) le quitaba
+# el IVA a la venta en silencio, y el negocio lo debía igual.
+# Verificado el 20/09/2026 en el catálogo CABYS oficial de Hacienda: comida
+# para perros y gatos (2331100000200), arneses y correas (2921001000000),
+# ropa para mascotas (2921099000000) e higiene para animales (3532307...)
+# llevan 13 %. El 1 % de "alimento animal" es para insumos agropecuarios,
+# no para comida de mascotas.
+TARIFA_GENERAL_IVA = Decimal("13.00")
 
 
 class Impuesto(models.Model):
@@ -161,27 +176,67 @@ class Producto(models.Model):
     def bajo_minimo(self):
         return self.stock_actual <= self.stock_minimo
 
+    # ------------------------------------------------------------------
+    # Precio, IVA y ganancia (20/09/2026)
+    #
+    # En régimen tradicional el precio de venta INCLUYE el IVA, y ese IVA es
+    # de Hacienda, no del negocio. Hasta esta fecha el margen, el markup y la
+    # ganancia se calculaban contra el precio completo: en un producto de
+    # ₡5.300 contaban como ganancia ₡610 que había que pagarle a Hacienda.
+    # Además la ficha de precio mostraba "Ganancia" como precio + costo − 1
+    # (un filtro de plantilla que sumaba en vez de restar).
+    #
+    # Todo sale de `precio_sin_iva`, para que el margen de la lista de
+    # precios, el de la ficha, el del admin y el del chat no puedan
+    # contarse distinto. En régimen simplificado no se desglosa IVA: ahí
+    # `precio_sin_iva` es el precio completo, igual que antes.
+    # ------------------------------------------------------------------
+
+    @property
+    def tarifa_iva(self):
+        """Tarifa de IVA del producto (%). Sin tarifa asignada, la general."""
+        return self.impuesto.tarifa if self.impuesto_id else TARIFA_GENERAL_IVA
+
+    @property
+    def desglosa_iva(self):
+        """True si la empresa está en régimen tradicional (el precio incluye IVA)."""
+        return self.empresa.regimen == Empresa.Regimen.TRADICIONAL
+
+    @property
+    def precio_sin_iva(self):
+        """Lo que le queda al negocio de cada unidad vendida a precio de lista."""
+        if not self.desglosa_iva:
+            return self.precio_venta
+        return (self.precio_venta / (1 + self.tarifa_iva / 100)).quantize(Decimal("0.01"))
+
+    @property
+    def iva_unitario(self):
+        """Parte del precio que se le paga a Hacienda (0 en régimen simplificado)."""
+        return self.precio_venta - self.precio_sin_iva
+
+    @property
+    def ganancia_unitaria(self):
+        """Ganancia bruta por unidad: precio sin IVA − costo promedio."""
+        return self.precio_sin_iva - self.costo_promedio
+
     @property
     def margen_pct(self):
-        """Margen de ganancia (%) sobre el precio de venta.
-        Fórmula: ((PrecioVenta - Costo) / PrecioVenta) * 100
-        Retorna Decimal con 2 decimales, o None si PrecioVenta es 0."""
-        if self.precio_venta == 0:
+        """Margen de ganancia (%) sobre el precio sin IVA.
+        Fórmula: ((PrecioSinIVA - Costo) / PrecioSinIVA) * 100
+        Retorna Decimal con 2 decimales, o None si el precio es 0."""
+        base = self.precio_sin_iva
+        if base == 0:
             return None
-        from decimal import Decimal
-        margen = ((self.precio_venta - self.costo_promedio) / self.precio_venta) * Decimal('100')
-        return round(margen, 2)
+        return round((base - self.costo_promedio) / base * Decimal("100"), 2)
 
     @property
     def markup_pct(self):
-        """Markup o recargo (%) sobre el costo.
-        Fórmula: ((PrecioVenta - Costo) / Costo) * 100
-        Retorna Decimal con 2 decimales, o None si Costo es 0."""
+        """Markup o recargo (%) sobre el costo, con el precio sin IVA.
+        Fórmula: ((PrecioSinIVA - Costo) / Costo) * 100
+        Retorna Decimal con 2 decimales, o None si el costo es 0."""
         if self.costo_promedio == 0:
             return None
-        from decimal import Decimal
-        markup = ((self.precio_venta - self.costo_promedio) / self.costo_promedio) * Decimal('100')
-        return round(markup, 2)
+        return round((self.precio_sin_iva - self.costo_promedio) / self.costo_promedio * Decimal("100"), 2)
 
 
 class CambioPrecio(models.Model):

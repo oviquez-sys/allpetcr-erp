@@ -480,6 +480,14 @@ PIE_TIQUETE = os.environ.get(
     "Documento interno de control. Regimen de Tributacion Simplificada: "
     "no constituye comprobante electronico.",
 )
+# Pie en régimen tradicional (20/09/2026). AllPetCR resultó ser tradicional:
+# el tiquete ya no puede nombrar el simplificado. Hasta que exista la factura
+# electrónica sigue sin ser comprobante, y tiene que decirlo. Se elige según
+# `Empresa.regimen` en impresion/servicio.py, no a mano.
+PIE_TIQUETE_TRADICIONAL = os.environ.get(
+    "PIE_TIQUETE_TRADICIONAL",
+    "Documento interno de control: no constituye comprobante electronico.",
+)
 
 # Decisión de Oscar (05/09/2026): el tiquete sale solo al cobrar. Se deja
 # apagable por si un día conviene ahorrar papel, pero el valor de fábrica es

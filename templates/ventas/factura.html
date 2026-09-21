@@ -468,7 +468,7 @@ td.tot{font-weight:600}
     </div>
     <div class="legal">
       {{ f.empresa.nombre }}{% if f.empresa.identificacion %} · Céd. {{ f.empresa.identificacion }}{% endif %}<br>
-      Comprobante del Régimen de Tributación Simplificada — Documento interno de control, no constituye comprobante electrónico
+      {% if f.empresa.regimen == "RTS" %}Comprobante del Régimen de Tributación Simplificada — {% endif %}Documento interno de control, no constituye comprobante electrónico
     </div>
   </div>
 

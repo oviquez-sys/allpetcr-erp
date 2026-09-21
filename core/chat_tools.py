@@ -259,8 +259,9 @@ def ejecutar_herramienta(nombre, entrada, usuario=None):
             from catalogo.models import Producto
 
             limite = min(int(entrada.get("limite", 5) or 5), 20)
-            productos = Producto.objects.filter(empresa=empresa, activo=True)
-            con_margen = [(p, p.margen_pct) for p in productos if p.margen_pct is not None]
+            # select_related: el margen usa empresa (régimen) e impuesto (tarifa).
+            productos = Producto.objects.filter(empresa=empresa, activo=True).select_related("empresa", "impuesto")
+            con_margen = [(p, m) for p in productos if (m := p.margen_pct) is not None]
             con_margen.sort(key=lambda t: t[1])
             return {
                 "productos": [

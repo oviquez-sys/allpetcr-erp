@@ -46,7 +46,9 @@ def precios(request):
             Q(nombre__icontains=q) | Q(sku__icontains=q) | Q(codigo_barras__icontains=q)
             | Q(descripcion__icontains=q)
         )
-    productos = list(productos.order_by("nombre")[:60])
+    # empresa e impuesto se traen juntos: el margen de cada fila los necesita
+    # (precio sin IVA según régimen y tarifa) y si no, son 2 consultas por fila.
+    productos = list(productos.select_related("empresa", "impuesto").order_by("nombre")[:60])
     return render(request, "catalogo/precios.html", {
         "productos": productos, "q": q, "agotados": agotados,
     })

@@ -63,7 +63,7 @@ def _calcular_indicadores(empresa):
     from caja.models import SesionCaja
     from catalogo.models import Producto
     from compras.models import Compra
-    from ventas.models import Cliente, FacturaVenta, LineaVenta
+    from ventas.models import Cliente, FacturaVenta
 
     hoy = timezone.localdate()
     inicio_mes = hoy.replace(day=1)
@@ -103,23 +103,21 @@ def _calcular_indicadores(empresa):
         Decimal("0"),
     )
     ventas_hoy_contado = ventas_hoy - ventas_hoy_credito
-    ventas_mes = ventas_emitidas.filter(creado_en__date__gte=inicio_mes).aggregate(t=Sum("total"))["t"] or Decimal("0")
-    ventas_mes_anterior = ventas_emitidas.filter(
-        creado_en__date__gte=(inicio_mes - timedelta(days=30)), creado_en__date__lt=inicio_mes
-    ).aggregate(t=Sum("total"))["t"] or Decimal("0")
+    # Resultado del mes (20/09/2026). Tres correcciones respecto de antes:
+    #  1. Ventas SIN IVA (subtotal): en régimen tradicional el IVA cobrado es
+    #     de Hacienda. Contarlo inflaba ventas, ganancia y margen en ~11,5 %.
+    #     En régimen simplificado subtotal == total, así que ahí no cambia.
+    #  2. Se restan las devoluciones parciales del mes (ingreso y costo). Antes
+    #     la venta devuelta seguía contando entera como ganancia.
+    #  3. "vs mes anterior" compara los MISMOS días (1 al N de cada mes). Antes
+    #     comparaba lo que va del mes contra 30 días completos: a principio de
+    #     mes siempre marcaba una caída aunque se vendiera igual o más.
+    ventas_mes, costo_mes = _resultado_periodo(empresa, inicio_mes, hoy + timedelta(days=1))
+    dias_transcurridos = (hoy - inicio_mes).days + 1
+    inicio_mes_anterior = (inicio_mes - timedelta(days=1)).replace(day=1)
+    fin_comparable = min(inicio_mes_anterior + timedelta(days=dias_transcurridos), inicio_mes)
+    ventas_mes_anterior, _ = _resultado_periodo(empresa, inicio_mes_anterior, fin_comparable)
 
-    # Utilidad bruta del mes = ventas - costo de lo vendido (a costo promedio).
-    lineas_mes = LineaVenta.objects.filter(
-        factura__empresa=empresa, factura__estado="EMI", factura__creado_en__date__gte=inicio_mes
-    )
-    # El costo se suma EN LA BASE (no trayendo cada línea a memoria): a miles
-    # de líneas de venta al mes, iterar en Python vuelve lenta la página.
-    costo_mes = lineas_mes.aggregate(
-        t=Sum(
-            F("costo_unitario") * F("cantidad"),
-            output_field=DecimalField(max_digits=14, decimal_places=2),
-        )
-    )["t"] or Decimal("0")
     utilidad_mes = ventas_mes - costo_mes
     margen = (utilidad_mes / ventas_mes * 100) if ventas_mes else Decimal("0")
 
@@ -160,7 +158,7 @@ def _calcular_indicadores(empresa):
     ).aggregate(t=Sum("total"))["t"] or Decimal("0")
     pct_rts = (compras_anio / limite * 100) if limite else Decimal("0")
 
-    # Variación de ventas mes vs mes anterior
+    # Variación de ventas: mismos días del mes anterior (ver arriba)
     variacion_mes = ((ventas_mes - ventas_mes_anterior) / ventas_mes_anterior * 100) if ventas_mes_anterior else Decimal("0")
 
     return {
@@ -236,3 +234,38 @@ def empresa_sucursal(empresa):
     """Filtro por sucursales de la empresa, para SesionCaja."""
     from django.db.models import Q
     return Q(sucursal__empresa=empresa)
+
+
+def _resultado_periodo(empresa, desde, hasta):
+    """(ventas sin IVA netas de devoluciones, costo de lo vendido neto) entre
+    `desde` (incluido) y `hasta` (excluido), por fecha local.
+
+    Las devoluciones se restan en el periodo en que ocurren, como en la
+    contabilidad. Su parte sin IVA se saca con la proporción subtotal/total de
+    la factura original: una venta hecha en régimen simplificado (sin IVA
+    desglosado) se devuelve sin quitarle IVA que nunca tuvo.
+    """
+    from ventas.models import FacturaVenta, LineaDevolucion, LineaVenta
+
+    emitidas = FacturaVenta.objects.filter(
+        empresa=empresa, estado="EMI", creado_en__date__gte=desde, creado_en__date__lt=hasta,
+    )
+    ventas = emitidas.aggregate(t=Sum("subtotal"))["t"] or Decimal("0")
+    # El costo se suma EN LA BASE (no trayendo cada línea a memoria): a miles
+    # de líneas de venta al mes, iterar en Python vuelve lenta la página.
+    costo = LineaVenta.objects.filter(factura__in=emitidas).aggregate(
+        t=Sum(F("costo_unitario") * F("cantidad"),
+              output_field=DecimalField(max_digits=14, decimal_places=2))
+    )["t"] or Decimal("0")
+
+    # Las devoluciones son pocas: se recorren en Python para prorratear el IVA.
+    devueltas = LineaDevolucion.objects.filter(
+        devolucion__factura__empresa=empresa, devolucion__factura__estado="EMI",
+        devolucion__creado_en__date__gte=desde, devolucion__creado_en__date__lt=hasta,
+    ).select_related("linea_venta__factura")
+    for ld in devueltas:
+        factura = ld.linea_venta.factura
+        proporcion = (factura.subtotal / factura.total) if factura.total else Decimal("1")
+        ventas -= (ld.monto * proporcion).quantize(Decimal("0.01"))
+        costo -= (ld.cantidad * ld.linea_venta.costo_unitario).quantize(Decimal("0.01"))
+    return ventas, costo

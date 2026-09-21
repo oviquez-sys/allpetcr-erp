@@ -51,25 +51,42 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 
     </div>
     <div style="font-size:22px;font-weight:700">₡{{ producto.precio_venta|crc:0 }}</div>
   </div>
+  {% if producto.desglosa_iva %}
+  {# Régimen tradicional: el precio trae IVA adentro y ese IVA es de Hacienda.
+     Se muestra aparte para que la ganancia no se lea contra el precio completo. #}
+  <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
+    <div style="font-size:12px;color:#777">
+      <span class="tooltip-wrapper">
+        IVA incluido ({{ producto.tarifa_iva|crc:0 }}%)
+        <span class="tooltip-icon">?</span>
+        <div class="tooltip-box">Parte del precio que se le paga a Hacienda. No es ganancia</div>
+      </span>
+    </div>
+    <div style="font-size:22px;font-weight:700;color:#6e6e73">₡{{ producto.iva_unitario|crc:0 }}</div>
+  </div>
+  {% endif %}
+  {# Ganancia (20/09/2026): antes se armaba en la plantilla con el filtro
+     `add`, que SUMABA el costo al precio (mostraba precio + costo − 1).
+     Ahora sale ya calculada del modelo, igual que el margen: una sola fórmula. #}
   <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
     <div style="font-size:12px;color:#777">
       <span class="tooltip-wrapper">
         Ganancia
         <span class="tooltip-icon">?</span>
-        <div class="tooltip-box">Precio - Costo. Ganancia por unidad vendida</div>
+        <div class="tooltip-box">{% if producto.desglosa_iva %}Precio sin IVA − Costo{% else %}Precio − Costo{% endif %}. Ganancia por unidad vendida, antes de gastos fijos</div>
       </span>
     </div>
-    <div style="font-size:22px;font-weight:700">₡{{ producto.precio_venta|add:0|add:producto.costo_promedio|add:-1|floatformat:0|crc:0 }}</div>
+    <div style="font-size:22px;font-weight:700;color:{% if producto.ganancia_unitaria < 0 %}#b03a2e{% else %}#0b7c6c{% endif %}">₡{{ producto.ganancia_unitaria|crc:0 }}</div>
   </div>
   <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
     <div style="font-size:12px;color:#777">
       <span class="tooltip-wrapper">
         Margen %
         <span class="tooltip-icon">?</span>
-        <div class="tooltip-box">Ganancia como % del precio. Fórmula: (Precio-Costo)/Precio×100</div>
+        <div class="tooltip-box">Ganancia como % del precio{% if producto.desglosa_iva %} sin IVA{% endif %}. Fórmula: Ganancia / Precio{% if producto.desglosa_iva %} sin IVA{% endif %} × 100</div>
       </span>
     </div>
-    <div style="font-size:22px;font-weight:700;color:{% if producto.margen_pct and producto.margen_pct < 0 %}#b03a2e{% else %}#0b7c6c{% endif %}">
+    <div style="font-size:22px;font-weight:700;color:{% if producto.margen_pct is not None and producto.margen_pct < 0 %}#b03a2e{% else %}#0b7c6c{% endif %}">
       {% if producto.margen_pct is not None %}{{ producto.margen_pct|crc:1 }}%{% else %}—{% endif %}</div>
   </div>
   <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
@@ -77,7 +94,7 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 
       <span class="tooltip-wrapper">
         Markup %
         <span class="tooltip-icon">?</span>
-        <div class="tooltip-box">Recargo sobre el costo. Fórmula: (Precio-Costo)/Costo×100</div>
+        <div class="tooltip-box">Recargo sobre el costo. Fórmula: Ganancia / Costo × 100</div>
       </span>
     </div>
     <div style="font-size:22px;font-weight:700">{% if producto.markup_pct is not None %}{{ producto.markup_pct|crc:1 }}%{% else %}—{% endif %}</div>

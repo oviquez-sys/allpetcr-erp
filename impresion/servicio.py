@@ -80,7 +80,8 @@ def imprimir_tiquete(factura) -> None:
     datos = _tiquete.bytes_tiquete(
         factura,
         ancho=settings.ANCHO_TIQUETE,
-        pie=settings.PIE_TIQUETE,
+        pie=(settings.PIE_TIQUETE if factura.empresa.regimen == "RTS"
+             else settings.PIE_TIQUETE_TRADICIONAL),
         logo=_tiquete.bytes_logo(
             settings.TIQUETE_LOGO_PUNTOS, settings.TIQUETE_PAPEL_PUNTOS
         ),

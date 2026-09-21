@@ -46,7 +46,10 @@ def _desglose_fiscal(empresa, producto, total_linea):
     """Devuelve (subtotal, impuesto) de una línea según el régimen."""
     if empresa.regimen == Empresa.Regimen.SIMPLIFICADO:
         return total_linea, Decimal("0")
-    tarifa = producto.impuesto.tarifa if producto.impuesto else Decimal("0")
+    # Sin tarifa asignada se usa la general (13 %), no 0: ver
+    # catalogo.models.TARIFA_GENERAL_IVA. Antes un producto sin impuesto se
+    # vendía en régimen tradicional sin IVA, sin avisar a nadie.
+    tarifa = producto.tarifa_iva
     subtotal = (total_linea / (1 + tarifa / 100)).quantize(Decimal("0.01"))
     return subtotal, total_linea - subtotal
 
@@ -145,13 +148,17 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             # Calcular automáticamente el monto del descuento
             desc_l = (bruto_linea * desc_pct / 100).quantize(Decimal("0.01"))
             total_linea = bruto_linea - desc_l
-            # Bloqueo de venta bajo costo: el precio efectivo por unidad (ya con
-            # el descuento) no puede quedar por debajo del costo promedio.
+            sub_l, imp_l = _desglose_fiscal(empresa, producto, total_linea)
+            # Bloqueo de venta bajo costo: lo que le queda al negocio por
+            # unidad (ya con el descuento y SIN el IVA, que es de Hacienda)
+            # no puede quedar por debajo del costo promedio. Antes se
+            # comparaba el precio con IVA: en régimen tradicional dejaba pasar
+            # ventas que perdían plata (20/09/2026).
             if not permitir_bajo_costo and producto.costo_promedio > 0:
-                precio_efectivo = total_linea / cantidad
+                precio_efectivo = sub_l / cantidad
                 if precio_efectivo < producto.costo_promedio:
                     raise ValidationError(
-                        f"{producto.nombre}: el precio con descuento (₡{precio_efectivo:.2f}) "
+                        f"{producto.nombre}: el precio con descuento, sin IVA (₡{precio_efectivo:.2f}), "
                         f"queda por debajo del costo (₡{producto.costo_promedio}). "
                         "Un gerente debe autorizar la venta bajo costo."
                     )
@@ -165,7 +172,6 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
                     f"{DESCUENTO_MAXIMO_SIN_AUTORIZACION}% que un cajero puede aplicar sin "
                     "autorización. Pedile a un gerente que registre la venta."
                 )
-            sub_l, imp_l = _desglose_fiscal(empresa, producto, total_linea)
             tipo_kardex = "VEN"
 
         # Kardex primero: si no hay stock, ValidationError revienta TODA la venta.

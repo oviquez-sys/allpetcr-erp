@@ -62,6 +62,8 @@ class _Lineas:
 class _Empresa:
     nombre: str = "ALLPETCR.COM"
     identificacion: str = "3-102-969361"
+    # El pie del tiquete depende del régimen (20/09/2026).
+    regimen: str = "RTS"
 
 
 @dataclass

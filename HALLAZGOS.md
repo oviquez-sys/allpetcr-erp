@@ -353,3 +353,52 @@ existen es peor que no tenerlo.
 | `ARQUEO_DIAS_VENTANA` | Ventana del reporte de diferencias de caja | `30` |
 | `ARQUEO_TOLERANCIA` | Diferencia por debajo de la cual un cierre se considera cuadrado | `100` |
 
+
+## Cambio del 20/09/2026 — Régimen tradicional y cálculo de ganancia
+
+**Contexto.** El contador le confirmó a Francisco que AllPetCR es **régimen
+tradicional desde el primer día**, no simplificado. `Empresa.regimen` sigue en
+`RTS` en la base: se cambia a mano desde el admin (Empresa → régimen) cuando
+esta entrega esté desplegada. Los precios actuales **no** se pensaron con IVA
+incluido: esa decisión de precios es de Oscar y no se tocó ningún precio.
+
+### Corregido
+- **Ganancia en la ficha de precio** (`templates/catalogo/precio_producto.html`):
+  mostraba precio + costo − 1 porque el filtro `add` sumaba el costo. Con
+  precio ₡5.300 y costo ₡2.000 decía ₡7.299. Ahora sale de
+  `Producto.ganancia_unitaria`.
+- **Margen, markup y ganancia sin IVA** (`catalogo/models.py`): en tradicional
+  se calculan sobre `precio_sin_iva`; antes contaban el IVA de Hacienda como
+  ganancia. En simplificado no cambia nada (`precio_sin_iva` = precio).
+- **Producto sin tarifa** (`ventas/services.py::_desglose_fiscal`): usaba 0 %;
+  ahora la general, `TARIFA_GENERAL_IVA` = 13 %. La migración
+  `catalogo/0007` asigna 13 % a todos los productos sin tarifa. Verificado en
+  el catálogo CABYS oficial: comida para perros y gatos, arneses, correas,
+  ropa e higiene para mascotas llevan 13 %.
+- **Piso de venta bajo costo**: se mide sin IVA. Antes, en tradicional, dejaba
+  pasar ventas que perdían plata.
+- **Resumen del mes** (`core/dashboard.py::_resultado_periodo`): ventas y
+  ganancia sin IVA; resta las devoluciones parciales; "vs mes anterior"
+  compara los mismos días (1 al N) y no 30 días completos.
+- **Textos legales**: tiquete (HTML y térmico) y recibo a color ya no dicen
+  "Régimen de Tributación Simplificada" si la empresa no lo es. Siguen
+  diciendo que no son comprobante electrónico, porque todavía no lo son.
+
+Pruebas nuevas: `catalogo/test_ganancia_iva.py`, `core/test_resultado_mes.py`,
+`ventas.tests.VentaEnRegimenTradicional`.
+
+### Pendiente (siguiente entrega)
+1. **IVA de las compras** (crédito fiscal): `compras` no registra el IVA
+   pagado ni existe la cuenta de IVA acreditable. Con régimen tradicional el
+   libro mostraría como deuda todo el IVA de las ventas.
+2. **Declaración mensual de IVA**: solo existe el reporte trimestral del
+   simplificado (`contabilidad/views.py`, `iva_trimestral.html`).
+3. **Factura electrónica**: `facturacion_electronica` no genera XML, no firma
+   ni envía. La llave criptográfica está en trámite; faltan también el usuario
+   de la API de Hacienda y el CABYS de cada producto (campo vacío).
+4. Confirmar con el contador cómo se anotó el costo en "Recibir mercadería"
+   (con o sin IVA) y cómo se regularizan las ventas previas.
+
+### Variables de entorno nuevas
+- `PIE_TIQUETE_TRADICIONAL` (opcional): pie del tiquete térmico en régimen
+  tradicional.
