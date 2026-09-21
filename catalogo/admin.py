@@ -56,8 +56,10 @@ class ProductoAdmin(admin.ModelAdmin):
         return f"{obj.markup_pct}%"
 
     list_display_links = ("sku", "nombre")
-    list_filter = ("categoria", "activo")
-    search_fields = ("sku", "nombre", "codigo_barras", "categoria_original")
+    list_filter = ("categoria", "activo", ("cabys", admin.EmptyFieldListFilter))
+    # CABYS en la búsqueda (21/09/2026): cuando el contador diga "cambien
+    # todos los 3694000999900", se encuentran escribiendo el código.
+    search_fields = ("sku", "nombre", "codigo_barras", "categoria_original", "cabys")
     list_per_page = 50
     # El margen de cada fila necesita empresa (régimen) e impuesto (tarifa).
     list_select_related = ("categoria", "empresa", "impuesto")

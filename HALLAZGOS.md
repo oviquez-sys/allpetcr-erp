@@ -414,8 +414,11 @@ correr dos veces. Pruebas: `catalogo/test_aplicar_precios_iva.py`.
 
 ### Pendiente
 1. **Factura electrónica**: `facturacion_electronica` no genera XML, no firma
-   ni envía. La llave criptográfica está en trámite; faltan también el usuario
-   de la API de Hacienda y el CABYS de cada producto (campo vacío).
+   ni envía. La llave criptográfica está en trámite; falta también el usuario
+   de la API de Hacienda. El CABYS de cada producto ya tiene cómo cargarse
+   (21/09/2026): `manage.py asignar_cabys` / `ASIGNAR_CABYS.bat`, por
+   categoría, con códigos verificados en Hacienda (`catalogo/cabys.py`);
+   deja `data/CABYS_PARA_EL_CONTADOR.xlsx` para que el contador revise.
 2. Confirmar con el contador cómo se anotó el costo en "Recibir mercadería"
    (con o sin IVA) y cómo se regularizan las ventas previas.
 

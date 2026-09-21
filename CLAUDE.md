@@ -265,6 +265,22 @@ el nombre corto del producto.
   porque alimenta el sitio público (`allpetcr-web`) y no es lo que Oscar
   pidió esta vez.
 
+## CABYS de cada producto (21/09/2026)
+
+- `catalogo/cabys.py` es la ÚNICA tabla de códigos: cada uno verificado en
+  la API de Hacienda (`api.hacienda.go.cr/fe/cabys?codigo=`), con su
+  descripción oficial. Todos son de 13 %. `test_cabys` falla si una regla
+  apunta a un código que no está en la tabla — así no se cuela uno inventado.
+- Se asigna por categoría raíz, afinado por palabras del nombre y de la
+  subcategoría (champú vs. cepillo, collar antipulgas, alimento húmedo).
+- `asignar_cabys` no pisa un código ya puesto (a mano o por el contador)
+  salvo `--reemplazar`, y no le pone código a un producto con IVA distinto
+  de 13 %. Siempre deja el Excel `data/CABYS_PARA_EL_CONTADOR.xlsx`.
+- Se aplica en el servidor con `ASIGNAR_CABYS.bat` (patrón de siempre: pide
+  la contraseña, simula, pregunta SI).
+- Desde la sandbox de Claude la API de Hacienda solo responde por WebFetch:
+  `curl` la bloquea el proxy.
+
 ## Reglas del proyecto
 
 **Los comentarios explican el *porqué*, no el *qué*.** Es la característica

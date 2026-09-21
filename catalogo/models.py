@@ -122,9 +122,13 @@ class Producto(models.Model):
         help_text="Contenido neto del empaque (ej. 15 para una bolsa de 15 kg)",
     )
     peso_unidad = models.CharField(max_length=2, choices=UnidadPeso.choices, blank=True)
-    # Vacío a propósito: lo llena Oscar copiándolo del catálogo oficial de
-    # Hacienda. Un CABYS mal puesto rebota la factura electrónica, así que
-    # nadie lo adivina ni lo autocompleta — ver validar_cabys arriba.
+    # Desde el 21/09/2026 lo carga `manage.py asignar_cabys` por categoría,
+    # solo con códigos verificados en la API de Hacienda (catalogo/cabys.py),
+    # y deja un Excel para que el contador revise. Un código puesto a mano
+    # (o corregido por el contador) no lo vuelve a pisar. Nunca se inventa
+    # uno: un CABYS inexistente rebota la factura electrónica.
+    # (El help_text de abajo quedó de antes; cambiarlo exigiría una migración
+    # que no aporta nada.)
     cabys = models.CharField(
         "código CABYS", max_length=13, blank=True, validators=[validar_cabys],
         help_text="13 dígitos del Catálogo de Bienes y Servicios de Hacienda. "
