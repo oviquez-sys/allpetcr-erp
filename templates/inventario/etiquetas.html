@@ -168,7 +168,8 @@ function filtrar(){
     return p.nombre.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
         || (p.codigo_barras||'').toLowerCase().includes(q)
         || (p.marca||'').toLowerCase().includes(q)
-        || (p.presentacion||'').toLowerCase().includes(q);
+        || (p.presentacion||'').toLowerCase().includes(q)
+        || (p.descripcion||'').toLowerCase().includes(q);
   });
 }
 

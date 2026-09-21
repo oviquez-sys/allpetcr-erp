@@ -63,6 +63,20 @@ class HerramientasTest(TestCase):
         print("productos_menor_margen:", r)
         self.assertEqual(r["productos"][0]["nombre"], "Barato")
 
+    def test_buscar_producto_encuentra_por_descripcion(self):
+        # 20/09/2026: "peluche gallina" tiene "gallina" solo en la
+        # descripción, no en el nombre corto del producto.
+        from catalogo.models import Producto
+        Producto.objects.create(
+            empresa=self.empresa, sku="J1", nombre="Peluche mediano",
+            descripcion="Peluche con forma de gallina, para perro",
+            precio_venta=Decimal("3000"), stock_actual=Decimal("2"),
+        )
+        r = ejecutar_herramienta("buscar_producto", {"texto": "peluche gallina"}, usuario=self.gerente)
+        print("buscar_producto por descripción:", r)
+        self.assertEqual(len(r["productos"]), 1)
+        self.assertEqual(r["productos"][0]["sku"], "J1")
+
 
 class PermisosHerramientasTest(TestCase):
     """El chat no debe ser una puerta trasera a los costos (hallazgo SEG-01).

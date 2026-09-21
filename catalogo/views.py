@@ -39,8 +39,12 @@ def precios(request):
     # es un botón y no una prohibición.
     productos = productos_visibles(empresa_actual(request), incluir_agotados=agotados)
     if q:
+        # También busca en la descripción (20/09/2026, pedido de Oscar): hay
+        # datos —color, material, presentación exacta— que solo están ahí y
+        # no en el nombre corto del producto.
         productos = productos.filter(
             Q(nombre__icontains=q) | Q(sku__icontains=q) | Q(codigo_barras__icontains=q)
+            | Q(descripcion__icontains=q)
         )
     productos = list(productos.order_by("nombre")[:60])
     return render(request, "catalogo/precios.html", {

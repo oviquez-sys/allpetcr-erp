@@ -124,7 +124,8 @@ def nueva(request):
         # que hace que el personal no tenga que aprender tres pantallas.
         .values("id", "sku", "nombre", "codigo_barras", "costo_promedio",
                 "stock_actual", "presentacion", "categoria__nombre",
-                "categoria__orden", "mascota", "precio_venta", "imagen", "actualizado_en")
+                "categoria__orden", "mascota", "precio_venta", "imagen",
+                "descripcion", "actualizado_en")
     )
     for p in productos:
         p["costo_promedio"] = float(p["costo_promedio"])
@@ -135,6 +136,7 @@ def nueva(request):
         p["categoria_orden"] = p.pop("categoria__orden") or 999
         p["mascota"] = p.get("mascota") or ""
         p["presentacion"] = p.get("presentacion") or ""
+        p["descripcion"] = p.get("descripcion") or ""
         completar_foto(p)
     proveedores = list(
         Proveedor.objects.filter(activo=True, empresa=empresa).values("id", "nombre").order_by("nombre")

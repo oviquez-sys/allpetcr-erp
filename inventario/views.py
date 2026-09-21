@@ -92,7 +92,8 @@ def etiquetas(request):
         productos_visibles(empresa, incluir_agotados=True)
         .select_related("categoria")
         .values("id", "sku", "nombre", "codigo_barras", "precio_venta", "stock_actual",
-                "presentacion", "marca", "categoria__nombre", "imagen", "actualizado_en")
+                "presentacion", "marca", "categoria__nombre", "imagen",
+                "descripcion", "actualizado_en")
         .order_by("nombre")
     )
     for p in productos:  # JSON-serializable + nombres de campo para el navegador
@@ -102,6 +103,7 @@ def etiquetas(request):
         p["presentacion"] = p.get("presentacion") or ""
         p["marca"] = p.get("marca") or ""
         p["codigo_barras"] = p.get("codigo_barras") or ""
+        p["descripcion"] = p.get("descripcion") or ""
         completar_foto(p)
 
     return render(request, "inventario/etiquetas.html", {

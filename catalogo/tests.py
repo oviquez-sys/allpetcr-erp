@@ -287,6 +287,40 @@ class HistorialDePrecios(TestCase):
         self.assertEqual(ultimo.valor_nuevo, Decimal("12500"))
 
 
+class BuscadorDePrecios(TestCase):
+    """El buscador de Precios encuentra por nombre o por descripción
+    (20/09/2026, pedido de Oscar): "peluche gallina" o "taza comida azul"
+    a veces solo están en la descripción, no en el nombre corto."""
+
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
+        self.gerente = User.objects.create_user("oscar", password="x", is_staff=True, is_superuser=True)
+        self.client.login(username="oscar", password="x")
+        self.peluche = Producto.objects.create(
+            empresa=self.empresa, sku="P-100", nombre="Peluche mediano",
+            descripcion="Peluche de gallina para perro, resistente",
+            precio_venta=Decimal("5000"), stock_actual=Decimal("3"),
+        )
+        self.tazon = Producto.objects.create(
+            empresa=self.empresa, sku="P-200", nombre="Tazón para comida",
+            descripcion="Color azul, plástico, 500 ml",
+            precio_venta=Decimal("2500"), stock_actual=Decimal("5"),
+        )
+
+    def _buscar(self, q):
+        r = self.client.get(reverse("catalogo:precios"), {"q": q})
+        return [p.sku for p in r.context["productos"]]
+
+    def test_encuentra_por_palabra_solo_en_la_descripcion(self):
+        self.assertEqual(self._buscar("gallina"), ["P-100"])
+
+    def test_encuentra_por_color_solo_en_la_descripcion(self):
+        self.assertEqual(self._buscar("azul"), ["P-200"])
+
+    def test_sigue_encontrando_por_nombre(self):
+        self.assertEqual(self._buscar("Tazón"), ["P-200"])
+
+
 class PermisosDePrecios(TestCase):
     """Solo gerente puede entrar a precios; un cajero es rebotado."""
 

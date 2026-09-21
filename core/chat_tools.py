@@ -41,18 +41,19 @@ TOOLS_SCHEMA = [
     {
         "name": "buscar_producto",
         "description": (
-            "Busca productos del catálogo por nombre, código (SKU) o código de "
-            "barras y devuelve precio de venta, existencia, categoría y mascota. "
-            "Usar SIEMPRE que la persona pregunte por un producto concreto "
-            "('¿cuánto cuesta el Royal Canin de 15 kg?', '¿quedan collares?', "
-            "'¿qué arena para gato tenemos?'). La pantalla muestra la foto de "
+            "Busca productos del catálogo por nombre, descripción, código (SKU) "
+            "o código de barras y devuelve precio de venta, existencia, "
+            "categoría y mascota. Usar SIEMPRE que la persona pregunte por un "
+            "producto concreto ('¿cuánto cuesta el Royal Canin de 15 kg?', "
+            "'¿quedan collares?', '¿qué arena para gato tenemos?', 'peluche de "
+            "gallina', 'tazón de comida azul'). La pantalla muestra la foto de "
             "cada producto encontrado debajo de tu respuesta, así que no hace "
             "falta describir cómo se ve."
         ),
         "input_schema": {
             "type": "object",
             "properties": {
-                "texto": {"type": "string", "description": "Palabras del nombre, SKU o código de barras."},
+                "texto": {"type": "string", "description": "Palabras del nombre, la descripción, el SKU o el código de barras."},
                 "limite": {"type": "integer", "description": "Máximo de productos, hasta 12. Por defecto 6."},
             },
             "required": ["texto"],
@@ -195,9 +196,14 @@ def ejecutar_herramienta(nombre, entrada, usuario=None):
             if not texto:
                 return {"productos": []}
             filtro = Q(sku__iexact=texto) | Q(codigo_barras=texto)
+            # Cada palabra puede caer en el nombre O en la descripción
+            # (20/09/2026, pedido de Oscar): "tazón comida azul" suele tener
+            # "tazón" y "comida" en el nombre corto y "azul" solo en la
+            # descripción. Exigir la frase completa en un único campo no
+            # encontraba nada.
             palabras = Q()
             for palabra in texto.split()[:6]:
-                palabras &= Q(nombre__icontains=palabra)
+                palabras &= Q(nombre__icontains=palabra) | Q(descripcion__icontains=palabra)
             qs = (
                 Producto.objects.filter(empresa=empresa, activo=True)
                 .filter(filtro | palabras)

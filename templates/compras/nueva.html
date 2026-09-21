@@ -540,7 +540,7 @@ function filtrar(){
     if (catSel !== "Todas" && p.categoria !== catSel) return false;
     if (!q) return true;
     return p.nombre.toLowerCase().includes(q) || p.sku.includes(q) || (p.codigo_barras||'').includes(q)
-        || (p.presentacion||'').toLowerCase().includes(q);
+        || (p.presentacion||'').toLowerCase().includes(q) || (p.descripcion||'').toLowerCase().includes(q);
   });
 }
 function pintarGrid(){

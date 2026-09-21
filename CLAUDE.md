@@ -241,6 +241,29 @@ Regla de Oscar: **donde se hable de un producto, se ve su foto.**
 - El chat de ayuda tiene la herramienta `buscar_producto` y la respuesta trae
   la foto de cada producto que devolvieron las herramientas.
 
+## Búsqueda por descripción (20/09/2026)
+
+Regla de Oscar: los buscadores de producto deben encontrar por **nombre o
+descripción**, no solo por nombre. Ejemplo real: "peluche gallina" o "taza
+comida azul" — la palabra clave a veces solo está en la descripción, no en
+el nombre corto del producto.
+
+- **POS, Recibir mercadería, Etiquetas** (JS con la lista precargada): el
+  filtro del navegador ahora también compara contra `descripcion`. Cada
+  vista Python que arma esa lista (`ventas.views.pos`, `compras.views.nueva`,
+  `inventario.views.etiquetas`) agrega el campo `descripcion` al `.values()`.
+- **Precios** (`catalogo.views.precios`): el filtro del servidor agrega
+  `Q(descripcion__icontains=q)`.
+- **Chat de ayuda** (`buscar_producto` en `core/chat_tools.py`): busca
+  palabra por palabra, y cada palabra puede caer en el nombre O en la
+  descripción — no exige la frase completa en un único campo, porque
+  "azul" puede estar solo en la descripción mientras "taza" y "comida"
+  están en el nombre.
+- Pendiente, si Oscar lo pide: el buscador del sitio web (`api/views.py`,
+  parámetro `?q=`) todavía solo busca en nombre y SKU exacto — no se tocó
+  porque alimenta el sitio público (`allpetcr-web`) y no es lo que Oscar
+  pidió esta vez.
+
 ## Reglas del proyecto
 
 **Los comentarios explican el *porqué*, no el *qué*.** Es la característica
