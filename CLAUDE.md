@@ -43,8 +43,9 @@ es alcanzable. Si un hallazgo dice "del sitio web", no es de este repo.
 - Régimen fiscal real: **tradicional desde el primer día** (lo confirmó el
   contador el 18-20/09/2026; hasta entonces se creía RTS). Todo lo que vende
   la tienda lleva IVA 13 %. Márgenes y ganancia ya se calculan sin IVA
-  (20/09/2026). Faltan el IVA de compras, la declaración mensual y la
-  factura electrónica — ver la sección del 20/09/2026 en `HALLAZGOS.md`.
+  (20/09/2026). El IVA de compras (acreditable) y el resumen mensual de
+  IVA están hechos; falta la factura electrónica — ver la sección del
+  20/09/2026 en `HALLAZGOS.md`.
 - Repos en GitHub: `oviquez-sys/allpetcr-erp` y `oviquez-sys/allpetcr-web`
   (este último recuperado de una corrupción de git el 29/08/2026 — ver
   `REPORTE-NOCHE.md`)

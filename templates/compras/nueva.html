@@ -109,6 +109,7 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
 .empty .big{font-size:34px;display:block;margin-bottom:8px}
 #totales{border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
 .tot.g{display:flex;justify-content:space-between;font-size:22px;font-weight:700;letter-spacing:-.02em}
+.tot:not(.g){display:flex;justify-content:space-between;font-size:14px;color:var(--ink2);margin-bottom:4px}
 .btn-reg{margin-top:12px;width:100%;padding:16px;border:none;border-radius:14px;
   background:linear-gradient(135deg,#072244,#0B3161);color:#fff;font-size:15px;font-weight:600;cursor:pointer;
   transition:transform .15s,filter .2s}
@@ -212,6 +213,17 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
       <input class="txt-in" id="factura" placeholder="Ej. 00123">
     </div>
 
+    {% if tradicional %}
+    {# IVA acreditable (20/09/2026): va aparte del costo para que Hacienda lo
+       reconozca al declarar. Solo con factura electrónica a nombre de la
+       empresa; sin factura, el IVA es costo y va dentro del precio unitario. #}
+    <div class="campo">
+      <label>IVA de la factura (₡)</label>
+      <input class="txt-in" id="ivaFactura" type="number" min="0" step="any" placeholder="0" oninput="pintarLineas()">
+      <p class="nota" style="margin-top:6px">Solo si el proveedor te dio <b>factura electrónica a nombre de AllPetCR</b>: poné los costos <b>sin IVA</b>, como vienen en cada línea, y el IVA total acá. Sin factura, poné el costo con todo incluido y dejá esto en 0.</p>
+    </div>
+    {% endif %}
+
     <div id="lineas"></div>
     <div id="totales"></div>
     <button class="btn-reg" onclick="registrar()">✅ Registrar compra</button>
@@ -227,7 +239,8 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
     <div class="step2"><div class="n">1</div><div class="st">Escaneá o buscá cada producto que llegó y tocalo para agregarlo a la lista de la derecha. Si es un producto que nunca habías comprado, tocá "➕ Producto nuevo" para crearlo al vuelo.</div></div>
     <div class="step2"><div class="n">2</div><div class="st">Ajustá la <b>cantidad</b> y el <b>costo</b> con el que te lo vendió el proveedor (no el precio de venta).</div></div>
     <div class="step2"><div class="n">+</div><div class="st">Si te dieron una <b>promoción tipo 12+1 o 100+20</b>, poné las facturadas en "cant." y las regaladas en "<b>+ gratis</b>". La factura se registra por lo que te cobran, el inventario sube por todo lo que llegó, y el sistema calcula solo cuánto te costó de verdad cada unidad.</div></div>
-    <div class="step2"><div class="n">+</div><div class="st">Si querés <b>recalcular el precio de venta</b>, escribí en "<b>gan. %</b>" cuánto querés ganarle sobre el costo (110 = el precio queda en 2,1 veces el costo). El sistema lo calcula sobre el costo <i>real</i> —con la bonificación ya repartida— y lo redondea a la centena. Si lo dejás vacío, el precio no se toca.</div></div>
+    <div class="step2"><div class="n">+</div><div class="st">Si querés <b>recalcular el precio de venta</b>, escribí en "<b>gan. %</b>" cuánto querés ganarle sobre el costo (110 = el precio queda en 2,1 veces el costo). El sistema lo calcula sobre el costo <i>real</i> —con la bonificación ya repartida— y lo redondea a la centena. Si lo dejás vacío, el precio no se toca.{% if tradicional %} El precio que calcula <b>ya incluye el IVA</b>, y la ganancia se mide sobre lo que te queda sin IVA.{% endif %}</div></div>
+    {% if tradicional %}<div class="step2"><div class="n">+</div><div class="st">Si el proveedor te dio <b>factura electrónica</b> a nombre de AllPetCR, anotá los costos <b>sin IVA</b> y el IVA total en "<b>IVA de la factura</b>": ese IVA te lo descuenta Hacienda. Sin factura, anotá el costo con todo incluido y el IVA en 0.</div></div>{% endif %}
     <div class="step2"><div class="n">3</div><div class="st">Elegí el proveedor (o escribí uno nuevo si no está en la lista) y si es de contado o a crédito.</div></div>
     <div class="step2"><div class="n">4</div><div class="st">Tocá <b>Registrar compra</b>. El stock y la contabilidad se actualizan solos, no hay que hacer nada más.</div></div>
     <button class="close" onclick="document.getElementById('ayuda').classList.remove('on')">Entendido</button>
@@ -286,6 +299,12 @@ const productos = JSON.parse(document.getElementById('datos-productos').textCont
 const CATEGORIAS = JSON.parse(document.getElementById('datos-categorias').textContent);
 const porId = Object.fromEntries(productos.map(p=>[p.id,p]));
 let carrito = {}; // id -> {cantidad, costo}
+// Régimen tradicional (20/09/2026): el precio de venta lleva el IVA adentro.
+// La ganancia se calcula sobre lo que le queda al negocio (precio ÷ 1,13);
+// sin esto, "gan. 100 %" daba un precio que en realidad ganaba 77 %.
+const FACTOR_IVA = {{ factor_iva }};
+const TRADICIONAL = {{ tradicional|yesno:"true,false" }};
+function ivaFactura(){ const el = document.getElementById('ivaFactura'); return el ? (+el.value || 0) : 0; }
 let formaPago = 'CON';
 
 // `fmt` lo define static/js/formato.js, cargado en el <head>.
@@ -437,7 +456,7 @@ function npRecalcularPrecio(){
   const costo = +(document.getElementById('npCosto').value || 0);
   const gan = document.getElementById('npGanancia').value;
   if (costo > 0 && gan !== '' && !isNaN(+gan)){
-    document.getElementById('npPrecio').value = redondear100(costo * (1 + (+gan)/100));
+    document.getElementById('npPrecio').value = redondear100(costo * (1 + (+gan)/100) * FACTOR_IVA);
   }
   npPintarAviso();
 }
@@ -445,7 +464,7 @@ function npRecalcularGanancia(){
   const costo = +(document.getElementById('npCosto').value || 0);
   const precio = +(document.getElementById('npPrecio').value || 0);
   if (costo > 0 && precio > 0){
-    document.getElementById('npGanancia').value = ((precio/costo - 1) * 100).toFixed(0);
+    document.getElementById('npGanancia').value = ((precio/FACTOR_IVA/costo - 1) * 100).toFixed(0);
   }
   npPintarAviso();
 }
@@ -454,14 +473,15 @@ function npPintarAviso(){
   const precio = +(document.getElementById('npPrecio').value || 0);
   const av = document.getElementById('npAviso');
   if (costo > 0 && precio > 0){
-    const gan = (precio/costo - 1) * 100;
-    const margen = (precio - costo)/precio * 100;
-    if (precio <= costo){
+    const neto = precio / FACTOR_IVA;  // lo que queda sin el IVA
+    const gan = (neto/costo - 1) * 100;
+    const margen = (neto - costo)/neto * 100;
+    if (neto <= costo){
       av.innerHTML = `⚠️ Estás vendiendo en <b>${fmt(precio)}</b> algo que te costó <b>${fmt(costo)}</b>: perdés plata en cada unidad.`;
       av.style.color = 'var(--red)';
       return;
     }
-    av.innerHTML = `Costo <b>${fmt(costo)}</b> → precio <b>${fmt(precio)}</b>. Le ganás <b>${gan.toFixed(0)}%</b> sobre el costo, que es un margen de <b>${margen.toFixed(0)}%</b> sobre la venta.`;
+    av.innerHTML = `Costo <b>${fmt(costo)}</b> → precio <b>${fmt(precio)}</b>${TRADICIONAL ? ' (con IVA)' : ''}. Le ganás <b>${gan.toFixed(0)}%</b> sobre el costo, que es un margen de <b>${margen.toFixed(0)}%</b> sobre la venta.`;
     av.style.color = '';
   } else {
     av.textContent = 'Poné el costo y la ganancia, y el precio se calcula solo. O escribí el precio directo y te digo qué ganancia es.';
@@ -616,12 +636,13 @@ function pintarLineas(){
     const gan = (l.gan === null || l.gan === undefined) ? null : +l.gan;
     let precioNuevo = null, margen = 0;
     if (gan !== null && costoReal > 0){
-      precioNuevo = redondear100(costoReal * (1 + gan/100));
-      margen = precioNuevo > 0 ? (precioNuevo - costoReal)/precioNuevo*100 : 0;
+      precioNuevo = redondear100(costoReal * (1 + gan/100) * FACTOR_IVA);
+      const neto = precioNuevo / FACTOR_IVA;
+      margen = neto > 0 ? (neto - costoReal)/neto*100 : 0;
     }
     // Ganancia que tiene HOY el producto, para que se vea con qué se compara.
     const ganActual = (p.costo_promedio > 0 && p.precio_venta > 0)
-      ? ((p.precio_venta/p.costo_promedio - 1) * 100) : null;
+      ? ((p.precio_venta/FACTOR_IVA/p.costo_promedio - 1) * 100) : null;
     const precioInfo = precioNuevo !== null
       ? `<div class="precio-linea">Precio de venta: <b>${fmt(p.precio_venta)}</b> → <span class="nuevo">${fmt(precioNuevo)}</span> · margen <b>${margen.toFixed(0)}%</b> sobre la venta</div>`
       : `<div class="precio-linea">Precio actual <b>${fmt(p.precio_venta)}</b>${ganActual !== null ? ` · ganancia de hoy <b>${ganActual.toFixed(0)}%</b>` : ''} · escribí una ganancia para recalcularlo</div>`;
@@ -637,7 +658,14 @@ function pintarLineas(){
       <button class="x" onclick="quitarLinea(${id})">✕</button></div>${aviso}${precioInfo}`;
   }).join('') : '<div class="empty"><span class="big">📦</span>Buscá o tocá un producto<br>para empezar a recibir</div>';
   const total = ids.reduce((a,id)=>a + carrito[id].cantidad*carrito[id].costo, 0);
-  document.getElementById('totales').innerHTML = `<div class="tot g"><span>Total</span><span>${fmt(total)}</span></div>`;
+  const iva = ivaFactura();
+  // Con IVA, se muestra el total de la factura para compararlo con el papel:
+  // si no calza, casi siempre es porque los costos se anotaron con IVA.
+  document.getElementById('totales').innerHTML = iva > 0
+    ? `<div class="tot"><span>Subtotal sin IVA</span><span>${fmt(total)}</span></div>
+       <div class="tot"><span>IVA de la factura</span><span>${fmt(iva)}</span></div>
+       <div class="tot g"><span>Total de la factura</span><span>${fmt(total + iva)}</span></div>`
+    : `<div class="tot g"><span>Total</span><span>${fmt(total)}</span></div>`;
 }
 async function registrar(){
   const lineas = Object.entries(carrito).map(([id,l])=>{
@@ -649,7 +677,7 @@ async function registrar(){
       producto_id:+id, cantidad:l.cantidad, cantidad_bonificada:bonif, costo_unitario:l.costo,
       // Solo viaja si el usuario escribió una ganancia. Sin eso, el precio del
       // producto no se toca.
-      precio_venta: (gan !== null && costoReal > 0) ? redondear100(costoReal * (1 + gan/100)) : null,
+      precio_venta: (gan !== null && costoReal > 0) ? redondear100(costoReal * (1 + gan/100) * FACTOR_IVA) : null,
     };
   });
   if (!lineas.length){ msg("Todavía no agregaste productos.", true); return; }
@@ -672,6 +700,7 @@ async function registrar(){
         proveedor_id, proveedor_nuevo,
         forma_pago: formaPago,
         factura_proveedor: document.getElementById('factura').value.trim(),
+        iva: ivaFactura(),
         lineas,
       })
     });
@@ -680,6 +709,7 @@ async function registrar(){
       msg(`✅ Compra ${d.numero} registrada por ${fmt(d.total)}. Stock actualizado.`);
       carrito = {}; pintarLineas();
       document.getElementById('factura').value = '';
+      if (document.getElementById('ivaFactura')) document.getElementById('ivaFactura').value = '';
     } else { msg("⛔ " + d.error, true); }
   } catch(e){ msg("⛔ No se pudo conectar con el servidor.", true); }
   document.querySelector('.btn-reg').disabled = false;

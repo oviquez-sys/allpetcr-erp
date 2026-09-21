@@ -38,7 +38,7 @@ class CompraAdmin(admin.ModelAdmin):
     digita ni se borra desde acá. Para corregir una compra recibida, usar
     anular_compra (services.py) — nunca borrarla."""
 
-    list_display = ("numero", "proveedor", "estado", "forma_pago", "total", "creado_en", "recibida_en")
+    list_display = ("numero", "proveedor", "estado", "forma_pago", "total", "iva", "creado_en", "recibida_en")
     list_filter = ("estado", "forma_pago")
     search_fields = ("numero", "factura_proveedor", "proveedor__nombre")
     inlines = [LineaCompraInline]

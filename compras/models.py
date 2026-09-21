@@ -48,6 +48,17 @@ class Compra(models.Model):
     estado = models.CharField(max_length=3, choices=Estado.choices, default=Estado.BORRADOR)
     forma_pago = models.CharField(max_length=3, choices=Pago.choices, default=Pago.CONTADO)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    # IVA de la factura del proveedor (20/09/2026). Solo en régimen
+    # tradicional y solo si la factura es electrónica a nombre de AllPetCR:
+    # ese IVA se acredita (se resta del IVA cobrado en ventas) y por eso NO
+    # entra al costo del inventario. `total` sigue siendo la suma de las
+    # líneas, sin IVA; lo que se le debe o se le paga al proveedor es
+    # `total_factura` = total + iva. Sin factura, el IVA va en 0 y el costo se
+    # anota con todo incluido: un IVA sin comprobante no se acredita, es costo.
+    iva = models.DecimalField(
+        "IVA de la factura", max_digits=12, decimal_places=2, default=0,
+        help_text="IVA que trae la factura electrónica del proveedor. 0 si no hay factura.",
+    )
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
     creado_en = models.DateTimeField(auto_now_add=True)
     recibida_en = models.DateTimeField(null=True, blank=True)
@@ -66,6 +77,11 @@ class Compra(models.Model):
             models.Index(fields=["recibida_en"], name="compra_recibida_idx"),
             models.Index(fields=["empresa", "estado", "recibida_en"], name="compra_emp_est_rec_idx"),
         ]
+
+    @property
+    def total_factura(self):
+        """Lo que cobra el proveedor: líneas sin IVA + IVA de la factura."""
+        return self.total + self.iva
 
     def __str__(self):
         return f"{self.numero} — {self.proveedor.nombre} ({self.get_estado_display()})"

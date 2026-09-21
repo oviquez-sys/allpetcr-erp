@@ -609,3 +609,68 @@ class RecibirMercaderiaMejoras(BaseCompras):
         self.producto.refresh_from_db()
         self.assertEqual(self.producto.stock_actual, Decimal("22"))  # 10 + 10 + 2 gratis
         self.assertEqual(self.producto.precio_venta, Decimal("25200"))
+
+
+class IVADeCompras(BaseCompras):
+    """IVA acreditable en régimen tradicional (20/09/2026)."""
+
+    def setUp(self):
+        super().setUp()
+        self.empresa.regimen = Empresa.Regimen.TRADICIONAL
+        self.empresa.save()
+
+    def comprar(self, iva, forma="CON"):
+        compra = crear_compra(
+            proveedor=self.proveedor, sucursal=self.sucursal, forma_pago=forma, usuario=self.usuario,
+            lineas=[{"producto": self.producto, "cantidad": Decimal("10"), "costo_unitario": Decimal("10000")}],
+            iva=iva,
+        )
+        return recibir_compra(compra=compra, usuario=self.usuario)
+
+    def test_iva_va_a_acreditable_y_no_al_costo(self):
+        self.comprar("13000")  # factura: 100.000 + 13.000 de IVA
+        self.assertEqual(self.saldo("inventario")[0], Decimal("100000"))
+        self.assertEqual(self.saldo("iva_acreditable")[0], Decimal("13000"))
+        self.assertEqual(self.saldo("bancos")[1], Decimal("113000"))
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.costo_promedio, Decimal("10000"))  # el IVA no infla el costo
+
+    def test_a_credito_el_proveedor_cobra_con_iva(self):
+        self.comprar("13000", forma="CRE")
+        self.proveedor.refresh_from_db()
+        self.assertEqual(self.proveedor.saldo, Decimal("113000"))
+
+    def test_anular_revierte_tambien_el_iva(self):
+        compra = self.comprar("13000", forma="CRE")
+        anular_compra(compra=compra, motivo="error", usuario=self.usuario)
+        debe, haber = self.saldo("iva_acreditable")
+        self.assertEqual(debe - haber, Decimal("0"))
+        self.proveedor.refresh_from_db()
+        self.assertEqual(self.proveedor.saldo, Decimal("0"))
+
+    def test_sin_factura_todo_es_costo(self):
+        self.comprar("0")
+        self.assertEqual(self.saldo("inventario")[0], Decimal("100000"))
+        self.assertEqual(self.saldo("iva_acreditable")[0], Decimal("0"))
+
+    def test_simplificado_no_acepta_iva(self):
+        self.empresa.regimen = Empresa.Regimen.SIMPLIFICADO
+        self.empresa.save()
+        with self.assertRaises(ValidationError):
+            self.comprar("13000")
+
+    def test_pantalla_manda_el_iva(self):
+        self.client.login(username="oscar", password="x")
+        r = self.client.post(reverse("compras:registrar"), data=json.dumps({
+            "proveedor_id": self.proveedor.pk, "forma_pago": "CON", "iva": 1300,
+            "lineas": [{"producto_id": self.producto.pk, "cantidad": 1, "costo_unitario": 10000}],
+        }), content_type="application/json")
+        self.assertTrue(r.json()["ok"], r.json())
+        self.assertEqual(r.json()["total"], 11300.0)
+        self.assertEqual(Compra.objects.get().iva, Decimal("1300.00"))
+
+    def test_pantalla_calcula_el_precio_con_iva(self):
+        self.client.login(username="oscar", password="x")
+        html = self.client.get(reverse("compras:nueva")).content.decode()
+        self.assertIn("const FACTOR_IVA = 1.13", html)
+        self.assertIn('id="ivaFactura"', html)

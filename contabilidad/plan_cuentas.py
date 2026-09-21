@@ -12,6 +12,7 @@ PLANTILLA = [
     ("1101", "Caja general", "A", True),
     ("1102", "Bancos", "A", True),
     ("1201", "Cuentas por cobrar clientes", "A", True),
+    ("1104", "IVA acreditable (crédito fiscal)", "A", True),
     ("1301", "Inventario de mercadería", "A", True),
     ("2", "PASIVO", "P", False),
     ("2401", "IVA por pagar", "P", True),
@@ -30,6 +31,10 @@ CODIGOS = {
     "bancos": "1102",
     "cxc": "1201",
     "inventario": "1301",
+    # IVA pagado en compras con factura electrónica (régimen tradicional,
+    # 20/09/2026). Es plata que Hacienda le reconoce al negocio: se resta del
+    # IVA cobrado en ventas al declarar. Por eso es un activo y no costo.
+    "iva_acreditable": "1104",
     "iva_por_pagar": "2401",
     "ventas": "4101",
     "descuentos": "4102",

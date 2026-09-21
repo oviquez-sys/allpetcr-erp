@@ -176,6 +176,12 @@ def iva_trimestral(request):
     except (TypeError, ValueError):
         anio = hoy.year
 
+    # Régimen tradicional (20/09/2026): el IVA se declara cada mes, IVA
+    # cobrado en ventas menos IVA acreditable de compras. Misma dirección y
+    # mismo botón en Reportes: quien la abre ve el reporte de SU régimen.
+    if empresa and empresa.regimen == Empresa.Regimen.TRADICIONAL:
+        return _iva_mensual(request, empresa, anio, hoy)
+
     factor = empresa.factor_rts if empresa else Decimal("0")
 
     etiquetas = ["Ene–Mar", "Abr–Jun", "Jul–Set", "Oct–Dic"]
@@ -217,4 +223,53 @@ def iva_trimestral(request):
         "total_ventas": total_ventas,
         "total_impuesto": total_impuesto,
         "es_rts": empresa.regimen == empresa.Regimen.SIMPLIFICADO if empresa else True,
+    })
+
+
+MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
+         "Agosto", "Setiembre", "Octubre", "Noviembre", "Diciembre"]
+
+
+def _iva_mensual(request, empresa, anio, hoy):
+    """Resumen mensual del IVA en régimen tradicional.
+
+    Sale del LIBRO, no de las facturas: el saldo del mes de "IVA por pagar"
+    (lo cobrado en ventas, ya neto de anulaciones y devoluciones, porque cada
+    una deja su asiento inverso) menos el de "IVA acreditable" (lo pagado en
+    compras con factura electrónica). Así el reporte y la contabilidad no
+    pueden contar distinto.
+    """
+    from contabilidad.services import cuenta
+    from ventas.models import FacturaVenta
+
+    c_cobrado = cuenta(empresa, "iva_por_pagar")
+    c_acreditable = cuenta(empresa, "iva_acreditable")
+    ultimo_mes = hoy.month if anio == hoy.year else 12
+
+    meses = []
+    totales = {"ventas": Decimal("0"), "cobrado": Decimal("0"), "acreditable": Decimal("0"), "neto": Decimal("0")}
+    for m in range(1, ultimo_mes + 1):
+        ini = date(anio, m, 1)
+        fin = date(anio + 1, 1, 1) if m == 12 else date(anio, m + 1, 1)
+        lineas = LineaAsiento.objects.filter(
+            asiento__empresa=empresa, asiento__fecha__gte=ini, asiento__fecha__lt=fin,
+        )
+        mov_cobrado = lineas.filter(cuenta=c_cobrado).aggregate(d=Sum("debe"), h=Sum("haber"))
+        mov_acred = lineas.filter(cuenta=c_acreditable).aggregate(d=Sum("debe"), h=Sum("haber"))
+        cobrado = (mov_cobrado["h"] or Decimal("0")) - (mov_cobrado["d"] or Decimal("0"))
+        acreditable = (mov_acred["d"] or Decimal("0")) - (mov_acred["h"] or Decimal("0"))
+        ventas = FacturaVenta.objects.filter(
+            empresa=empresa, estado="EMI", creado_en__date__gte=ini, creado_en__date__lt=fin,
+        ).aggregate(t=Sum("subtotal"))["t"] or Decimal("0")
+        neto = cobrado - acreditable
+        meses.append({"nombre": MESES[m - 1], "ventas": ventas, "cobrado": cobrado,
+                      "acreditable": acreditable, "neto": neto})
+        for k, v in (("ventas", ventas), ("cobrado", cobrado), ("acreditable", acreditable), ("neto", neto)):
+            totales[k] += v
+
+    return render(request, "contabilidad/iva_mensual.html", {
+        "anio": anio,
+        "anios": list(range(hoy.year, hoy.year - 6, -1)),
+        "meses": meses,
+        "totales": totales,
     })

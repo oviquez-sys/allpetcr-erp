@@ -248,3 +248,37 @@ class CierreDePeriodo(BaseContable):
         # anular hoy: la reversa va con fecha de hoy, posterior al cierre -> pasa
         anular_factura(factura=f, motivo="cliente devolvió", usuario=self.usuario)
         self.assertTrue(Asiento.objects.filter(origen="ANU").exists())
+
+
+class ReporteIVAMensual(BaseContable):
+    """En régimen tradicional el reporte de IVA es mensual y sale del libro."""
+
+    def test_iva_a_pagar_es_cobrado_menos_acreditable(self):
+        from compras.models import Proveedor
+        from compras.services import crear_compra, recibir_compra
+        from django.urls import reverse
+
+        iva = Impuesto.objects.create(nombre="IVA", tarifa=Decimal("13"))
+        self.producto.impuesto = iva; self.producto.save()
+        self.empresa.regimen = Empresa.Regimen.TRADICIONAL; self.empresa.save()
+        self.vender(1, "EFE")  # 10.000 con IVA: 1.150,44 de IVA cobrado
+        compra = crear_compra(
+            proveedor=Proveedor.objects.create(empresa=self.empresa, nombre="Prov"),
+            sucursal=self.sucursal, usuario=self.usuario, iva="500",
+            lineas=[{"producto": self.producto, "cantidad": Decimal("1"), "costo_unitario": Decimal("4000")}],
+        )
+        recibir_compra(compra=compra, usuario=self.usuario)
+
+        self.client.force_login(self.usuario)
+        r = self.client.get(reverse("contabilidad:iva_trimestral"))
+        self.assertTemplateUsed(r, "contabilidad/iva_mensual.html")
+        mes = r.context["meses"][-1]
+        self.assertEqual(mes["cobrado"], Decimal("1150.44"))
+        self.assertEqual(mes["acreditable"], Decimal("500"))
+        self.assertEqual(mes["neto"], Decimal("650.44"))
+
+    def test_simplificado_sigue_con_el_trimestral(self):
+        from django.urls import reverse
+        self.client.force_login(self.usuario)
+        r = self.client.get(reverse("contabilidad:iva_trimestral"))
+        self.assertTemplateUsed(r, "contabilidad/iva_trimestral.html")

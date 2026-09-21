@@ -1,0 +1,79 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}IVA mensual{% endblock %}
+
+{% block extrahead %}<style>
+body { background-color: var(--bg) !important; position: relative; }
+body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-image: url('{% static "patterns/allpetcr-logo.png" %}'); background-repeat: repeat; background-attachment: fixed; background-size: 120px 120px; opacity: 0.06; pointer-events: none; z-index: -1; }
+.q-table{width:100%;border-collapse:collapse;max-width:860px;background:var(--card);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow)}
+.q-table th{background:var(--brand);color:#fff;text-align:right;padding:12px 14px;font-size:12px;text-transform:uppercase;letter-spacing:.03em}
+.q-table th.l{text-align:left}
+.q-table td{padding:12px 14px;border-bottom:1px solid #eee;text-align:right;font-variant-numeric:tabular-nums}
+.q-table td.l{text-align:left;font-weight:600}
+.q-table tr:last-child td{border-bottom:none}
+.q-table tfoot td{font-weight:800;background:#f7f9fa;border-top:2px solid var(--brand)}
+.q-pagar{color:#b03a2e;font-weight:700}
+.q-favor{color:var(--green-d);font-weight:700}
+.aviso{background:#fff8e6;border:1px solid #f0e0b0;border-radius:var(--radius);padding:14px 18px;max-width:860px;margin:16px 0;font-size:13.5px;color:#7a5c00;line-height:1.5}
+.info{background:#eef4f6;border:1px solid #cfe0e6;border-radius:var(--radius);padding:14px 18px;max-width:860px;margin:16px 0;font-size:13.5px;color:#255;line-height:1.5}
+</style>{% endblock %}
+
+{% block content %}
+<h1>IVA mensual — Régimen tradicional</h1>
+<p style="color:#555;max-width:860px">Cada mes se le paga a Hacienda el <b>IVA cobrado en las ventas</b> menos el
+   <b>IVA pagado en las compras con factura electrónica</b>. Si el segundo es mayor, queda un saldo a tu favor.</p>
+
+<form method="get" style="margin:14px 0;display:flex;gap:10px;align-items:end">
+  <div>
+    <label style="display:block;font-size:12px;color:#666;margin-bottom:3px">Año</label>
+    <select name="anio" onchange="this.form.submit()" style="padding:9px 12px;border:1px solid #ccc;border-radius:9px">
+      {% for a in anios %}<option value="{{ a }}" {% if a == anio %}selected{% endif %}>{{ a }}</option>{% endfor %}
+    </select>
+  </div>
+  <noscript><button type="submit" style="padding:9px 18px;border:none;border-radius:9px;background:var(--brand);color:#fff;font-weight:600">Ver</button></noscript>
+</form>
+
+<table class="q-table">
+  <thead>
+    <tr>
+      <th class="l">Mes {{ anio }}</th>
+      <th>Ventas sin IVA</th>
+      <th>IVA cobrado</th>
+      <th>IVA de compras</th>
+      <th>A pagar (o a favor)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in meses %}
+      <tr>
+        <td class="l">{{ m.nombre }}</td>
+        <td>₡{{ m.ventas|crc:0 }}</td>
+        <td>₡{{ m.cobrado|crc:0 }}</td>
+        <td>₡{{ m.acreditable|crc:0 }}</td>
+        <td>{% if m.neto > 0 %}<span class="q-pagar">₡{{ m.neto|crc:0 }}</span>{% elif m.neto < 0 %}<span class="q-favor">₡{{ m.neto|crc_abs:0 }} a favor</span>{% else %}₡0{% endif %}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td class="l">Total {{ anio }}</td>
+      <td>₡{{ totales.ventas|crc:0 }}</td>
+      <td>₡{{ totales.cobrado|crc:0 }}</td>
+      <td>₡{{ totales.acreditable|crc:0 }}</td>
+      <td>{% if totales.neto > 0 %}<span class="q-pagar">₡{{ totales.neto|crc:0 }}</span>{% elif totales.neto < 0 %}<span class="q-favor">₡{{ totales.neto|crc_abs:0 }} a favor</span>{% else %}₡0{% endif %}</td>
+    </tr>
+  </tfoot>
+</table>
+
+<div class="info">
+  <b>IVA de compras</b> solo cuenta lo que se anotó en "IVA de la factura" al recibir mercadería. Si una compra
+  tuvo factura electrónica y el IVA no se anotó, no aparece acá y pagarías de más.
+</div>
+
+<div class="aviso" style="margin-top:18px">
+  <b>Importante.</b> Este reporte es una <b>ayuda</b>, no la declaración oficial: la declaración mensual del IVA se
+  presenta en <b>TRIBU-CR</b>. Las ventas registradas antes del 20/09/2026 no separaban el IVA, así que esos meses
+  salen en cero; cómo se regularizan lo define tu contador. Confirmá siempre el monto con él antes de pagar.
+</div>
+{% endblock %}

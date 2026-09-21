@@ -397,16 +397,26 @@ UNA transacción cambia los precios y pasa la empresa a régimen tradicional.
 Nunca baja un precio, toma el más alto si un código se repite y se niega a
 correr dos veces. Pruebas: `catalogo/test_aplicar_precios_iva.py`.
 
-### Pendiente (siguiente entrega)
-1. **IVA de las compras** (crédito fiscal): `compras` no registra el IVA
-   pagado ni existe la cuenta de IVA acreditable. Con régimen tradicional el
-   libro mostraría como deuda todo el IVA de las ventas.
-2. **Declaración mensual de IVA**: solo existe el reporte trimestral del
-   simplificado (`contabilidad/views.py`, `iva_trimestral.html`).
-3. **Factura electrónica**: `facturacion_electronica` no genera XML, no firma
+### Contabilidad del IVA (20/09/2026, noche)
+- **IVA acreditable de compras**: `Compra.iva` (migración `compras/0005`) y
+  cuenta 1104 "IVA acreditable (crédito fiscal)". Al recibir: Debe Inventario
+  (sin IVA) + Debe IVA acreditable / Haber Bancos o CxP (total + IVA). El IVA
+  NO entra al costo promedio. La anulación revierte las tres líneas. En
+  simplificado se rechaza un IVA > 0.
+- **Recibir mercadería**: campo "IVA de la factura" (solo en tradicional),
+  subtotal / IVA / total de la factura para comparar con el papel, y la
+  calculadora "gan. %" ya suma el IVA al precio y mide la ganancia sin IVA.
+- **Reporte de IVA**: en tradicional, la misma dirección
+  (`contabilidad:iva_trimestral`) muestra el resumen MENSUAL desde el libro:
+  IVA cobrado (cuenta 2401) − IVA acreditable (1104). En simplificado sigue
+  el trimestral.
+- Pruebas: `compras.tests.IVADeCompras`, `contabilidad.tests.ReporteIVAMensual`.
+
+### Pendiente
+1. **Factura electrónica**: `facturacion_electronica` no genera XML, no firma
    ni envía. La llave criptográfica está en trámite; faltan también el usuario
    de la API de Hacienda y el CABYS de cada producto (campo vacío).
-4. Confirmar con el contador cómo se anotó el costo en "Recibir mercadería"
+2. Confirmar con el contador cómo se anotó el costo en "Recibir mercadería"
    (con o sin IVA) y cómo se regularizan las ventas previas.
 
 ### Variables de entorno nuevas

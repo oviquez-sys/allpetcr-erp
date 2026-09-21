@@ -4,8 +4,9 @@ recibir_compra es la contraparte de la venta: entra mercadería al inventario
 (recalcula el costo promedio vía el servicio de inventario) y genera su
 asiento en la misma transacción:
 
-    Debe  Inventario de mercadería   total
-        Haber  Bancos (contado) o CxP proveedor (crédito)   total
+    Debe  Inventario de mercadería   total (sin IVA)
+    Debe  IVA acreditable            iva   (solo régimen tradicional, con factura)
+        Haber  Bancos (contado) o CxP proveedor (crédito)   total + iva
 
 Todo o nada: si algo falla, no queda ni stock ni asiento a medias.
 """
@@ -18,13 +19,15 @@ from django.utils import timezone
 from contabilidad.services import cuenta, registrar_asiento
 from inventario.models import Bodega
 from inventario.services import registrar_movimiento
+from core.models import Empresa
 from ventas.models import Consecutivo
 
 from .models import Compra, LineaCompra, Proveedor
 
 
 @transaction.atomic
-def crear_compra(*, proveedor, sucursal, lineas, forma_pago="CON", factura_proveedor="", usuario=None) -> Compra:
+def crear_compra(*, proveedor, sucursal, lineas, forma_pago="CON", factura_proveedor="", usuario=None,
+                 iva=0) -> Compra:
     """Crea la compra en borrador.
 
     lineas: dicts {producto, cantidad, costo_unitario, cantidad_bonificada?}.
@@ -38,10 +41,17 @@ def crear_compra(*, proveedor, sucursal, lineas, forma_pago="CON", factura_prove
     if not lineas:
         raise ValidationError("La compra no tiene líneas.")
     empresa = sucursal.empresa
+    iva = Decimal(str(iva or 0)).quantize(Decimal("0.01"))
+    if iva < 0:
+        raise ValidationError("El IVA de la factura no puede ser negativo.")
+    if iva > 0 and empresa.regimen != Empresa.Regimen.TRADICIONAL:
+        # En el simplificado el IVA de las compras no se acredita: es costo.
+        raise ValidationError("En régimen simplificado el IVA de la compra no se separa: "
+                              "anotá el costo con todo incluido y dejá el IVA en 0.")
     numero = Consecutivo.tomar(empresa, "OC")
     compra = Compra.objects.create(
         empresa=empresa, sucursal=sucursal, proveedor=proveedor, numero=numero,
-        forma_pago=forma_pago, factura_proveedor=factura_proveedor, usuario=usuario,
+        forma_pago=forma_pago, factura_proveedor=factura_proveedor, usuario=usuario, iva=iva,
     )
     total = Decimal("0")
     for l in lineas:
@@ -100,15 +110,12 @@ def recibir_compra(*, compra, usuario=None) -> Compra:
         empresa=empresa, fecha=timezone.now().date(),
         descripcion=f"Compra {compra.numero} — {compra.proveedor.nombre}",
         origen="MAN", referencia=compra.numero, usuario=usuario,
-        lineas=[
-            {"cuenta": cuenta(empresa, "inventario"), "debe": compra.total},
-            {"cuenta": contra, "haber": compra.total},
-        ],
+        lineas=_lineas_asiento(compra, contra),
     )
 
     if compra.forma_pago == Compra.Pago.CREDITO:
         proveedor = Proveedor.objects.select_for_update().get(pk=compra.proveedor_id)
-        proveedor.saldo += compra.total
+        proveedor.saldo += compra.total_factura
         proveedor.save(update_fields=["saldo"])
 
     compra.estado = Compra.Estado.RECIBIDA
@@ -154,15 +161,17 @@ def anular_compra(*, compra, motivo, usuario=None) -> Compra:
         empresa=empresa, fecha=timezone.now().date(),
         descripcion=f"Anulación compra {compra.numero} — {compra.proveedor.nombre}",
         origen="ANU", referencia=compra.numero, usuario=usuario,
+        # El inverso exacto del de recepción: lo que era debe pasa a haber.
         lineas=[
-            {"cuenta": contra, "debe": compra.total},
-            {"cuenta": cuenta(empresa, "inventario"), "haber": compra.total},
+            {"cuenta": l["cuenta"], "haber": l["debe"]} if "debe" in l
+            else {"cuenta": l["cuenta"], "debe": l["haber"]}
+            for l in _lineas_asiento(compra, contra)
         ],
     )
 
     if compra.forma_pago == Compra.Pago.CREDITO:
         proveedor = Proveedor.objects.select_for_update().get(pk=compra.proveedor_id)
-        proveedor.saldo -= compra.total
+        proveedor.saldo -= compra.total_factura
         proveedor.save(update_fields=["saldo"])
 
     compra.estado = Compra.Estado.ANULADA
@@ -171,6 +180,18 @@ def anular_compra(*, compra, motivo, usuario=None) -> Compra:
     compra.anulada_por = usuario
     compra.save(update_fields=["estado", "motivo_anulacion", "anulada_en", "anulada_por"])
     return compra
+
+
+def _lineas_asiento(compra, contra):
+    """Líneas del asiento de recepción. El IVA acreditable va aparte del
+    inventario: si entrara al costo, el costo promedio quedaría inflado 13 %
+    y el negocio pagaría dos veces el mismo IVA (en la compra y en la venta)."""
+    empresa = compra.empresa
+    lineas = [{"cuenta": cuenta(empresa, "inventario"), "debe": compra.total}]
+    if compra.iva:
+        lineas.append({"cuenta": cuenta(empresa, "iva_acreditable"), "debe": compra.iva})
+    lineas.append({"cuenta": contra, "haber": compra.total_factura})
+    return lineas
 
 
 def _cuenta_cxp(empresa):

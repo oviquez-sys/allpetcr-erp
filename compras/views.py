@@ -10,7 +10,7 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from catalogo.models import Categoria, Producto
+from catalogo.models import TARIFA_GENERAL_IVA, Categoria, Producto
 from catalogo.services import cambiar_precio
 from core.imagenes import completar_foto, datos_foto, guardar_imagen_producto
 from core.models import Empresa, Sucursal
@@ -156,10 +156,16 @@ def nueva(request):
         }
         for c in Categoria.objects.select_related("padre").order_by("orden", "nombre")
     ]
+    # Régimen tradicional (20/09/2026): el precio de venta lleva IVA adentro,
+    # así que la calculadora de "gan. %" tiene que sumarlo; y la compra puede
+    # traer IVA acreditable aparte del costo. En simplificado, factor 1.
+    tradicional = empresa.regimen == Empresa.Regimen.TRADICIONAL
     return render(request, "compras/nueva.html", {
         "productos": productos,
         "proveedores": proveedores,
         "categorias": categorias,
+        "tradicional": tradicional,
+        "factor_iva": str(1 + TARIFA_GENERAL_IVA / 100) if tradicional else "1",
     })
 
 
@@ -212,6 +218,7 @@ def registrar(request):
             forma_pago=datos.get("forma_pago", "CON"),
             factura_proveedor=datos.get("factura_proveedor", ""),
             usuario=request.user,
+            iva=datos.get("iva") or 0,
         )
         services.recibir_compra(compra=compra, usuario=request.user)
 
@@ -237,7 +244,7 @@ def registrar(request):
     except (json.JSONDecodeError, KeyError, Producto.DoesNotExist, Proveedor.DoesNotExist):
         return JsonResponse({"ok": False, "error": "Datos de compra inválidos."}, status=400)
 
-    return JsonResponse({"ok": True, "numero": compra.numero, "total": float(compra.total)})
+    return JsonResponse({"ok": True, "numero": compra.numero, "total": float(compra.total_factura)})
 
 
 @rol_requerido(GERENTE)
