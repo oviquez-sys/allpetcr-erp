@@ -387,6 +387,16 @@ incluido: esa decisión de precios es de Oscar y no se tocó ningún precio.
 Pruebas nuevas: `catalogo/test_ganancia_iva.py`, `core/test_resultado_mes.py`,
 `ventas.tests.VentaEnRegimenTradicional`.
 
+### Precios nuevos con IVA (aprobados por Oscar el 20/09/2026)
+Oscar aprobó la "versión Medio" del plan de precios: cada precio ya trae el
+IVA, subido según el precio del chino y terminado en precio bonito
+(`catalogo/precios_bonitos.py`). Mediana +25 % sobre el precio anterior.
+Se aplica con `APLICAR_PRECIOS_IVA.bat` →
+`manage.py aplicar_precios_iva --excel data/PRECIOS_NUEVOS_IVA.xlsx`, que en
+UNA transacción cambia los precios y pasa la empresa a régimen tradicional.
+Nunca baja un precio, toma el más alto si un código se repite y se niega a
+correr dos veces. Pruebas: `catalogo/test_aplicar_precios_iva.py`.
+
 ### Pendiente (siguiente entrega)
 1. **IVA de las compras** (crédito fiscal): `compras` no registra el IVA
    pagado ni existe la cuenta de IVA acreditable. Con régimen tradicional el
