@@ -139,6 +139,13 @@ const TOPE = {{ tope }};
 const TOPE_COPIAS = 50;
 const CSRF = '{{ csrf_token }}';
 let marcado = null;   // id resaltado por el último escaneo
+// true solo si `marcado` vino de un código de barras/SKU exacto (una pistola
+// de verdad no escribe nombres). Si vino de escribir un nombre y darle Enter
+// para saltar al único resultado, queda en false: ESO no es un escaneo, y no
+// tiene que borrar la búsqueda al imprimir (Oscar, 24/09/2026 — el primer
+// intento de este arreglo no alcanzaba porque Enter después de escribir un
+// nombre también pasa por `escanear()`).
+let marcadoPorCodigo = false;
 
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => (
   {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -271,7 +278,7 @@ async function imprimir(id){
   // clic — antes se borraba siempre y la lista saltaba a la vista completa
   // (Oscar, 24/09/2026: "la pantalla se mueve y no queda en el mismo
   // producto").
-  const fueEscaneado = (marcado === id);
+  const fueEscaneado = (marcado === id && marcadoPorCodigo);
   const caja = document.getElementById('q-' + id);
   const copias = Math.max(1, Math.min(TOPE_COPIAS, parseInt(caja.value, 10) || 1));
   const boton = document.getElementById('b-' + id);
@@ -300,7 +307,7 @@ async function imprimir(id){
 // pantalla donde un escaneo no puede hacer daño.
 function volverAlEscaner(){
   const b = document.getElementById('buscar');
-  b.value = ''; marcado = null; pintarGrid(); b.focus();
+  b.value = ''; marcado = null; marcadoPorCodigo = false; pintarGrid(); b.focus();
 }
 
 // Escanear solo SELECCIONA. Imprimir es siempre un acto aparte: el botón, la
@@ -313,9 +320,10 @@ function escanear(codigo){
   caja.value = q;
   // Coincidencia EXACTA primero: es lo que manda la pistola.
   let prod = productos.find(p => p.codigo_barras === q || p.sku === q);
+  const porCodigo = !!prod;
   if (!prod){ const r = filtrar(); if (r.length === 1) prod = r[0]; }
   if (!prod){
-    marcado = null; pintarGrid();
+    marcado = null; marcadoPorCodigo = false; pintarGrid();
     toast('No encontré ese producto: ' + q, true);
     caja.focus(); caja.select();
     return;
@@ -325,6 +333,7 @@ function escanear(codigo){
   // producto que haya que esconder.
   if (prod.stock_actual <= 0) document.getElementById('verCero').checked = true;
   marcado = prod.id;
+  marcadoPorCodigo = porCodigo;
   pintarGrid();
   const tarjeta = document.getElementById('c-' + prod.id);
   if (tarjeta) tarjeta.scrollIntoView({block:'center', behavior:'smooth'});
@@ -334,7 +343,7 @@ function escanear(codigo){
 }
 
 const cajaBuscar = document.getElementById('buscar');
-cajaBuscar.addEventListener('input', () => { marcado = null; pintarGrid(); });
+cajaBuscar.addEventListener('input', () => { marcado = null; marcadoPorCodigo = false; pintarGrid(); });
 cajaBuscar.addEventListener('keydown', e => {
   // «+» imprime el producto marcado sin tener que ir al mouse. Se eligió esa
   // tecla porque la pistola solo manda dígitos y Enter: no puede dispararla.
