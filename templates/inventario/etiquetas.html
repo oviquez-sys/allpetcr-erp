@@ -263,6 +263,15 @@ async function imprimir(id){
     toast('Ya se mandó esa etiqueta hace un segundo. Esperá un momento.', true);
     return;
   }
+  // Solo se vuelve a la pantalla del escáner (limpiar y enfocar la caja) si
+  // ESTE producto es el que había marcado un escaneo. Si Oscar llegó acá
+  // escribiendo un nombre o categoría a mano y está imprimiendo varios de la
+  // misma lista, `marcado` sigue en null (escribir no lo cambia, solo Enter
+  // o un escaneo lo hacen) y la búsqueda se queda quieta para el siguiente
+  // clic — antes se borraba siempre y la lista saltaba a la vista completa
+  // (Oscar, 24/09/2026: "la pantalla se mueve y no queda en el mismo
+  // producto").
+  const fueEscaneado = (marcado === id);
   const caja = document.getElementById('q-' + id);
   const copias = Math.max(1, Math.min(TOPE_COPIAS, parseInt(caja.value, 10) || 1));
   const boton = document.getElementById('b-' + id);
@@ -276,7 +285,7 @@ async function imprimir(id){
     const d = await r.json();
     if (d.ok){
       toast(`🏷️ ${copias} etiqueta(s) de ${porId[id].nombre}`);
-      volverAlEscaner();
+      if (fueEscaneado) volverAlEscaner();
     } else {
       toast('⛔ ' + d.error, true);
     }
