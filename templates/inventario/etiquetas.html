@@ -180,18 +180,15 @@ function filtrar(){
   });
 }
 
-function pintarGrid(){
-  const encontrados = filtrar();
-  const vivos = encontrados.slice(0, TOPE);
-  const enCero = productos.filter(p => p.stock_actual <= 0).length;
-  const cola = (!document.getElementById('verCero').checked && enCero)
-    ? ` · ${enCero} en cero, ocultos` : '';
-  document.getElementById('cuenta').textContent =
-    (encontrados.length > TOPE
-      ? `${encontrados.length} productos · se muestran los primeros ${TOPE}`
-      : `${encontrados.length} producto(s)`) + cola;
+// Se dibuja por tandas de TOPE y se agregan más al llegar al final.
+// Antes se cortaba en los primeros 150 y el resto del catálogo no aparecía
+// nunca: recorriendo la lista alfabética, Oscar llegaba a la "C" y no había
+// más (24/09/2026). Agregar tarjetas al final —en vez de redibujar todo— no
+// mueve la pantalla, que es lo que se arregló ese mismo día al imprimir.
+let encontradosActuales = [];
+let mostrados = 0;
 
-  document.getElementById('grid').innerHTML = vivos.map(p => {
+function tarjeta(p){
     const foto = p.miniatura
       ? `<div class="foto">${fotoHTML(p, null, 'clickable-product-img')}</div>`
       : `<div class="foto ph"><svg viewBox="0 0 24 24"><circle cx="8" cy="9.5" r="1.9"/><circle cx="16" cy="9.5" r="1.9"/><circle cx="4.7" cy="13.2" r="1.8"/><circle cx="19.3" cy="13.2" r="1.8"/><path d="M12 14.2c2.6 0 4.7 1.7 4.7 3.4 0 1.6-2.1 2.2-4.7 2.2s-4.7-.6-4.7-2.2c0-1.7 2.1-3.4 4.7-3.4z"/></svg></div>`;
@@ -224,8 +221,33 @@ function pintarGrid(){
       </div>
       <div class="acc">${acciones}</div>
     </div>`;
-  }).join('') || '<p class="empty">No hay productos con ese filtro. Probá otra categoría o borrá la búsqueda.</p>';
 }
+
+function pintarGrid(){
+  encontradosActuales = filtrar();
+  mostrados = Math.min(TOPE, encontradosActuales.length);
+  const enCero = productos.filter(p => p.stock_actual <= 0).length;
+  const cola = (!document.getElementById('verCero').checked && enCero)
+    ? ` · ${enCero} en cero, ocultos (marcá la casilla para verlos)` : '';
+  document.getElementById('cuenta').textContent =
+    `${encontradosActuales.length} producto(s)` + cola;
+  document.getElementById('grid').innerHTML =
+    encontradosActuales.slice(0, mostrados).map(tarjeta).join('')
+    || '<p class="empty">No hay productos con ese filtro. Probá otra categoría o borrá la búsqueda.</p>';
+}
+
+function mostrarMas(){
+  if (mostrados >= encontradosActuales.length) return;
+  const hasta = Math.min(mostrados + TOPE, encontradosActuales.length);
+  document.getElementById('grid').insertAdjacentHTML('beforeend',
+    encontradosActuales.slice(mostrados, hasta).map(tarjeta).join(''));
+  mostrados = hasta;
+}
+
+document.getElementById('grid').addEventListener('scroll', e => {
+  const g = e.target;
+  if (g.scrollTop + g.clientHeight >= g.scrollHeight - 600) mostrarMas();
+});
 
 function sumar(id, delta){
   const caja = document.getElementById('q-' + id);
