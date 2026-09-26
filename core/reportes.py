@@ -299,12 +299,39 @@ def ventas_por_periodo(empresa, desde, hasta, agrupar="dia"):
     for c in por_categoria:
         c["utilidad"] = (c["venta"] or Decimal("0")) - (c["costo"] or Decimal("0"))
 
+    # Por división: alimentos para perro, para gato, y accesorios (26/09/2026).
+    from catalogo.divisiones import ORDEN, anotar_division
+    from catalogo.models import Producto
+
+    ventas_div = {
+        d["div"]: d for d in LineaVenta.objects.filter(factura__in=facturas, es_regalia=False)
+        .annotate(div=anotar_division("producto__")).values("div")
+        .annotate(unidades=Sum("cantidad"), venta=Sum(base),
+                  costo=Sum(F("costo_unitario") * F("cantidad"), output_field=dinero))
+    }
+    inventario_div = {
+        d["div"]: d for d in Producto.objects.filter(empresa=empresa, activo=True, stock_actual__gt=0)
+        .annotate(div=anotar_division()).values("div")
+        .annotate(productos=Count("id"),
+                  capital=Sum(F("stock_actual") * F("costo_promedio"), output_field=dinero))
+    }
+    por_division = []
+    for nombre in ORDEN:
+        v, i = ventas_div.get(nombre, {}), inventario_div.get(nombre, {})
+        if not v and not i:
+            continue
+        venta, costo = v.get("venta") or Decimal("0"), v.get("costo") or Decimal("0")
+        por_division.append({"division": nombre, "unidades": v.get("unidades") or Decimal("0"),
+                             "venta": venta, "costo": costo, "utilidad": venta - costo,
+                             "productos": i.get("productos") or 0,
+                             "capital": i.get("capital") or Decimal("0")})
+
     devoluciones = DevolucionVenta.objects.filter(
         factura__empresa=empresa, creado_en__date__gte=desde, creado_en__date__lte=hasta,
     ).aggregate(t=Sum("total"), n=Count("id"))
     tot = lambda clave: sum((f[clave] for f in filas), Decimal("0"))  # noqa: E731
     return {
-        "filas": filas, "por_categoria": por_categoria, "desde": desde, "hasta": hasta, "agrupar": agrupar,
+        "filas": filas, "por_categoria": por_categoria, "por_division": por_division, "desde": desde, "hasta": hasta, "agrupar": agrupar,
         "totales": {"tiquetes": sum(f["tiquetes"] for f in filas), "total": tot("total"),
                     "sin_iva": tot("sin_iva"), "iva": tot("iva"), "costo": tot("costo"),
                     "utilidad": tot("utilidad")},
