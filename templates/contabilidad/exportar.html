@@ -1,0 +1,39 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Excel para el contador{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.ex-wrap{max-width:720px;margin:0 auto}
+.ex-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.ex-sub{font-size:14px;color:#6e6e73;margin-bottom:18px;line-height:1.5}
+.ex-card{background:#fff;border-radius:18px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05)}
+.ex-fila{display:flex;gap:14px;flex-wrap:wrap}
+.ex-fila div{flex:1;min-width:180px}
+.ex-card label{display:block;font-size:13px;font-weight:600;color:#6e6e73;margin-bottom:6px}
+.ex-card input{width:100%;padding:11px 12px;border:1px solid #d9d9de;border-radius:10px;font-size:15px}
+.ex-btn{margin-top:18px;padding:13px 22px;border:none;border-radius:12px;background:#0B3161;color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+.ex-card ul{margin:14px 0 0 18px;font-size:14px;color:#3a3a3c;line-height:1.7}
+</style>{% endblock %}
+
+{% block content %}
+<div class="ex-wrap">
+  <div class="ex-title">Excel para el contador</div>
+  <div class="ex-sub">Un solo archivo con todo lo del período. Por defecto trae el mes pasado completo.</div>
+  <form class="ex-card" method="get">
+    <input type="hidden" name="descargar" value="1">
+    <div class="ex-fila">
+      <div><label for="desde">Desde</label><input id="desde" type="date" name="desde" value="{{ desde|date:'Y-m-d' }}" max="{{ hoy|date:'Y-m-d' }}"></div>
+      <div><label for="hasta">Hasta</label><input id="hasta" type="date" name="hasta" value="{{ hasta|date:'Y-m-d' }}" max="{{ hoy|date:'Y-m-d' }}"></div>
+    </div>
+    <button class="ex-btn">⬇ Descargar Excel</button>
+    <ul>
+      <li><b>Ventas:</b> un tiquete por fila, con cliente, medio de pago, subtotal, descuento, IVA y total.</li>
+      <li><b>Detalle de ventas:</b> cada producto con CABYS, tarifa, IVA y costo.</li>
+      <li><b>Pagos:</b> cómo entró el dinero (los pagos mixtos, repartidos).</li>
+      <li><b>Devoluciones</b> y <b>Compras</b> (con el IVA acreditable).</li>
+      <li><b>Libro diario:</b> todos los asientos contables.</li>
+    </ul>
+  </form>
+</div>
+{% endblock %}

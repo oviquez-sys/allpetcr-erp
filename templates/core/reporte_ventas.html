@@ -1,0 +1,85 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Ventas por período{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.rv-wrap{max-width:1100px;margin:0 auto}
+.rv-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.rv-sub{font-size:14px;color:#6e6e73;margin-bottom:16px}
+.rv-card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:16px;overflow-x:auto}
+.rv-filtros{display:flex;gap:12px;flex-wrap:wrap;align-items:end}
+.rv-filtros label{display:block;font-size:12.5px;font-weight:600;color:#6e6e73;margin-bottom:5px}
+.rv-filtros input,.rv-filtros select{padding:9px 11px;border:1px solid #d9d9de;border-radius:10px;font-size:14.5px}
+.rv-btn{padding:10px 16px;border:none;border-radius:10px;background:#0B3161;color:#fff;font-weight:600;cursor:pointer}
+.rv-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.rv-kpi{background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.rv-kpi .l{font-size:12.5px;color:#6e6e73}
+.rv-kpi .v{font-size:22px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+h3{font-size:17px;margin:0 0 10px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;color:#6e6e73;padding:8px 10px;border-bottom:1px solid #eee;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid #f4f4f6}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tfoot td{font-weight:700;border-top:2px solid #eee}
+.nota{font-size:12.5px;color:#6e6e73;margin-top:8px}
+</style>{% endblock %}
+
+{% block content %}
+<div class="rv-wrap">
+  <div class="rv-title">Ventas por período y categoría</div>
+  <div class="rv-sub">Solo ventas vigentes (sin las anuladas). La utilidad bruta es la venta sin IVA menos el costo de lo vendido.</div>
+
+  <form class="rv-card rv-filtros" method="get">
+    <div><label for="desde">Desde</label><input id="desde" type="date" name="desde" value="{{ desde|date:'Y-m-d' }}"></div>
+    <div><label for="hasta">Hasta</label><input id="hasta" type="date" name="hasta" value="{{ hasta|date:'Y-m-d' }}"></div>
+    <div><label for="agrupar">Agrupar</label>
+      <select id="agrupar" name="agrupar">{% for k, v in agrupaciones.items %}<option value="{{ k }}" {% if k == agrupar %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+    <button class="rv-btn">Ver</button>
+  </form>
+
+  <div class="rv-kpis">
+    <div class="rv-kpi"><div class="l">Ventas (con IVA)</div><div class="v">₡{{ totales.total|crc:0 }}</div></div>
+    <div class="rv-kpi"><div class="l">Tiquetes</div><div class="v">{{ totales.tiquetes }}</div></div>
+    <div class="rv-kpi"><div class="l">IVA cobrado</div><div class="v">₡{{ totales.iva|crc:0 }}</div></div>
+    <div class="rv-kpi"><div class="l">Utilidad bruta</div><div class="v">₡{{ totales.utilidad|crc:0 }}</div></div>
+    <div class="rv-kpi"><div class="l">Devoluciones ({{ n_devoluciones }})</div><div class="v">₡{{ devoluciones|crc:0 }}</div></div>
+  </div>
+
+  <div class="rv-card">
+    <h3>{{ titulo_agrupacion }}</h3>
+    <table>
+      <thead><tr><th>{% if agrupar == "mes" %}Mes{% elif agrupar == "semana" %}Semana del{% else %}Día{% endif %}</th><th class="n">Tiquetes</th><th class="n">Ventas</th><th class="n">Sin IVA</th><th class="n">IVA</th><th class="n">Costo</th><th class="n">Utilidad bruta</th></tr></thead>
+      <tbody>{% for f in filas %}
+        <tr><td>{% if agrupar == "mes" %}{{ f.periodo|date:"F Y" }}{% else %}{{ f.periodo|date:"D d/m/Y" }}{% endif %}</td>
+          <td class="n">{{ f.tiquetes }}</td><td class="n">₡{{ f.total|crc:0 }}</td><td class="n">₡{{ f.sin_iva|crc:0 }}</td>
+          <td class="n">₡{{ f.iva|crc:0 }}</td><td class="n">₡{{ f.costo|crc:0 }}</td><td class="n">₡{{ f.utilidad|crc:0 }}</td></tr>
+      {% empty %}<tr><td colspan="7" style="color:#6e6e73">No hay ventas en ese rango.</td></tr>{% endfor %}</tbody>
+      {% if filas %}<tfoot><tr><td>Total</td><td class="n">{{ totales.tiquetes }}</td><td class="n">₡{{ totales.total|crc:0 }}</td><td class="n">₡{{ totales.sin_iva|crc:0 }}</td><td class="n">₡{{ totales.iva|crc:0 }}</td><td class="n">₡{{ totales.costo|crc:0 }}</td><td class="n">₡{{ totales.utilidad|crc:0 }}</td></tr></tfoot>{% endif %}
+    </table>
+    <div class="nota">Las devoluciones parciales no se restan de estas filas: van aparte arriba. Para el resultado contable exacto, use el Estado de resultados.</div>
+  </div>
+
+  <div class="rv-card">
+    <h3>Por categoría</h3>
+    <table>
+      <thead><tr><th>Categoría</th><th class="n">Unidades</th><th class="n">Venta sin IVA</th><th class="n">Costo</th><th class="n">Utilidad bruta</th></tr></thead>
+      <tbody>{% for c in por_categoria %}
+        <tr><td>{{ c.cat }}</td><td class="n">{{ c.unidades|floatformat:"-2" }}</td><td class="n">₡{{ c.venta|crc:0 }}</td><td class="n">₡{{ c.costo|crc:0 }}</td><td class="n">₡{{ c.utilidad|crc:0 }}</td></tr>
+      {% empty %}<tr><td colspan="5" style="color:#6e6e73">Sin datos.</td></tr>{% endfor %}</tbody>
+    </table>
+    <div class="nota">En las ventas anteriores al 26/09/2026 la línea no guardaba su IVA: ahí la venta incluye el IVA.</div>
+  </div>
+
+  <div class="rv-card">
+    <h3>Lo que menos se vende (con existencia)</h3>
+    <table>
+      <thead><tr><th>Producto</th><th class="n">Vendidas en el rango</th><th class="n">En bodega</th><th class="n">Capital dormido (a costo)</th></tr></thead>
+      <tbody>{% for p in menos_vendidos %}
+        <tr><td>{% foto_producto p 32 "clickable-product-img" %} {{ p.nombre }}</td><td class="n">{{ p.vendidas|floatformat:"-2" }}</td>
+          <td class="n">{{ p.stock_actual|floatformat:"-2" }}</td><td class="n">₡{{ p.capital|crc:0 }}</td></tr>
+      {% empty %}<tr><td colspan="4" style="color:#6e6e73">Sin datos.</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -481,3 +481,19 @@ def chat_claude(request):
     except Exception as e:
         ChatMensaje.objects.create(usuario=request.user, pregunta=mensaje, error=str(e))
         return JsonResponse({"error": f"Error: {e}"}, status=500)
+
+
+@rol_requerido(GERENTE)
+def reporte_ventas(request):
+    """Ventas por período y por categoría, con utilidad bruta, y lo que menos
+    se vende (auditoría 26/09/2026, CAJ-04)."""
+    empresa = empresa_actual(request)
+    desde_def, hasta_def = rep._rango_por_defecto()
+    desde = _parse_fecha(request.GET.get("desde"), desde_def)
+    hasta = _parse_fecha(request.GET.get("hasta"), hasta_def)
+    agrupar = request.GET.get("agrupar") if request.GET.get("agrupar") in rep.AGRUPACIONES else "dia"
+    datos = rep.ventas_por_periodo(empresa, desde, hasta, agrupar)
+    datos["menos_vendidos"] = rep.menos_vendidos(empresa, desde, hasta)
+    datos["agrupaciones"] = rep.AGRUPACIONES
+    datos["titulo_agrupacion"] = rep.AGRUPACIONES[agrupar]
+    return render(request, "core/reporte_ventas.html", datos)

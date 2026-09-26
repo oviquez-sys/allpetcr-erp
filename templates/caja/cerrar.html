@@ -46,6 +46,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
 <div class="cc-wrap">
   <div class="cc-icon"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5h.01M18 14.5h.01"/></svg></div>
   <div class="cc-title">Cierre de caja #{{ sesion.pk }}</div>
+  {% if sesion.usuario_id != request.user.id %}<div class="cc-sub">Esta caja la abrió <b>{{ sesion.usuario.username }}</b>; se comparte entre quienes venden en la tienda.</div>{% endif %}
   <div class="cc-sub"><b>Contá el efectivo físico ANTES de continuar.</b> El sistema calcula el monto esperado y la diferencia al confirmar (arqueo ciego: así el conteo no se acomoda al número esperado).</div>
 
   {% if messages %}{% for m in messages %}
@@ -63,6 +64,14 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
         <div class="cc-help">{{ form.monto_contado.help_text }}</div>
         {% if form.monto_contado.errors %}<div class="cc-help" style="color:#b5231a">{{ form.monto_contado.errors|join:", " }}</div>{% endif %}
       </div>
+      {% for campo in form %}{% if campo.name != "monto_contado" %}
+      <div class="cc-row">
+        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        <div class="cc-help">{{ campo.help_text }}</div>
+        {% if campo.errors %}<div class="cc-help" style="color:#b5231a">{{ campo.errors|join:", " }}</div>{% endif %}
+      </div>
+      {% endif %}{% endfor %}
 
       <div class="cc-actions">
         <button type="submit" class="cc-btn" onclick="return confirm('¿Confirma el cierre? La sesión quedará inmutable.');">Cerrar caja</button>

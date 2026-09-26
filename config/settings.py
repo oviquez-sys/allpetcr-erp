@@ -501,6 +501,10 @@ PIE_TIQUETE_TRADICIONAL = os.environ.get(
 # imprimir: en caja, un clic de menos por venta se nota.
 TIQUETE_AUTOMATICO = os.environ.get("TIQUETE_AUTOMATICO", "1") != "0"
 
+# Caja compartida (auditoría 26/09/2026, CAJ-03): un solo cajón de dinero en la
+# tienda, una sola sesión de caja abierta a la vez. "0" = una caja por persona.
+CAJA_COMPARTIDA = os.environ.get("CAJA_COMPARTIDA", "1") != "0"
+
 # Logo del tiquete, en puntos de la impresora (203 por pulgada). 384 puntos son
 # 48 mm, que en el papel de 80 mm deja aire a los lados. En 0 el tiquete sale
 # sin logo, con el nombre de la empresa en letra grande como antes del

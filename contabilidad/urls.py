@@ -10,4 +10,5 @@ urlpatterns = [
     path("cierres/", views.cierres, name="cierres"),
     path("estado-resultados/", views.estado_resultados, name="estado_resultados"),
     path("iva-trimestral/", views.iva_trimestral, name="iva_trimestral"),
+    path("exportar/", views.exportar, name="exportar"),
 ]

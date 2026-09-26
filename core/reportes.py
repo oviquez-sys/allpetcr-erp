@@ -243,3 +243,88 @@ def resumen_diario(empresa, fecha):
         "sesiones_con_diferencia": sesiones_con_diferencia,
         "ediciones_auditlog": ediciones_auditlog,
     }
+
+
+# --------------------------------------------------------------------------
+# Ventas por período, por categoría y menos vendidos (auditoría 26/09/2026,
+# CAJ-04). Faltaban: el ERP decía qué se vende más, pero no cómo van las
+# ventas semana a semana, qué categoría deja la plata ni qué se quedó dormido.
+# --------------------------------------------------------------------------
+AGRUPACIONES = {"dia": "Por día", "semana": "Por semana", "mes": "Por mes"}
+
+
+def ventas_por_periodo(empresa, desde, hasta, agrupar="dia"):
+    from django.db.models.functions import TruncDay, TruncMonth, TruncWeek
+
+    from ventas.models import DevolucionVenta, FacturaVenta, LineaVenta
+
+    trunc = {"dia": TruncDay, "semana": TruncWeek, "mes": TruncMonth}.get(agrupar, TruncDay)
+    facturas = FacturaVenta.objects.filter(
+        empresa=empresa, estado=FacturaVenta.Estado.EMITIDA,
+        creado_en__date__gte=desde, creado_en__date__lte=hasta,
+    )
+    dinero = DecimalField(max_digits=14, decimal_places=2)
+    por_periodo = {
+        f["periodo"]: f for f in facturas.annotate(periodo=trunc("creado_en")).values("periodo")
+        .annotate(tiquetes=Count("id"), total=Sum("total"), sin_iva=Sum("subtotal"), iva=Sum("impuesto"))
+    }
+    costos = {
+        c["periodo"]: c["costo"] for c in LineaVenta.objects.filter(factura__in=facturas, es_regalia=False)
+        .annotate(periodo=trunc("factura__creado_en")).values("periodo")
+        .annotate(costo=Sum(F("costo_unitario") * F("cantidad"), output_field=dinero))
+    }
+    filas = []
+    for periodo in sorted(por_periodo):
+        f = por_periodo[periodo]
+        costo = costos.get(periodo) or Decimal("0")
+        filas.append({
+            "periodo": timezone.localtime(periodo).date() if timezone.is_aware(periodo) else periodo,
+            "tiquetes": f["tiquetes"], "total": f["total"] or Decimal("0"),
+            "sin_iva": f["sin_iva"] or Decimal("0"), "iva": f["iva"] or Decimal("0"),
+            "costo": costo, "utilidad": (f["sin_iva"] or Decimal("0")) - costo,
+        })
+
+    # Por categoría raíz. La venta sin IVA sale de la línea (VEN-08); en las
+    # ventas anteriores al 26/09/2026 la línea no la tiene y se usa el total.
+    base = Coalesce("subtotal", "total", output_field=dinero)
+    por_categoria = list(
+        LineaVenta.objects.filter(factura__in=facturas, es_regalia=False)
+        .annotate(cat=Coalesce("producto__categoria__padre__nombre", "producto__categoria__nombre",
+                               Value("Sin categoría")))
+        .values("cat")
+        .annotate(unidades=Sum("cantidad"), venta=Sum(base),
+                  costo=Sum(F("costo_unitario") * F("cantidad"), output_field=dinero))
+        .order_by("-venta")
+    )
+    for c in por_categoria:
+        c["utilidad"] = (c["venta"] or Decimal("0")) - (c["costo"] or Decimal("0"))
+
+    devoluciones = DevolucionVenta.objects.filter(
+        factura__empresa=empresa, creado_en__date__gte=desde, creado_en__date__lte=hasta,
+    ).aggregate(t=Sum("total"), n=Count("id"))
+    tot = lambda clave: sum((f[clave] for f in filas), Decimal("0"))  # noqa: E731
+    return {
+        "filas": filas, "por_categoria": por_categoria, "desde": desde, "hasta": hasta, "agrupar": agrupar,
+        "totales": {"tiquetes": sum(f["tiquetes"] for f in filas), "total": tot("total"),
+                    "sin_iva": tot("sin_iva"), "iva": tot("iva"), "costo": tot("costo"),
+                    "utilidad": tot("utilidad")},
+        "devoluciones": devoluciones["t"] or Decimal("0"), "n_devoluciones": devoluciones["n"],
+    }
+
+
+def menos_vendidos(empresa, desde, hasta, limite=50):
+    """Lo que hay en bodega y casi no se mueve: plata dormida. Incluye lo que
+    no se vendió ni una vez en el rango (que es lo más dormido de todo)."""
+    from catalogo.models import Producto
+
+    vendidas = Coalesce(Sum(
+        "lineaventa__cantidad",
+        filter=Q(lineaventa__factura__estado="EMI",
+                 lineaventa__factura__creado_en__date__gte=desde,
+                 lineaventa__factura__creado_en__date__lte=hasta),
+    ), Value(Decimal("0")), output_field=DecimalField(max_digits=14, decimal_places=2))
+    productos = (Producto.objects.filter(empresa=empresa, activo=True, stock_actual__gt=0)
+                 .annotate(vendidas=vendidas)
+                 .annotate(capital=F("stock_actual") * F("costo_promedio"))
+                 .order_by("vendidas", "-capital")[:limite])
+    return list(productos)

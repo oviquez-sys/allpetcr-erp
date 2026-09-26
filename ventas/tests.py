@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from caja.models import MovimientoCaja, SesionCaja
@@ -129,6 +129,7 @@ class ArqueoDeCaja(BaseVentas):
 
 
 class PantallaPOS(BaseVentas):
+    @override_settings(CAJA_COMPARTIDA=False)  # con caja compartida usaría la de oscar
     def test_pos_redirige_sin_caja_abierta(self):
         from django.contrib.auth.models import Group
         otro = User.objects.create_user("cajero2", password="clave-test", is_staff=True)
@@ -629,6 +630,9 @@ class RolesYPermisos(BaseVentas):
         self.assertEqual(factura.estado, FacturaVenta.Estado.ANULADA)
 
 
+# Escrita para el esquema de una caja por persona: se fija ese modo (la caja
+# compartida, CAJA_COMPARTIDA, tiene sus propias pruebas en test_auditoria_2026_09).
+@override_settings(CAJA_COMPARTIDA=False)
 class VentaBajoCosto(BaseVentas):
     """Sprint B: no se puede vender por debajo del costo salvo autorización
     de gerente. (Producto: precio 5000, costo promedio 2000.)"""
@@ -677,6 +681,9 @@ class VentaBajoCosto(BaseVentas):
         self.assertIn("costo", r.json()["error"].lower())
 
 
+# Escrita para el esquema de una caja por persona: se fija ese modo (la caja
+# compartida, CAJA_COMPARTIDA, tiene sus propias pruebas en test_auditoria_2026_09).
+@override_settings(CAJA_COMPARTIDA=False)
 class VentaDescuentoAlto(BaseVentas):
     """SEC-001 (auditoría 2026-08-10): un cajero no puede aplicar más de
     DESCUENTO_MAXIMO_SIN_AUTORIZACION (15%) por línea sin que un gerente
@@ -736,6 +743,9 @@ class VentaDescuentoAlto(BaseVentas):
         self.assertTrue(r.json()["ok"])
 
 
+# Escrita para el esquema de una caja por persona: se fija ese modo (la caja
+# compartida, CAJA_COMPARTIDA, tiene sus propias pruebas en test_auditoria_2026_09).
+@override_settings(CAJA_COMPARTIDA=False)
 class VentaRegaliaAlta(BaseVentas):
     """SEC-006 (auditoría 2026-08-10): una regalía exige motivo siempre, y
     un cajero no puede regalar más de REGALIA_MAXIMA_SIN_AUTORIZACION

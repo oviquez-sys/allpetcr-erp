@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from django.contrib import messages
@@ -273,3 +273,26 @@ def _iva_mensual(request, empresa, anio, hoy):
         "meses": meses,
         "totales": totales,
     })
+
+
+@rol_requerido(GERENTE, CONTADOR)
+def exportar(request):
+    """Excel para el contador (auditoría 26/09/2026, CAJ-01). Sin parámetros
+    muestra el formulario; con `descargar=1` entrega el archivo."""
+    from django.http import HttpResponse
+
+    from .exportar import excel_contador
+
+    empresa = empresa_actual(request)
+    hoy = timezone.localdate()
+    mes_pasado = (hoy.replace(day=1) - timedelta(days=1)).replace(day=1)
+    desde = _parse_fecha(request.GET.get("desde"), mes_pasado)
+    hasta = _parse_fecha(request.GET.get("hasta"), hoy.replace(day=1) - timedelta(days=1))
+    if request.GET.get("descargar") == "1":
+        if hasta < desde:
+            desde, hasta = hasta, desde
+        r = HttpResponse(excel_contador(empresa, desde, hasta),
+                         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        r["Content-Disposition"] = f'attachment; filename="AllPetCR_{desde:%Y-%m-%d}_a_{hasta:%Y-%m-%d}.xlsx"'
+        return r
+    return render(request, "contabilidad/exportar.html", {"desde": desde, "hasta": hasta, "hoy": hoy})

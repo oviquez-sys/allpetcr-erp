@@ -459,9 +459,14 @@ Informe completo: `AUDITORIA_ERP_FASE2.md`. Estado verificado con pruebas en
 | INV-09 | Sin escaneo con cámara | Media | **Cerrado** | `static/js/camara.js` (BarcodeDetector) en POS, Recibir y Etiquetas; el botón solo aparece donde el navegador lo soporta. |
 | INV-10 | Código de barras repetible | Baja | **Parcial** | Validado en el admin, en Recibir y en la carga masiva. Falta la restricción de base: primero correr `censo_codigos` en producción. |
 | INV-06 | Sin vencimientos | Media | **Abierto a propósito** | Solo si venden alimento/medicamento con vencimiento (pregunta 9 del informe). |
+| CAJ-01 | Sin exportación a Excel para el contador | Alta | **Cerrado** | `contabilidad:exportar` (`contabilidad/exportar.py`): ventas, detalle, pagos, devoluciones, compras y libro diario; prueba de cuadre ventas = pagos. |
+| CAJ-02 | Arqueo solo de efectivo | Media | **Cerrado** | Cierre pide datáfono y SINPE (opcionales); `SesionCaja.tarjeta_*` / `sinpe_*`. |
+| CAJ-03 | Una caja por persona sobre un solo cajón | Media | **Cerrado** | Caja compartida (`CAJA_COMPARTIDA`, por defecto sí); cada venta sigue firmada; `cerrada_por`. |
+| CAJ-04 | Faltaban reportes por período/categoría y menos vendidos | Media | **Cerrado** | `core:reporte_ventas`. |
 
 ### Variables de entorno nuevas
 | Variable | Para qué |
 |---|---|
 | `RESEND_API_KEY` | Correo por HTTPS en vez de SMTP (TIQ-06) |
 | `DEFAULT_FROM_EMAIL` | Remitente, de un dominio verificado en el servicio de correo |
+| `CAJA_COMPARTIDA` | `1` (defecto): una caja abierta a la vez, compartida. `0`: una por persona |

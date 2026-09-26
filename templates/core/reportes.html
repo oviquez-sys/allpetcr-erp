@@ -40,6 +40,18 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
 
   <div class="rc-sec">Ventas</div>
   <div class="rc-grid">
+    <a class="rc-card" href="{% url 'core:reporte_ventas' %}">
+      <div class="rc-ic i-sell"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16V11M12 16V7M17 16v-3"/></svg></div>
+      <div class="rc-tx"><div class="h">Ventas por período y categoría</div><div class="d">Día, semana o mes, con IVA, costo y utilidad bruta; qué categoría deja más, y qué casi no se vende.</div></div>
+    </a>
+    <a class="rc-card" href="{% url 'contabilidad:exportar' %}">
+      <div class="rc-ic i-list"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3"/></svg></div>
+      <div class="rc-tx"><div class="h">Excel para el contador</div><div class="d">Ventas, detalle con IVA y CABYS, pagos, devoluciones, compras y libro diario de un rango de fechas.</div></div>
+    </a>
+    <a class="rc-card" href="{% url 'ventas:historial' %}">
+      <div class="rc-ic i-list"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div>
+      <div class="rc-tx"><div class="h">Historial de ventas</div><div class="d">Buscar una venta para ver, reimprimir o reenviar su tiquete.</div></div>
+    </a>
     <a class="rc-card" href="{% url 'core:reporte_mas_vendidos' %}">
       <div class="rc-ic i-sell"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg></div>
       <div class="rc-tx"><div class="h">Más vendidos</div><div class="d">Ranking de productos por unidades e ingreso, en el rango de fechas que elijás.</div></div>
