@@ -52,8 +52,8 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 
     <div style="font-size:22px;font-weight:700">₡{{ producto.precio_venta|crc:0 }}</div>
   </div>
   {% if producto.desglosa_iva %}
-  {# Régimen tradicional: el precio trae IVA adentro y ese IVA es de Hacienda.
-     Se muestra aparte para que la ganancia no se lea contra el precio completo. #}
+  {% comment %} Régimen tradicional: el precio trae IVA adentro y ese IVA es de Hacienda.
+     Se muestra aparte para que la ganancia no se lea contra el precio completo. {% endcomment %}
   <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
     <div style="font-size:12px;color:#777">
       <span class="tooltip-wrapper">
@@ -65,9 +65,9 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 
     <div style="font-size:22px;font-weight:700;color:#6e6e73">₡{{ producto.iva_unitario|crc:0 }}</div>
   </div>
   {% endif %}
-  {# Ganancia (20/09/2026): antes se armaba en la plantilla con el filtro
+  {% comment %} Ganancia (20/09/2026): antes se armaba en la plantilla con el filtro
      `add`, que SUMABA el costo al precio (mostraba precio + costo − 1).
-     Ahora sale ya calculada del modelo, igual que el margen: una sola fórmula. #}
+     Ahora sale ya calculada del modelo, igual que el margen: una sola fórmula. {% endcomment %}
   <div style="background:#f2f5f6;border-radius:12px;padding:14px 18px;min-width:150px">
     <div style="font-size:12px;color:#777">
       <span class="tooltip-wrapper">

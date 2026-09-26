@@ -253,3 +253,24 @@ class ReglaSoloEnExistenciaTest(TestCase):
             "catalogo.consultas.productos_visibles y sacá el archivo de "
             "EXCEPCIONES en esta prueba.",
         )
+
+
+class ComentariosDePlantilla(TestCase):
+    """{# #} en Django es de UNA línea: si ocupa varias, el texto sale impreso
+    en la página. Pasó en el tiquete, en la ficha de precio y en Recibir
+    mercadería (auditoría 26/09/2026). Los comentarios largos van con
+    {% comment %}."""
+
+    def test_ningun_comentario_corto_ocupa_varias_lineas(self):
+        import re
+        from pathlib import Path
+
+        from django.conf import settings
+
+        malos = []
+        for plantilla in Path(settings.BASE_DIR, "templates").rglob("*.html"):
+            texto = plantilla.read_text(encoding="utf-8")
+            for m in re.finditer(r"\{#(.*?)#\}", texto, flags=re.S):
+                if "\n" in m.group(1):
+                    malos.append(f"{plantilla.name}:{texto[:m.start()].count(chr(10)) + 1}")
+        self.assertEqual(malos, [], "Use {% comment %} para comentarios de varias líneas")

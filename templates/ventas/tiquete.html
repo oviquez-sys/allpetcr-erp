@@ -52,10 +52,10 @@ td{padding:2px 0;vertical-align:top}
 </table>
 <hr>
 <p class="c">¡Gracias por su compra! 🐾<br>www.allpetcr.com</p>
-{# La mención del régimen simplificado sale solo si la empresa está en él
+{% comment %}La mención del régimen simplificado sale solo si la empresa está en él
    (20/09/2026): AllPetCR resultó ser régimen tradicional, y el tiquete no
    puede afirmar un régimen que no es. Mientras no exista la factura
-   electrónica, sigue sin ser comprobante. #}
+   electrónica, sigue sin ser comprobante. (Antes estaba entre {# #}, que solo sirve para una línea: el texto salía impreso en el tiquete. Auditoría 26/09/2026.){% endcomment %}
 <p class="c" style="font-size:9.5px">Documento interno de control.<br>
 {% if f.empresa.regimen == "RTS" %}Régimen de Tributación Simplificada —<br>{% endif %}no constituye comprobante electrónico.</p>
 <p class="c no-print" style="margin-top:12px">

@@ -216,9 +216,9 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
     </div>
 
     {% if tradicional %}
-    {# IVA acreditable (20/09/2026): va aparte del costo para que Hacienda lo
+    {% comment %} IVA acreditable (20/09/2026): va aparte del costo para que Hacienda lo
        reconozca al declarar. Solo con factura electrónica a nombre de la
-       empresa; sin factura, el IVA es costo y va dentro del precio unitario. #}
+       empresa; sin factura, el IVA es costo y va dentro del precio unitario. {% endcomment %}
     <div class="campo">
       <label>IVA de la factura (₡)</label>
       <input class="txt-in" id="ivaFactura" type="number" min="0" step="any" placeholder="0" oninput="pintarLineas()">
