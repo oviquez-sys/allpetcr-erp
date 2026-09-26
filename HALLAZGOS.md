@@ -452,6 +452,8 @@ Informe completo: `AUDITORIA_ERP_FASE2.md`. Estado verificado con pruebas en
 | INV-03 | Compra en dos transacciones | Media | **Cerrado** | `crear_y_recibir_compra`. El admin (`entrada_view`) no se tocó: es la zona de SEC-003, en pausa. |
 | INV-04 | Misma factura de proveedor dos veces | Media | **Cerrado** | `crear_compra` la rechaza (sin contar las anuladas). |
 | UX-02 | 16 pruebas de impresión fallaban en la PC de la tienda | Baja | **Cerrado** | Fuerzan el camino del agente. |
+| USU-02b | `TRAER_RESPALDOS_NUBE.bat` se caía desde el 14/09 (símbolo ✅ en el registro): bajaba 1 copia por corrida y nunca avisaba de un respaldo atrasado | Alta | **Cerrado** | `PYTHONIOENCODING=utf-8` en el .bat. El respaldo del 26/09 03:03 llegó y está sano. |
+| UX-08 | 6 .bat con saltos de línea de Linux en disco ("EM no se reconoce...") | Media | **Cerrado** | CRLF; `test_arquitectura.ArchivosBatConSaltosDeWindows`. |
 | INV-01 | Sin carga masiva desde Excel en pantalla | Alta | **Cerrado** | Compras → «Cargar desde Excel» (`compras/carga_masiva.py`): plantilla, vista previa firmada, todo-o-nada, completa sin pisar. |
 | INV-05 | Ajuste sin tipo | Media | **Cerrado** | Tipo obligatorio; queda como `[Tipo] motivo` en el kardex (sin migración). |
 | INV-07 | Kárdex escondido y sin usuario | Baja | **Cerrado** | Ficha de precio: quién, motivo, saldo y enlace al kárdex completo. |
