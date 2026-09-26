@@ -43,8 +43,22 @@ main{flex:1;display:flex;padding:14px 22px 20px;overflow:hidden}
 .filtros{display:flex;gap:14px;margin-top:12px;align-items:center;flex-wrap:wrap}
 .vercero{display:flex;gap:7px;align-items:center;font-size:13px;color:var(--ink2);cursor:pointer;user-select:none}
 .vercero input{width:16px;height:16px;accent-color:var(--brand);cursor:pointer}
+#filtroEtiqueta{font-size:13px;color:var(--ink);border:1px solid var(--line);border-radius:9px;
+  padding:6px 10px;background:#fff;cursor:pointer}
+.lote{display:flex;gap:6px}
+.lote button{font-size:12px;color:var(--brand);background:#fff;border:1px solid var(--line);
+  border-radius:9px;padding:6px 11px;cursor:pointer}
+.lote button:hover{background:rgba(11,49,97,.06)}
 .cuenta{font-size:12.5px;color:var(--ink2);margin-left:auto}
 .aviso{margin-top:10px;background:#fdf3e2;color:#8a5a08;font-size:13px;padding:9px 13px;border-radius:11px}
+/* Estado de la etiqueta (26/09/2026): separa lo ya impreso de lo pendiente
+   mientras se pone al día con las cargas nuevas. Es un marcador de trabajo,
+   no una garantía de que el papel quedó pegado en el estante. */
+.etq{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:11.5px;
+  padding:5px 9px;border-radius:9px;background:#f2f2f5;color:var(--ink2)}
+.etq.on{background:#e6f8ec;color:#1a7a3c}
+.etq button{font-size:11px;border:none;background:none;color:var(--brand);cursor:pointer;
+  text-decoration:underline;padding:0}
 
 #grid{overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));
   gap:14px;align-content:start;margin-top:14px;padding:2px 4px 2px 2px}
@@ -118,6 +132,15 @@ main{flex:1;display:flex;padding:14px 22px 20px;overflow:hidden}
         <input type="checkbox" id="verCero" onchange="pintarGrid()">
         Ver también los que el sistema tiene en cero
       </label>
+      <select id="filtroEtiqueta" onchange="pintarGrid()">
+        <option value="">Etiqueta: todas</option>
+        <option value="pendientes">Etiqueta: pendientes</option>
+        <option value="impresas">Etiqueta: ya impresas</option>
+      </select>
+      <div class="lote">
+        <button type="button" onclick="marcarVisibles(true)">✓ Marcar visibles como impresas</button>
+        <button type="button" onclick="marcarVisibles(false)">↺ Marcar visibles como pendientes</button>
+      </div>
       <span class="cuenta" id="cuenta"></span>
     </div>
     {% if sin_codigo %}
@@ -170,8 +193,11 @@ function toast(texto, mal){
 function filtrar(){
   const q = document.getElementById('buscar').value.toLowerCase().trim();
   const verCero = document.getElementById('verCero').checked;
+  const etq = document.getElementById('filtroEtiqueta').value;
   return productos.filter(p => {
     if (!verCero && p.stock_actual <= 0) return false;
+    if (etq === 'pendientes' && p.etiqueta_impresa_en) return false;
+    if (etq === 'impresas' && !p.etiqueta_impresa_en) return false;
     if (!q) return true;
     return p.nombre.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
         || (p.codigo_barras||'').toLowerCase().includes(q)
@@ -211,6 +237,16 @@ function tarjeta(p){
          <button class="pm" onclick="sumar(${p.id},1)">+</button>
          <button class="imp" id="b-${p.id}" onclick="imprimir(${p.id})">🏷️ Imprimir</button>`
       : `<button class="imp" disabled>Sin código</button>`;
+    // Estado de etiqueta: se pinta aparte de "imprimir" porque una cosa es
+    // mandarla a imprimir desde acá y otra, marcarla a mano (producto que ya
+    // tenía su etiqueta puesta antes de que existiera este campo).
+    const yaImpresa = !!p.etiqueta_impresa_en;
+    const etq = `<div class="etq${yaImpresa ? ' on' : ''}" id="e-${p.id}">
+      <span>${yaImpresa ? '✓ Etiqueta puesta' : 'Etiqueta pendiente'}</span>
+      <button type="button" onclick="marcarEtiqueta(${p.id}, ${!yaImpresa})">
+        ${yaImpresa ? 'marcar pendiente' : 'marcar impresa'}
+      </button>
+    </div>`;
     return `<div class="pcard${marcado === p.id ? ' marcada' : ''}" id="c-${p.id}">
       ${foto}
       <div class="n" title="${esc(p.nombre)}">${esc(p.nombre)}</div>
@@ -220,6 +256,7 @@ function tarjeta(p){
         <span class="p">${fmt(p.precio_venta)}</span>
         <span class="st${cero}">Sistema: <b>${p.stock_actual}</b></span>
       </div>
+      ${etq}
       <div class="acc">${acciones}</div>
     </div>`;
 }
@@ -230,8 +267,13 @@ function pintarGrid(){
   const enCero = productos.filter(p => p.stock_actual <= 0).length;
   const cola = (!document.getElementById('verCero').checked && enCero)
     ? ` · ${enCero} en cero, ocultos (marcá la casilla para verlos)` : '';
+  // Dentro de lo que se está viendo ahora, cuántos ya tienen etiqueta y
+  // cuántos faltan — es justo lo que se pidió el 26/09/2026: poder revisar
+  // de un vistazo qué falta por imprimir.
+  const impresasVisibles = encontradosActuales.filter(p => p.etiqueta_impresa_en).length;
   document.getElementById('cuenta').textContent =
-    `${encontradosActuales.length} producto(s)` + cola;
+    `${encontradosActuales.length} producto(s) · ${impresasVisibles} con etiqueta · `
+    + `${encontradosActuales.length - impresasVisibles} pendientes` + cola;
   document.getElementById('grid').innerHTML =
     encontradosActuales.slice(0, mostrados).map(tarjeta).join('')
     || '<p class="empty">No hay productos con ese filtro. Probá otra categoría o borrá la búsqueda.</p>';
@@ -315,6 +357,10 @@ async function imprimir(id){
     const d = await r.json();
     if (d.ok){
       toast(`🏷️ ${copias} etiqueta(s) de ${porId[id].nombre}`);
+      // Imprimir desde acá también marca la etiqueta como puesta (servicio.py
+      // lo hace del lado del servidor); se refleja acá sin recargar toda la
+      // pantalla, igual que el resto de esta vista.
+      if (d.etiqueta_impresa_en) actualizarEstadoLocal([id], d.etiqueta_impresa_en);
       if (fueEscaneado) volverAlEscaner();
     } else {
       toast('⛔ ' + d.error, true);
@@ -323,6 +369,55 @@ async function imprimir(id){
     toast('⛔ No se pudo conectar con el ERP.', true);
   }
   boton.disabled = false; boton.textContent = '🏷️ Imprimir';
+}
+
+// Actualiza `productos` (y por lo tanto `porId`) en memoria y repinta solo lo
+// que corresponde, sin pedirle la lista entera al servidor otra vez.
+function actualizarEstadoLocal(ids, valor){
+  const set = new Set(ids);
+  for (const p of productos) if (set.has(p.id)) p.etiqueta_impresa_en = valor;
+  pintarGrid();
+}
+
+// Marcado manual, uno por uno: no imprime nada, solo cambia el estado que
+// separa pendiente de ya impresa (Oscar, 26/09/2026).
+async function marcarEtiqueta(id, impresa){
+  try {
+    const cuerpo = new FormData();
+    cuerpo.append('impresa', impresa ? '1' : '0');
+    const r = await fetch(`/inventario/etiquetas/${id}/marcar/`, {
+      method: 'POST', headers: {'X-CSRFToken': CSRF}, body: cuerpo
+    });
+    const d = await r.json();
+    if (!d.ok){ toast('⛔ No se pudo cambiar el estado de la etiqueta.', true); return; }
+    actualizarEstadoLocal([id], d.en);
+  } catch(e){
+    toast('⛔ No se pudo conectar con el ERP.', true);
+  }
+}
+
+// Marcado manual EN LOTE: todo lo que está visible con el filtro actual, no
+// solo lo dibujado en pantalla (puede haber más abajo del scroll).
+async function marcarVisibles(impresa){
+  const lista = filtrar();
+  if (!lista.length){ toast('No hay productos con ese filtro.', true); return; }
+  const verbo = impresa ? 'marcar como YA IMPRESAS' : 'marcar como PENDIENTES';
+  if (!confirm(`¿${verbo} las ${lista.length} etiqueta(s) que están visibles con el filtro de ahora?`)) return;
+  try {
+    const cuerpo = new FormData();
+    lista.forEach(p => cuerpo.append('ids', p.id));
+    cuerpo.append('impresa', impresa ? '1' : '0');
+    const r = await fetch('/inventario/etiquetas/marcar-lote/', {
+      method: 'POST', headers: {'X-CSRFToken': CSRF}, body: cuerpo
+    });
+    const d = await r.json();
+    if (!d.ok){ toast('⛔ No se pudo actualizar el lote.', true); return; }
+    const valor = impresa ? new Date().toISOString() : null;
+    actualizarEstadoLocal(lista.map(p => p.id), valor);
+    toast(`${d.total} etiqueta(s) actualizadas.`);
+  } catch(e){
+    toast('⛔ No se pudo conectar con el ERP.', true);
+  }
 }
 
 // La pistola es un teclado: escribe el código y da Enter. El foco tiene que

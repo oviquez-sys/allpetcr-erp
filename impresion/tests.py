@@ -738,3 +738,58 @@ class PuertasDelAgente(TestCase):
         self.assertEqual(
             TrabajoImpresion.objects.get().estado, TrabajoImpresion.IMPRESO
         )
+
+
+class MarcaEtiquetaAlImprimir(TestCase):
+    """26/09/2026 (a pedido de Oscar): imprimir de verdad marca el producto
+    como "ya impresa" para la pantalla de Etiquetas. La marca vive en la
+    VISTA (no en `servicio.imprimir_etiqueta`, que solo sabe mandar bytes a
+    una impresora y en sus propias pruebas ni siquiera recibe un Producto de
+    la base — ver `_Producto` arriba en este archivo)."""
+
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
+        self.usuario = User.objects.create_user(
+            "oscar", password="clave-larga-1234", is_staff=True, is_superuser=True
+        )
+        self.producto = Producto.objects.create(
+            empresa=self.empresa, sku="ET-900", nombre="Correa retráctil",
+            codigo_barras="7852052828900", precio_venta=Decimal("6500"),
+            stock_actual=Decimal("3"),
+        )
+        self.client.force_login(self.usuario)
+
+    def test_imprimir_un_producto_lo_marca_como_impresa(self):
+        self.assertIsNone(self.producto.etiqueta_impresa_en)
+        with mock.patch("impresion.servicio.imprimir_etiqueta", return_value=1):
+            r = self.client.post(
+                reverse("impresion:etiqueta_producto", args=[self.producto.pk]), {"copias": "1"}
+            )
+        self.assertTrue(r.json()["etiqueta_impresa_en"])
+        self.producto.refresh_from_db()
+        self.assertIsNotNone(self.producto.etiqueta_impresa_en)
+
+    def test_si_falla_la_impresion_no_se_marca(self):
+        """Un error de impresión no debe hacer parecer que ya está lista."""
+        with mock.patch("impresion.servicio.imprimir_etiqueta",
+                         side_effect=servicio.ErrorDeImpresion("sin papel")):
+            r = self.client.post(
+                reverse("impresion:etiqueta_producto", args=[self.producto.pk]), {"copias": "1"}
+            )
+        self.assertFalse(r.json()["ok"])
+        self.producto.refresh_from_db()
+        self.assertIsNone(self.producto.etiqueta_impresa_en)
+
+    def test_imprimir_en_tanda_marca_a_todos_los_de_la_tanda(self):
+        otro = Producto.objects.create(
+            empresa=self.empresa, sku="ET-901", nombre="Correa fija",
+            codigo_barras="7852052828901", precio_venta=Decimal("4500"),
+            stock_actual=Decimal("2"),
+        )
+        with mock.patch("impresion.servicio.imprimir_etiquetas", return_value=2):
+            r = self.client.post(reverse("impresion:etiquetas"), {"copias": "1"})
+        self.assertEqual(r.status_code, 302)
+        self.producto.refresh_from_db()
+        otro.refresh_from_db()
+        self.assertIsNotNone(self.producto.etiqueta_impresa_en)
+        self.assertIsNotNone(otro.etiqueta_impresa_en)

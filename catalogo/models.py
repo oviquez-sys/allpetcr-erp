@@ -142,6 +142,15 @@ class Producto(models.Model):
     stock_actual = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     stock_minimo = models.DecimalField(max_digits=12, decimal_places=2, default=2)
     activo = models.BooleanField(default=True)
+    # Marcador de trabajo para la pantalla de Etiquetas (26/09/2026, a pedido
+    # de Oscar): separar "ya tiene su etiqueta física puesta" de "todavía no",
+    # mientras se pone al día con las cargas nuevas (ZeeDog, Gosbi). Se pone
+    # solo al imprimir desde esa pantalla (`impresion.servicio.imprimir_etiqueta`)
+    # o a mano, con el botón de la misma pantalla — nunca al cargar el
+    # producto. NO es una garantía de que el papel salió bien pegado en el
+    # estante (eso solo lo sabe Oscar mirando el estante); es nada más el
+    # último momento en que se mandó o se marcó como impresa. Vacío = pendiente.
+    etiqueta_impresa_en = models.DateTimeField(null=True, blank=True)
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 

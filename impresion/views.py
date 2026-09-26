@@ -14,9 +14,11 @@ from django.conf import settings
 from django.contrib import messages
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from catalogo.consultas import productos_visibles
+from catalogo.models import Producto
 from core.roles import CAJERO, GERENTE, rol_requerido
 from core.tenancy import documento_de_empresa, empresa_actual
 from inventario.etiquetas import seleccionar_para_etiquetas
@@ -92,6 +94,13 @@ def etiquetas(request):
     except ErrorDeImpresion as e:
         messages.error(request, f"⛔ {e}")
         return redirect(destino)
+    # Marca de trabajo (26/09/2026): separa pendiente de ya impresa en la
+    # pantalla de Etiquetas. Un solo UPDATE para toda la tanda — no hace
+    # falta guardar producto por producto. Ver la nota completa junto a
+    # inventario.views.marcar_etiqueta.
+    Producto.objects.filter(
+        pk__in=[p.pk for p, _ in seleccion.pares]
+    ).update(etiqueta_impresa_en=timezone.now())
     aviso = f"🏷️ {total} etiqueta(s) enviadas a la impresora."
     if seleccion.recortado:
         aviso += " La selección se cortó en el tope; repetí para la siguiente tanda."
@@ -125,7 +134,18 @@ def etiqueta_producto(request, producto_id):
     except ErrorDeImpresion as e:
         logger.warning("No se pudo imprimir la etiqueta de %s: %s", producto.sku, e)
         return JsonResponse({"ok": False, "error": str(e)}, status=503)
-    return JsonResponse({"ok": True, "copias": copias})
+    # Marca de trabajo (26/09/2026): separa pendiente de ya impresa en la
+    # pantalla de Etiquetas — ver la nota completa junto a
+    # inventario.views.marcar_etiqueta. Se hace ACÁ y no dentro de
+    # `servicio.imprimir_etiqueta` a propósito: ese módulo solo sabe mandar
+    # bytes a una impresora (sus pruebas lo llaman con un objeto de prueba
+    # que ni siquiera es un Producto de la base) y no debe tocar el catálogo.
+    producto.etiqueta_impresa_en = timezone.now()
+    producto.save(update_fields=["etiqueta_impresa_en"])
+    return JsonResponse({
+        "ok": True, "copias": copias,
+        "etiqueta_impresa_en": producto.etiqueta_impresa_en.isoformat(),
+    })
 
 
 @rol_requerido(CAJERO, GERENTE)

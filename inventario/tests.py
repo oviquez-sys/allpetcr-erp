@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from catalogo.models import Producto
 from core.models import AuditLog, Empresa, Sucursal
@@ -148,3 +149,89 @@ class PantallaAjuste(BaseInventario):
         log = AuditLog.objects.filter(tabla="inventario.movimientoinventario").latest("fecha")
         self.assertEqual(log.usuario, self.staff)
         self.assertIsNotNone(log.ip)
+
+
+class MarcadoDeEtiquetas(BaseInventario):
+    """Pantalla de Etiquetas: separar pendiente de ya impresa (26/09/2026,
+    a pedido de Oscar, para ponerse al día con las cargas de ZeeDog/Gosbi).
+
+    Estas pruebas cubren el marcado A MANO. El marcado AUTOMÁTICO al
+    imprimir de verdad vive del lado de `impresion` (esa vista es la que
+    llama a `servicio.imprimir_etiqueta`) — ver impresion/tests.py."""
+
+    def setUp(self):
+        super().setUp()
+        self.staff = User.objects.create_user("oscar", password="clave-test", is_staff=True, is_superuser=True)
+        self.client.login(username="oscar", password="clave-test")
+
+    def test_requiere_login(self):
+        self.client.logout()
+        respuesta = self.client.post(
+            reverse("inventario:marcar_etiqueta", args=[self.producto.pk]), {"impresa": "1"}
+        )
+        self.assertEqual(respuesta.status_code, 302)  # redirige al login
+        self.producto.refresh_from_db()
+        self.assertIsNone(self.producto.etiqueta_impresa_en)
+
+    def test_marcar_impresa_pone_fecha(self):
+        respuesta = self.client.post(
+            reverse("inventario:marcar_etiqueta", args=[self.producto.pk]), {"impresa": "1"}
+        )
+        self.assertEqual(respuesta.json()["ok"], True)
+        self.producto.refresh_from_db()
+        self.assertIsNotNone(self.producto.etiqueta_impresa_en)
+
+    def test_marcar_pendiente_borra_la_fecha(self):
+        self.producto.etiqueta_impresa_en = timezone.now()
+        self.producto.save(update_fields=["etiqueta_impresa_en"])
+        respuesta = self.client.post(
+            reverse("inventario:marcar_etiqueta", args=[self.producto.pk]), {"impresa": "0"}
+        )
+        self.assertEqual(respuesta.json()["ok"], True)
+        self.producto.refresh_from_db()
+        self.assertIsNone(self.producto.etiqueta_impresa_en)
+
+    def test_no_imprime_nada_solo_cambia_el_estado(self):
+        """El marcado a mano no debe pasar por impresion.servicio: no gasta
+        papel ni toca la cola de impresión."""
+        antes = self.producto.actualizado_en
+        self.client.post(
+            reverse("inventario:marcar_etiqueta", args=[self.producto.pk]), {"impresa": "1"}
+        )
+        self.producto.refresh_from_db()
+        # `actualizado_en` es auto_now: si save() se llamó con update_fields
+        # limitado a etiqueta_impresa_en, no cambia.
+        self.assertEqual(self.producto.actualizado_en, antes)
+
+    def test_lote_marca_solo_los_ids_pedidos(self):
+        otro = Producto.objects.create(
+            empresa=self.producto.empresa, sku="TEST-002", nombre="Otro producto", precio_venta=500,
+        )
+        respuesta = self.client.post(reverse("inventario:marcar_etiquetas_lote"), {
+            "ids": [self.producto.pk], "impresa": "1",
+        })
+        self.assertEqual(respuesta.json()["total"], 1)
+        self.producto.refresh_from_db()
+        otro.refresh_from_db()
+        self.assertIsNotNone(self.producto.etiqueta_impresa_en)
+        self.assertIsNone(otro.etiqueta_impresa_en)  # el que no se pidió, intacto
+
+    def test_lote_puede_devolver_varios_a_pendiente(self):
+        otro = Producto.objects.create(
+            empresa=self.producto.empresa, sku="TEST-003", nombre="Otro más", precio_venta=500,
+            etiqueta_impresa_en=timezone.now(),
+        )
+        self.producto.etiqueta_impresa_en = timezone.now()
+        self.producto.save(update_fields=["etiqueta_impresa_en"])
+        respuesta = self.client.post(reverse("inventario:marcar_etiquetas_lote"), {
+            "ids": [self.producto.pk, otro.pk], "impresa": "0",
+        })
+        self.assertEqual(respuesta.json()["total"], 2)
+        self.producto.refresh_from_db()
+        otro.refresh_from_db()
+        self.assertIsNone(self.producto.etiqueta_impresa_en)
+        self.assertIsNone(otro.etiqueta_impresa_en)
+
+    def test_pantalla_de_etiquetas_manda_el_estado_al_navegador(self):
+        respuesta = self.client.get(reverse("inventario:etiquetas"))
+        self.assertContains(respuesta, "etiqueta_impresa_en")

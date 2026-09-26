@@ -3,10 +3,11 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.shortcuts import redirect, render
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.safestring import mark_safe
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 
 from catalogo.codigos import aplicar_conversion, plan_de_conversion
 from catalogo.consultas import productos_visibles
@@ -93,7 +94,7 @@ def etiquetas(request):
         .select_related("categoria")
         .values("id", "sku", "nombre", "codigo_barras", "precio_venta", "stock_actual",
                 "presentacion", "marca", "categoria__nombre", "imagen",
-                "descripcion", "actualizado_en")
+                "descripcion", "actualizado_en", "etiqueta_impresa_en")
         .order_by("nombre")
     )
     for p in productos:  # JSON-serializable + nombres de campo para el navegador
@@ -104,6 +105,11 @@ def etiquetas(request):
         p["marca"] = p.get("marca") or ""
         p["codigo_barras"] = p.get("codigo_barras") or ""
         p["descripcion"] = p.get("descripcion") or ""
+        # ISO o None: lo único que usa el navegador es si hay valor o no
+        # (pendiente / ya impresa) — ver la nota larga en marcar_etiqueta.
+        p["etiqueta_impresa_en"] = (
+            p["etiqueta_impresa_en"].isoformat() if p["etiqueta_impresa_en"] else None
+        )
         completar_foto(p)
 
     return render(request, "inventario/etiquetas.html", {
@@ -111,6 +117,48 @@ def etiquetas(request):
         "tope": TOPE_TARJETAS,
         "sin_codigo": sum(1 for p in productos if not p["codigo_barras"]),
     })
+
+
+@rol_requerido(CAJERO, GERENTE)
+@require_POST
+def marcar_etiqueta(request, producto_id):
+    """Marca o desmarca a mano la etiqueta de UN producto como impresa.
+
+    No imprime nada — es solo el estado que separa "pendiente" de "ya
+    impresa" en la pantalla de Etiquetas. Existe para dos casos que la
+    marca automática (al imprimir, en impresion.servicio) no cubre:
+    productos que ya tenían su etiqueta puesta en el estante ANTES de que
+    existiera este campo (Oscar los pone al día a mano, una vez), y
+    corregir un marcado que quedó mal (una etiqueta que se mandó a
+    imprimir pero salió en blanco, por ejemplo).
+    """
+    producto = get_object_or_404(
+        productos_visibles(empresa_actual(request), incluir_agotados=True),
+        pk=producto_id,
+    )
+    impresa = request.POST.get("impresa") == "1"
+    producto.etiqueta_impresa_en = timezone.now() if impresa else None
+    producto.save(update_fields=["etiqueta_impresa_en"])
+    return JsonResponse({
+        "ok": True,
+        "impresa": impresa,
+        "en": producto.etiqueta_impresa_en.isoformat() if producto.etiqueta_impresa_en else None,
+    })
+
+
+@rol_requerido(CAJERO, GERENTE)
+@require_POST
+def marcar_etiquetas_lote(request):
+    """Lo mismo que marcar_etiqueta, para varios productos de una vez —
+    la lista que está filtrada en pantalla en ese momento. Pensado para
+    "ya imprimí/etiqueté todo esto, marcalo de una sola vez" en vez de
+    producto por producto."""
+    ids = request.POST.getlist("ids")
+    impresa = request.POST.get("impresa") == "1"
+    productos = productos_visibles(empresa_actual(request), incluir_agotados=True).filter(pk__in=ids)
+    valor = timezone.now() if impresa else None
+    total = productos.update(etiqueta_impresa_en=valor)
+    return JsonResponse({"ok": True, "impresa": impresa, "total": total})
 
 
 def _hoja_de_etiquetas(request, empresa):
