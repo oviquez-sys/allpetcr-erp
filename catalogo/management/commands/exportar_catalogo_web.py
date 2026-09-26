@@ -127,6 +127,12 @@ class Command(BaseCommand):
                 # marcar un agotado sin esperar a la siguiente corrida.
                 "disponible": p.stock_actual > 0,
                 "imagen": self._ruta_web(p) if INCLUIR_IMAGENES else "",
+                # Vitrina manual de la home (26/09/2026) — ver la nota larga
+                # junto al campo en catalogo/models.py. Viaja igual que en
+                # api/serializers.py, con el mismo nombre, porque el sitio
+                # consume los dos y no sabe de cuál vino.
+                "destacado_home": p.destacado_home,
+                "orden_home": p.orden_home,
             }
             datos_productos.append(fila)
 

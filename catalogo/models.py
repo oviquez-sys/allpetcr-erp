@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -151,6 +152,39 @@ class Producto(models.Model):
     # estante (eso solo lo sabe Oscar mirando el estante); es nada más el
     # último momento en que se mandó o se marcó como impresa. Vacío = pendiente.
     etiqueta_impresa_en = models.DateTimeField(null=True, blank=True)
+    # Vitrina de la home del sitio (26/09/2026, a pedido de Oscar). Hasta acá
+    # "La vitrina" de la portada se armaba sola: repartía productos por
+    # categoría (allpetcr-web/app/page.tsx) sin que nadie eligiera cuáles se
+    # ven primero. Para un escaparate comercial eso no alcanza — Oscar quiere
+    # decidir qué producto recibe al visitante, no que lo decida el orden en
+    # que quedó cargado en el catálogo.
+    #
+    # Estos dos campos son SOLO para esa sección de la portada. No tocan el
+    # catálogo del sitio (/catalogo), la API (sigue ordenando por `nombre`,
+    # ver api/views.py) ni ninguna pantalla del ERP — Meta.ordering de acá
+    # abajo sigue siendo alfabético, como siempre.
+    #
+    # `destacado_home` prende o apaga el producto en la vitrina manual.
+    # `orden_home` decide el lugar (menor sale primero) y solo importa si
+    # `destacado_home` es True — por eso puede quedar vacío en cualquier otro
+    # producto. `clean()` exige el número apenas se marca destacado, y la
+    # restricción `orden_home_unico_por_empresa` de abajo impide que dos
+    # destacados de la misma empresa compitan por el mismo lugar: así el
+    # aviso sale en el formulario del admin, no como un choque silencioso en
+    # la vitrina del sitio (dos productos peleando el puesto 1, ninguno en
+    # el 2). Si faltan destacados para llenar la sección, o si uno se queda
+    # sin stock, el sitio completa los espacios solo — ver el comentario
+    # largo en allpetcr-web/lib/vitrina.ts.
+    destacado_home = models.BooleanField(
+        default=False,
+        help_text="Aparece primero en «La vitrina» de la portada del sitio, "
+                  "en el lugar que diga 'Orden en home'.",
+    )
+    orden_home = models.PositiveSmallIntegerField(
+        null=True, blank=True,
+        help_text="Lugar dentro de «La vitrina». Menor sale primero. Solo se "
+                  "usa si «Destacado en home» está marcado.",
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 
@@ -159,10 +193,27 @@ class Producto(models.Model):
         constraints = [
             models.CheckConstraint(condition=models.Q(precio_venta__gte=0), name="precio_no_negativo"),
             models.CheckConstraint(condition=models.Q(stock_actual__gte=0), name="stock_no_negativo"),
+            models.UniqueConstraint(
+                fields=["empresa", "orden_home"],
+                condition=models.Q(destacado_home=True),
+                name="orden_home_unico_por_empresa",
+                violation_error_message="Ya hay otro producto destacado en ese mismo lugar de la vitrina.",
+            ),
         ]
 
     def __str__(self):
         return f"{self.sku} — {self.nombre}"
+
+    def clean(self):
+        super().clean()
+        # Un destacado sin número de orden no tiene dónde ubicarse en la
+        # vitrina: dejarlo pasar solo pospone el error hasta que alguien
+        # mire la portada y no lo encuentre (o lo encuentre al final, por
+        # casualidad). Se avisa acá, en el formulario, no en el sitio.
+        if self.destacado_home and self.orden_home is None:
+            raise ValidationError({
+                "orden_home": "Un producto destacado en home necesita su número de orden.",
+            })
 
     def save(self, *args, **kwargs):
         """Al crear un producto sin código de barras, le asigna uno interno.

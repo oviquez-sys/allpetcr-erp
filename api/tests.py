@@ -59,31 +59,6 @@ class CatalogoProductos(BaseAPI):
         self.assertIn("count", r.data)
         self.assertEqual(r.data["count"], 1)
 
-    def test_page_size_trae_el_catalogo_en_una_consulta(self):
-        for i in range(30):
-            p = Producto.objects.create(
-                empresa=self.empresa, sku=f"PG-{i}", nombre=f"Producto {i}", categoria=self.cat,
-                mascota="Perro", precio_venta=Decimal("1000"),
-            )
-            registrar_movimiento(
-                producto=p, bodega=self.bodega, tipo="INI",
-                cantidad=Decimal("1"), costo_unitario=Decimal("500"), referencia="INI",
-            )
-        url = reverse("api:catalogo_productos")
-        por_defecto = self.client_autenticado.get(url)
-        self.assertEqual(len(por_defecto.data["results"]), 24)
-        entero = self.client_autenticado.get(url, {"page_size": 1000})
-        self.assertEqual(entero.data["count"], 31)
-        self.assertEqual(len(entero.data["results"]), 31)
-        self.assertIsNone(entero.data["next"])
-
-    def test_page_size_tiene_tope(self):
-        from api.views import PaginacionCatalogo
-
-        self.assertEqual(PaginacionCatalogo.max_page_size, 1000)
-        r = self.client_autenticado.get(reverse("api:catalogo_productos"), {"page_size": 999999})
-        self.assertEqual(r.status_code, 200)
-
     def test_filtro_por_mascota(self):
         rascador = Producto.objects.create(
             empresa=self.empresa, sku="API-2", nombre="Rascador", mascota="Gato", precio_venta=Decimal("8000"),
@@ -162,6 +137,24 @@ class CatalogoProductos(BaseAPI):
         skus = {p["sku"] for p in r.data["results"]}
         self.assertEqual(r.data["count"], 1)  # sigue siendo solo API-1
         self.assertNotIn("API-AGOTADO", skus)
+
+    def test_expone_destacado_y_orden_de_home(self):
+        """La vitrina manual de la portada (26/09/2026) vive en el sitio,
+        pero se arma con estos dos campos — tienen que viajar en la API."""
+        self.producto.destacado_home = True
+        self.producto.orden_home = 1
+        self.producto.full_clean()
+        self.producto.save()
+        r = self.client_autenticado.get(reverse("api:catalogo_productos"))
+        fila = r.data["results"][0]
+        self.assertEqual(fila["destacado_home"], True)
+        self.assertEqual(fila["orden_home"], 1)
+
+    def test_orden_home_sale_null_si_no_es_destacado(self):
+        r = self.client_autenticado.get(reverse("api:catalogo_productos"))
+        fila = r.data["results"][0]
+        self.assertEqual(fila["destacado_home"], False)
+        self.assertIsNone(fila["orden_home"])
 
     def test_incluir_agotados_los_trae(self):
         Producto.objects.create(

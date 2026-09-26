@@ -63,6 +63,11 @@ class ProductoListaSerializer(serializers.ModelSerializer):
             "sku", "nombre", "marca", "categoria_id", "presentacion",
             "descripcion", "mascota", "peso_valor", "peso_unidad",
             "precio_venta", "disponible", "imagen",
+            # Vitrina manual de la home (26/09/2026): el sitio arma "La
+            # vitrina" de la portada con estos dos, en vez del reparto
+            # automático por categoría. Ver la nota larga junto al campo en
+            # catalogo/models.py y la lógica en allpetcr-web/lib/vitrina.ts.
+            "destacado_home", "orden_home",
         ]
 
     def get_disponible(self, obj):

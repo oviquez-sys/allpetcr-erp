@@ -48,7 +48,13 @@ class ProductoForm(forms.ModelForm):
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
     form = ProductoForm
-    list_display =("foto", "sku", "nombre", "categoria", "stock_fmt", "minimo_fmt", "costo_fmt", "precio_fmt", "margen_fmt", "markup_fmt", "activo")
+    list_display = ("foto", "sku", "nombre", "categoria", "stock_fmt", "minimo_fmt", "costo_fmt", "precio_fmt", "margen_fmt", "markup_fmt", "activo", "destacado_home", "orden_home")
+    # "Destacado en home" y "Orden en home" (26/09/2026, a pedido de Oscar):
+    # editables directo en la lista, sin entrar a cada ficha, porque armar la
+    # vitrina de la portada es probar un orden, mirar el sitio, y ajustar —
+    # entrar y salir del formulario de cada producto para eso sería
+    # impracticable con más de dos o tres destacados.
+    list_editable = ("destacado_home", "orden_home")
 
     @admin.display(description="Stock actual", ordering="stock_actual")
     def stock_fmt(self, obj):
@@ -79,7 +85,7 @@ class ProductoAdmin(admin.ModelAdmin):
         return f"{obj.markup_pct}%"
 
     list_display_links = ("sku", "nombre")
-    list_filter = ("categoria", "activo", ("cabys", admin.EmptyFieldListFilter))
+    list_filter = ("categoria", "activo", "destacado_home", ("cabys", admin.EmptyFieldListFilter))
     # CABYS en la búsqueda (21/09/2026): cuando el contador diga "cambien
     # todos los 3694000999900", se encuentran escribiendo el código.
     search_fields = ("sku", "nombre", "codigo_barras", "categoria_original", "cabys")
@@ -173,6 +179,14 @@ class ProductoAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         # Los productos no se borran (integridad histórica); se desactivan.
         return False
+
+    def get_ordering(self, request):
+        """Los destacados de home arriba de todo, en su propio orden, para
+        poder armar y revisar la vitrina de un vistazo (26/09/2026). El resto
+        de la lista sigue alfabético debajo, como siempre — esto es solo el
+        orden en que se VE en el admin, no toca Producto.Meta.ordering ni
+        ninguna consulta del sitio."""
+        return ("-destacado_home", "orden_home", "nombre")
 
 
 @admin.register(CambioPrecio)

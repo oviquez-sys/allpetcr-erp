@@ -915,3 +915,110 @@ class CodigosInternos(TestCase):
         call_command("convertir_codigos_internos", "--aplicar", stdout=StringIO())
         p.refresh_from_db()
         self.assertEqual(p.codigo_barras, primero)
+
+
+class VitrinaDeLaHome(TestCase):
+    """destacado_home / orden_home (26/09/2026, a pedido de Oscar): la
+    vitrina manual de la portada. Ver la nota larga junto a los campos en
+    catalogo/models.py."""
+
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
+        self.otra_empresa = Empresa.objects.create(nombre="OTRA")
+
+    def _producto(self, sku, empresa=None, **extra):
+        return Producto.objects.create(
+            empresa=empresa or self.empresa, sku=sku, nombre=f"Producto {sku}",
+            precio_venta=Decimal("1000"), **extra,
+        )
+
+    def test_por_defecto_no_es_destacado_y_no_necesita_orden(self):
+        p = self._producto("V-1")
+        p.full_clean()  # no debe reventar
+        self.assertFalse(p.destacado_home)
+        self.assertIsNone(p.orden_home)
+
+    def test_destacado_sin_orden_no_pasa_la_validacion(self):
+        p = self._producto("V-2", destacado_home=True)
+        with self.assertRaises(ValidationError) as ctx:
+            p.full_clean()
+        self.assertIn("orden_home", ctx.exception.message_dict)
+
+    def test_destacado_con_orden_pasa_la_validacion(self):
+        p = self._producto("V-3", destacado_home=True, orden_home=1)
+        p.full_clean()  # no debe reventar
+
+    def test_dos_destacados_de_la_misma_empresa_no_pueden_compartir_lugar(self):
+        """La validación tiene que avisar ANTES de guardar (por eso se arma
+        sin `.create()`): guardar directo ya rebota con IntegrityError, que
+        es justo lo que esta restricción evita que le llegue a Oscar."""
+        self._producto("V-4", destacado_home=True, orden_home=1)
+        chocado = Producto(
+            empresa=self.empresa, sku="V-5", nombre="Producto V-5",
+            precio_venta=Decimal("1000"), destacado_home=True, orden_home=1,
+        )
+        with self.assertRaises(ValidationError) as ctx:
+            chocado.full_clean()
+        self.assertIn(
+            "Ya hay otro producto destacado en ese mismo lugar",
+            str(ctx.exception),
+        )
+
+    def test_dos_productos_NO_destacados_si_pueden_compartir_numero(self):
+        """El número solo importa mientras el producto está destacado: dos
+        productos sin marcar pueden tener el mismo orden_home viejo (o
+        ninguno) sin que nada se queje."""
+        self._producto("V-6", orden_home=5)
+        otro = self._producto("V-7", orden_home=5)
+        otro.full_clean()  # no debe reventar
+
+    def test_el_mismo_orden_en_otra_empresa_no_choca(self):
+        """La restricción es por empresa (multiempresa): AllPetCR y otra
+        empresa pueden tener cada una su puesto 1."""
+        self._producto("V-8", destacado_home=True, orden_home=1)
+        de_otra = self._producto("V-9", empresa=self.otra_empresa, destacado_home=True, orden_home=1)
+        de_otra.full_clean()  # no debe reventar
+
+    def test_desmarcar_libera_el_lugar_para_otro(self):
+        primero = self._producto("V-10", destacado_home=True, orden_home=1)
+        primero.destacado_home = False
+        primero.save()
+        segundo = self._producto("V-11", destacado_home=True, orden_home=1)
+        segundo.full_clean()  # ya no choca: el primero se desmarcó
+
+    def test_orden_general_del_catalogo_no_cambia(self):
+        """Meta.ordering sigue siendo alfabético: la vitrina manual es
+        aparte y no debe filtrarse al resto del ERP, ni siquiera cuando el
+        destacado por sí solo iría último alfabéticamente."""
+        Producto.objects.create(
+            empresa=self.empresa, sku="V-Z", nombre="Zebra", precio_venta=Decimal("1000"),
+        )
+        Producto.objects.create(
+            empresa=self.empresa, sku="V-A", nombre="Ave", precio_venta=Decimal("1000"),
+            destacado_home=True, orden_home=1,
+        )
+        nombres = list(Producto.objects.values_list("nombre", flat=True))
+        self.assertEqual(nombres, sorted(nombres))
+
+
+class AdminMuestraVitrinaDeLaHome(TestCase):
+    """La lista del admin tiene que dejar marcar/ordenar sin entrar a cada
+    ficha — ver la nota junto a ProductoAdmin.list_editable."""
+
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
+        Producto.objects.create(
+            empresa=self.empresa, sku="ADM-1", nombre="Correa", precio_venta=Decimal("1000"),
+        )
+        User.objects.create_user("jefe-vitrina", password="x", is_staff=True, is_superuser=True)
+        self.client.login(username="jefe-vitrina", password="x")
+
+    def test_destacado_home_y_orden_home_son_editables_desde_la_lista(self):
+        r = self.client.get(reverse("admin:catalogo_producto_changelist"))
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("destacado_home", r.context["cl"].list_editable)
+        self.assertIn("orden_home", r.context["cl"].list_editable)
+
+    def test_se_puede_filtrar_por_destacado(self):
+        r = self.client.get(reverse("admin:catalogo_producto_changelist"), {"destacado_home__exact": "1"})
+        self.assertEqual(r.status_code, 200)
