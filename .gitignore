@@ -113,3 +113,12 @@ $RECYCLE.BIN/
 /_llaves_spaces.py
 /_llaves_agente.py
 /_respaldo_traslado/
+
+# --- Auditoría 26/09/2026 (USU-01): el repositorio es PÚBLICO ---
+# Copias de la base, Excel con costos y la papelera de limpieza no se suben
+# nunca. Quedan en la computadora; solo dejan de publicarse.
+/PRODUCTOS_SIN_EXISTENCIA.xlsx
+/_PAPELERA_REVISAR/
+*.dump
+*.sql
+/respaldo_*.zip
