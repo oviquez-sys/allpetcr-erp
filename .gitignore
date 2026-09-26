@@ -122,3 +122,6 @@ $RECYCLE.BIN/
 *.dump
 *.sql
 /respaldo_*.zip
+
+# Configuración local de la herramienta de revisión de diseño (no es del ERP).
+/.impeccable/
