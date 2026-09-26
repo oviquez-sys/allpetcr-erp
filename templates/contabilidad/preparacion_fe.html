@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Preparación para factura electrónica{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.fe-wrap{max-width:760px;margin:0 auto}
+.fe-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.fe-sub{font-size:14px;color:#6e6e73;margin-bottom:18px;line-height:1.5}
+.fe-item{display:flex;gap:14px;background:#fff;border-radius:16px;padding:16px 18px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.fe-ic{font-size:22px;line-height:1}
+.fe-t{font-weight:600}
+.fe-d{font-size:13.5px;color:#6e6e73;margin-top:4px}
+</style>{% endblock %}
+
+{% block content %}
+<div class="fe-wrap">
+  <div class="fe-title">Preparación para factura electrónica</div>
+  <div class="fe-sub">El ERP todavía no emite comprobantes electrónicos. Esta lista dice qué datos faltan para el día en que se active.
+    {{ listos }} de {{ puntos|length }} listos. Los requisitos exactos los confirma el contador.</div>
+  {% for p in puntos %}
+    <div class="fe-item">
+      <div class="fe-ic">{% if p.listo %}✅{% else %}⏳{% endif %}</div>
+      <div><div class="fe-t">{{ p.texto }}</div>{% if p.detalle %}<div class="fe-d">{{ p.detalle }}</div>{% endif %}</div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -236,3 +236,26 @@ class ConcurrenciaConsecutivo(TransactionTestCase):
 
         self.assertEqual(len(numeros), N)
         self.assertEqual(len(set(numeros)), N)  # ninguno se repite
+
+
+class PreparacionParaFE(TestCase):
+    """Auditoría 26/09/2026: la lista de lo que falta para emitir comprobantes."""
+
+    def test_dice_que_falta_y_se_ve_en_pantalla(self):
+        from django.contrib.auth.models import User
+        from django.urls import reverse
+
+        from catalogo.models import Producto
+        from core.models import Empresa, Sucursal
+        from facturacion_electronica.preparacion import revisar
+
+        empresa = Empresa.objects.create(nombre="ALLPETCR.COM", identificacion="3-102-969361")
+        Sucursal.objects.create(empresa=empresa, nombre="Central")
+        Producto.objects.create(empresa=empresa, sku="A", nombre="Sin cabys", precio_venta=1)
+        puntos = {p.texto: p for p in revisar(empresa)}
+        self.assertFalse(puntos["Datos de la empresa (emisor)"].listo)
+        self.assertIn("código de actividad", puntos["Datos de la empresa (emisor)"].detalle)
+        self.assertIn("1 producto", puntos["Código CABYS en cada producto"].detalle)
+        usuario = User.objects.create_user("oscar", password="x", is_staff=True, is_superuser=True)
+        self.client.force_login(usuario)
+        self.assertContains(self.client.get(reverse("contabilidad:preparacion_fe")), "CABYS")

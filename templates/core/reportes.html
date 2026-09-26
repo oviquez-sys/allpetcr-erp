@@ -88,6 +88,10 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
 
   <div class="rc-sec">Control interno</div>
   <div class="rc-grid">
+    <a class="rc-card" href="{% url 'contabilidad:preparacion_fe' %}">
+      <div class="rc-ic i-lock"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+      <div class="rc-tx"><div class="h">Preparación para factura electrónica</div><div class="d">Qué datos faltan (empresa, CABYS, clientes) antes de poder emitir comprobantes.</div></div>
+    </a>
     <a class="rc-card" href="{% url 'core:reporte_arqueo' %}">
       <div class="rc-ic i-vault"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><circle cx="12" cy="12" r="3"/></svg></div>
       <div class="rc-tx"><div class="h">Arqueo de caja por cajero</div><div class="d">Diferencias de cierre de los últimos 30 días. Un faltante aislado es ruido; el mismo faltante repetido, no.</div></div>

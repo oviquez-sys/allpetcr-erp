@@ -11,4 +11,5 @@ urlpatterns = [
     path("estado-resultados/", views.estado_resultados, name="estado_resultados"),
     path("iva-trimestral/", views.iva_trimestral, name="iva_trimestral"),
     path("exportar/", views.exportar, name="exportar"),
+    path("factura-electronica/", views.preparacion_fe, name="preparacion_fe"),
 ]

@@ -6,7 +6,17 @@ from .models import AuditLog, ChatMensaje, Empresa, Sucursal
 @admin.register(Empresa)
 class EmpresaAdmin(admin.ModelAdmin):
     list_display = ("nombre", "identificacion", "regimen", "moneda", "factor_rts")
-    fields = ("nombre", "identificacion", "regimen", "regimen_vigente_desde", "moneda", "factor_rts")
+    # Los datos del emisor (auditoría 26/09/2026, FE-02) van en su propio bloque:
+    # nada los usa hasta que se active la factura electrónica, pero conviene
+    # llenarlos con el contador desde ya.
+    fieldsets = (
+        (None, {"fields": ("nombre", "identificacion", "regimen", "regimen_vigente_desde", "moneda", "factor_rts")}),
+        ("Datos del emisor para la factura electrónica", {
+            "description": "Los confirma el contador. Se usan cuando se active la factura electrónica.",
+            "fields": ("nombre_comercial", "codigo_actividad", "telefono", "correo",
+                       ("provincia", "canton", "distrito"), "otras_senas", ("establecimiento", "terminal")),
+        }),
+    )
 
 
 @admin.register(Sucursal)

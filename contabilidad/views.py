@@ -296,3 +296,13 @@ def exportar(request):
         r["Content-Disposition"] = f'attachment; filename="AllPetCR_{desde:%Y-%m-%d}_a_{hasta:%Y-%m-%d}.xlsx"'
         return r
     return render(request, "contabilidad/exportar.html", {"desde": desde, "hasta": hasta, "hoy": hoy})
+
+
+@rol_requerido(GERENTE, CONTADOR)
+def preparacion_fe(request):
+    """Qué datos faltan para la factura electrónica (auditoría 26/09/2026)."""
+    from facturacion_electronica.preparacion import revisar
+
+    puntos = revisar(empresa_actual(request))
+    return render(request, "contabilidad/preparacion_fe.html",
+                  {"puntos": puntos, "listos": sum(1 for p in puntos if p.listo)})

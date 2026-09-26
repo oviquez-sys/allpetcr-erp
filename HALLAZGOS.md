@@ -463,6 +463,8 @@ Informe completo: `AUDITORIA_ERP_FASE2.md`. Estado verificado con pruebas en
 | CAJ-02 | Arqueo solo de efectivo | Media | **Cerrado** | Cierre pide datáfono y SINPE (opcionales); `SesionCaja.tarjeta_*` / `sinpe_*`. |
 | CAJ-03 | Una caja por persona sobre un solo cajón | Media | **Cerrado** | Caja compartida (`CAJA_COMPARTIDA`, por defecto sí); cada venta sigue firmada; `cerrada_por`. |
 | CAJ-04 | Faltaban reportes por período/categoría y menos vendidos | Media | **Cerrado** | `core:reporte_ventas`. |
+| FE-02 / FE-03 | Faltaban datos del emisor y tipo de identificación del cliente | Alta | **Cerrado (datos)** | Campos nuevos en Empresa (admin, bloque propio) y Cliente; cliente rápido desde el POS. Hay que LLENARLOS con el contador. |
+| FE-01…09 | Qué falta para emitir | — | **Seguimiento** | Pantalla `contabilidad:preparacion_fe` (Reportes → Control interno). No se emite nada todavía. |
 
 ### Variables de entorno nuevas
 | Variable | Para qué |
