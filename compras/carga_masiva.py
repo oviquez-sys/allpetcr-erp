@@ -246,8 +246,9 @@ def revisar(empresa, archivo) -> Revision:
                 f.errores.append(f"«{celda(clave)}» no es un número ({clave.replace('_', ' ')}).")
                 valor = Decimal("0")
             setattr(f, clave, str(valor) if (clave != "precio_venta" or valor > 0) else "")
-        if Decimal(f.cantidad) <= 0:
-            f.errores.append("La cantidad tiene que ser mayor que cero.")
+        # 0 facturadas vale si la fila trae bonificadas: regalo del proveedor.
+        if Decimal(f.cantidad) < 0 or (Decimal(f.cantidad) == 0 and Decimal(f.bonificadas) <= 0):
+            f.errores.append("La cantidad tiene que ser mayor que cero (o la fila tiene que traer bonificadas).")
         if Decimal(f.costo_unitario) < 0:
             f.errores.append("El costo no puede ser negativo.")
         if Decimal(f.bonificadas) < 0:

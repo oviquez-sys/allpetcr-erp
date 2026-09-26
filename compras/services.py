@@ -74,10 +74,14 @@ def crear_compra(*, proveedor, sucursal, lineas, forma_pago="CON", factura_prove
         cantidad = Decimal(str(l["cantidad"]))
         costo = Decimal(str(l["costo_unitario"]))
         bonificada = Decimal(str(l.get("cantidad_bonificada") or 0))
-        if cantidad <= 0 or costo < 0:
+        if cantidad < 0 or costo < 0:
             raise ValidationError("Cantidad o costo inválidos en una línea.")
         if bonificada < 0:
             raise ValidationError("La bonificación no puede ser negativa.")
+        # Cantidad facturada 0 vale solo si vienen bonificadas: es mercadería
+        # de regalo del proveedor, que entra a bodega a costo cero.
+        if cantidad + bonificada <= 0:
+            raise ValidationError("Una línea tiene que traer unidades facturadas o bonificadas.")
         # El total sale SOLO de lo facturado. Las bonificadas entran a bodega
         # más abajo (recibir_compra), no acá.
         total_l = (cantidad * costo).quantize(Decimal("0.01"))
@@ -130,12 +134,16 @@ def recibir_compra(*, compra, usuario=None) -> Compra:
 
     empresa = compra.empresa
     contra = cuenta(empresa, "bancos") if compra.forma_pago == Compra.Pago.CONTADO else _cuenta_cxp(empresa)
-    registrar_asiento(
-        empresa=empresa, fecha=timezone.now().date(),
-        descripcion=f"Compra {compra.numero} — {compra.proveedor.nombre}",
-        origen="MAN", referencia=compra.numero, usuario=usuario,
-        lineas=_lineas_asiento(compra, contra),
-    )
+    # Una compra que es TODA regalo del proveedor (solo bonificadas) no mueve
+    # plata: la mercadería entra a bodega a costo cero y no hay asiento que
+    # hacer. Un asiento en cero no dice nada y el motor contable lo rechaza.
+    if compra.total_factura:
+        registrar_asiento(
+            empresa=empresa, fecha=timezone.now().date(),
+            descripcion=f"Compra {compra.numero} — {compra.proveedor.nombre}",
+            origen="MAN", referencia=compra.numero, usuario=usuario,
+            lineas=_lineas_asiento(compra, contra),
+        )
 
     if compra.forma_pago == Compra.Pago.CREDITO:
         proveedor = Proveedor.objects.select_for_update().get(pk=compra.proveedor_id)
@@ -181,17 +189,18 @@ def anular_compra(*, compra, motivo, usuario=None) -> Compra:
     # Asiento inverso del de recepción.
     empresa = compra.empresa
     contra = cuenta(empresa, "bancos") if compra.forma_pago == Compra.Pago.CONTADO else _cuenta_cxp(empresa)
-    registrar_asiento(
-        empresa=empresa, fecha=timezone.now().date(),
-        descripcion=f"Anulación compra {compra.numero} — {compra.proveedor.nombre}",
-        origen="ANU", referencia=compra.numero, usuario=usuario,
-        # El inverso exacto del de recepción: lo que era debe pasa a haber.
-        lineas=[
-            {"cuenta": l["cuenta"], "haber": l["debe"]} if "debe" in l
-            else {"cuenta": l["cuenta"], "debe": l["haber"]}
-            for l in _lineas_asiento(compra, contra)
-        ],
-    )
+    if compra.total_factura:   # una compra toda de regalo no tuvo asiento
+        registrar_asiento(
+            empresa=empresa, fecha=timezone.now().date(),
+            descripcion=f"Anulación compra {compra.numero} — {compra.proveedor.nombre}",
+            origen="ANU", referencia=compra.numero, usuario=usuario,
+            # El inverso exacto del de recepción: lo que era debe pasa a haber.
+            lineas=[
+                {"cuenta": l["cuenta"], "haber": l["debe"]} if "debe" in l
+                else {"cuenta": l["cuenta"], "debe": l["haber"]}
+                for l in _lineas_asiento(compra, contra)
+            ],
+        )
 
     if compra.forma_pago == Compra.Pago.CREDITO:
         proveedor = Proveedor.objects.select_for_update().get(pk=compra.proveedor_id)

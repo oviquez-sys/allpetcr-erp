@@ -116,7 +116,15 @@ class LineaCompra(models.Model):
         verbose_name = "línea de compra"
         verbose_name_plural = "líneas de compra"
         constraints = [
-            models.CheckConstraint(condition=models.Q(cantidad__gt=0), name="cantidad_compra_positiva"),
+            # Una línea puede venir SOLO con bonificadas (26/09/2026, compra de
+            # Belina): el proveedor manda unidades de regalo de un producto que
+            # no facturó. Esas entran a bodega a costo cero y la factura no las
+            # cobra. Lo que no puede existir es una línea vacía.
+            models.CheckConstraint(condition=models.Q(cantidad__gte=0), name="cantidad_compra_no_negativa"),
+            models.CheckConstraint(
+                condition=models.Q(cantidad__gt=0) | models.Q(cantidad_bonificada__gt=0),
+                name="linea_compra_con_unidades",
+            ),
             models.CheckConstraint(
                 condition=models.Q(cantidad_bonificada__gte=0), name="bonificada_no_negativa"
             ),
