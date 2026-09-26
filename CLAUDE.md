@@ -18,6 +18,26 @@ corregido entre que se escribió el informe (10:14) y que se leyó.
 **Regla: verificá el estado real en el código antes de "corregir" algo.**
 Y al cerrar un hallazgo, actualizá `HALLAZGOS.md` en el mismo commit.
 
+## Auditoría del 26/09/2026 (rama `auditoria-erp-fase2`)
+
+Informe: `AUDITORIA_ERP_FASE2.md` (sección 0 = qué se hizo y qué le toca a Oscar).
+Todo el trabajo está en la rama `auditoria-erp-fase2`, **sin publicar** hasta que
+Oscar corra `PUBLICAR_AUDITORIA.bat`. 702 pruebas en verde.
+
+- **El repositorio de GitHub es PÚBLICO.** Nunca subir respaldos, `.dump`, `.sql`,
+  Excel con costos ni bases de datos (`.gitignore` ya los bloquea). Pendiente de Oscar:
+  ponerlo privado, cambiar contraseñas y regenerar el token de la API.
+- Pantallas nuevas: `ventas:historial`, `compras:carga_masiva`, `core:reporte_ventas`,
+  `contabilidad:exportar`, `contabilidad:preparacion_fe`.
+- Pago mixto: el reparto por medio vive SOLO en `ventas/pagos.py`; ningún reporte
+  debe agrupar por `FacturaVenta.medio_pago` por su cuenta.
+- Caja compartida por defecto (`CAJA_COMPARTIDA`): `caja.services.sesion_abierta_de`
+  devuelve la caja abierta aunque la haya abierto otro usuario.
+- Comentarios de plantilla de varias líneas: `{% comment %}`, nunca `{# #}`
+  (`core/test_arquitectura.ComentariosDePlantilla`).
+- **No correr dos `manage.py test` a la vez**: comparten la base `test_allpetcr` y
+  uno le borra la base al otro (pasó el 26/09).
+
 ## Qué es
 
 ERP interno de AllPetCR, tienda de mascotas en Heredia Central, Costa Rica.
