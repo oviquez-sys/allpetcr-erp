@@ -59,6 +59,31 @@ class CatalogoProductos(BaseAPI):
         self.assertIn("count", r.data)
         self.assertEqual(r.data["count"], 1)
 
+    def test_page_size_trae_el_catalogo_en_una_consulta(self):
+        for i in range(30):
+            p = Producto.objects.create(
+                empresa=self.empresa, sku=f"PG-{i}", nombre=f"Producto {i}", categoria=self.cat,
+                mascota="Perro", precio_venta=Decimal("1000"),
+            )
+            registrar_movimiento(
+                producto=p, bodega=self.bodega, tipo="INI",
+                cantidad=Decimal("1"), costo_unitario=Decimal("500"), referencia="INI",
+            )
+        url = reverse("api:catalogo_productos")
+        por_defecto = self.client_autenticado.get(url)
+        self.assertEqual(len(por_defecto.data["results"]), 24)
+        entero = self.client_autenticado.get(url, {"page_size": 1000})
+        self.assertEqual(entero.data["count"], 31)
+        self.assertEqual(len(entero.data["results"]), 31)
+        self.assertIsNone(entero.data["next"])
+
+    def test_page_size_tiene_tope(self):
+        from api.views import PaginacionCatalogo
+
+        self.assertEqual(PaginacionCatalogo.max_page_size, 1000)
+        r = self.client_autenticado.get(reverse("api:catalogo_productos"), {"page_size": 999999})
+        self.assertEqual(r.status_code, 200)
+
     def test_filtro_por_mascota(self):
         rascador = Producto.objects.create(
             empresa=self.empresa, sku="API-2", nombre="Rascador", mascota="Gato", precio_venta=Decimal("8000"),

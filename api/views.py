@@ -16,6 +16,7 @@ from decimal import Decimal, InvalidOperation
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, Throttled, ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -36,6 +37,23 @@ from .serializers import (
 )
 
 
+class PaginacionCatalogo(PageNumberPagination):
+    """Páginas de 24 por defecto (settings), pero quien lo necesite puede
+    pedir el catálogo entero de una vez con ?page_size=.
+
+    Rendimiento, 26/09/2026: el sitio pedía las 22 páginas de 24 (526
+    productos) una tras otra en cada visita al inicio o al catálogo — ~3 s
+    antes del primer byte y 23 consultas por visita contra un límite de
+    120/min, o sea que con 5 o 6 visitas en el mismo minuto el sitio se
+    caía con un 429. Con ?page_size=1000 es una sola consulta.
+
+    `max_page_size` es el tope duro: nadie puede pedir más que eso aunque lo
+    ponga en la URL."""
+
+    page_size_query_param = "page_size"
+    max_page_size = 1000
+
+
 class CatalogoProductosView(generics.ListAPIView):
     """Catálogo con paginación (PageNumberPagination, ver settings) y
     filtros por querystring: ?categoria=<id>&mascota=Gato&marca=Royal
@@ -52,6 +70,7 @@ class CatalogoProductosView(generics.ListAPIView):
     quien de verdad necesite verlos (ej. un panel interno)."""
 
     serializer_class = ProductoListaSerializer
+    pagination_class = PaginacionCatalogo
 
     def get_queryset(self):
         empresa = empresa_actual(self.request)

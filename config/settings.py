@@ -148,9 +148,15 @@ REST_FRAMEWORK = {
     # ReservaStock.PLAZO_MINUTOS): suficiente para navegar el catálogo con
     # holgura, bajo para frenar un raspado agresivo o un abuso del endpoint
     # de pedidos. Se ajustan acá si en producción resultan cortos o largos.
+    #
+    # "user" subió de 120 a 600/min el 26/09/2026. El único usuario con
+    # token es el sitio web (servidor a servidor, ver api/views.py), y cada
+    # página de producto que arma consulta el ERP: con 120/min alcanzaba
+    # un puñado de visitas por minuto en TODO el sitio para quedar sin
+    # catálogo. Sigue habiendo tope por si el token se filtra.
     "DEFAULT_THROTTLE_RATES": {
         "anon": "60/min",
-        "user": "120/min",
+        "user": "600/min",
     },
 }
 
