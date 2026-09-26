@@ -452,6 +452,13 @@ Informe completo: `AUDITORIA_ERP_FASE2.md`. Estado verificado con pruebas en
 | INV-03 | Compra en dos transacciones | Media | **Cerrado** | `crear_y_recibir_compra`. El admin (`entrada_view`) no se tocó: es la zona de SEC-003, en pausa. |
 | INV-04 | Misma factura de proveedor dos veces | Media | **Cerrado** | `crear_compra` la rechaza (sin contar las anuladas). |
 | UX-02 | 16 pruebas de impresión fallaban en la PC de la tienda | Baja | **Cerrado** | Fuerzan el camino del agente. |
+| INV-01 | Sin carga masiva desde Excel en pantalla | Alta | **Cerrado** | Compras → «Cargar desde Excel» (`compras/carga_masiva.py`): plantilla, vista previa firmada, todo-o-nada, completa sin pisar. |
+| INV-05 | Ajuste sin tipo | Media | **Cerrado** | Tipo obligatorio; queda como `[Tipo] motivo` en el kardex (sin migración). |
+| INV-07 | Kárdex escondido y sin usuario | Baja | **Cerrado** | Ficha de precio: quién, motivo, saldo y enlace al kárdex completo. |
+| INV-08 | Sin etiquetas de la compra recién ingresada | Media | **Cerrado** | `impresion:etiquetas_compra`; se ofrece al registrar y al terminar la carga masiva. |
+| INV-09 | Sin escaneo con cámara | Media | **Cerrado** | `static/js/camara.js` (BarcodeDetector) en POS, Recibir y Etiquetas; el botón solo aparece donde el navegador lo soporta. |
+| INV-10 | Código de barras repetible | Baja | **Parcial** | Validado en el admin, en Recibir y en la carga masiva. Falta la restricción de base: primero correr `censo_codigos` en producción. |
+| INV-06 | Sin vencimientos | Media | **Abierto a propósito** | Solo si venden alimento/medicamento con vencimiento (pregunta 9 del informe). |
 
 ### Variables de entorno nuevas
 | Variable | Para qué |

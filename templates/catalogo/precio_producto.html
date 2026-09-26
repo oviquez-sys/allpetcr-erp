@@ -143,13 +143,16 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 
   </tbody>
 </table>
 
-<h3>Historial de costo (kardex)</h3>
-<p style="color:#777;font-size:13px">El costo promedio se recalcula solo cuando entra mercadería. Cada movimiento deja el costo resultante.</p>
+<h3>Kárdex: entradas y salidas</h3>
+<p style="color:#777;font-size:13px">Los últimos 50 movimientos, con quién los hizo y el documento. El costo promedio se recalcula solo cuando entra mercadería.
+  <a href="/admin/inventario/movimientoinventario/?q={{ producto.sku|urlencode }}">Ver el kárdex completo →</a></p>
 <table style="width:100%;border-collapse:collapse">
   <thead><tr>
     <th style="text-align:left;border-bottom:2px solid #ddd;padding:8px">Fecha</th>
     <th style="text-align:left;border-bottom:2px solid #ddd;padding:8px">Movimiento</th>
+    <th style="text-align:left;border-bottom:2px solid #ddd;padding:8px">Quién</th>
     <th style="text-align:right;border-bottom:2px solid #ddd;padding:8px">Cantidad</th>
+    <th style="text-align:right;border-bottom:2px solid #ddd;padding:8px">Queda</th>
     <th style="text-align:right;border-bottom:2px solid #ddd;padding:8px">Costo unit.</th>
     <th style="text-align:right;border-bottom:2px solid #ddd;padding:8px">Costo prom. resultante</th>
   </tr></thead>
@@ -158,12 +161,14 @@ body::before { content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 
     <tr>
       <td style="padding:9px 8px;border-bottom:1px solid #eee">{{ mv.fecha|date:"d/m/Y H:i" }}</td>
       <td style="padding:9px 8px;border-bottom:1px solid #eee">{{ mv.get_tipo_display }}{% if mv.referencia %} · {{ mv.referencia }}{% endif %}</td>
+      <td style="padding:9px 8px;border-bottom:1px solid #eee">{{ mv.usuario.username|default:"—" }}{% if mv.motivo %}<br><small style="color:#777">{{ mv.motivo }}</small>{% endif %}</td>
       <td style="padding:9px 8px;border-bottom:1px solid #eee;text-align:right">{{ mv.cantidad|crc:0 }}</td>
+      <td style="padding:9px 8px;border-bottom:1px solid #eee;text-align:right">{{ mv.stock_resultante|crc:0 }}</td>
       <td style="padding:9px 8px;border-bottom:1px solid #eee;text-align:right">{% if mv.costo_unitario %}₡{{ mv.costo_unitario|crc:0 }}{% else %}—{% endif %}</td>
       <td style="padding:9px 8px;border-bottom:1px solid #eee;text-align:right">₡{{ mv.costo_promedio_resultante|crc:0 }}</td>
     </tr>
   {% empty %}
-    <tr><td colspan="5" style="padding:14px;color:#999">Sin movimientos en el kardex.</td></tr>
+    <tr><td colspan="7" style="padding:14px;color:#999">Sin movimientos en el kardex.</td></tr>
   {% endfor %}
   </tbody>
 </table>

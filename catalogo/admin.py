@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django import forms
 from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
@@ -23,9 +24,31 @@ class ImpuestoAdmin(admin.ModelAdmin):
     list_display = ("nombre", "tarifa", "vigente_desde", "vigente_hasta")
 
 
+class ProductoForm(forms.ModelForm):
+    class Meta:
+        model = Producto
+        fields = "__all__"
+
+    def clean_codigo_barras(self):
+        """Un código de barras, un producto (auditoría 26/09/2026, INV-10).
+
+        El escáner del POS toma el PRIMER producto con ese código: con dos,
+        se vende el equivocado al precio equivocado. Se valida acá y no con
+        una restricción de la base porque no se puede confirmar que la base
+        de producción no tenga ya algún repetido; la restricción de base se
+        agrega cuando `censo_codigos` lo confirme."""
+        codigo = (self.cleaned_data.get("codigo_barras") or "").strip()
+        if codigo:
+            otros = Producto.objects.filter(codigo_barras=codigo).exclude(pk=self.instance.pk)
+            if otros.exists():
+                raise forms.ValidationError(f"Ese código ya lo tiene «{otros.first().nombre}».")
+        return codigo
+
+
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    list_display = ("foto", "sku", "nombre", "categoria", "stock_fmt", "minimo_fmt", "costo_fmt", "precio_fmt", "margen_fmt", "markup_fmt", "activo")
+    form = ProductoForm
+    list_display =("foto", "sku", "nombre", "categoria", "stock_fmt", "minimo_fmt", "costo_fmt", "precio_fmt", "margen_fmt", "markup_fmt", "activo")
 
     @admin.display(description="Stock actual", ordering="stock_actual")
     def stock_fmt(self, obj):

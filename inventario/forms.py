@@ -5,6 +5,21 @@ from catalogo.models import Producto
 from .models import Bodega
 
 
+# Tipos de ajuste (auditoría 26/09/2026, INV-05). Antes el motivo era solo
+# texto libre: no había forma de sumar "cuánto se perdió por daño este mes".
+# El tipo se guarda al inicio del motivo del kardex, entre corchetes, así no
+# hace falta cambiar la tabla más grande del sistema y el reporte lo lee igual.
+TIPOS_AJUSTE = [
+    ("Conteo físico", "Conteo físico (lo contado no calza con el sistema)"),
+    ("Daño", "Producto dañado"),
+    ("Vencido", "Producto vencido"),
+    ("Merma", "Merma (se perdió en el manejo)"),
+    ("Robo o pérdida", "Robo o pérdida"),
+    ("Uso interno", "Uso interno de la tienda"),
+    ("Otro", "Otro (explicar en el motivo)"),
+]
+
+
 class AjusteInventarioForm(forms.Form):
     """Ajuste manual de inventario.
 
@@ -32,6 +47,7 @@ class AjusteInventarioForm(forms.Form):
         max_digits=12,
         decimal_places=2,
     )
+    tipo = forms.ChoiceField(label="Tipo de ajuste", choices=[("", "— elegir —")] + TIPOS_AJUSTE)
     motivo = forms.CharField(
         label="Motivo (obligatorio, queda en auditoría)",
         widget=forms.Textarea(attrs={"rows": 3}),

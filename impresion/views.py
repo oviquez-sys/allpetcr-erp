@@ -173,3 +173,37 @@ def estado(request):
             messages.error(request, f"⛔ {e}")
         return redirect("impresion:estado")
     return render(request, "impresion/estado.html", {"d": datos, "title": "Impresoras"})
+
+
+@rol_requerido(CAJERO, GERENTE)
+@require_POST
+def etiquetas_compra(request, compra_id):
+    """Las etiquetas de todo lo que entró en UNA compra (auditoría 26/09/2026,
+    INV-08): una por unidad recibida, bonificadas incluidas. Es el momento en
+    que hay que etiquetar, con la caja del proveedor todavía abierta."""
+    from compras.models import Compra
+    from inventario.etiquetas import TOPE_ETIQUETAS
+
+    compra = documento_de_empresa(Compra.objects.prefetch_related("lineas__producto"), request, pk=compra_id)
+    pares, total = [], 0
+    for linea in compra.lineas.all():
+        copias = int(linea.cantidad + linea.cantidad_bonificada)
+        copias = max(0, min(copias, TOPE_ETIQUETAS - total))
+        if copias and linea.producto.codigo_barras:
+            pares.append((linea.producto, copias))
+            total += copias
+    quiere_json = "application/json" in request.headers.get("Accept", "")
+    try:
+        impresas = servicio.imprimir_etiquetas(pares) if pares else 0
+    except ErrorDeImpresion as e:
+        if quiere_json:
+            return JsonResponse({"ok": False, "error": str(e)}, status=503)
+        messages.error(request, f"⛔ {e}")
+        return redirect(_a_donde_volver(request))
+    aviso = f"🏷️ {impresas} etiqueta(s) de la compra {compra.numero} enviadas a la impresora."
+    if total >= TOPE_ETIQUETAS:
+        aviso += f" Se cortó en {TOPE_ETIQUETAS}: imprima el resto desde Etiquetas."
+    if quiere_json:
+        return JsonResponse({"ok": True, "mensaje": aviso, "etiquetas": impresas})
+    messages.success(request, aviso)
+    return redirect(_a_donde_volver(request))

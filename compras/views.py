@@ -5,8 +5,10 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.http import JsonResponse
+from django.core import signing
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -246,7 +248,8 @@ def registrar(request):
     except (json.JSONDecodeError, KeyError, Producto.DoesNotExist, Proveedor.DoesNotExist):
         return JsonResponse({"ok": False, "error": "Datos de compra inválidos."}, status=400)
 
-    return JsonResponse({"ok": True, "numero": compra.numero, "total": float(compra.total_factura)})
+    return JsonResponse({"ok": True, "numero": compra.numero, "total": float(compra.total_factura),
+                         "etiquetas_url": reverse("impresion:etiquetas_compra", args=[compra.pk])})
 
 
 @rol_requerido(GERENTE)
@@ -359,3 +362,96 @@ def producto_nuevo(request):
             **datos_foto(producto),
         },
     })
+
+
+# --------------------------------------------------------------------------
+# Carga masiva desde Excel/CSV (auditoría 26/09/2026, INV-01) — ver
+# compras/carga_masiva.py para las reglas.
+# --------------------------------------------------------------------------
+_SAL_CARGA = "compras.carga_masiva"
+_VIGENCIA_CARGA = 3600  # una hora para revisar y confirmar
+
+
+@rol_requerido(GERENTE)
+def carga_masiva_plantilla(request):
+    from . import carga_masiva
+
+    r = HttpResponse(carga_masiva.plantilla_excel(),
+                     content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    r["Content-Disposition"] = 'attachment; filename="plantilla_mercaderia.xlsx"'
+    return r
+
+
+@rol_requerido(GERENTE)
+def carga_masiva(request):
+    """Paso 1: elegir proveedor y archivo. Paso 2 (POST): vista previa."""
+    from . import carga_masiva as cm
+
+    empresa = empresa_actual(request)
+    proveedores = Proveedor.objects.filter(activo=True, empresa=empresa).order_by("nombre")
+    ctx = {"proveedores": proveedores, "tradicional": empresa.regimen == Empresa.Regimen.TRADICIONAL,
+           "columnas": cm.COLUMNAS}
+    if request.method != "POST":
+        return render(request, "compras/carga_masiva.html", ctx)
+
+    encabezado = {
+        "proveedor_id": request.POST.get("proveedor_id") or "",
+        "proveedor_nuevo": (request.POST.get("proveedor_nuevo") or "").strip(),
+        "factura_proveedor": (request.POST.get("factura_proveedor") or "").strip(),
+        "forma_pago": request.POST.get("forma_pago") if request.POST.get("forma_pago") in ("CON", "CRE") else "CON",
+        "iva": (request.POST.get("iva") or "0").strip() or "0",
+    }
+    ctx["encabezado"] = encabezado
+    archivo = request.FILES.get("archivo")
+    if archivo is None:
+        messages.error(request, "Elija el archivo de Excel o CSV.")
+        return render(request, "compras/carga_masiva.html", ctx)
+    if not (encabezado["proveedor_id"] or encabezado["proveedor_nuevo"]):
+        messages.error(request, "Elija el proveedor o escriba uno nuevo.")
+        return render(request, "compras/carga_masiva.html", ctx)
+    if archivo.size > 5 * 1024 * 1024:
+        messages.error(request, "El archivo pesa más de 5 MB. Divídalo en partes.")
+        return render(request, "compras/carga_masiva.html", ctx)
+
+    revision = cm.revisar(empresa, archivo)
+    ctx["revision"] = revision
+    if revision.valida:
+        ctx["firma"] = signing.dumps({"filas": cm.a_datos(revision), "encabezado": encabezado},
+                                     salt=_SAL_CARGA, compress=True)
+    return render(request, "compras/carga_masiva.html", ctx)
+
+
+@rol_requerido(GERENTE)
+@require_POST
+def carga_masiva_confirmar(request):
+    """Paso 3: aplica EXACTAMENTE lo que se mostró en la vista previa."""
+    from . import carga_masiva as cm
+
+    try:
+        datos = signing.loads(request.POST.get("firma") or "", salt=_SAL_CARGA, max_age=_VIGENCIA_CARGA)
+    except signing.SignatureExpired:
+        messages.error(request, "La vista previa venció (más de una hora). Suba el archivo de nuevo.")
+        return redirect("compras:carga_masiva")
+    except signing.BadSignature:
+        messages.error(request, "No se pudo leer la vista previa. Suba el archivo de nuevo.")
+        return redirect("compras:carga_masiva")
+    empresa = empresa_actual(request)
+    enc = datos["encabezado"]
+    sucursal = Sucursal.objects.filter(empresa=empresa, activa=True).first()
+    try:
+        if sucursal is None:
+            raise ValidationError("No hay una sucursal activa configurada.")
+        if enc["proveedor_id"]:
+            proveedor = Proveedor.objects.get(pk=enc["proveedor_id"], empresa=empresa)
+        else:
+            proveedor, _ = Proveedor.objects.get_or_create(empresa=empresa, nombre=enc["proveedor_nuevo"])
+        compra = cm.aplicar(
+            empresa=empresa, filas=datos["filas"], proveedor=proveedor, sucursal=sucursal,
+            forma_pago=enc["forma_pago"], factura_proveedor=enc["factura_proveedor"],
+            iva=Decimal(enc["iva"].replace(",", ".")), usuario=request.user,
+        )
+    except (ValidationError, Proveedor.DoesNotExist, InvalidOperation) as e:
+        mensaje = " ".join(e.messages) if isinstance(e, ValidationError) else "Datos inválidos."
+        messages.error(request, f"No se cargó nada: {mensaje}")
+        return redirect("compras:carga_masiva")
+    return render(request, "compras/carga_masiva_listo.html", {"compra": compra, "lineas": compra.lineas.select_related("producto")})

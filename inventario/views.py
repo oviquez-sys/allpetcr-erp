@@ -41,7 +41,7 @@ def ajuste_inventario(request):
                 cantidad=datos["cantidad"],
                 costo_unitario=datos["costo_unitario"] or 0,
                 referencia=referencia,
-                motivo=datos["motivo"],
+                motivo=f"[{datos['tipo']}] {datos['motivo']}"[:200],
                 usuario=request.user,
             )
             messages.success(

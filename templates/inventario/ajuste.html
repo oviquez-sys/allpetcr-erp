@@ -93,7 +93,10 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
       </div>
 
       <div class="aj-row">
-        <label for="{{ form.motivo.id_for_label }}">{{ form.motivo.label }}</label>
+        <label for="{{ form.tipo.id_for_label }}">{{ form.tipo.label }}</label>
+        {{ form.tipo }}
+        {% if form.tipo.errors %}<div class="aj-help" style="color:#b5231a">{{ form.tipo.errors|join:", " }}</div>{% endif %}
+        <label for="{{ form.motivo.id_for_label }}" style="margin-top:12px">{{ form.motivo.label }}</label>
         {{ form.motivo }}
         {% if form.motivo.errors %}<div class="aj-help" style="color:#b5231a">{{ form.motivo.errors|join:", " }}</div>{% endif %}
       </div>

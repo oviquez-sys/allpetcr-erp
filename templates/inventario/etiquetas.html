@@ -91,6 +91,7 @@ main{flex:1;display:flex;padding:14px 22px 20px;overflow:hidden}
 </style>
 <link rel="stylesheet" href="{% static 'css/fotos.css' %}">
 <script src="{% static 'js/fotos.js' %}"></script>
+<script src="{% static 'js/camara.js' %}"></script>
 </head>
 <body>
 <div class="nav">
@@ -385,6 +386,8 @@ document.addEventListener('keydown', e => {
 
 pintarGrid();
 document.getElementById('buscar').focus();
+// Cámara del celular (INV-09): solo aparece donde el navegador la soporta.
+activarCamara(document.getElementById('buscar'));
 </script>
 {% include "core/includes/chat_widget.html" %}
 </body>

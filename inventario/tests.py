@@ -108,6 +108,7 @@ class PantallaAjuste(BaseInventario):
             "bodega": self.bodega.pk,
             "cantidad": "-2",
             "costo_unitario": "0",
+            "tipo": "Conteo físico",
             "motivo": "Conteo físico: faltante",
         })
         self.assertEqual(respuesta.status_code, 302)
@@ -116,6 +117,8 @@ class PantallaAjuste(BaseInventario):
         mov = MovimientoInventario.objects.filter(tipo="AJU").latest("id")
         self.assertEqual(mov.usuario, self.staff)
         self.assertIn("faltante", mov.motivo)
+        # INV-05: el tipo queda al inicio del motivo, para poder sumarlo por tipo.
+        self.assertTrue(mov.motivo.startswith("[Conteo físico] "))
 
     def test_ajuste_a_negativo_muestra_error_sin_mover_stock(self):
         self.client.login(username="oscar", password="clave-test")
@@ -124,6 +127,7 @@ class PantallaAjuste(BaseInventario):
             "bodega": self.bodega.pk,
             "cantidad": "-999",
             "costo_unitario": "0",
+            "tipo": "Daño",
             "motivo": "prueba",
         })
         self.assertEqual(respuesta.status_code, 200)  # vuelve al formulario
@@ -138,6 +142,7 @@ class PantallaAjuste(BaseInventario):
             "bodega": self.bodega.pk,
             "cantidad": "1",
             "costo_unitario": "500",
+            "tipo": "Conteo físico",
             "motivo": "Sobrante en conteo",
         })
         log = AuditLog.objects.filter(tabla="inventario.movimientoinventario").latest("fecha")

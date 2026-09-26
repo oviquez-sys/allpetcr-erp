@@ -1,0 +1,118 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Cargar mercadería desde Excel{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.cm-wrap{max-width:1100px;margin:0 auto}
+.cm-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.cm-sub{font-size:14px;color:#6e6e73;margin-bottom:18px;line-height:1.5}
+.cm-card{background:#fff;border-radius:18px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:16px}
+.cm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.cm-card label{display:block;font-size:13px;font-weight:600;color:#6e6e73;margin-bottom:6px}
+.cm-card input,.cm-card select{width:100%;padding:11px 12px;border:1px solid #d9d9de;border-radius:10px;font-size:15px;background:#fbfbfd}
+.cm-btn{display:inline-block;padding:13px 22px;border:none;border-radius:12px;background:#0B3161;color:#fff;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none}
+.cm-btn.sec{background:#fff;color:#0B3161;border:1px solid #0B3161}
+.cm-pasos{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;font-size:13.5px;color:#6e6e73}
+.cm-pasos span{background:#fff;border:1px solid #e5e5ea;border-radius:20px;padding:5px 12px}
+.cm-pasos b{color:#0B3161}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-size:12px;color:#6e6e73;padding:8px 10px;border-bottom:1px solid #eee;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid #f4f4f6;vertical-align:top}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.mal td{background:#fff5f4}
+.tag{display:inline-block;padding:2px 8px;border-radius:980px;font-size:11.5px;font-weight:600}
+.tag.nuevo{background:rgba(11,49,97,.1);color:#0B3161}
+.tag.exis{background:rgba(52,199,89,.14);color:#1c6b30}
+.err{color:#b5231a;font-size:12.5px}
+.aviso{padding:12px 16px;border-radius:12px;margin-bottom:14px;font-size:14px}
+.aviso.mal{background:#fff0ee;color:#8a1f16}
+.aviso.bien{background:#eefaf1;color:#1c6b30}
+.cols{font-size:13px;color:#3a3a3c;columns:2;column-gap:28px;margin-top:10px}
+.cols li{margin-bottom:4px;break-inside:avoid}
+@media(max-width:700px){.cols{columns:1}.tabla-scroll{overflow-x:auto}}
+</style>{% endblock %}
+
+{% block content %}
+<div class="cm-wrap">
+  <div class="cm-title">Cargar mercadería desde Excel</div>
+  <div class="cm-sub">Para facturas grandes: se llena la plantilla, se sube, se revisa fila por fila y recién ahí se guarda.
+    Nada se guarda al subir el archivo.</div>
+  <div class="cm-pasos"><span><b>1.</b> Descargue la plantilla y llénela</span><span><b>2.</b> Súbala con el proveedor y la factura</span><span><b>3.</b> Revise y confirme</span></div>
+
+  {% if messages %}{% for m in messages %}<div class="aviso {% if m.tags == 'error' %}mal{% else %}bien{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+
+  {% if revision %}
+    <div class="cm-card">
+      {% if revision.errores_generales %}
+        {% for e in revision.errores_generales %}<div class="aviso mal">{{ e }}</div>{% endfor %}
+      {% elif revision.valida %}
+        <div class="aviso bien">Todo en orden: {{ revision.filas|length }} fila(s), {{ revision.nuevos }} producto(s) nuevo(s),
+          total de la factura (sin IVA) ₡{{ revision.total|crc:0 }}. Revise y confirme.</div>
+      {% else %}
+        <div class="aviso mal">Hay {{ revision.con_errores|length }} fila(s) con errores (en rojo). Corrija el archivo y vuelva a subirlo: no se carga nada a medias.</div>
+      {% endif %}
+      {% if revision.filas %}
+      <div class="tabla-scroll">
+      <table>
+        <thead><tr><th>Fila</th><th></th><th>Producto</th><th class="n">Cant.</th><th class="n">Bonif.</th><th class="n">Costo</th><th class="n">Precio</th><th>Categoría / mascota</th></tr></thead>
+        <tbody>
+        {% for f in revision.filas %}
+          <tr class="{% if f.errores %}mal{% endif %}">
+            <td>{{ f.numero }}</td>
+            <td>{% if f.nuevo %}<span class="tag nuevo">Nuevo</span>{% else %}<span class="tag exis">Existe</span>{% endif %}</td>
+            <td>{{ f.nombre|default:"—" }}{% if f.codigo_barras %}<br><small>{{ f.codigo_barras }}</small>{% endif %}
+              {% for e in f.errores %}<div class="err">⛔ {{ e }}</div>{% endfor %}</td>
+            <td class="n">{{ f.cantidad|floatformat:"-2" }}</td>
+            <td class="n">{{ f.bonificadas|floatformat:"-2" }}</td>
+            <td class="n">₡{{ f.costo_unitario|crc:0 }}</td>
+            <td class="n">{% if f.cambia_precio %}<s>₡{{ f.precio_actual|crc:0 }}</s><br><b>₡{{ f.precio_venta|crc:0 }}</b>{% elif f.precio_venta %}₡{{ f.precio_venta|crc:0 }}{% elif f.precio_actual %}₡{{ f.precio_actual|crc:0 }}{% endif %}</td>
+            <td>{{ f.categoria_txt }}{% if f.mascota %}<br><small>{{ f.mascota }}</small>{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      </div>
+      {% endif %}
+      {% if firma %}
+      <form method="post" action="{% url 'compras:carga_masiva_confirmar' %}" style="margin-top:16px" onsubmit="this.querySelector('button').disabled=true">
+        {% csrf_token %}<input type="hidden" name="firma" value="{{ firma }}">
+        <button class="cm-btn">Confirmar y cargar al inventario</button>
+        <a class="cm-btn sec" href="{% url 'compras:carga_masiva' %}">Cancelar</a>
+      </form>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <form class="cm-card" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="cm-grid">
+      <div>
+        <label for="proveedor_id">Proveedor</label>
+        <select id="proveedor_id" name="proveedor_id">
+          <option value="">— elegir —</option>
+          {% for p in proveedores %}<option value="{{ p.id }}" {% if encabezado.proveedor_id == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nombre }}</option>{% endfor %}
+        </select>
+      </div>
+      <div><label for="proveedor_nuevo">…o proveedor nuevo</label><input id="proveedor_nuevo" name="proveedor_nuevo" value="{{ encabezado.proveedor_nuevo|default:'' }}"></div>
+      <div><label for="factura_proveedor">N.º de factura del proveedor</label><input id="factura_proveedor" name="factura_proveedor" value="{{ encabezado.factura_proveedor|default:'' }}"></div>
+      <div><label for="forma_pago">Forma de pago</label>
+        <select id="forma_pago" name="forma_pago"><option value="CON">Contado</option><option value="CRE" {% if encabezado.forma_pago == "CRE" %}selected{% endif %}>Crédito del proveedor</option></select></div>
+      {% if tradicional %}<div><label for="iva">IVA de la factura (₡)</label><input id="iva" name="iva" inputmode="decimal" value="{{ encabezado.iva|default:'0' }}"></div>{% endif %}
+      <div><label for="archivo">Archivo (.xlsx o .csv)</label><input id="archivo" type="file" name="archivo" accept=".xlsx,.csv" required></div>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="cm-btn">Revisar archivo</button>
+      <a class="cm-btn sec" href="{% url 'compras:carga_masiva_plantilla' %}">⬇ Descargar plantilla</a>
+    </div>
+  </form>
+
+  <div class="cm-card">
+    <b>Columnas de la plantilla</b>
+    <ul class="cols">{% for c, etiqueta, ayuda in columnas %}<li><b>{{ etiqueta }}:</b> {{ ayuda }}</li>{% endfor %}</ul>
+    <p class="cm-sub" style="margin-top:10px">Un producto se reconoce por el código de barras; si no trae, por el nombre exacto. Si no existe, se crea.
+      Los datos de un producto existente (marca, categoría…) solo se completan si estaban vacíos: nunca se borran.</p>
+  </div>
+</div>
+{% endblock %}

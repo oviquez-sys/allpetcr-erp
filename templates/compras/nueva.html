@@ -158,12 +158,14 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
 </style>
 <link rel="stylesheet" href="{% static 'css/fotos.css' %}">
 <script src="{% static 'js/fotos.js' %}"></script>
+<script src="{% static 'js/camara.js' %}"></script>
 </head>
 <body>
 <div class="nav">
   <img class="logo" src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetcr.com">
   <b>Recibir mercadería</b>
   <span class="sp"></span>
+  <a href="{% url 'compras:carga_masiva' %}">Cargar desde Excel</a>
   <a class="home" href="/">Inicio</a>
 </div>
 <div class="steps">
@@ -253,6 +255,16 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
     <div class="campo2">
       <label>Nombre del producto *</label>
       <input id="npNombre" placeholder="Ej. Correa retráctil 5m">
+    </div>
+    <div class="fila2">
+      <div class="campo2">
+        <label>Código de barras de fábrica</label>
+        <input id="npCodigo" inputmode="numeric" placeholder="Vacío = el ERP le da uno interno">
+      </div>
+      <div class="campo2">
+        <label>Marca</label>
+        <input id="npMarca" placeholder="Opcional">
+      </div>
     </div>
     <div class="fila2">
       <div class="campo2">
@@ -433,8 +445,13 @@ function onNpCategoriaChange(){
   document.getElementById('npCategoriaMadre').style.display = mostrar;
 }
 
-function abrirNuevoProducto(){
-  document.getElementById('npNombre').value = document.getElementById('buscar').value.trim();
+function abrirNuevoProducto(codigo){
+  // Si viene de un escaneo que no se encontró, el código va a su campo y el
+  // nombre queda vacío para escribirlo (auditoría 26/09/2026, INV-02).
+  const texto = document.getElementById('buscar').value.trim();
+  document.getElementById('npCodigo').value = codigo || '';
+  document.getElementById('npMarca').value = '';
+  document.getElementById('npNombre').value = codigo ? '' : texto;
   document.getElementById('npCategoria').value = '';
   document.getElementById('npCategoriaNueva').value = '';
   document.getElementById('npCategoriaNueva').style.display = 'none';
@@ -520,6 +537,8 @@ async function guardarProductoNuevo(){
       body: JSON.stringify({
         nombre, precio_venta, categoria, categoria_padre,
         presentacion: document.getElementById('npPresentacion').value.trim(),
+        codigo_barras: document.getElementById('npCodigo').value.trim(),
+        marca: document.getElementById('npMarca').value.trim(),
         foto_base64,
       })
     });
@@ -707,6 +726,13 @@ async function registrar(){
     const d = await r.json();
     if (d.ok){
       msg(`✅ Compra ${d.numero} registrada por ${fmt(d.total)}. Stock actualizado.`);
+      // Etiquetas de lo que acaba de entrar (auditoría 26/09/2026, INV-08):
+      // se ofrecen en el momento, con la caja del proveedor abierta.
+      if (d.etiquetas_url && confirm(`Compra ${d.numero} registrada.\n\n¿Imprimir ahora las etiquetas de todo lo que entró?`)){
+        fetch(d.etiquetas_url, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}', 'Accept':'application/json'}})
+          .then(r => r.json()).then(x => msg(x.ok ? x.mensaje : '⛔ ' + x.error, !x.ok))
+          .catch(() => msg('⛔ No se pudo conectar con el ERP.', true));
+      }
       carrito = {}; pintarLineas();
       document.getElementById('factura').value = '';
       if (document.getElementById('ivaFactura')) document.getElementById('ivaFactura').value = '';
@@ -722,6 +748,14 @@ document.getElementById('buscar').addEventListener('keydown', e=>{
   let prod = productos.find(p => p.codigo_barras === q || p.sku === q);
   if (!prod){ const r = filtrar(); if (r.length === 1) prod = r[0]; }
   if (prod){ agregar(prod.id); e.target.value=''; pintarGrid(); }
+  else if (/^\d{8,14}$/.test(q)){
+    // Un código de barras que no existe: casi siempre es un producto nuevo.
+    // Se abre el formulario con el código ya puesto, en vez de un error.
+    e.target.value = '';
+    abrirNuevoProducto(q);
+    msg("Ese código no está en el ERP: regístrelo como producto nuevo.");
+    document.getElementById('npNombre').focus();
+  }
   else { msg("No encontré ese producto: " + q, true); }
 });
 document.getElementById('buscar').focus();
@@ -729,6 +763,8 @@ pintarPills();
 poblarCategorias();
 pintarGrid();
 pintarLineas();
+// Cámara del celular (INV-09): solo aparece donde el navegador la soporta.
+activarCamara(document.getElementById('buscar'));
 </script>
 
 {% include "core/includes/chat_widget.html" %}
