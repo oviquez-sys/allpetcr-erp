@@ -274,3 +274,20 @@ class ComentariosDePlantilla(TestCase):
                 if "\n" in m.group(1):
                     malos.append(f"{plantilla.name}:{texto[:m.start()].count(chr(10)) + 1}")
         self.assertEqual(malos, [], "Use {% comment %} para comentarios de varias líneas")
+
+
+class ArchivosBatConSaltosDeWindows(TestCase):
+    """cmd.exe lee mal un .bat con saltos de línea de Linux: parte las líneas
+    ("EM no se reconoce como un comando") o cierra la ventana sin hacer nada.
+    Pasó con TRAER_RESPALDOS_NUBE.bat (13/09) y con PUBLICAR_AUDITORIA.bat
+    (26/09). `.gitattributes` lo arregla al sacar los archivos de git, pero no
+    cuando un archivo se escribe directo en la carpeta: esta prueba sí lo ve."""
+
+    def test_todos_los_bat_tienen_crlf(self):
+        from pathlib import Path
+
+        from django.conf import settings
+
+        malos = [p.name for p in Path(settings.BASE_DIR).glob("*.bat")
+                 if b"\n" in p.read_bytes().replace(b"\r\n", b"")]
+        self.assertEqual(malos, [], "Guarde estos .bat con saltos de línea de Windows (CRLF)")

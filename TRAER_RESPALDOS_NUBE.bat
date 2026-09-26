@@ -30,6 +30,11 @@ REM viejo que esa linea. Si ya esta, pip no hace nada y tarda un segundo.
 .\.venv\Scripts\python.exe -c "import boto3" 2>nul
 if errorlevel 1 .\.venv\Scripts\python.exe -m pip install --quiet boto3 >> "%LOG%" 2>&1
 
+REM Python escribe el registro en UTF-8 (26/09/2026). Sin esto, al mandar la
+REM salida a un archivo usa la tabla de Windows, que no tiene el simbolo de
+REM "listo": desde el 14/09 el programa se caia despues de bajar UNA copia y
+REM nunca llegaba a revisar si el respaldo estaba atrasado ni a mandar el aviso.
+set PYTHONIOENCODING=utf-8
 echo. >> "%LOG%"
 .\.venv\Scripts\python.exe _traer_respaldos_nube.py >> "%LOG%" 2>&1
 
