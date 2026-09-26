@@ -144,6 +144,15 @@ def registrar_devolucion(*, factura, lineas, motivo, usuario=None) -> Devolucion
                 cliente = Cliente.objects.select_for_update().get(pk=doc.cliente_id)
                 cliente.saldo -= reducir_cxc
                 cliente.save(update_fields=["saldo"])
+        elif factura.medio_pago == FacturaVenta.MedioPago.MIXTO:
+            # Pago mixto (VEN-04): el reembolso sale en la misma proporción en
+            # que se cobró. Simple y siempre igual: si pagó la mitad en
+            # efectivo, la mitad de lo devuelto sale del cajón y la otra mitad
+            # se gestiona por el datáfono o por SINPE.
+            efectivo_pagado = sum((m for medio, m in factura.desglose_pagos() if medio == "EFE"), Decimal("0"))
+            if factura.total > 0:
+                reembolso_efectivo = (neto_total * efectivo_pagado / factura.total).quantize(Decimal("0.01"))
+            reembolso_bancos = neto_total - reembolso_efectivo
         else:  # TAR, SIN, TRA: se liquidó a Bancos, no toca caja física
             reembolso_bancos = neto_total
 

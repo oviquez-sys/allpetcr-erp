@@ -100,9 +100,13 @@ tr:last-child td{border-bottom:none}
               {% endif %}
             </td>
             <td class="n acciones">
+              <a class="btn-dev" href="{% url 'ventas:tiquete' f.id %}" target="_blank">Tiquete</a>
               {% if f.estado != "ANU" %}
                 <a class="btn-dev" href="{% url 'ventas:devolver' f.id %}">Devolver</a>
+                {# Con devoluciones ya no se anula (VEN-01): el resto se devuelve. #}
+                {% if not f.n_devoluciones %}
                 <button class="btn-anu" onclick="anular('venta', {{ f.id }}, '{{ f.numero }}')">Anular</button>
+                {% endif %}
               {% endif %}
             </td>
           </tr>

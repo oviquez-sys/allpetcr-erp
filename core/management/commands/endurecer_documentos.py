@@ -72,6 +72,9 @@ GRUPO_APPEND_ONLY = {
     "caja_movimientocaja": ("UPDATE", "DELETE"),
     "contabilidad_lineaasiento": ("UPDATE", "DELETE"),
     "ventas_abono": ("UPDATE", "DELETE"),
+    # Partes de un pago mixto (26/09/2026, VEN-04): se escriben al cobrar y
+    # nunca más se tocan, igual que un abono.
+    "ventas_pagoventa": ("UPDATE", "DELETE"),
 }
 GRUPO_DOCUMENTOS = {
     "ventas_facturaventa": ("DELETE",),

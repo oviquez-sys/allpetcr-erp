@@ -22,7 +22,7 @@ td{padding:2px 0;vertical-align:top}
 <h1>{{ f.empresa.nombre }}</h1>
 {% if f.empresa.identificacion %}<p class="c">Cédula: {{ f.empresa.identificacion }}</p>{% endif %}
 <p class="c">{{ f.sucursal.nombre }}<br>{{ f.creado_en|date:"d/m/Y h:i A" }}</p>
-<p class="c"><b>{{ f.numero }}</b> · {{ f.get_medio_pago_display }}</p>
+<p class="c"><b>{{ f.numero }}</b> · {{ f.get_medio_pago_display }}{% if f.usuario %}<br>Atendió: {{ f.usuario.get_full_name|default:f.usuario.username }}{% endif %}{% if f.cliente %}<br>Cliente: {{ f.cliente.nombre }}{% endif %}</p>
 {% if f.estado == "ANU" %}<div class="anulada">★ ANULADA ★<br>{{ f.motivo_anulacion }}</div>{% endif %}
 <hr>
 <table>
@@ -31,19 +31,24 @@ td{padding:2px 0;vertical-align:top}
   {% if l.es_regalia %}
   <tr><td>{{ l.cantidad }} × REGALO</td><td class="n">₡0</td></tr>
   {% else %}
-  <tr><td>{{ l.cantidad }} × ₡{{ l.precio_unitario }}</td><td class="n">₡{{ l.total }}</td></tr>
-  {% if l.descuento_pct > 0 %}<tr><td style="padding-left:8px">descuento {{ l.descuento_pct }}%</td><td class="n">− ₡{{ l.descuento_monto }}</td></tr>{% endif %}
+  <tr><td>{{ l.cantidad|floatformat:"-2" }} × ₡{{ l.precio_unitario|crc:0 }}</td><td class="n">₡{{ l.total|crc:0 }}</td></tr>
+  {% if l.descuento_pct > 0 %}<tr><td style="padding-left:8px">descuento {{ l.descuento_pct|floatformat:"-2" }}%</td><td class="n">− ₡{{ l.descuento_monto|crc:0 }}</td></tr>{% endif %}
   {% endif %}
 {% endfor %}
 </table>
 <hr>
 <table>
   {% if f.impuesto > 0 %}
-  <tr><td>Subtotal</td><td class="n">₡{{ f.subtotal }}</td></tr>
-  <tr><td>IVA</td><td class="n">₡{{ f.impuesto }}</td></tr>
+  <tr><td>Subtotal</td><td class="n">₡{{ f.subtotal|crc:2 }}</td></tr>
+  <tr><td>IVA</td><td class="n">₡{{ f.impuesto|crc:2 }}</td></tr>
   {% endif %}
-  {% if f.descuento > 0 %}<tr><td>Descuentos</td><td class="n">− ₡{{ f.descuento }}</td></tr>{% endif %}
-  <tr class="tot"><td>TOTAL</td><td class="n">₡{{ f.total }}</td></tr>
+  {% if f.descuento > 0 %}<tr><td>Descuentos</td><td class="n">− ₡{{ f.descuento|crc:0 }}</td></tr>{% endif %}
+  <tr class="tot"><td>TOTAL</td><td class="n">₡{{ f.total|crc:0 }}</td></tr>
+  {% if f.medio_pago == "MIX" %}{% for p in f.pagos.all %}<tr><td style="padding-left:8px">{{ p.get_medio_display }}</td><td class="n">₡{{ p.monto|crc:0 }}</td></tr>{% endfor %}{% endif %}
+  {% if f.monto_recibido is not None %}
+  <tr><td>Efectivo recibido</td><td class="n">₡{{ f.monto_recibido|crc:0 }}</td></tr>
+  <tr><td><b>Vuelto</b></td><td class="n"><b>₡{{ f.vuelto|crc:0 }}</b></td></tr>
+  {% endif %}
 </table>
 <hr>
 <p class="c">¡Gracias por su compra! 🐾<br>www.allpetcr.com</p>

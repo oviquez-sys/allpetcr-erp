@@ -32,6 +32,27 @@ class Empresa(models.Model):
         help_text="Factor RTS que Hacienda asigna a tu actividad (ej. 0.02 = 2% de las compras). "
                   "Confirmalo con tu contador o en TRIBU-CR. 0 si aún no lo sabés.",
     )
+    # --- Datos del emisor para la factura electrónica (auditoría 26/09/2026,
+    # FE-02). Solo se guardan: nada los usa hasta que se active
+    # `facturacion_electronica`. Se llenan desde el admin (Empresa) con los
+    # datos que confirme el contador; ninguno se inventa acá.
+    nombre_comercial = models.CharField(max_length=120, blank=True)
+    codigo_actividad = models.CharField(
+        "código de actividad económica", max_length=10, blank=True,
+        help_text="El que aparece en la inscripción ante Hacienda. Lo confirma el contador.",
+    )
+    provincia = models.CharField(max_length=40, blank=True)
+    canton = models.CharField("cantón", max_length=60, blank=True)
+    distrito = models.CharField(max_length=60, blank=True)
+    otras_senas = models.CharField("otras señas", max_length=250, blank=True)
+    telefono = models.CharField("teléfono", max_length=30, blank=True)
+    correo = models.EmailField(blank=True, help_text="Correo del emisor en los comprobantes")
+    establecimiento = models.CharField(
+        max_length=3, default="001", help_text="Número de local para la numeración de Hacienda (3 dígitos)",
+    )
+    terminal = models.CharField(
+        max_length=5, default="00001", help_text="Número de caja para la numeración de Hacienda (5 dígitos)",
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:

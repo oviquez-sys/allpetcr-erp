@@ -1,11 +1,17 @@
 import json
 import logging
 import smtplib
+from datetime import datetime
+from decimal import InvalidOperation
 
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMessage
+from django.core.validators import validate_email
+from django.db.models import Q
+from django.utils import timezone
+from django.db import IntegrityError
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.template.loader import render_to_string
@@ -42,24 +48,10 @@ def pos(request):
     # venta que deje el stock en negativo. Ofrecer en pantalla lo que la venta
     # va a rechazar solo produce un error a mitad del cobro, con el cliente
     # esperando.
-    productos = list(
-        productos_visibles(empresa)
-        .select_related("categoria")
-        .values("id", "sku", "nombre", "codigo_barras", "precio_venta",
-                "stock_actual", "presentacion", "categoria__nombre", "imagen", "mascota",
-                "descripcion", "actualizado_en")
-    )
-    for p in productos:  # JSON-serializable + normalizar nombres de campos
-        p["precio_venta"] = float(p["precio_venta"])
-        p["stock_actual"] = float(p["stock_actual"])
-        p["categoria"] = p.pop("categoria__nombre") or "Sin categoría"
-        p["presentacion"] = p.get("presentacion") or ""
-        p["mascota"] = p.get("mascota") or ""
-        p["descripcion"] = p.get("descripcion") or ""
-        completar_foto(p)
+    productos = _filas_pos(productos_visibles(empresa))
     clientes = list(
         Cliente.objects.filter(activo=True, empresa=empresa)
-        .values("id", "nombre", "limite_credito", "saldo")
+        .values("id", "nombre", "limite_credito", "saldo", "email")
     )
     for c in clientes:
         # La resta se hace en Decimal (regla de dinero del proyecto) y solo se
@@ -74,6 +66,147 @@ def pos(request):
         "sesion": sesion,
         "productos": productos,
         "clientes": clientes,
+        "es_gerente": es_gerente(request.user),
+        "tipos_identificacion": Cliente.TipoIdentificacion.choices,
+    })
+
+
+def _filas_pos(queryset):
+    """Productos como los necesita el POS en el navegador (JSON)."""
+    filas = list(
+        queryset.select_related("categoria")
+        .values("id", "sku", "nombre", "codigo_barras", "precio_venta",
+                "stock_actual", "presentacion", "categoria__nombre", "imagen", "mascota",
+                "descripcion", "actualizado_en")
+    )
+    for p in filas:  # JSON-serializable + normalizar nombres de campos
+        p["precio_venta"] = float(p["precio_venta"])
+        p["stock_actual"] = float(p["stock_actual"])
+        p["categoria"] = p.pop("categoria__nombre") or "Sin categoría"
+        p["presentacion"] = p.get("presentacion") or ""
+        p["mascota"] = p.get("mascota") or ""
+        p["descripcion"] = p.get("descripcion") or ""
+        completar_foto(p)
+    return filas
+
+
+@rol_requerido(CAJERO, GERENTE)
+def producto_por_codigo(request):
+    """Busca en la base un código que el POS no tiene en su lista.
+
+    El POS carga los productos al abrir la pantalla (auditoría 26/09/2026,
+    VEN-05). Lo que se ingresó después —Francisco recibiendo mercadería desde
+    el celular— no se podía escanear hasta recargar, y lo que el sistema tiene
+    en 0 salía como «No encontré ese producto» aunque existiera. Ahora el POS
+    pregunta acá antes de rendirse, y el mensaje dice la verdad."""
+    codigo = (request.GET.get("q") or "").strip()
+    sesion = sesion_abierta_de(request.user)
+    if not codigo or sesion is None:
+        return JsonResponse({"ok": False, "error": "Falta el código."}, status=400)
+    empresa = sesion.sucursal.empresa
+    qs = Producto.objects.filter(activo=True, empresa=empresa).filter(
+        Q(codigo_barras=codigo) | Q(sku=codigo)
+    )
+    producto = qs.first()
+    if producto is None:
+        return JsonResponse({"ok": False, "existe": False,
+                             "error": f"No hay ningún producto con el código {codigo}. "
+                                      "Búsquelo por nombre, o pida que lo registren en «Recibir mercadería»."})
+    if producto.stock_actual <= 0:
+        return JsonResponse({"ok": False, "existe": True,
+                             "error": f"«{producto.nombre}» existe, pero el sistema dice que hay 0. "
+                                      "Un gerente tiene que registrar la entrada de mercadería "
+                                      "(o un ajuste) antes de venderlo."})
+    return JsonResponse({"ok": True, "producto": _filas_pos(qs.filter(pk=producto.pk))[0]})
+
+
+@rol_requerido(CAJERO, GERENTE)
+@require_POST
+def cliente_rapido(request):
+    """Crea un cliente desde el POS sin salir de la venta (FE-03, TIQ-03).
+
+    Solo los datos que sirven hoy: nombre, identificación y correo (para
+    mandarle el recibo). Nace sin crédito: dar crédito es una decisión del
+    gerente y se hace en el admin."""
+    sesion = sesion_abierta_de(request.user)
+    if sesion is None:
+        return JsonResponse({"ok": False, "error": "No tiene una caja abierta."}, status=400)
+    try:
+        datos = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "Datos inválidos."}, status=400)
+    nombre = (datos.get("nombre") or "").strip()[:150]
+    if not nombre:
+        return JsonResponse({"ok": False, "error": "Escriba el nombre del cliente."}, status=400)
+    email = (datos.get("email") or "").strip()[:254]
+    if email:
+        try:
+            validate_email(email)
+        except ValidationError:
+            return JsonResponse({"ok": False, "error": "Ese correo no parece válido."}, status=400)
+    tipo = datos.get("tipo_identificacion") or ""
+    if tipo not in Cliente.TipoIdentificacion.values:
+        tipo = ""
+    identificacion = (datos.get("identificacion") or "").strip()[:30]
+    empresa = sesion.sucursal.empresa
+    if identificacion:
+        existente = Cliente.objects.filter(empresa=empresa, identificacion=identificacion, activo=True).first()
+        if existente is not None:
+            return JsonResponse({"ok": True, "ya_existia": True, "cliente": _cliente_json(existente)})
+    cliente = Cliente.objects.create(
+        empresa=empresa, nombre=nombre, email=email, tipo_identificacion=tipo,
+        identificacion=identificacion, telefono=(datos.get("telefono") or "").strip()[:30],
+    )
+    return JsonResponse({"ok": True, "ya_existia": False, "cliente": _cliente_json(cliente)})
+
+
+def _cliente_json(c):
+    return {"id": c.id, "nombre": c.nombre, "email": c.email,
+            "limite_credito": float(c.limite_credito), "saldo": float(c.saldo),
+            "disponible": float(c.limite_credito - c.saldo)}
+
+
+@rol_requerido(CAJERO, GERENTE)
+def historial(request):
+    """Historial de ventas con buscador, para reimprimir o reenviar un
+    tiquete (auditoría 26/09/2026, TIQ-03).
+
+    Antes la única lista era «Actividad»: solo gerente, las últimas 40 y sin
+    ningún enlace al tiquete. Un cajero no tenía cómo reimprimir. Acá el
+    cajero ve y reimprime; devolver y anular siguen siendo del gerente."""
+    from django.core.paginator import Paginator
+    from django.db.models import Count
+
+    from core.tenancy import empresa_actual
+
+    empresa = empresa_actual(request)
+    hoy = timezone.localdate()
+    q = (request.GET.get("q") or "").strip()
+    fecha_txt = request.GET.get("fecha")
+    facturas = (
+        FacturaVenta.objects.filter(empresa=empresa)
+        .select_related("cliente", "usuario")
+        .annotate(n_devoluciones=Count("devoluciones"))
+        .order_by("-id")
+    )
+    fecha = None
+    if q:
+        # Un número suelto ("48") también encuentra FV-00000048.
+        numero = f"FV-{int(q):08d}" if q.isdigit() else q
+        facturas = facturas.filter(
+            Q(numero__iexact=numero) | Q(numero__icontains=q) | Q(cliente__nombre__icontains=q)
+            | Q(cliente__identificacion__icontains=q)
+        )
+    else:
+        try:
+            fecha = datetime.strptime(fecha_txt, "%Y-%m-%d").date() if fecha_txt else hoy
+        except ValueError:
+            fecha = hoy
+        facturas = facturas.filter(creado_en__date=fecha)
+    pagina = Paginator(facturas, 50).get_page(request.GET.get("pagina"))
+    return render(request, "ventas/historial.html", {
+        "pagina": pagina, "q": q, "fecha": fecha, "hoy": hoy,
+        "es_gerente": es_gerente(request.user),
     })
 
 
@@ -83,11 +216,13 @@ def vender(request):
     sesion = sesion_abierta_de(request.user)
     if not sesion:
         return JsonResponse({"ok": False, "error": "No tiene una caja abierta."}, status=400)
+    clave_pos = None
     try:
         datos = json.loads(request.body)
+        clave_pos = (str(datos.get("clave") or "").strip()[:40]) or None
         cliente = None
         if datos.get("cliente_id"):
-            cliente = Cliente.objects.get(pk=datos["cliente_id"], activo=True)
+            cliente = Cliente.objects.get(pk=datos["cliente_id"], activo=True, empresa=sesion.sucursal.empresa)
         factura = services.registrar_venta(
             sesion_caja=sesion,
             lineas=datos.get("lineas", []),
@@ -97,11 +232,32 @@ def vender(request):
             permitir_bajo_costo=es_gerente(request.user),  # el gerente puede vender bajo costo
             permitir_descuento_alto=es_gerente(request.user),  # el gerente puede autorizar descuentos > 15% (SEC-001)
             permitir_regalia_alta=es_gerente(request.user),  # el gerente puede autorizar regalías > ₡5000 (SEC-006)
+            pagos=datos.get("pagos"),
+            clave_pos=clave_pos,
+            monto_recibido=datos.get("recibido"),
         )
     except ValidationError as e:
         return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)
-    except (json.JSONDecodeError, KeyError, Producto.DoesNotExist, Cliente.DoesNotExist):
+    except IntegrityError:
+        # Dos envíos del mismo cobro chocaron en la base (VEN-02): el otro ya
+        # quedó guardado. Se contesta con esa venta; nunca se crea una segunda.
+        factura = FacturaVenta.objects.filter(clave_pos=clave_pos).first() if clave_pos else None
+        if factura is None:
+            logger.exception("Error de integridad al registrar una venta")
+            return JsonResponse({"ok": False, "error": "No se pudo registrar la venta. Intente de nuevo."}, status=400)
+        return _respuesta_venta(factura, repetida=True)
+    except (json.JSONDecodeError, KeyError, TypeError, ValueError, InvalidOperation):
         return JsonResponse({"ok": False, "error": "Datos de venta inválidos."}, status=400)
+    except Producto.DoesNotExist:
+        return JsonResponse({"ok": False, "error": "Uno de los productos ya no está a la venta (lo desactivaron). "
+                                                   "Quítelo de la venta y vuelva a cobrar."}, status=400)
+    except Cliente.DoesNotExist:
+        return JsonResponse({"ok": False, "error": "Ese cliente ya no existe o está inactivo. Elija otro."}, status=400)
+
+    # Un reenvío del mismo cobro (doble F1, la red que reintenta) trae la venta
+    # que ya existía: se contesta igual, pero sin volver a imprimir.
+    if getattr(factura, "repetida", False):
+        return _respuesta_venta(factura, repetida=True)
     # Tiquete automático (decisión de Oscar, 05/09/2026): sale del rollo sin
     # que el cajero toque nada. Si la impresora falla —sin papel, apagada, el
     # cable flojo— la venta YA está registrada y NO se revierte por eso: se
@@ -113,23 +269,37 @@ def vender(request):
     # que distinguir «impreso» de «encolado». Decirle al cajero «Tiquete
     # impreso» cuando en realidad quedó en cola sería mentirle: si el agente
     # está cerrado, él se entera cuando el cliente pide el comprobante.
-    impreso, error_impresion = False, ""
-    encolado = impresion.por_agente()
+    impreso, error_impresion, trabajo = False, "", None
     if settings.TIQUETE_AUTOMATICO:
         try:
-            impresion.imprimir_tiquete(factura)
+            trabajo = impresion.imprimir_tiquete(factura)
             impreso = True
         except ErrorDeImpresion as e:
             error_impresion = str(e)
             logger.warning("Venta %s registrada pero sin tiquete: %s", factura.numero, e)
+    return _respuesta_venta(factura, impreso=impreso, error_impresion=error_impresion, trabajo=trabajo)
 
+
+def _respuesta_venta(factura, *, impreso=False, error_impresion="", trabajo=None, repetida=False):
+    """Lo que el POS necesita para cerrar la venta en pantalla: número, total,
+    vuelto y cómo seguir el tiquete (reimprimir, enviar, ¿salió?)."""
     return JsonResponse({
         "ok": True,
+        "repetida": repetida,
+        "id": factura.pk,
         "numero": factura.numero,
         "total": float(factura.total),
+        "vuelto": float(factura.vuelto) if factura.vuelto is not None else None,
+        "recibido": float(factura.monto_recibido) if factura.monto_recibido is not None else None,
+        "correo_cliente": factura.cliente.email if factura.cliente_id else "",
         "tiquete_url": reverse("ventas:tiquete", args=[factura.pk]),
+        "reimprimir_url": reverse("impresion:tiquete", args=[factura.pk]),
+        "enviar_url": reverse("ventas:factura_enviar", args=[factura.pk]),
         "impreso": impreso,
-        "encolado": impreso and encolado,
+        # Por la cola del agente: lo único seguro es que quedó encolado. El POS
+        # pregunta a `trabajo_url` si salió de verdad (TIQ-02).
+        "encolado": trabajo is not None,
+        "trabajo_url": reverse("impresion:estado_trabajo", args=[trabajo.pk]) if trabajo else "",
         "error_impresion": error_impresion,
     })
 
@@ -137,7 +307,8 @@ def vender(request):
 @rol_requerido(CAJERO, GERENTE)
 def tiquete(request, factura_id):
     factura = documento_de_empresa(
-        FacturaVenta.objects.select_related("empresa", "sucursal", "cliente").prefetch_related("lineas__producto"),
+        FacturaVenta.objects.select_related("empresa", "sucursal", "cliente", "usuario")
+        .prefetch_related("lineas__producto", "pagos"),
         request,
         pk=factura_id,
     )
@@ -157,19 +328,84 @@ def factura(request, factura_id):
     return render(request, "ventas/factura.html", {"f": f})
 
 
+def _correo_configurado() -> bool:
+    """¿Este servidor manda correos de verdad?
+
+    Sin clave de correo, Django usa el backend de consola: "envía" a la
+    terminal y no a nadie. En la computadora de desarrollo eso está bien; en
+    la tienda significaba que la pantalla decía «enviado» y el cliente nunca
+    recibía nada (auditoría 26/09/2026, TIQ-06)."""
+    return not settings.EMAIL_BACKEND.endswith("console.EmailBackend") or settings.DEBUG
+
+
+def _enviar_recibo(f, destinatario):
+    """Arma y manda el recibo. Lanza OSError/SMTPException si el servicio de
+    correo falla; quien llama decide cómo contarlo."""
+    # El recibo va como PDF ADJUNTO, no como cuerpo del correo (02/09/2026).
+    #
+    # Antes el HTML del recibo era el cuerpo del mensaje. Se veía bien en el
+    # navegador y descuadrado en Outlook, que dibuja los correos con el
+    # motor de Word y no entiende flexbox: las columnas se montaban unas
+    # sobre otras y el logo salía como un cuadrito roto.
+    #
+    # En PDF el diseño llega idéntico a cualquier cliente de correo, en el
+    # celular y al imprimirlo. Y es lo que la gente espera de un recibo.
+    html = render_to_string(
+        "ventas/factura.html",
+        {"f": f, "es_email": True, "logo_src": logo_data_uri()},
+    )
+    pdf = html_a_pdf(html)
+
+    if pdf:
+        cuerpo = render_to_string("ventas/correo_recibo.txt", {"f": f})
+        correo = EmailMessage(
+            subject=f"Tu recibo {f.numero} — {f.empresa.nombre}",
+            body=cuerpo,
+            to=[destinatario],
+        )
+        correo.attach(f"Recibo-{f.numero}.pdf", pdf, "application/pdf")
+    else:
+        # Sin Chromium instalado se manda como antes: feo pero llega.
+        # Ver core/pdf.py para el porqué de no abortar.
+        logger.warning("Recibo %s enviado sin PDF: Chromium no disponible.", f.numero)
+        correo = EmailMessage(
+            subject=f"Tu recibo {f.numero} — {f.empresa.nombre}",
+            body=html,
+            to=[destinatario],
+        )
+        correo.content_subtype = "html"
+    correo.send(fail_silently=False)
+
+
 @rol_requerido(CAJERO, GERENTE)
 @require_POST
 def factura_enviar(request, factura_id):
     """Manda el recibo a color por correo, en vez de solo poder verlo en
     pantalla. Reusa la misma plantilla, oculta el botón de imprimir/enviar
-    (que no tiene sentido dentro de un correo) con es_email=True."""
+    (que no tiene sentido dentro de un correo) con es_email=True.
+
+    Contesta en JSON si la llamada viene del POS (26/09/2026, TIQ-03): así se
+    manda desde la misma pantalla de cobro, sin salir de la venta. El correo
+    va en su propia petición, DESPUÉS de cobrar: si falla, la venta ya está
+    hecha y no se toca."""
     f = documento_de_empresa(
         FacturaVenta.objects.select_related("empresa", "sucursal", "cliente").prefetch_related("lineas__producto"),
         request,
         pk=factura_id,
     )
     destinatario = (request.POST.get("destinatario") or "").strip()
+    quiere_json = "application/json" in request.headers.get("Accept", "")
     ctx = {"f": f}
+
+    def responder(error="", status=200):
+        if quiere_json:
+            return JsonResponse({"ok": not error, "error": error, "enviado_a": destinatario}, status=status)
+        if error:
+            ctx["enviado_error"] = error
+        else:
+            ctx["enviado_ok"] = True
+            ctx["enviado_a"] = destinatario
+        return render(request, "ventas/factura.html", ctx, status=status)
 
     # El código de estado tiene que decir la verdad (auditoría 2026-07-28,
     # hallazgo BE-07). Antes se respondía 200 en los tres casos —éxito, fallo
@@ -180,55 +416,28 @@ def factura_enviar(request, factura_id):
     # posición de cobro. El mensaje en pantalla sigue siendo igual de amable;
     # lo que cambia es lo que la máquina reporta.
     if not destinatario:
-        ctx["enviado_error"] = "Falta el correo del destinatario."
-        return render(request, "ventas/factura.html", ctx, status=400)
-
+        return responder("Falta el correo del destinatario.", 400)
     try:
-        # El recibo va como PDF ADJUNTO, no como cuerpo del correo (02/09/2026).
-        #
-        # Antes el HTML del recibo era el cuerpo del mensaje. Se veía bien en el
-        # navegador y descuadrado en Outlook, que dibuja los correos con el
-        # motor de Word y no entiende flexbox: las columnas se montaban unas
-        # sobre otras y el logo salía como un cuadrito roto.
-        #
-        # En PDF el diseño llega idéntico a cualquier cliente de correo, en el
-        # celular y al imprimirlo. Y es lo que la gente espera de un recibo.
-        html = render_to_string(
-            "ventas/factura.html",
-            {"f": f, "es_email": True, "logo_src": logo_data_uri()},
-        )
-        pdf = html_a_pdf(html)
-
-        if pdf:
-            cuerpo = render_to_string("ventas/correo_recibo.txt", {"f": f})
-            correo = EmailMessage(
-                subject=f"Tu recibo {f.numero} — {f.empresa.nombre}",
-                body=cuerpo,
-                to=[destinatario],
-            )
-            correo.attach(f"Recibo-{f.numero}.pdf", pdf, "application/pdf")
-        else:
-            # Sin Chromium instalado se manda como antes: feo pero llega.
-            # Ver core/pdf.py para el porqué de no abortar.
-            logger.warning("Recibo %s enviado sin PDF: Chromium no disponible.", f.numero)
-            correo = EmailMessage(
-                subject=f"Tu recibo {f.numero} — {f.empresa.nombre}",
-                body=html,
-                to=[destinatario],
-            )
-            correo.content_subtype = "html"
-
-        correo.send(fail_silently=False)
+        validate_email(destinatario)
+    except ValidationError:
+        return responder("Ese correo no parece válido. Revíselo.", 400)
+    if not _correo_configurado():
+        logger.error("Recibo %s NO enviado: el servidor no tiene correo configurado.", f.numero)
+        return responder("El envío de correos no está configurado en el servidor. "
+                         "Avísele al administrador; mientras tanto, imprima el tiquete.", 503)
+    try:
+        _enviar_recibo(f, destinatario)
     except (smtplib.SMTPException, OSError) as e:
         # 502: el fallo no es del usuario ni de esta aplicación, sino del
         # servicio de correo del que dependemos.
         logger.exception("No se pudo enviar la factura %s a %s", f.numero, destinatario)
-        ctx["enviado_error"] = str(e)
-        return render(request, "ventas/factura.html", ctx, status=502)
+        return responder(f"No se pudo enviar el correo: {e}", 502)
 
-    ctx["enviado_ok"] = True
-    ctx["enviado_a"] = destinatario
-    return render(request, "ventas/factura.html", ctx)
+    # Si el cliente no tenía correo guardado, se le guarda: la próxima vez ya
+    # aparece puesto.
+    if f.cliente_id and not f.cliente.email:
+        Cliente.objects.filter(pk=f.cliente_id).update(email=destinatario)
+    return responder()
 
 
 @rol_requerido(GERENTE)
@@ -243,6 +452,11 @@ def anular(request, factura_id):
         messages.success(request, f"Venta {factura.numero} anulada: el inventario y la caja se revirtieron.")
     except ValidationError as e:
         messages.error(request, " ".join(e.messages))
+    # Vuelve a la pantalla desde donde se anuló (Actividad o el Historial).
+    # Solo rutas internas: un "volver" con http:// sería un redirector abierto.
+    volver = (request.POST.get("volver") or "").strip()
+    if volver.startswith("/") and not volver.startswith("//"):
+        return redirect(volver)
     return redirect("core:actividad")
 
 

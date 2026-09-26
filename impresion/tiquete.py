@@ -112,6 +112,40 @@ def _dos_columnas(izquierda: str, derecha: str, ancho: int) -> str:
     return f"{izquierda[:espacio - 1]:<{espacio}}{derecha}"
 
 
+_MEDIOS = [("EFE", "Efectivo"), ("TAR", "Tarjeta"), ("SIN", "SINPE Movil"), ("CRE", "Credito")]
+
+
+def _hora_local(momento):
+    """La hora de la venta en Costa Rica.
+
+    La base guarda la hora en UTC. Antes se imprimía tal cual y el tiquete
+    salía con 6 horas de más: una venta de las 8:30 a. m. decía «02:30 PM»
+    (auditoría 26/09/2026, TIQ-01). La pantalla nunca tuvo el problema porque
+    las plantillas de Django convierten solas; el texto armado a mano, no."""
+    from django.utils import timezone
+
+    if timezone.is_aware(momento):
+        return timezone.localtime(momento)
+    return momento
+
+
+def _cajero(factura) -> str:
+    usuario = getattr(factura, "usuario", None)
+    if not usuario:
+        return ""
+    return (usuario.get_full_name() or usuario.get_username()) if hasattr(usuario, "get_username") else str(usuario)
+
+
+def _etiqueta_iva(factura) -> str:
+    """«IVA 13%» si toda la venta lleva la misma tarifa; «IVA» si hay varias
+    o si la venta es anterior a que las líneas guardaran su tarifa."""
+    tarifas = {l.tarifa_iva for l in factura.lineas.all()
+               if not l.es_regalia and getattr(l, "tarifa_iva", None) is not None}
+    if len(tarifas) == 1:
+        return f"IVA {Decimal(tarifas.pop()).normalize():f}%"
+    return "IVA"
+
+
 def _envolver(texto: str, ancho: int) -> list[str]:
     """Corta un nombre largo en varios renglones sin partir palabras."""
     palabras = texto.split()
@@ -149,9 +183,12 @@ def bytes_tiquete(factura, ancho: int = 48, pie: str = "", logo: bytes = b"") ->
     if getattr(empresa, "identificacion", ""):
         partes += [_texto(f"Cedula: {empresa.identificacion}"), SALTO]
     partes += [_texto(factura.sucursal.nombre), SALTO]
-    partes += [_texto(f"{factura.creado_en:%d/%m/%Y %I:%M %p}"), SALTO]
+    partes += [_texto(f"{_hora_local(factura.creado_en):%d/%m/%Y %I:%M %p}"), SALTO]
     partes += [NEGRITA_ON, _texto(factura.numero), NEGRITA_OFF,
                _texto(f"  {factura.get_medio_pago_display()}"), SALTO]
+    cajero = _cajero(factura)
+    if cajero:
+        partes += [_texto(f"Atendió: {cajero}"), SALTO]
     if factura.cliente_id:
         partes += [_texto(str(factura.cliente)), SALTO]
     if factura.estado == "ANU":
@@ -183,12 +220,27 @@ def bytes_tiquete(factura, ancho: int = 48, pie: str = "", logo: bytes = b"") ->
     partes += [_texto("-" * ancho), SALTO]
     if factura.impuesto > 0:
         partes += [_texto(_dos_columnas("Subtotal", _monto(factura.subtotal), ancho)), SALTO]
-        partes += [_texto(_dos_columnas("IVA", _monto(factura.impuesto), ancho)), SALTO]
+        partes += [_texto(_dos_columnas(_etiqueta_iva(factura), _monto(factura.impuesto), ancho)), SALTO]
     if factura.descuento > 0:
         partes += [_texto(_dos_columnas("Descuentos", f"-{_monto(factura.descuento)}", ancho)), SALTO]
     partes += [NEGRITA_ON, DOBLE,
                _texto(_dos_columnas("TOTAL", _monto(factura.total), ancho // 2)),
-               NORMAL, NEGRITA_OFF, SALTO, SALTO]
+               NORMAL, NEGRITA_OFF, SALTO]
+
+    # Cómo pagó (26/09/2026, TIQ-04): cada medio de un pago mixto, y el
+    # efectivo recibido con su vuelto. Es lo primero que se mira cuando un
+    # cliente vuelve diciendo que le dieron mal el vuelto.
+    pagos = factura.desglose_pagos() if hasattr(factura, "desglose_pagos") else []
+    if len(pagos) > 1:
+        nombres = dict(_MEDIOS)
+        for medio, monto in pagos:
+            partes += [_texto(_dos_columnas(f"  {nombres.get(medio, medio)}", _monto(monto), ancho)), SALTO]
+    recibido = getattr(factura, "monto_recibido", None)
+    vuelto = getattr(factura, "vuelto", None)
+    if recibido is not None:
+        partes += [_texto(_dos_columnas("Efectivo recibido", _monto(recibido), ancho)), SALTO]
+        partes += [NEGRITA_ON, _texto(_dos_columnas("Vuelto", _monto(vuelto or 0), ancho)), NEGRITA_OFF, SALTO]
+    partes += [SALTO]
 
     partes += [CENTRO, _texto("Gracias por su compra"), SALTO]
     partes += [_texto("www.allpetcr.com"), SALTO, SALTO]

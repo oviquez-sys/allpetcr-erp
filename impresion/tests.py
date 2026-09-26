@@ -7,6 +7,7 @@ un doble que guarda lo que se le mandó.
 """
 from dataclasses import dataclass
 from datetime import datetime
+from datetime import timezone as dt_timezone
 from decimal import Decimal
 from unittest import mock
 
@@ -76,7 +77,10 @@ class _Factura:
         self.empresa = _Empresa()
         self.sucursal = _Sucursal()
         self.numero = "FE-0001"
-        self.creado_en = datetime(2026, 9, 5, 15, 30)
+        # Con zona horaria, como la entrega la base (UTC): 21:30 UTC son las
+        # 3:30 p. m. en Costa Rica. Antes era una hora "sin zona" y por eso
+        # ninguna prueba vio que el tiquete salía 6 horas adelantado (TIQ-01).
+        self.creado_en = datetime(2026, 9, 5, 21, 30, tzinfo=dt_timezone.utc)
         self.cliente_id = None
         self.estado = "ACT"
         self.motivo_anulacion = ""
@@ -93,6 +97,21 @@ class _Factura:
 class TiqueteTermico(TestCase):
     def setUp(self):
         self.factura = _Factura([_Linea(_Producto("Alimento perro adulto 15 kg"))])
+
+    def test_la_hora_es_la_de_costa_rica(self):
+        """TIQ-01: la base guarda UTC; el papel tiene que decir la hora local."""
+        texto = bytes_tiquete(self.factura, ancho=48).decode("cp850")
+        self.assertIn("05/09/2026 03:30 PM", texto)
+        self.assertNotIn("09:30 PM", texto)
+
+    def test_muestra_recibido_y_vuelto(self):
+        """TIQ-04: con efectivo recibido, el tiquete dice cuánto y el vuelto."""
+        self.factura.monto_recibido = Decimal("5000")
+        self.factura.vuelto = Decimal("4000")
+        texto = bytes_tiquete(self.factura, ancho=48).decode("cp850")
+        self.assertIn("Efectivo recibido", texto)
+        self.assertIn("Vuelto", texto)
+        self.assertIn("4.000", texto)
 
     def test_lleva_numero_total_y_nombre_del_producto(self):
         datos = bytes_tiquete(self.factura, ancho=48)
@@ -505,11 +524,15 @@ class PantallaDeEtiquetasSeDibuja(TestCase):
 # impresoras de la tienda, así que deja el trabajo en una cola y el agente que
 # corre en el mostrador lo recoge.
 #
-# Estas pruebas corren SIN parchar `windows.disponible`: la máquina de pruebas
-# es Linux y no ve impresoras, que es exactamente la situación del servidor.
+# Estas pruebas FUERZAN el camino del agente (IMPRESION_FORZAR_AGENTE). Antes
+# daban por hecho que la máquina de pruebas no ve impresoras; en la
+# computadora de la tienda sí las ve, así que 16 pruebas fallaban siempre ahí
+# y la suite nunca quedaba en verde (auditoría 26/09/2026, UX-02). Forzarlo
+# además garantiza que ninguna prueba mande papel a la térmica de verdad.
 # --------------------------------------------------------------------------
 @override_settings(IMPRESORA_RECIBOS="Recibos de prueba",
-                   IMPRESORA_ETIQUETAS="Etiquetas de prueba")
+                   IMPRESORA_ETIQUETAS="Etiquetas de prueba",
+                   IMPRESION_FORZAR_AGENTE=True)
 class ColaDeImpresion(TestCase):
     def test_sin_impresoras_el_tiquete_queda_en_la_cola(self):
         """Lo importante es que NO reviente: la venta ya se registró."""
@@ -627,7 +650,8 @@ class ColaDeImpresion(TestCase):
 
 
 @override_settings(IMPRESION_AGENTE_TOKEN="llave-de-prueba",
-                   IMPRESORA_RECIBOS="Recibos de prueba")
+                   IMPRESORA_RECIBOS="Recibos de prueba",
+                   IMPRESION_FORZAR_AGENTE=True)
 class PuertasDelAgente(TestCase):
     """La cola queda expuesta a internet: lo único que la protege es la llave."""
 

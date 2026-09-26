@@ -10,9 +10,24 @@ class Cliente(models.Model):
     """Cliente con control de crédito. `saldo` es denormalizado (lectura
     rápida); la fuente de verdad es la suma de documentos CxC pendientes."""
 
+    class TipoIdentificacion(models.TextChoices):
+        # Preparación para la factura electrónica (auditoría 26/09/2026,
+        # FE-03): el receptor de una factura se identifica por tipo y número.
+        # Los códigos oficiales de Hacienda se asignan al generar el XML, no
+        # acá: así esta lista no depende de una versión del anexo técnico.
+        FISICA = "FIS", "Cédula física"
+        JURIDICA = "JUR", "Cédula jurídica"
+        DIMEX = "DIM", "DIMEX"
+        NITE = "NIT", "NITE"
+        EXTRANJERO = "EXT", "Extranjero / pasaporte"
+
     empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, related_name="clientes")
     nombre = models.CharField(max_length=150)
+    tipo_identificacion = models.CharField(max_length=3, choices=TipoIdentificacion.choices, blank=True)
     identificacion = models.CharField(max_length=30, blank=True)
+    provincia = models.CharField(max_length=40, blank=True)
+    canton = models.CharField("cantón", max_length=60, blank=True)
+    distrito = models.CharField(max_length=60, blank=True)
     telefono = models.CharField(max_length=30, blank=True)
     email = models.EmailField(blank=True)
     direccion = models.CharField(max_length=250, blank=True)
@@ -71,6 +86,10 @@ class FacturaVenta(models.Model):
         TARJETA = "TAR", "Tarjeta"
         SINPE = "SIN", "SINPE Móvil"
         CREDITO = "CRE", "Crédito (CxC)"
+        # Varios medios en la misma venta (auditoría 26/09/2026, VEN-04). El
+        # detalle de cuánto entró por cada uno vive en PagoVenta; solo las
+        # ventas mixtas tienen filas ahí, las de un solo medio siguen igual.
+        MIXTO = "MIX", "Pago mixto"
 
     empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT)
     sucursal = models.ForeignKey(Sucursal, on_delete=models.PROTECT)
@@ -90,6 +109,15 @@ class FacturaVenta(models.Model):
     anulada_en = models.DateTimeField(null=True, blank=True)
     anulada_por = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
                                     on_delete=models.SET_NULL, related_name="ventas_anuladas")
+    # Clave que el POS genera UNA vez por venta (auditoría 26/09/2026, VEN-02).
+    # Si el mismo cobro llega dos veces —doble F1, un reintento de la red— la
+    # segunda petición encuentra esta clave y devuelve la venta ya hecha en vez
+    # de crear otra. Nula en las ventas anteriores y en las que no vienen del POS.
+    clave_pos = models.CharField(max_length=40, null=True, blank=True, unique=True, editable=False)
+    # Efectivo que entregó el cliente y vuelto que se le dio (VEN-03). Solo
+    # informativos: la caja se mueve por lo cobrado, no por lo recibido.
+    monto_recibido = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    vuelto = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
 
     class Meta:
         verbose_name = "factura de venta"
@@ -127,6 +155,33 @@ class FacturaVenta(models.Model):
     def estado_visual_display(self):
         return self.ESTADO_VISUAL_LABEL[self.estado_visual]
 
+    def desglose_pagos(self):
+        """[(medio, monto)] de esta venta. Una venta de un solo medio no tiene
+        filas en PagoVenta: su único pago es el total."""
+        if self.medio_pago == self.MedioPago.MIXTO:
+            return [(p.medio, p.monto) for p in self.pagos.all()]
+        return [(self.medio_pago, self.total)]
+
+
+class PagoVenta(models.Model):
+    """Una parte del cobro de una venta con pago mixto (VEN-04). Inmutable,
+    igual que la factura."""
+
+    factura = models.ForeignKey(FacturaVenta, on_delete=models.CASCADE, related_name="pagos")
+    medio = models.CharField(max_length=3, choices=FacturaVenta.MedioPago.choices)
+    monto = models.DecimalField(max_digits=12, decimal_places=2)
+
+    class Meta:
+        verbose_name = "pago de venta"
+        verbose_name_plural = "pagos de venta"
+        ordering = ["id"]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(monto__gt=0), name="pago_venta_positivo"),
+        ]
+
+    def __str__(self):
+        return f"{self.get_medio_display()} ₡{self.monto} ({self.factura.numero})"
+
 
 class LineaVenta(models.Model):
     factura = models.ForeignKey(FacturaVenta, on_delete=models.CASCADE, related_name="lineas")
@@ -141,6 +196,15 @@ class LineaVenta(models.Model):
                                      help_text="Producto entregado gratis: sin ingreso, pero su costo sale a gasto")
     costo_unitario = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=12, decimal_places=2)
+    # Foto fiscal de la línea AL MOMENTO de la venta (auditoría 26/09/2026,
+    # VEN-08 / FE-04). Antes solo la factura guardaba totales: si mañana cambia
+    # la tarifa o el CABYS de un producto, las ventas viejas ya no se podrían
+    # desglosar. Nulos en las ventas anteriores a este cambio.
+    tarifa_iva = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True,
+                                   help_text="Total de la línea sin IVA")
+    impuesto = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    cabys = models.CharField(max_length=13, blank=True)
 
     class Meta:
         verbose_name = "línea de venta"

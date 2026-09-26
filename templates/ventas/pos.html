@@ -143,6 +143,44 @@ main{flex:1;display:grid;grid-template-columns:1fr 440px;gap:16px;padding:14px 2
    caben en un celular. Abajo de 900px se apilan en 1 columna: primero el
    catálogo, después el carrito, y la página scrollea normal en vez de que
    cada columna scrollee por separado. */
+/* ===== Diálogos de cobro, última venta y cámara (auditoría 26/09/2026) =====
+   <dialog> nativo abierto con showModal(): Esc lo cierra solo y el foco queda
+   atrapado adentro, que es justo lo que hace falta con el cliente enfrente. */
+dialog.dlg{border:none;border-radius:22px;padding:26px;max-width:440px;width:calc(100% - 32px);box-shadow:0 20px 60px rgba(0,0,0,.3)}
+dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
+.dlg h2{font-size:20px;font-weight:700;margin-bottom:6px}
+.dlg .sub{font-size:13.5px;color:var(--ink2);margin-bottom:16px}
+.dlg label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin:10px 0 6px}
+.dlg input,.dlg select{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:12px;font-size:18px;background:#fbfbfd}
+.dlg input:focus,.dlg select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px rgba(11,49,97,.12)}
+.dlg .big{font-size:30px;font-weight:800;letter-spacing:-.02em}
+.dlg .fila{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;font-size:16px}
+.dlg .fila.vuelto b{font-size:30px;color:#1c7a36}
+.dlg .fila.falta b{color:var(--red)}
+.dlg .acc{display:flex;gap:10px;margin-top:20px}
+.dlg .acc button{flex:1;padding:14px;border-radius:14px;font-size:15.5px;font-weight:600;cursor:pointer;border:1px solid var(--line);background:#fff}
+.dlg .acc button.pri{background:var(--brand);color:#fff;border-color:var(--brand)}
+.dlg .acc button:disabled{opacity:.45;cursor:not-allowed}
+.dlg .rapidos{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.dlg .rapidos button{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px}
+.dlg video{width:100%;border-radius:14px;background:#000;aspect-ratio:4/3;object-fit:cover}
+.dlg .err{color:var(--red);font-size:13.5px;margin-top:8px;min-height:18px}
+#ultima{display:none;margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fbfbfd;font-size:14px}
+#ultima.on{display:block}
+#ultima .t{font-weight:700}
+#ultima .vuelto{font-size:22px;font-weight:800;color:#1c7a36;margin-top:2px}
+#ultima .imp{font-size:13px;color:var(--ink2);margin-top:6px}
+#ultima .imp.mal{color:var(--red);font-weight:600}
+#ultima .bts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#ultima .bts button,#ultima .bts a{font-size:13px;padding:7px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--brand);cursor:pointer}
+.cli-fila{display:flex;gap:8px;margin-bottom:12px}
+.cli-fila #cliente{margin-bottom:0;flex:1}
+.cli-fila button{padding:0 14px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--brand);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.busca-fila{display:flex;gap:8px}
+.busca-fila #buscar{flex:1}
+#btnCamara{display:none;padding:0 16px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:22px;cursor:pointer}
+.pagos.cuatro{grid-template-columns:1fr 1fr 1fr 1fr}
+
 @media(max-width:900px){
   body{height:auto;min-height:100vh;overflow:visible}
   main{grid-template-columns:1fr;overflow:visible;padding:12px 14px 16px}
@@ -157,12 +195,10 @@ main{flex:1;display:grid;grid-template-columns:1fr 440px;gap:16px;padding:14px 2
   #grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
   .pcard .n{font-size:14.5px}
   .pcard .p{font-size:22px}
-  .pagos{grid-template-columns:1fr 1fr}
-  .pagos button:nth-child(3){grid-column:span 2}
+  .pagos,.pagos.cuatro{grid-template-columns:1fr 1fr}
 }
 @media(max-width:420px){
-  .pagos{grid-template-columns:1fr}
-  .pagos button:nth-child(3){grid-column:span 1}
+  .pagos,.pagos.cuatro{grid-template-columns:1fr 1fr}
 }
 </style>
 <link rel="stylesheet" href="{% static 'css/fotos.css' %}">
@@ -174,6 +210,7 @@ main{flex:1;display:grid;grid-template-columns:1fr 440px;gap:16px;padding:14px 2
   <b>Vender</b>
   <span class="info">Caja #{{ sesion.pk }} · {{ request.user.username }}</span>
   <span class="sp"></span>
+  <a href="{% url 'ventas:historial' %}">Historial de ventas</a>
   <a href="{% url 'caja:cerrar' %}">Cerrar caja</a>
   <a class="home" href="/">Inicio</a>
 </div>
@@ -185,17 +222,23 @@ main{flex:1;display:grid;grid-template-columns:1fr 440px;gap:16px;padding:14px 2
 
 <main>
   <div class="col">
-    <input id="buscar" placeholder="🔎 Escaneá el código de barras, o escribí el nombre del producto…" autofocus>
+    <div class="busca-fila">
+      <input id="buscar" placeholder="🔎 Escaneá el código de barras, o escribí el nombre del producto…" autofocus>
+      <button id="btnCamara" type="button" title="Escanear con la cámara" aria-label="Escanear con la cámara">📷</button>
+    </div>
     <div class="chips" id="chips"></div>
     <div id="grid"></div>
   </div>
   <div class="col cart">
     <h2>Venta actual</h2>
-    <select id="cliente"><option value="">Cliente: Consumidor final</option></select>
+    <div class="cli-fila">
+      <select id="cliente"><option value="">Cliente: Consumidor final</option></select>
+      <button type="button" id="btnCliNuevo" title="Registrar un cliente nuevo">＋ Cliente</button>
+    </div>
     <div id="lineas"></div>
     <div id="totales"></div>
-    <div class="pagos">
-      <button onclick="cobrar('EFE')">
+    <div class="pagos cuatro">
+      <button onclick="pedirEfectivo()">
         <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5h.01M18 14.5h.01"/></svg>
         <span>Efectivo</span></button>
       <button onclick="cobrar('TAR')">
@@ -204,14 +247,66 @@ main{flex:1;display:grid;grid-template-columns:1fr 440px;gap:16px;padding:14px 2
       <button onclick="cobrar('SIN')">
         <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
         <span>SINPE</span></button>
+      <button onclick="pedirMixto()">
+        <svg viewBox="0 0 24 24"><path d="M4 7h11M4 12h16M4 17h8"/><circle cx="18" cy="7" r="2"/><circle cx="14" cy="17" r="2"/></svg>
+        <span>Mixto</span></button>
     </div>
     <button class="btn-cred" id="btnCredito" onclick="cobrar('CRE')">
       <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
       <span>Fiado (venta a crédito)</span></button>
+    <div id="ultima" aria-live="polite"></div>
     <p class="nota">La venta descuenta el inventario y registra la contabilidad sola. Para fiar, elegí primero un cliente con crédito.</p>
   </div>
 </main>
-<div id="msg"></div>
+<div id="msg" role="status"></div>
+
+<dialog class="dlg" id="dlgEfectivo" aria-labelledby="tEfe">
+  <form method="dialog" id="frmEfectivo">
+    <h2 id="tEfe">Cobro en efectivo</h2>
+    <div class="sub">Escriba con cuánto paga el cliente y Enter. Si paga exacto, Enter solo.</div>
+    <div class="fila"><span>Total</span><span class="big" id="efeTotal"></span></div>
+    <label for="efeRecibido">Paga con</label>
+    <input id="efeRecibido" inputmode="numeric" autocomplete="off" placeholder="exacto">
+    <div class="rapidos" id="efeRapidos"></div>
+    <div class="fila vuelto" id="efeVueltoFila"><span>Vuelto</span><b id="efeVuelto">₡0</b></div>
+    <div class="acc"><button type="button" data-cerrar>Cancelar</button><button class="pri" id="efeOk">Cobrar</button></div>
+  </form>
+</dialog>
+
+<dialog class="dlg" id="dlgMixto" aria-labelledby="tMix">
+  <form method="dialog" id="frmMixto">
+    <h2 id="tMix">Pago mixto</h2>
+    <div class="sub">Reparta el total entre los medios. Tiene que sumar exacto.</div>
+    <div class="fila"><span>Total</span><span class="big" id="mixTotal"></span></div>
+    <label for="mixEFE">Efectivo</label><input id="mixEFE" inputmode="numeric" autocomplete="off" placeholder="0">
+    <label for="mixTAR">Tarjeta</label><input id="mixTAR" inputmode="numeric" autocomplete="off" placeholder="0">
+    <label for="mixSIN">SINPE</label><input id="mixSIN" inputmode="numeric" autocomplete="off" placeholder="0">
+    <div class="fila" id="mixFaltaFila"><span id="mixFaltaTxt">Falta</span><b id="mixFalta"></b></div>
+    <div class="acc"><button type="button" data-cerrar>Cancelar</button><button class="pri" id="mixOk">Cobrar</button></div>
+  </form>
+</dialog>
+
+<dialog class="dlg" id="dlgCliente" aria-labelledby="tCli">
+  <form method="dialog" id="frmCliente">
+    <h2 id="tCli">Cliente nuevo</h2>
+    <div class="sub">Con el correo se le puede mandar el recibo. El crédito lo da un gerente después.</div>
+    <label for="cliNombre">Nombre</label><input id="cliNombre" autocomplete="off" required>
+    <label for="cliTipo">Tipo de identificación</label>
+    <select id="cliTipo"><option value="">(no sé / no dio)</option>{% for v, e in tipos_identificacion %}<option value="{{ v }}">{{ e }}</option>{% endfor %}</select>
+    <label for="cliCedula">Cédula</label><input id="cliCedula" autocomplete="off" inputmode="numeric">
+    <label for="cliCorreo">Correo</label><input id="cliCorreo" type="email" autocomplete="off">
+    <div class="err" id="cliErr"></div>
+    <div class="acc"><button type="button" data-cerrar>Cancelar</button><button class="pri" id="cliOk">Guardar</button></div>
+  </form>
+</dialog>
+
+<dialog class="dlg" id="dlgCamara" aria-labelledby="tCam">
+  <h2 id="tCam">Escanear con la cámara</h2>
+  <div class="sub">Apunte al código de barras. Se agrega solo.</div>
+  <video id="camVideo" playsinline muted></video>
+  <div class="err" id="camErr"></div>
+  <div class="acc"><button type="button" data-cerrar>Cerrar</button></div>
+</dialog>
 
 <div class="help-fab" onclick="document.getElementById('ayuda').classList.add('on')">?</div>
 <div class="overlay" id="ayuda" onclick="if(event.target===this)this.classList.remove('on')">
@@ -221,8 +316,8 @@ main{flex:1;display:grid;grid-template-columns:1fr 440px;gap:16px;padding:14px 2
     <div class="step2"><div class="n">2</div><div class="st">Repetí con cada producto. A la derecha se va armando la venta con el total.</div></div>
     <div class="step2"><div class="n">3</div><div class="st">Tocá cómo paga: <b>Efectivo</b>, <b>Tarjeta</b> o <b>SINPE</b>. Sale el tiquete solo.</div></div>
     <div class="step2"><div class="n">4</div><div class="st">Si el cliente lleva fiado, elegí su nombre arriba y usá <b>Fiado</b>.</div></div>
-    <div class="step2"><div class="n">5</div><div class="st"><b>Descuento o regalo.</b> Debajo de cada producto en la venta podés poner un <b>descuento</b> en colones, o marcarlo como <b>🎁 Regalo</b> (sale gratis, pero igual descuenta del inventario y se registra el costo).</div></div>
-    <div class="step2"><div class="n">6</div><div class="st"><b>Con el teclado es más rápido.</b> <b>F1</b> cobra en efectivo, <b>F2</b> con tarjeta y <b>F3</b> por SINPE. <b>Esc</b> limpia la búsqueda y devuelve el cursor al escáner.</div></div>
+    <div class="step2"><div class="n">5</div><div class="st"><b>Descuento o regalo.</b> Debajo de cada producto en la venta podés poner un <b>descuento</b> en porcentaje (%), o marcarlo como <b>🎁 Regalo</b> (sale gratis, pero igual descuenta del inventario y se registra el costo).</div></div>
+    <div class="step2"><div class="n">6</div><div class="st"><b>Con el teclado es más rápido.</b> <b>F1</b> cobra en efectivo (escribí con cuánto paga y Enter; Enter solo = pagó exacto), <b>F2</b> con tarjeta, <b>F3</b> por SINPE y <b>F4</b> pago mixto. <b>Esc</b> limpia la búsqueda y devuelve el cursor al escáner.</div></div>
     <button class="close" onclick="document.getElementById('ayuda').classList.remove('on')">Entendido</button>
   </div>
 </div>
@@ -459,54 +554,296 @@ function pintar(){
   // el contador del producto afectado con refrescarStock(id). El catálogo se
   // rearma únicamente cuando cambia de verdad: al buscar, filtrar o cobrar.
 }
-async function cobrar(medio){
-  const lineas = Object.entries(carrito).map(([id,c])=>({
+// --- Cobro (auditoría 26/09/2026) ------------------------------------------
+// `cobrando` y `clave` cierran el doble cobro (VEN-02). Los botones ya se
+// deshabilitaban, pero F1/F2/F3 llamaban a cobrar() igual y un doble toque
+// creaba dos ventas. Ahora: (1) mientras hay un cobro en viaje, cualquier otro
+// intento se ignora; (2) cada venta lleva una clave única que el servidor usa
+// para no registrarla dos veces aunque la red reintente. La clave se conserva
+// si la conexión falla, así el reintento del cajero no duplica.
+let cobrando = false;
+let clave = null;
+function nuevaClave(){
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+}
+function totalCarrito(){ return Object.keys(carrito).reduce((a,id)=>a + totalLinea(id), 0); }
+function lineasCarrito(){
+  return Object.entries(carrito).map(([id,c])=>({
     producto_id:+id, cantidad:c.cantidad,
     descuento_pct: c.regalia ? 0 : (c.descuento_pct||0),
     es_regalia: !!c.regalia,
     motivo: c.regalia ? (c.motivo_regalia||'').trim() : '',
   }));
-  if (!lineas.length){ msg("Todavía no agregaste productos.", true); return; }
+}
+function listoParaCobrar(){
+  const lineas = lineasCarrito();
+  if (!lineas.length){ msg("Todavía no agregaste productos.", true); return false; }
   // Chequeo local (SEC-006): evita el viaje al servidor por un motivo vacío;
   // el servidor lo exige igual, esto es solo para no hacer esperar al cajero.
-  if (lineas.some(l => l.es_regalia && !l.motivo)){
-    msg("Toda regalía necesita un motivo.", true); return;
-  }
+  if (lineas.some(l => l.es_regalia && !l.motivo)){ msg("Toda regalía necesita un motivo.", true); return false; }
+  return true;
+}
+const montoDe = v => { const n = parseFloat(String(v||'').replace(/[^\d.,]/g,'').replace(/\./g,'').replace(',','.')); return isNaN(n) ? 0 : n; };
+function cerrarDialogos(){ document.querySelectorAll('dialog[open]').forEach(d=>d.close()); }
+document.querySelectorAll('dialog [data-cerrar]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+document.querySelectorAll('dialog').forEach(d => d.addEventListener('close', () => { if (d.id !== 'dlgCliente') volverAlEscaner(); }));
+
+// Efectivo con vuelto (VEN-03). Enter sin escribir = pagó exacto: un Enter de
+// más, no un paso más.
+function pedirEfectivo(){
+  if (cobrando || !listoParaCobrar()) return;
+  const total = totalCarrito();
+  document.getElementById('efeTotal').textContent = fmt(total);
+  const inp = document.getElementById('efeRecibido'); inp.value = '';
+  // Billetes probables: el siguiente múltiplo de 1.000, 5.000, 10.000 y 20.000.
+  const rap = document.getElementById('efeRapidos'); rap.textContent = '';
+  [...new Set([1000,5000,10000,20000].map(b => Math.ceil(total / b) * b))].filter(v => v > total).slice(0,4).forEach(v => {
+    const b = document.createElement('button'); b.type='button'; b.textContent = fmt(v);
+    b.addEventListener('click', () => { inp.value = v; calcVuelto(); inp.focus(); });
+    rap.appendChild(b);
+  });
+  calcVuelto();
+  document.getElementById('dlgEfectivo').showModal();
+  inp.focus();
+}
+function calcVuelto(){
+  const total = totalCarrito(), rec = montoDe(document.getElementById('efeRecibido').value);
+  const fila = document.getElementById('efeVueltoFila'), ok = document.getElementById('efeOk');
+  if (!rec){ fila.className='fila vuelto'; document.getElementById('efeVuelto').textContent = fmt(0); ok.disabled=false; return; }
+  if (rec < total){ fila.className='fila falta'; fila.firstElementChild.textContent='Falta';
+    document.getElementById('efeVuelto').textContent = fmt(total - rec); ok.disabled = true; return; }
+  fila.className='fila vuelto'; fila.firstElementChild.textContent='Vuelto';
+  document.getElementById('efeVuelto').textContent = fmt(rec - total); ok.disabled = false;
+}
+document.getElementById('efeRecibido').addEventListener('input', calcVuelto);
+document.getElementById('frmEfectivo').addEventListener('submit', e => {
+  e.preventDefault();
+  if (document.getElementById('efeOk').disabled) return;
+  const rec = montoDe(document.getElementById('efeRecibido').value);
+  document.getElementById('dlgEfectivo').close();
+  cobrar('EFE', {recibido: rec || null});
+});
+
+// Pago mixto (VEN-04): efectivo + tarjeta + SINPE, sumando exacto.
+function pedirMixto(){
+  if (cobrando || !listoParaCobrar()) return;
+  document.getElementById('mixTotal').textContent = fmt(totalCarrito());
+  ['mixEFE','mixTAR','mixSIN'].forEach(i => document.getElementById(i).value = '');
+  calcMixto();
+  document.getElementById('dlgMixto').showModal();
+  document.getElementById('mixEFE').focus();
+}
+function calcMixto(){
+  const total = totalCarrito();
+  const suma = ['mixEFE','mixTAR','mixSIN'].reduce((a,i)=>a + montoDe(document.getElementById(i).value), 0);
+  const dif = Math.round((total - suma) * 100) / 100;
+  document.getElementById('mixFaltaTxt').textContent = dif > 0 ? 'Falta' : (dif < 0 ? 'Sobra' : 'Cuadra');
+  document.getElementById('mixFalta').textContent = fmt(Math.abs(dif));
+  document.getElementById('mixFaltaFila').className = 'fila' + (dif ? ' falta' : ' vuelto');
+  document.getElementById('mixOk').disabled = dif !== 0;
+}
+['mixEFE','mixTAR','mixSIN'].forEach(i => document.getElementById(i).addEventListener('input', calcMixto));
+document.getElementById('frmMixto').addEventListener('submit', e => {
+  e.preventDefault();
+  if (document.getElementById('mixOk').disabled) return;
+  const pagos = [['EFE','mixEFE'],['TAR','mixTAR'],['SIN','mixSIN']]
+    .map(([m,i]) => ({medio:m, monto: montoDe(document.getElementById(i).value)})).filter(p => p.monto > 0);
+  document.getElementById('dlgMixto').close();
+  if (pagos.length === 1){ cobrar(pagos[0].medio); return; }   // puso todo en un solo medio
+  cobrar('MIX', {pagos});
+});
+
+async function cobrar(medio, extra = {}){
+  if (cobrando) return;               // un cobro a la vez (VEN-02)
+  if (!listoParaCobrar()) return;
   const clienteId = document.getElementById('cliente').value;
   if (medio === 'CRE' && !clienteId){ msg("Para fiar, elegí primero el cliente arriba.", true); return; }
+  cobrando = true;
+  if (!clave) clave = nuevaClave();
   document.querySelectorAll('.pagos button, #btnCredito').forEach(b=>b.disabled=true);
   try {
     const r = await fetch("{% url 'ventas:vender' %}", {
       method:'POST',
       headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
-      body: JSON.stringify({medio_pago: medio, lineas, cliente_id: clienteId || null})
+      body: JSON.stringify({medio_pago: medio, lineas: lineasCarrito(), cliente_id: clienteId || null,
+                            clave, pagos: extra.pagos || null, recibido: extra.recibido || null})
     });
     const d = await r.json();
     if (d.ok){
-      Object.entries(carrito).forEach(([id,c])=>{ porId[id].stock_actual -= c.cantidad; });
+      if (!d.repetida) Object.entries(carrito).forEach(([id,c])=>{ porId[id].stock_actual -= c.cantidad; });
       carrito = {};
-      soloEscaneados = false;   // la venta terminó: vuelve el catálogo entero
+      clave = null;                   // la próxima venta lleva una clave nueva
+      soloEscaneados = false;         // la venta terminó: vuelve el catálogo entero
       pintar();
-      pintarGrid();   // acá sí toca rearmar el catálogo: bajó el stock de varios productos
+      pintarGrid();                   // acá sí toca rearmar el catálogo: bajó el stock de varios productos
       document.getElementById('cliente').value = '';
-      if (d.impreso){
-        // "Enviado" y no "impreso" cuando pasa por el agente de la tienda: el
-        // ERP está en la nube y lo único que sabe es que lo dejó en la cola.
-        msg(d.encolado
-          ? `✅ Venta ${d.numero} por ${fmt(d.total)}. Tiquete enviado a la impresora.`
-          : `✅ Venta ${d.numero} por ${fmt(d.total)}. Tiquete impreso.`);
-      } else {
+      mostrarUltima(d);
+      if (!d.impreso){
         // La venta YA quedó registrada: si la térmica falló se abre el tiquete
-        // en pantalla para no dejar al cliente sin comprobante mientras se
-        // resuelve la impresora.
-        msg(`⚠️ Venta ${d.numero} por ${fmt(d.total)} registrada, pero no salió el tiquete. ${d.error_impresion||''}`, true);
+        // en pantalla para no dejar al cliente sin comprobante.
         window.open(d.tiquete_url, '_blank', 'width=420,height=640');
       }
-      volverAlEscaner();   // listo para la siguiente venta sin tocar el mouse
-    } else { msg("⛔ " + d.error, true); }
-  } catch(e){ msg("⛔ No se pudo conectar con el servidor.", true); }
+    } else {
+      msg("⛔ " + d.error, true);
+      clave = null;                   // el servidor la rechazó: no quedó registrada
+    }
+  } catch(e){
+    // Sin respuesta no se sabe si la venta quedó: se conserva la clave para
+    // que volver a cobrar NO la duplique.
+    msg("⛔ No se pudo conectar con el servidor. Vuelva a tocar el medio de pago: no se va a cobrar dos veces.", true);
+  }
+  cobrando = false;
   document.querySelectorAll('.pagos button, #btnCredito').forEach(b=>b.disabled=false);
+  volverAlEscaner();
 }
+
+// --- La última venta queda a mano: vuelto, reimprimir y correo (TIQ-03) ---
+let ultima = null;
+function mostrarUltima(d){
+  ultima = d;
+  const u = document.getElementById('ultima');
+  u.textContent = '';
+  const t = document.createElement('div'); t.className = 't';
+  t.textContent = `✅ Venta ${d.numero} por ${fmt(d.total)}` + (d.repetida ? ' (ya estaba registrada)' : '');
+  u.appendChild(t);
+  if (d.vuelto !== null && d.vuelto !== undefined){
+    const v = document.createElement('div'); v.className = 'vuelto';
+    v.textContent = `Vuelto: ${fmt(d.vuelto)}`; u.appendChild(v);
+  }
+  const imp = document.createElement('div'); imp.className = 'imp'; imp.id = 'ultimaImp';
+  imp.textContent = d.repetida ? '' : (d.impreso ? (d.encolado ? 'Tiquete enviado a la impresora…' : 'Tiquete impreso.')
+                                                 : `No salió el tiquete. ${d.error_impresion||''}`);
+  if (!d.impreso && !d.repetida) imp.classList.add('mal');
+  u.appendChild(imp);
+  const bts = document.createElement('div'); bts.className = 'bts';
+  const b1 = document.createElement('button'); b1.type='button'; b1.textContent = '🖨️ Reimprimir'; b1.addEventListener('click', reimprimir);
+  const b2 = document.createElement('button'); b2.type='button'; b2.textContent = '✉️ Enviar por correo'; b2.addEventListener('click', enviarCorreo);
+  const a = document.createElement('a'); a.href = d.tiquete_url; a.target = '_blank'; a.textContent = 'Ver tiquete';
+  bts.append(b1, b2, a); u.appendChild(bts);
+  u.classList.add('on');
+  if (d.trabajo_url) vigilarTiquete(d.trabajo_url, d.numero);
+}
+// ¿Salió el tiquete de verdad? (TIQ-02). Con el ERP en la nube, "enviado"
+// solo significa "en la cola". Se pregunta unos segundos: si el agente de la
+// tienda falla o no está abierto, el cajero se entera en el momento.
+async function vigilarTiquete(url, numero){
+  for (let i = 0; i < 12; i++){
+    await new Promise(r => setTimeout(r, 2000));
+    if (!ultima || ultima.numero !== numero) return;   // ya hay otra venta
+    let d; try { d = await (await fetch(url)).json(); } catch(_) { continue; }
+    const el = document.getElementById('ultimaImp'); if (!el) return;
+    if (d.ok){ el.textContent = '✅ Tiquete impreso.'; el.classList.remove('mal'); return; }
+    if (d.terminado){
+      el.textContent = `⛔ El tiquete NO salió: ${d.detalle || 'la impresora no respondió'}. Revise la impresora y toque «Reimprimir».`;
+      el.classList.add('mal'); msg(`⛔ El tiquete de ${numero} no salió. Revise la impresora.`, true); return;
+    }
+  }
+  const el = document.getElementById('ultimaImp');
+  if (el && ultima && ultima.numero === numero){
+    el.textContent = '⚠️ El tiquete todavía no sale. ¿Está abierto el programa de impresión (AGENTE_IMPRESION) en la computadora de la tienda?';
+    el.classList.add('mal');
+  }
+}
+async function reimprimir(){
+  if (!ultima) return;
+  try {
+    const r = await fetch(ultima.reimprimir_url, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}});
+    const d = await r.json();
+    if (d.ok){ msg('🖨️ Tiquete enviado de nuevo.');
+      if (d.trabajo_id){ vigilarTiquete(`{% url 'impresion:estado_trabajo' 0 %}`.replace('/0/', `/${d.trabajo_id}/`), ultima.numero); } }
+    else msg('⛔ ' + d.error, true);
+  } catch(_){ msg('⛔ No se pudo conectar con el ERP.', true); }
+  volverAlEscaner();
+}
+async function enviarCorreo(){
+  if (!ultima) return;
+  const correo = prompt('¿A qué correo le mandamos el recibo?', ultima.correo_cliente || '');
+  if (!correo || !correo.trim()){ volverAlEscaner(); return; }
+  const datos = new FormData(); datos.append('destinatario', correo.trim());
+  msg('Enviando el recibo…');
+  try {
+    const r = await fetch(ultima.enviar_url, {method:'POST', body: datos,
+      headers:{'X-CSRFToken':'{{ csrf_token }}', 'Accept':'application/json'}});
+    const d = await r.json();
+    msg(d.ok ? `✉️ Recibo enviado a ${d.enviado_a}.` : '⛔ ' + d.error, !d.ok);
+  } catch(_){ msg('⛔ No se pudo conectar con el ERP.', true); }
+  volverAlEscaner();
+}
+
+// --- Cliente nuevo sin salir de la venta (FE-03) ---
+document.getElementById('btnCliNuevo').addEventListener('click', () => {
+  ['cliNombre','cliCedula','cliCorreo'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('cliTipo').value = ''; document.getElementById('cliErr').textContent = '';
+  document.getElementById('dlgCliente').showModal(); document.getElementById('cliNombre').focus();
+});
+document.getElementById('frmCliente').addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = document.getElementById('cliErr'); err.textContent = '';
+  try {
+    const r = await fetch("{% url 'ventas:cliente_rapido' %}", {method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
+      body: JSON.stringify({nombre: document.getElementById('cliNombre').value, tipo_identificacion: document.getElementById('cliTipo').value,
+                            identificacion: document.getElementById('cliCedula').value, email: document.getElementById('cliCorreo').value})});
+    const d = await r.json();
+    if (!d.ok){ err.textContent = d.error; return; }
+    const c = d.cliente, sel = document.getElementById('cliente');
+    if (![...sel.options].some(o => o.value == c.id)){
+      const o = document.createElement('option'); o.value = c.id; o.textContent = `${c.nombre} — disponible ${fmt(c.disponible)}`; sel.appendChild(o);
+    }
+    sel.value = c.id;
+    document.getElementById('dlgCliente').close();
+    msg(d.ya_existia ? `Ese cliente ya existía: ${c.nombre}.` : `Cliente ${c.nombre} registrado.`);
+    volverAlEscaner();
+  } catch(_){ err.textContent = 'No se pudo conectar con el ERP.'; }
+});
+
+// --- Código que no está en la lista: preguntarle al servidor (VEN-05) ---
+async function buscarEnServidor(codigo){
+  try {
+    const r = await fetch("{% url 'ventas:producto_por_codigo' %}?q=" + encodeURIComponent(codigo));
+    const d = await r.json();
+    if (d.ok){
+      const p = d.producto;
+      if (!porId[p.id]){ productos.push(p); porId[p.id] = p; } else { porId[p.id].stock_actual = p.stock_actual; }
+      soloEscaneados = true; agregar(p.id); pintarGrid();
+    } else { msg("⛔ " + d.error, true); }
+  } catch(_){ msg("No encontré ese producto: " + codigo, true); }
+}
+function escaneado(codigo){
+  let prod = productos.find(p => p.codigo_barras === codigo || p.sku === codigo);
+  if (!prod){ const r = filtrar(); if (r.length === 1) prod = r[0]; }
+  if (prod){ soloEscaneados = true; agregar(prod.id); pintarGrid(); }
+  else { buscarEnServidor(codigo); }
+}
+
+// --- Cámara del celular (INV-09) -----------------------------------------------
+// Solo aparece donde el navegador trae BarcodeDetector (Chrome en Android). En
+// una computadora con pistola no hace falta y el botón no se muestra.
+let camStream = null, camActiva = false;
+if ('BarcodeDetector' in window && navigator.mediaDevices){
+  document.getElementById('btnCamara').style.display = 'block';
+  document.getElementById('btnCamara').addEventListener('click', abrirCamara);
+  document.getElementById('dlgCamara').addEventListener('close', () => {
+    camActiva = false; if (camStream){ camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  });
+}
+async function abrirCamara(){
+  const dlg = document.getElementById('dlgCamara'), video = document.getElementById('camVideo');
+  document.getElementById('camErr').textContent = '';
+  dlg.showModal();
+  try {
+    const detector = new BarcodeDetector({formats: ['ean_13','ean_8','code_128','upc_a','upc_e']});
+    camStream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'environment'}});
+    video.srcObject = camStream; await video.play(); camActiva = true;
+    while (camActiva){
+      const hallados = await detector.detect(video).catch(() => []);
+      if (hallados.length){ dlg.close(); escaneado(hallados[0].rawValue.trim()); return; }
+      await new Promise(r => setTimeout(r, 250));
+    }
+  } catch(_){ document.getElementById('camErr').textContent = 'No se pudo usar la cámara. Revise el permiso del navegador.'; }
+}
+
 document.getElementById('buscar').addEventListener('input', () => {
   // Escribir es buscar en todo el catálogo; si no, un producto sin código de
   // barras quedaría inalcanzable en medio de una venta.
@@ -517,11 +854,10 @@ document.getElementById('buscar').addEventListener('keydown', e=>{
   if (e.key !== 'Enter') return;
   const q = e.target.value.trim();
   if (!q) return;
-  // La pistola escanea el código y da Enter: coincidencia EXACTA primero.
-  let prod = productos.find(p => p.codigo_barras === q || p.sku === q);
-  if (!prod){ const r = filtrar(); if (r.length === 1) prod = r[0]; }
-  if (prod){ soloEscaneados = true; agregar(prod.id); e.target.value=''; pintarGrid(); }
-  else { msg("No encontré ese producto: " + q, true); }
+  // La pistola escanea el código y da Enter: coincidencia EXACTA primero, y si
+  // no está en la lista cargada se le pregunta al servidor (VEN-05).
+  e.target.value = '';
+  escaneado(q);
 });
 // Atajos de cobro. Con la pistola en una mano, las teclas de función evitan
 // soltar el escáner para ir al mouse en cada venta. Esc limpia la búsqueda y
@@ -534,7 +870,10 @@ document.addEventListener('keydown', e => {
     b.value = ''; pintarGrid(); volverAlEscaner();
     return;
   }
-  const medios = {F1:'EFE', F2:'TAR', F3:'SIN'};
+  if (document.querySelector('dialog[open]')) return;   // los diálogos manejan su teclado
+  if (e.key === 'F1'){ e.preventDefault(); pedirEfectivo(); return; }
+  if (e.key === 'F4'){ e.preventDefault(); pedirMixto(); return; }
+  const medios = {F2:'TAR', F3:'SIN'};
   if (medios[e.key]){ e.preventDefault(); cobrar(medios[e.key]); }
 });
 

@@ -22,6 +22,8 @@ from core.tenancy import documento_de_empresa, empresa_actual
 from inventario.etiquetas import seleccionar_para_etiquetas
 from ventas.models import FacturaVenta
 
+from .models import TrabajoImpresion
+
 from . import servicio
 from .servicio import ErrorDeImpresion
 
@@ -38,11 +40,26 @@ def tiquete(request, factura_id):
         pk=factura_id,
     )
     try:
-        servicio.imprimir_tiquete(factura)
+        trabajo = servicio.imprimir_tiquete(factura)
     except ErrorDeImpresion as e:
         logger.warning("No se pudo imprimir el tiquete %s: %s", factura.numero, e)
         return JsonResponse({"ok": False, "error": str(e)}, status=503)
-    return JsonResponse({"ok": True})
+    return JsonResponse({"ok": True, "trabajo_id": trabajo.pk if trabajo else None})
+
+
+@rol_requerido(CAJERO, GERENTE)
+def estado_trabajo(request, trabajo_id):
+    """¿Salió el tiquete? El POS pregunta esto unos segundos después de cobrar
+    (TIQ-02). Solo devuelve el estado y el mensaje de error: nunca el
+    contenido, que es para el agente."""
+    trabajo = get_object_or_404(TrabajoImpresion, pk=trabajo_id)
+    return JsonResponse({
+        "estado": trabajo.estado,
+        "terminado": trabajo.estado in (TrabajoImpresion.IMPRESO, TrabajoImpresion.ERROR,
+                                        TrabajoImpresion.VENCIDO),
+        "ok": trabajo.estado == TrabajoImpresion.IMPRESO,
+        "detalle": trabajo.detalle,
+    })
 
 
 def _a_donde_volver(request):

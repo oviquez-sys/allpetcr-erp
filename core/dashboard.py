@@ -82,10 +82,10 @@ def _calcular_indicadores(empresa):
     # Desglose del día por medio de pago. Es lo que explica por qué el efectivo
     # de la gaveta no coincide con las ventas del día: SINPE y tarjeta no pasan
     # por caja. Agrupado en la base, no iterando facturas.
-    por_medio = {
-        f["medio_pago"]: f
-        for f in facturas_hoy.values("medio_pago").annotate(t=Sum("total"), n=Count("id"))
-    }
+    # Los pagos mixtos se reparten entre sus medios (VEN-04, ventas/pagos.py).
+    from ventas.pagos import MEDIOS_REALES
+    from ventas.pagos import por_medio as _por_medio
+    por_medio = _por_medio(facturas_hoy)
     ventas_hoy_por_medio = [
         {
             "codigo": codigo,
@@ -93,7 +93,7 @@ def _calcular_indicadores(empresa):
             "total": (por_medio.get(codigo, {}).get("t") or Decimal("0")),
             "tiquetes": (por_medio.get(codigo, {}).get("n") or 0),
         }
-        for codigo, etiqueta in FacturaVenta.MedioPago.choices
+        for codigo, etiqueta in MEDIOS_REALES
     ]
     # El crédito es venta, NO es cobro. Separarlos evita el error de leer
     # "ventas del día" como "plata que entró hoy".

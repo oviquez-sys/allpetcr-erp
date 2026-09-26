@@ -420,7 +420,14 @@ else:
 # Sin EMAIL_HOST_PASSWORD configurado, Django usa el backend de consola: no
 # manda nada de verdad, solo imprime el correo en la terminal. Así el sistema
 # no se rompe si todavía no se configuró el correo.
-if os.environ.get("EMAIL_HOST_PASSWORD"):
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+if RESEND_API_KEY:
+    # Correo por HTTPS (auditoría 26/09/2026, TIQ-06). Gana sobre el SMTP: si
+    # alguien configuró la llave es porque el SMTP no sale del servidor.
+    EMAIL_BACKEND = "core.correo.ResendBackend"
+    DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "AllPetcr <recibos@allpetcr.com>")
+    EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "20"))
+elif os.environ.get("EMAIL_HOST_PASSWORD"):
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
     EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.office365.com")
     EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))

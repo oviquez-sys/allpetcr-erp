@@ -75,8 +75,13 @@ def enviar_imagen(impresora: str, imagen, ancho_mm: float, alto_mm: float,
     windows.imprimir_imagen(impresora, imagen, ancho_mm, alto_mm, titulo=titulo)
 
 
-def imprimir_tiquete(factura) -> None:
-    """Saca el tiquete de la venta por la térmica de recibos."""
+def imprimir_tiquete(factura):
+    """Saca el tiquete de la venta por la térmica de recibos.
+
+    Devuelve el TrabajoImpresion si quedó en la cola del agente, o None si
+    se imprimió directo. El POS usa ese trabajo para preguntar si el tiquete
+    salió de verdad (auditoría 26/09/2026, TIQ-02): el 24/09 dos tiquetes
+    fallaron en la tienda mientras la pantalla decía «enviado»."""
     datos = _tiquete.bytes_tiquete(
         factura,
         ancho=settings.ANCHO_TIQUETE,
@@ -88,11 +93,11 @@ def imprimir_tiquete(factura) -> None:
     )
     titulo = f"Tiquete {factura.numero}"
     if por_agente():
-        cola.encolar_crudo(
+        return cola.encolar_crudo(
             settings.IMPRESORA_RECIBOS, datos, titulo, TrabajoImpresion.TIQUETE
         )
-        return
     windows.enviar_crudo(settings.IMPRESORA_RECIBOS, datos, titulo=titulo)
+    return None
 
 
 def imprimir_etiqueta(producto, copias: int = 1) -> int:

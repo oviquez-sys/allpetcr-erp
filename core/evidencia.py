@@ -94,17 +94,18 @@ def efectivo_en_caja(empresa):
     # explica la diferencia entre "ventas de hoy" y "efectivo en caja", que es
     # la duda que trae a esta pantalla a casi todo el mundo.
     hoy = timezone.localdate()
-    no_efectivo = (
+    # Con pago mixto (VEN-04) la parte en efectivo SÍ entra a la gaveta: se
+    # reparte por medio con ventas/pagos.py en vez de agrupar por factura.
+    from ventas.pagos import por_medio as _por_medio
+    no_efectivo = _por_medio(
         FacturaVenta.objects
         .filter(empresa=empresa, estado=FacturaVenta.Estado.EMITIDA, creado_en__date=hoy)
-        .exclude(medio_pago=FacturaVenta.MedioPago.EFECTIVO)
-        .values("medio_pago").annotate(t=Sum("total"))
     )
     etiquetas = dict(FacturaVenta.MedioPago.choices)
     excluye = [
-        {"titulo": f"{etiquetas.get(f['medio_pago'], f['medio_pago'])}: ₡{f['t']:,.0f}".replace(",", "."),
+        {"titulo": f"{etiquetas.get(medio, medio)}: ₡{d['t']:,.0f}".replace(",", "."),
          "detalle": "No entra a la gaveta: se cobra fuera del efectivo."}
-        for f in no_efectivo
+        for medio, d in no_efectivo.items() if medio != FacturaVenta.MedioPago.EFECTIVO and d["t"]
     ]
     excluye.append({
         "titulo": "El efectivo de sesiones anteriores",
@@ -147,13 +148,12 @@ def ventas_por_medio(empresa, fecha=None):
         .order_by("creado_en", "id")
     )
 
-    agrupado = {
-        f["medio_pago"]: f
-        for f in facturas.values("medio_pago").annotate(t=Sum("total"), n=Count("id"))
-    }
+    from ventas.pagos import MEDIOS_REALES
+    from ventas.pagos import por_medio as _por_medio
+    agrupado = _por_medio(facturas)
     formula = []
     total_ventas = Decimal("0")
-    for codigo, etiqueta in FacturaVenta.MedioPago.choices:
+    for codigo, etiqueta in MEDIOS_REALES:
         d = agrupado.get(codigo, {})
         monto = d.get("t") or Decimal("0")
         n = d.get("n") or 0

@@ -185,12 +185,14 @@ def resumen_diario(empresa, fecha):
     facturas = FacturaVenta.objects.filter(
         empresa=empresa, estado=FacturaVenta.Estado.EMITIDA, creado_en__date=fecha,
     )
-    ventas_por_medio = list(
-        facturas.values("medio_pago").annotate(total=Sum("total"), cantidad=Count("id")).order_by("-total")
-    )
+    # Pagos mixtos repartidos por medio (VEN-04, ventas/pagos.py).
+    from ventas.pagos import por_medio as _por_medio
     _medios = dict(FacturaVenta.MedioPago.choices)
-    for m in ventas_por_medio:
-        m["medio_pago"] = _medios.get(m["medio_pago"], m["medio_pago"])
+    ventas_por_medio = sorted(
+        ({"medio_pago": _medios.get(m, m), "total": d["t"], "cantidad": d["n"]}
+         for m, d in _por_medio(facturas).items()),
+        key=lambda m: -m["total"],
+    )
     total_ventas = facturas.aggregate(t=Sum("total"))["t"] or Decimal("0")
     num_ventas = facturas.count()
 

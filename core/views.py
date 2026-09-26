@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 import anthropic
 from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import Count
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -61,9 +62,13 @@ def actividad(request):
     # justamente la pantalla que no debería mezclar empresas: es la que se usa
     # para investigar anulaciones sospechosas.
     empresa = empresa_actual(request)
+    # `n_devoluciones`: una venta con devoluciones ya no se anula (VEN-01,
+    # auditoría 26/09/2026); la pantalla esconde el botón en vez de ofrecer
+    # una acción que el servidor va a rechazar.
     ventas = (FacturaVenta.objects
               .filter(empresa=empresa)
               .select_related("cliente", "usuario", "anulada_por")
+              .annotate(n_devoluciones=Count("devoluciones"))
               .order_by("-id")[:40])
     compras = (Compra.objects
                .filter(empresa=empresa)

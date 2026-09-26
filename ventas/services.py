@@ -22,7 +22,7 @@ from core.models import Empresa
 from inventario.models import Bodega
 from inventario.services import registrar_movimiento
 
-from .models import Consecutivo, FacturaVenta, LineaVenta
+from .models import Consecutivo, FacturaVenta, LineaVenta, PagoVenta
 
 # Descuento máximo que un cajero puede aplicar por línea sin que un gerente
 # autorice la venta (SEC-001, auditoría 2026-08-10). Antes no había ningún
@@ -54,10 +54,38 @@ def _desglose_fiscal(empresa, producto, total_linea):
     return subtotal, total_linea - subtotal
 
 
+# Medios que pueden combinarse en un pago mixto (VEN-04). El crédito queda
+# afuera a propósito: una venta a medias fiada necesitaría una CxC parcial,
+# abonos contra una parte, y un reembolso que no sabe de qué parte salió. Si
+# el cliente fía una parte, se hace como dos ventas.
+MEDIOS_MIXTOS = ("EFE", "TAR", "SIN")
+
+
+def _validar_pagos(pagos, total):
+    """Normaliza la lista de pagos mixtos y exige que sume el total exacto."""
+    limpios = []
+    for p in pagos:
+        medio = p.get("medio")
+        monto = Decimal(str(p.get("monto") or 0)).quantize(Decimal("0.01"))
+        if medio not in MEDIOS_MIXTOS:
+            raise ValidationError("En un pago mixto solo se combinan efectivo, tarjeta y SINPE.")
+        if monto < 0:
+            raise ValidationError("Un monto del pago mixto no puede ser negativo.")
+        if monto > 0:
+            limpios.append({"medio": medio, "monto": monto})
+    suma = sum((p["monto"] for p in limpios), Decimal("0"))
+    if suma != total:
+        raise ValidationError(
+            f"Los pagos suman ₡{suma:,.2f} y la venta es de ₡{total:,.2f}: tienen que coincidir."
+        )
+    return limpios
+
+
 @transaction.atomic
 def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
                     permitir_bajo_costo=False, permitir_descuento_alto=False,
-                    permitir_regalia_alta=False) -> FacturaVenta:
+                    permitir_regalia_alta=False, pagos=None, clave_pos=None,
+                    monto_recibido=None) -> FacturaVenta:
     """lineas: iterable de dicts {"producto_id": int, "cantidad": Decimal}.
 
     permitir_bajo_costo: por defecto NO se puede vender un producto por debajo
@@ -72,7 +100,22 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
 
     permitir_regalia_alta: por defecto un cajero no puede marcar es_regalia
     en una línea cuyo valor de lista supere REGALIA_MAXIMA_SIN_AUTORIZACION
-    (SEC-006). Toda regalía exige además un motivo (línea["motivo"])."""
+    (SEC-006). Toda regalía exige además un motivo (línea["motivo"]).
+
+    pagos: solo con medio_pago="MIX", lista de {"medio", "monto"} que debe
+    sumar el total (VEN-04).
+
+    clave_pos: identificador único que el POS le pone a CADA venta. Si llega
+    una que ya existe, se devuelve esa y no se crea otra (VEN-02: doble F1,
+    reintento de la red).
+
+    monto_recibido: efectivo que entregó el cliente; si viene, se guarda el
+    vuelto (VEN-03)."""
+    if clave_pos:
+        ya_hecha = FacturaVenta.objects.filter(clave_pos=clave_pos).first()
+        if ya_hecha is not None:
+            ya_hecha.repetida = True  # la vista no vuelve a imprimir
+            return ya_hecha
     # Releer la sesión desde la BD con bloqueo: el objeto en memoria puede
     # estar desactualizado (p. ej., la caja se cerró desde otra pantalla).
     sesion_caja = SesionCaja.objects.select_for_update().get(pk=sesion_caja.pk)
@@ -94,9 +137,19 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
         raise ValidationError("La sucursal no tiene bodega configurada.")
 
     numero = Consecutivo.tomar(empresa, "FV")
+    # Segunda mirada, ya con el consecutivo bloqueado: si dos envíos del mismo
+    # cobro llegaron a la vez, el primero ya confirmó y este lo encuentra. Se
+    # deshace lo de esta transacción, así el número tomado vuelve a quedar libre.
+    if clave_pos:
+        ya_hecha = FacturaVenta.objects.filter(clave_pos=clave_pos).first()
+        if ya_hecha is not None:
+            transaction.set_rollback(True)
+            ya_hecha.repetida = True
+            return ya_hecha
     factura = FacturaVenta.objects.create(
         empresa=empresa, sucursal=sucursal, sesion_caja=sesion_caja,
         numero=numero, cliente=cliente, medio_pago=medio_pago, usuario=usuario,
+        clave_pos=clave_pos or None,
     )
 
     # Orden estable de bloqueo: al recorrer las líneas se toma un lock de fila
@@ -119,6 +172,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             # stock sale y su costo se registra como gasto de promoción.
             precio = Decimal("0")
             desc_l = Decimal("0")
+            desc_pct = Decimal("0")
             total_linea = Decimal("0")
             sub_l = imp_l = Decimal("0")
             tipo_kardex = "REG"
@@ -185,22 +239,48 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             precio_unitario=precio, descuento_pct=desc_pct if not es_regalia else 0,
             descuento_monto=desc_l if not es_regalia else 0, es_regalia=es_regalia,
             costo_unitario=producto.costo_promedio, total=total_linea,
+            # Foto fiscal de la línea (VEN-08). En simplificado no hay tarifa
+            # que declarar: se deja vacía en vez de inventar un 0 %.
+            tarifa_iva=(producto.tarifa_iva if empresa.regimen == Empresa.Regimen.TRADICIONAL else None),
+            subtotal=sub_l, impuesto=imp_l, cabys=producto.cabys or "",
         )
         subtotal += sub_l; impuesto += imp_l; total += total_linea; descuento_total += desc_l
 
     factura.subtotal, factura.impuesto, factura.total = subtotal, impuesto, total
     factura.descuento = descuento_total
-    factura.save(update_fields=["subtotal", "descuento", "impuesto", "total"])
 
-    if medio_pago == FacturaVenta.MedioPago.EFECTIVO:
-        # Una venta 100% regalía tiene total 0: no mueve caja (evita el
-        # movimiento de monto cero, que además es inválido).
-        if total > 0:
-            registrar_movimiento_caja(
-                sesion=sesion_caja, tipo=MovimientoCaja.Tipo.VENTA, monto=total,
-                descripcion=f"Venta {numero}", referencia=numero, usuario=usuario,
+    # Cuánto de este cobro es efectivo que entra al cajón.
+    if medio_pago == FacturaVenta.MedioPago.MIXTO:
+        pagos = _validar_pagos(pagos or [], total)
+        if len(pagos) < 2:
+            raise ValidationError("Un pago mixto necesita al menos dos medios con monto.")
+        for p in pagos:
+            PagoVenta.objects.create(factura=factura, medio=p["medio"], monto=p["monto"])
+        efectivo = sum((p["monto"] for p in pagos if p["medio"] == "EFE"), Decimal("0"))
+    elif medio_pago == FacturaVenta.MedioPago.EFECTIVO:
+        efectivo = total
+    else:
+        efectivo = Decimal("0")
+
+    campos = ["subtotal", "descuento", "impuesto", "total"]
+    if monto_recibido not in (None, "") and efectivo > 0:
+        recibido = Decimal(str(monto_recibido)).quantize(Decimal("0.01"))
+        if recibido < efectivo:
+            raise ValidationError(
+                f"El cliente entregó ₡{recibido:,.0f} y en efectivo son ₡{efectivo:,.0f}: falta plata."
             )
-    elif medio_pago == FacturaVenta.MedioPago.CREDITO:
+        factura.monto_recibido, factura.vuelto = recibido, recibido - efectivo
+        campos += ["monto_recibido", "vuelto"]
+    factura.save(update_fields=campos)
+
+    # Una venta 100% regalía tiene total 0: no mueve caja (evita el
+    # movimiento de monto cero, que además es inválido).
+    if efectivo > 0:
+        registrar_movimiento_caja(
+            sesion=sesion_caja, tipo=MovimientoCaja.Tipo.VENTA, monto=efectivo,
+            descripcion=f"Venta {numero}", referencia=numero, usuario=usuario,
+        )
+    if medio_pago == FacturaVenta.MedioPago.CREDITO:
         # Genera la cuenta por cobrar y valida el límite (revienta la venta
         # completa si el crédito no alcanza). No mueve caja: no hay efectivo.
         if total > 0:
@@ -223,6 +303,17 @@ def anular_factura(*, factura, motivo, usuario) -> FacturaVenta:
         raise ValidationError("La factura ya está anulada.")
     if not motivo or not motivo.strip():
         raise ValidationError("El motivo de anulación es obligatorio.")
+    # Una venta con devoluciones ya NO se anula (auditoría 26/09/2026, VEN-01).
+    # La anulación reversa las cantidades y el total ORIGINALES: sobre una
+    # venta con una devolución parcial volvía a meter al inventario lo ya
+    # devuelto y a sacar de caja otra vez lo ya reembolsado. Medido: venta de
+    # ₡10.600, devolución de ₡5.300 y anulación = ₡15.900 fuera de caja y una
+    # unidad fantasma. Lo que queda por devolver se devuelve con "Devolver".
+    if factura.devoluciones.exists():
+        raise ValidationError(
+            "Esta venta ya tiene devoluciones, así que no se puede anular completa. "
+            "Use «Devolver» para lo que falta devolver."
+        )
 
     # Se reversa contra la MISMA bodega de la que salió (BE-09).
     bodega = Bodega.principal_de(factura.sucursal)
@@ -232,7 +323,10 @@ def anular_factura(*, factura, motivo, usuario) -> FacturaVenta:
             cantidad=linea.cantidad, costo_unitario=Decimal("0"),
             referencia=f"ANU-{factura.numero}", motivo=motivo, usuario=usuario,
         )
-    if factura.medio_pago == FacturaVenta.MedioPago.EFECTIVO:
+    # Sale del cajón lo que entró en efectivo: todo en una venta de contado,
+    # solo la parte en efectivo en un pago mixto.
+    efectivo = sum((m for medio, m in factura.desglose_pagos() if medio == "EFE"), Decimal("0"))
+    if efectivo > 0:
         from caja.services import sesion_abierta_de
         sesion = sesion_abierta_de(usuario)
         if sesion is None:
@@ -241,7 +335,7 @@ def anular_factura(*, factura, motivo, usuario) -> FacturaVenta:
                 "(el dinero devuelto sale de esa caja)."
             )
         registrar_movimiento_caja(
-            sesion=sesion, tipo=MovimientoCaja.Tipo.ANULACION, monto=-factura.total,
+            sesion=sesion, tipo=MovimientoCaja.Tipo.ANULACION, monto=-efectivo,
             descripcion=f"Anulación {factura.numero}: {motivo}", referencia=factura.numero, usuario=usuario,
         )
     elif factura.medio_pago == FacturaVenta.MedioPago.CREDITO:

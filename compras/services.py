@@ -48,6 +48,22 @@ def crear_compra(*, proveedor, sucursal, lineas, forma_pago="CON", factura_prove
         # En el simplificado el IVA de las compras no se acredita: es costo.
         raise ValidationError("En régimen simplificado el IVA de la compra no se separa: "
                               "anotá el costo con todo incluido y dejá el IVA en 0.")
+    # La misma factura del proveedor no entra dos veces (auditoría 26/09/2026,
+    # INV-04). Con dos personas ingresando mercadería desde lugares distintos
+    # —Francisco desde el celular, Oscar desde la computadora— la misma factura
+    # podía cargarse dos veces: el doble de stock y el doble de deuda.
+    factura_proveedor = (factura_proveedor or "").strip()
+    if factura_proveedor:
+        repetida = (
+            Compra.objects.filter(proveedor=proveedor, factura_proveedor__iexact=factura_proveedor)
+            .exclude(estado=Compra.Estado.ANULADA).first()
+        )
+        if repetida is not None:
+            raise ValidationError(
+                f"La factura {factura_proveedor} de {proveedor.nombre} ya se ingresó "
+                f"({repetida.numero}, {repetida.creado_en:%d/%m/%Y}). Si de verdad es otra, "
+                "revise el número; si fue un error, anule la anterior primero."
+            )
     numero = Consecutivo.tomar(empresa, "OC")
     compra = Compra.objects.create(
         empresa=empresa, sucursal=sucursal, proveedor=proveedor, numero=numero,
@@ -73,6 +89,14 @@ def crear_compra(*, proveedor, sucursal, lineas, forma_pago="CON", factura_prove
     compra.total = total
     compra.save(update_fields=["total"])
     return compra
+
+
+@transaction.atomic
+def crear_y_recibir_compra(*, usuario=None, **datos) -> Compra:
+    """Crea la compra y la recibe en una sola transacción: o entra todo al
+    inventario y a la contabilidad, o no queda nada (INV-03)."""
+    compra = crear_compra(usuario=usuario, **datos)
+    return recibir_compra(compra=compra, usuario=usuario)
 
 
 @transaction.atomic

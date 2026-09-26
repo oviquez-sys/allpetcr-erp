@@ -1,0 +1,125 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Historial de ventas{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.hv-wrap{max-width:1040px;margin:0 auto}
+.hv-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.hv-sub{font-size:14px;color:#6e6e73;margin-bottom:18px}
+.hv-buscar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;background:#fff;border-radius:16px;padding:14px 16px;
+  box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:16px}
+.hv-buscar label{display:block;font-size:12.5px;font-weight:600;color:#6e6e73;margin-bottom:5px}
+.hv-buscar input{padding:10px 12px;border:1px solid #d9d9de;border-radius:10px;font-size:15px}
+.hv-buscar input[name=q]{min-width:260px}
+.hv-btn{padding:10px 16px;border:none;border-radius:10px;background:#0B3161;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.hv-card{background:#fff;border-radius:16px;overflow:auto;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;color:#6e6e73;font-weight:600;padding:10px 14px;border-bottom:1px solid #eee}
+td{padding:10px 14px;border-bottom:1px solid #f4f4f6;vertical-align:middle}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;padding:3px 10px;border-radius:980px;font-size:12px;font-weight:600}
+.badge.EMI{background:rgba(52,199,89,.14);color:#1c6b30}
+.badge.ANU{background:rgba(255,59,48,.1);color:#b5231a}
+.acc{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.acc a,.acc button{font-size:12.5px;padding:6px 10px;border-radius:8px;border:1px solid #d9d9de;background:#fff;color:#0B3161;cursor:pointer;text-decoration:none;white-space:nowrap}
+.acc .peligro{color:#b5231a;border-color:#f1c4c0}
+.hv-vacio{color:#6e6e73;padding:24px 16px}
+.hv-pag{display:flex;gap:10px;justify-content:center;margin:14px 0;font-size:14px}
+#aviso{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1d1d1f;color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;display:none;z-index:50}
+#aviso.err{background:#c0392b}
+</style>{% endblock %}
+
+{% block content %}
+<div class="hv-wrap">
+  <div class="hv-title">Historial de ventas</div>
+  <div class="hv-sub">Busque una venta para ver su tiquete, reimprimirlo o mandarlo por correo.</div>
+
+  <form class="hv-buscar" method="get">
+    <div>
+      <label for="q">Número, cliente o cédula</label>
+      <input id="q" name="q" value="{{ q }}" placeholder="ej. 48, FV-00000048 o María" autofocus>
+    </div>
+    <div>
+      <label for="fecha">o un día</label>
+      <input id="fecha" type="date" name="fecha" value="{% if fecha %}{{ fecha|date:'Y-m-d' }}{% endif %}">
+    </div>
+    <button class="hv-btn">Buscar</button>
+    <a href="{% url 'ventas:pos' %}" style="margin-left:auto;font-size:14px">← Volver a vender</a>
+  </form>
+
+  <div class="hv-card">
+    <table>
+      <thead><tr><th>Número</th><th>Fecha</th><th>Atendió</th><th>Cliente</th><th>Pago</th><th class="n">Total</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+      {% for f in pagina %}
+        <tr>
+          <td><b>{{ f.numero }}</b></td>
+          <td>{{ f.creado_en|date:"d/m/Y h:i A" }}</td>
+          <td>{{ f.usuario.username|default:"—" }}</td>
+          <td>{{ f.cliente.nombre|default:"—" }}</td>
+          <td>{{ f.get_medio_pago_display }}</td>
+          <td class="n">₡{{ f.total|crc:0 }}</td>
+          <td><span class="badge {{ f.estado }}">{{ f.get_estado_display }}</span>{% if f.n_devoluciones %} <small>con devolución</small>{% endif %}</td>
+          <td>
+            <div class="acc">
+              <a href="{% url 'ventas:tiquete' f.id %}" target="_blank">Ver tiquete</a>
+              <button type="button" data-reimprimir="{% url 'impresion:tiquete' f.id %}">Reimprimir</button>
+              <button type="button" data-enviar="{% url 'ventas:factura_enviar' f.id %}" data-correo="{{ f.cliente.email|default:'' }}">Correo</button>
+              {% if es_gerente and f.estado != "ANU" %}
+                <a href="{% url 'ventas:devolver' f.id %}">Devolver</a>
+                {% if not f.n_devoluciones %}
+                <button type="button" class="peligro" data-anular="{% url 'ventas:anular' f.id %}" data-numero="{{ f.numero }}">Anular</button>
+                {% endif %}
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="8" class="hv-vacio">No hay ventas {% if q %}que coincidan con «{{ q }}»{% else %}ese día{% endif %}.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pagina.has_other_pages %}
+  <div class="hv-pag">
+    {% if pagina.has_previous %}<a href="?q={{ q|urlencode }}&fecha={% if fecha %}{{ fecha|date:'Y-m-d' }}{% endif %}&pagina={{ pagina.previous_page_number }}">← Más nuevas</a>{% endif %}
+    <span>Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+    {% if pagina.has_next %}<a href="?q={{ q|urlencode }}&fecha={% if fecha %}{{ fecha|date:'Y-m-d' }}{% endif %}&pagina={{ pagina.next_page_number }}">Más viejas →</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+<form id="frmAnular" method="post" style="display:none">{% csrf_token %}<input type="hidden" name="motivo" id="motivoAnular"><input type="hidden" name="volver" value="{{ request.get_full_path }}"></form>
+<div id="aviso" role="status"></div>
+<script>
+const CSRF = '{{ csrf_token }}';
+function aviso(t, err){ const a=document.getElementById('aviso'); a.textContent=t; a.className=err?'err':''; a.style.display='block';
+  clearTimeout(a._h); a._h=setTimeout(()=>a.style.display='none', 4500); }
+document.addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.reimprimir){
+    b.disabled = true;
+    try { const r = await fetch(b.dataset.reimprimir, {method:'POST', headers:{'X-CSRFToken':CSRF}});
+      const d = await r.json(); aviso(d.ok ? 'Tiquete enviado a la impresora.' : '⛔ ' + d.error, !d.ok);
+    } catch(_){ aviso('⛔ No se pudo conectar con el ERP.', true); }
+    b.disabled = false;
+  } else if (b.dataset.enviar){
+    const correo = prompt('¿A qué correo se lo mandamos?', b.dataset.correo || '');
+    if (!correo) return;
+    b.disabled = true;
+    const datos = new FormData(); datos.append('destinatario', correo.trim());
+    try { const r = await fetch(b.dataset.enviar, {method:'POST', body:datos, headers:{'X-CSRFToken':CSRF, 'Accept':'application/json'}});
+      const d = await r.json(); aviso(d.ok ? '✉️ Recibo enviado a ' + d.enviado_a : '⛔ ' + d.error, !d.ok);
+    } catch(_){ aviso('⛔ No se pudo conectar con el ERP.', true); }
+    b.disabled = false;
+  } else if (b.dataset.anular){
+    const motivo = prompt(`Vas a ANULAR la venta ${b.dataset.numero}.\n\nEscribí el motivo (queda registrado con tu nombre):`);
+    if (motivo === null) return;
+    if (!motivo.trim()){ alert('El motivo es obligatorio.'); return; }
+    const f = document.getElementById('frmAnular'); f.action = b.dataset.anular;
+    document.getElementById('motivoAnular').value = motivo.trim(); f.submit();
+  }
+});
+</script>
+{% endblock %}

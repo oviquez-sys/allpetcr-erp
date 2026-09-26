@@ -33,6 +33,20 @@ from contabilidad.services import cuenta, registrar_asiento
 _CUENTA_PAGO = {"EFE": "caja", "TAR": "bancos", "SIN": "bancos", "CRE": "cxc", "TRA": "bancos"}
 
 
+def _cargos(empresa, factura):
+    """[(cuenta, monto)] contra las que entró el cobro de la venta.
+
+    Una venta de un solo medio es un solo cargo por el total. Una venta con
+    pago mixto (auditoría 26/09/2026, VEN-04) reparte: lo del efectivo a
+    Caja y lo de tarjeta/SINPE a Bancos, sumados por cuenta para que el
+    asiento no traiga dos líneas iguales."""
+    por_cuenta = {}
+    for medio, monto in factura.desglose_pagos():
+        clave = _CUENTA_PAGO[medio]
+        por_cuenta[clave] = por_cuenta.get(clave, Decimal("0")) + monto
+    return [(cuenta(empresa, clave), monto) for clave, monto in por_cuenta.items() if monto > 0]
+
+
 def _costos_por_tipo(factura):
     """Separa el costo (a costo promedio) de lo vendido vs. lo regalado.
     Lo vendido va a Costo de ventas; lo regalado a Gasto por regalías."""
@@ -46,7 +60,6 @@ def asentar_venta(factura, usuario=None):
     # Fecha del DÍA LOCAL (Costa Rica), no la fecha UTC: una venta a las 7pm
     # debe quedar en su día, no correrse al siguiente por el desfase horario.
     fecha = timezone.localdate(factura.creado_en)
-    cuenta_cargo = cuenta(empresa, _CUENTA_PAGO[factura.medio_pago])
 
     # Ventas brutas = lo que paga el cliente + el descuento concedido. El
     # descuento se debita a su propia cuenta (contra-ingreso) para que quede
@@ -54,7 +67,8 @@ def asentar_venta(factura, usuario=None):
     bruto = factura.subtotal + factura.descuento
     lineas = []
     if factura.total > 0:
-        lineas.append({"cuenta": cuenta_cargo, "debe": factura.total, "detalle": factura.numero})
+        for cuenta_cargo, monto in _cargos(empresa, factura):
+            lineas.append({"cuenta": cuenta_cargo, "debe": monto, "detalle": factura.numero})
     if factura.descuento > 0:
         lineas.append({"cuenta": cuenta(empresa, "descuentos"), "debe": factura.descuento})
     if bruto > 0:
@@ -163,12 +177,12 @@ def asentar_anulacion(factura, usuario=None):
     """Reversa de la venta y del costo (débitos y créditos intercambiados)."""
     empresa = factura.empresa
     fecha = timezone.localdate(factura.anulada_en) if factura.anulada_en else timezone.localdate(factura.creado_en)
-    cuenta_cargo = cuenta(empresa, _CUENTA_PAGO[factura.medio_pago])
 
     bruto = factura.subtotal + factura.descuento
     lineas = []
     if factura.total > 0:
-        lineas.append({"cuenta": cuenta_cargo, "haber": factura.total, "detalle": f"Anulación {factura.numero}"})
+        for cuenta_cargo, monto in _cargos(empresa, factura):
+            lineas.append({"cuenta": cuenta_cargo, "haber": monto, "detalle": f"Anulación {factura.numero}"})
     if factura.descuento > 0:
         lineas.append({"cuenta": cuenta(empresa, "descuentos"), "haber": factura.descuento})
     if bruto > 0:

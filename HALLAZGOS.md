@@ -425,3 +425,36 @@ correr dos veces. Pruebas: `catalogo/test_aplicar_precios_iva.py`.
 ### Variables de entorno nuevas
 - `PIE_TIQUETE_TRADICIONAL` (opcional): pie del tiquete térmico en régimen
   tradicional.
+
+---
+
+## Auditoría del 26/09/2026 — Fase 2 (rama `auditoria-erp-fase2`)
+
+Informe completo: `AUDITORIA_ERP_FASE2.md`. Estado verificado con pruebas en
+`*/test_auditoria_2026_09.py`.
+
+| Ref | Hallazgo | Sev. | Estado | Evidencia / nota |
+|---|---|---|---|---|
+| USU-01 | Repositorio público con copias de la base y Excel con costos | Crítica | **Parcial** | Sacados de Git (siguen en disco) y en `.gitignore`. **Falta (Oscar):** poner el repo en privado, cambiar contraseñas, regenerar la llave de la API y limpiar el historial. |
+| VEN-01 | Anular una venta con devolución duplicaba plata e inventario | Crítica | **Cerrado** | `anular_factura` la rechaza; Actividad/Historial esconden el botón. |
+| VEN-02 | Doble cobro (F1/F2/F3 y reintentos) | Alta | **Cerrado** | Candado `cobrando` en el POS + `FacturaVenta.clave_pos` única; la repetida no reimprime. |
+| VEN-03 | Sin vuelto | Alta | **Cerrado** | Diálogo de efectivo (Enter = exacto); `monto_recibido` y `vuelto` en la factura y en el tiquete. |
+| VEN-04 | Sin pago mixto | Alta | **Cerrado** | `PagoVenta` (solo ventas `MIX`); caja, asientos, anulación, devolución (proporcional) y reportes (`ventas/pagos.py`). Crédito no se mezcla, a propósito. |
+| VEN-05 | POS no veía productos nuevos ni explicaba el "en 0" | Media | **Cerrado** | `ventas:producto_por_codigo`. |
+| VEN-07 | Ayuda decía "descuento en colones" | Baja | **Cerrado** | |
+| VEN-08 / FE-04 | La línea no guardaba su tarifa | Media | **Cerrado** | `LineaVenta.tarifa_iva/subtotal/impuesto/cabys` (vacíos en ventas anteriores). |
+| TIQ-01 | Hora UTC en el tiquete térmico | Alta | **Cerrado** | `tiquete._hora_local`; la prueba ahora usa una fecha con zona. |
+| TIQ-02 | El POS decía "enviado" aunque el agente fallara | Alta | **Cerrado** | `impresion:estado_trabajo`; el POS pregunta ~24 s y avisa. |
+| TIQ-03 | Sin reimprimir/enviar tras cobrar ni desde un historial | Media | **Cerrado** | Panel "última venta" en el POS y `ventas:historial` (cajero y gerente, con buscador). |
+| TIQ-04 | Tiquete sin cajero, pagos, vuelto ni tarifa | Media | **Cerrado** | Térmico y HTML. |
+| TIQ-06 | Correo: "enviado" sin configuración; SMTP posiblemente bloqueado | Media | **Parcial** | 503 claro si no hay correo; envío en JSON desde el POS; `core/correo.py` (Resend por HTTPS) activable con `RESEND_API_KEY`. **Falta (Oscar):** abrir la cuenta y cargar la variable; PDF en el servidor sigue sin Chromium. |
+| INV-02 | Productos nuevos con código "NP…" | Alta | **Cerrado** | Reciben EAN-8 interno o el de fábrica. Los "NP…" existentes se convierten desde Inventario → Códigos. |
+| INV-03 | Compra en dos transacciones | Media | **Cerrado** | `crear_y_recibir_compra`. El admin (`entrada_view`) no se tocó: es la zona de SEC-003, en pausa. |
+| INV-04 | Misma factura de proveedor dos veces | Media | **Cerrado** | `crear_compra` la rechaza (sin contar las anuladas). |
+| UX-02 | 16 pruebas de impresión fallaban en la PC de la tienda | Baja | **Cerrado** | Fuerzan el camino del agente. |
+
+### Variables de entorno nuevas
+| Variable | Para qué |
+|---|---|
+| `RESEND_API_KEY` | Correo por HTTPS en vez de SMTP (TIQ-06) |
+| `DEFAULT_FROM_EMAIL` | Remitente, de un dominio verificado en el servicio de correo |

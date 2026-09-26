@@ -21,6 +21,17 @@ class SesionCaja(models.Model):
     monto_contado = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     diferencia = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     cerrada_en = models.DateTimeField(null=True, blank=True)
+    cerrada_por = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                    related_name="cajas_cerradas")
+    # Arqueo de lo que NO es efectivo (auditoría 26/09/2026, CAJ-02). Lo
+    # esperado sale de las ventas de la sesión; lo "según comprobante" lo anota
+    # quien cierra: el total del cierre del datáfono y lo que de verdad entró
+    # por SINPE. Vacío = no se revisó (no se inventa un cero).
+    tarjeta_esperado = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    tarjeta_contado = models.DecimalField("tarjeta según datáfono", max_digits=12, decimal_places=2,
+                                          null=True, blank=True)
+    sinpe_esperado = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    sinpe_contado = models.DecimalField("SINPE recibido", max_digits=12, decimal_places=2, null=True, blank=True)
 
     class Meta:
         verbose_name = "sesión de caja"

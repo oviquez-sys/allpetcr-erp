@@ -211,7 +211,10 @@ def registrar(request):
                 "costo_unitario": l["costo_unitario"],
             })
 
-        compra = services.crear_compra(
+        # Crear y recibir en UNA transacción (auditoría 26/09/2026, INV-03):
+        # antes eran dos, y si la recepción fallaba quedaba una compra
+        # "borrador" suelta con su número gastado.
+        compra = services.crear_y_recibir_compra(
             proveedor=proveedor,
             sucursal=sucursal,
             lineas=lineas,
@@ -220,7 +223,6 @@ def registrar(request):
             usuario=request.user,
             iva=datos.get("iva") or 0,
         )
-        services.recibir_compra(compra=compra, usuario=request.user)
 
         # Los precios, al final y uno por uno. Pasan por cambiar_precio para
         # que cada uno quede firmado en el historial; si uno falla —precio
@@ -298,10 +300,20 @@ def producto_nuevo(request):
 
         # Código interno autogenerado: el usuario no tiene que inventar un SKU.
         sku = _generar_sku()
+        # Código de barras: el de fábrica si lo escanearon; si no, el
+        # Producto le asigna el EAN-8 interno que empieza con 2 (auditoría
+        # 26/09/2026, INV-02). Antes se copiaba el SKU "NP2609…" de 20
+        # caracteres, que en la etiqueta de 35 mm la pistola no lee.
+        codigo = (datos.get("codigo_barras") or "").strip()
+        if codigo and Producto.objects.filter(codigo_barras=codigo).exists():
+            return JsonResponse({"ok": False, "error": f"Ya hay un producto con el código {codigo}. "
+                                                       "Búsquelo en la lista en vez de crearlo de nuevo."},
+                                status=400)
         producto = Producto.objects.create(
             empresa=empresa, sku=sku, nombre=nombre, categoria=categoria,
-            codigo_barras=sku, presentacion=(datos.get("presentacion") or "").strip(),
+            codigo_barras=codigo, presentacion=(datos.get("presentacion") or "").strip(),
             precio_venta=precio_venta,
+            marca=(datos.get("marca") or "").strip()[:80],
         )
 
         # Procesar foto si la hay (base64: "data:image/png;base64,...")
