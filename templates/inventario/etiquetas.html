@@ -136,9 +136,10 @@ main{flex:1;display:flex;padding:14px 22px 20px;overflow:hidden}
         Ver también los que el sistema tiene en cero
       </label>
       <select id="filtroEtiqueta" onchange="pintarGrid()">
-        <option value="">Etiqueta: todas</option>
-        <option value="pendientes">Etiqueta: pendientes</option>
-        <option value="impresas">Etiqueta: ya impresas</option>
+        {% comment %}Pendientes por defecto: lo ya impreso no se quiere ver (Oscar, 27/09/2026).{% endcomment %}
+        <option value="pendientes" selected>Solo pendientes</option>
+        <option value="impresas">Solo ya impresas</option>
+        <option value="">Todas</option>
       </select>
       <div class="lote">
         <button type="button" id="loteSi" onclick="marcarVisibles(true)">✓ Marcar como impresas</button>
@@ -201,14 +202,22 @@ function toast(texto, mal, accion){
 // Por defecto solo lo que el sistema tiene en existencia: es la lista de lo
 // que debería estar en el estante, que es contra lo que se cuenta. El
 // interruptor levanta el filtro para ir a ver los que están en cero.
+// El producto recién escaneado se muestra siempre, aunque ya tenga etiqueta:
+// si lo tenés en la mano es porque le querés reimprimir.
+function pasaFiltroEtiqueta(p){
+  const etq = document.getElementById('filtroEtiqueta').value;
+  if (p.id === marcado) return true;
+  if (etq === 'pendientes' && p.etiqueta_impresa_en) return false;
+  if (etq === 'impresas' && !p.etiqueta_impresa_en) return false;
+  return true;
+}
+
 function filtrar(){
   const q = document.getElementById('buscar').value.toLowerCase().trim();
   const verCero = document.getElementById('verCero').checked;
-  const etq = document.getElementById('filtroEtiqueta').value;
   return productos.filter(p => {
     if (!verCero && p.stock_actual <= 0) return false;
-    if (etq === 'pendientes' && p.etiqueta_impresa_en) return false;
-    if (etq === 'impresas' && !p.etiqueta_impresa_en) return false;
+    if (!pasaFiltroEtiqueta(p)) return false;
     if (!q) return true;
     return p.nombre.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q)
         || (p.codigo_barras||'').toLowerCase().includes(q)
@@ -402,17 +411,25 @@ async function imprimir(id){
 // Actualiza `productos` en memoria y cambia SOLO las tarjetas afectadas, en su
 // lugar. Antes se redibujaba la lista entera y cada impresión mandaba la
 // pantalla al principio: Oscar perdía el producto donde iba (27/09/2026, y
-// ya había pasado el 24/09). Tampoco se saca de la lista un producto que
-// dejó de coincidir con el filtro (p. ej. «pendientes»): eso movería todo lo
-// de abajo. Se va al tocar «Actualizar lista» o al cambiar la búsqueda.
+// ya había pasado el 24/09). Si con el cambio el producto deja de coincidir
+// con el filtro («Solo pendientes» y se acaba de imprimir), su tarjeta se
+// quita y la siguiente sube a su lugar; la pantalla no se mueve.
 function actualizarEstadoLocal(ids, valor){
   const set = new Set(ids);
   for (const p of productos) if (set.has(p.id)) p.etiqueta_impresa_en = valor;
   for (const id of set){
     const tarjetaVieja = document.getElementById('c-' + id);
-    if (tarjetaVieja) tarjetaVieja.outerHTML = tarjeta(porId[id]);
+    if (!tarjetaVieja) continue;
+    if (pasaFiltroEtiqueta(porId[id])){
+      tarjetaVieja.outerHTML = tarjeta(porId[id]);
+    } else {
+      tarjetaVieja.remove();
+      encontradosActuales = encontradosActuales.filter(p => p.id !== id);
+      mostrados = Math.max(0, mostrados - 1);
+    }
   }
   pintarCuenta();
+  mostrarMas();  // rellena abajo lo que se quitó, si quedaba más lista
 }
 
 // Marcado manual, uno por uno: no imprime nada, solo cambia el estado que
@@ -452,7 +469,9 @@ async function marcarVisibles(impresa){
   toast(`${d.total} etiqueta(s) marcadas como ${impresa ? 'impresas' : 'pendientes'}.`, false, {
     texto: 'Deshacer',
     alHacer: async () => {
-      if (await mandarLote(d.ids, !impresa)) toast('Listo, quedó como estaba.');
+      // Se redibuja entero: las tarjetas que el marcado quitó de la vista
+      // tienen que volver a aparecer.
+      if (await mandarLote(d.ids, !impresa)){ pintarGrid(); toast('Listo, quedó como estaba.'); }
     },
   });
 }
