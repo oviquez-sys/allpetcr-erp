@@ -1,0 +1,6 @@
+sku,campo,valor_actual,valor_nuevo,motivo
+BEL-93020,mascota,Perro,Gato,El empaque dice Cat & Kitten; el fabricante lo publica como Cat Formula.
+BEL-93020,nombre,NutriSource ChickenTurkeyLambFish 156 g,"NutriSource Cat Chicken, Turkey, Lamb & Fish 156 g","Nombre oficial: Chicken, Turkey, Lamb & Fish Cat Formula."
+GOS-71849,nombre,Natsbi Steamed Duck 500 g,Natsbi Steamed Chicken & Duck 500 g,"El empaque dice Chicken & Duck (60 % pollo, 30 % pato)."
+BEL-53507,nombre,Balance LR Senior Dog 2 kg,Balance Senior 2 kg,El empaque es Balance Senior para razas medianas y grandes.
+BEL-53510,nombre,Balance LR Senior Dog 14.97 kg,Balance Senior 14.97 kg,El empaque es Balance Senior para razas medianas y grandes.

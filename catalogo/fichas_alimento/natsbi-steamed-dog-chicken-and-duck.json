@@ -115,7 +115,7 @@
  ],
  "estado": "verificado",
  "verificado_en": "2026-09-26",
- "notas_internas": "GOS-71849 figura en el ERP como 'Natsbi Steamed Duck', pero el empaque dice Chicken & Duck (60 % pollo, 30 % pato).",
+ "notas_internas": "GOS-71849 figura en el ERP como 'Natsbi Steamed Duck', pero el empaque dice Chicken & Duck (60 % pollo, 30 % pato). Nombre corregido en el ERP el 27/09/2026 (catalogo/correcciones/2026-09-27.csv).",
  "skus": [
   "GOS-71849",
   "GOS-72169"

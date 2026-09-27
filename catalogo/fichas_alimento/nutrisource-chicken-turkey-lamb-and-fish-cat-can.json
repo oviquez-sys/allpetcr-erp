@@ -86,7 +86,7 @@
  ],
  "estado": "verificado",
  "verificado_en": "2026-09-26",
- "notas_internas": "Identificados por nombre, presentación y foto del empaque (el código de Belina no coincide con el SKU del fabricante): BEL-93020. En el ERP figura como Perro, pero el empaque y el fabricante dicen Cat & Kitten (gato). Corregir la mascota del producto en el ERP.",
+ "notas_internas": "Identificados por nombre, presentación y foto del empaque (el código de Belina no coincide con el SKU del fabricante): BEL-93020. En el ERP figura como Perro, pero el empaque y el fabricante dicen Cat & Kitten (gato). Corregido en el ERP el 27/09/2026 (catalogo/correcciones/2026-09-27.csv).",
  "skus": [
   "BEL-93020"
  ]
