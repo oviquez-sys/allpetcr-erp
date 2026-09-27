@@ -1,0 +1,92 @@
+{
+ "clave": "gosbi-fresko-cat-sterilized-chicken-with-rabbit",
+ "marca": "Gosbi",
+ "linea": "Fresko Cat",
+ "nombre": "Fresko Cat Sterilized Chicken with Rabbit",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "esterilizado",
+  "control_peso",
+  "libre_granos"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo y conejo",
+ "descripcion_corta": "Alimento húmedo complementario y bajo en calorías para gato esterilizado, con pollo y conejo.",
+ "descripcion": "Es un alimento complementario: se sirve junto con un alimento completo. Ingredientes cocinados en su caldo, con algas marinas.",
+ "beneficios": [
+  {
+   "clave": "control_peso",
+   "texto": "Receta baja en calorías para cuidar su línea."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Omega 6 del pollo para una piel sana."
+  }
+ ],
+ "ingredientes": "Pollo 32 %, conejo 6 %, algas secas (Laminaria sp.).",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "9.7",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "3",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "2",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "0.1",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "",
+   "valor": "84",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 701,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbi-fresko-cat-sterilized-chicken-with-rabbit/222",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8435814901311"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "GOS-71110"
+ ]
+}

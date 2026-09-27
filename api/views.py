@@ -109,7 +109,7 @@ class ProductoDetalleView(generics.RetrieveAPIView):
     lookup_field = "sku"
 
     def get_queryset(self):
-        return Producto.objects.filter(activo=True, empresa=empresa_actual(self.request))
+        return Producto.objects.filter(activo=True, empresa=empresa_actual(self.request)).select_related("ficha_alimento")
 
 
 class DisponibilidadView(APIView):

@@ -10,7 +10,7 @@ from core.admin_fotos import columna_foto
 from core.templatetags.fotos import foto_producto
 from core.templatetags.formato import crc as _crc  # formato CR (miles con punto)
 
-from .models import CambioPrecio, Categoria, Impuesto, Producto
+from .models import CambioPrecio, Categoria, FichaAlimento, Impuesto, Producto
 
 
 @admin.register(Categoria)
@@ -55,6 +55,9 @@ class ProductoAdmin(admin.ModelAdmin):
     # entrar y salir del formulario de cada producto para eso sería
     # impracticable con más de dos o tres destacados.
     list_editable = ("destacado_home", "orden_home")
+    # La ficha de alimento se elige buscando por nombre, no en un desplegable
+    # de ~130 fórmulas.
+    autocomplete_fields = ("ficha_alimento",)
 
     @admin.display(description="Stock actual", ordering="stock_actual")
     def stock_fmt(self, obj):
@@ -207,3 +210,37 @@ class CambioPrecioAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+class VerificacionFilter(admin.SimpleListFilter):
+    """Antigüedad de la última verificación contra la fuente oficial. Sirve
+    para sacar la lista de "fichas que no se revisan hace más de un año"
+    sin construir un sistema de alertas."""
+
+    title = "última verificación"
+    parameter_name = "verificacion"
+
+    def lookups(self, request, model_admin):
+        return [("nunca", "Nunca"), ("6m", "Hace más de 6 meses"), ("12m", "Hace más de 12 meses")]
+
+    def queryset(self, request, queryset):
+        from datetime import date, timedelta
+
+        if self.value() == "nunca":
+            return queryset.filter(verificado_en__isnull=True)
+        if self.value() in ("6m", "12m"):
+            dias = 183 if self.value() == "6m" else 365
+            return queryset.filter(verificado_en__lt=date.today() - timedelta(days=dias))
+        return queryset
+
+
+@admin.register(FichaAlimento)
+class FichaAlimentoAdmin(admin.ModelAdmin):
+    list_display = ("nombre", "marca", "especie", "tipo", "estado", "verificado_en", "presentaciones")
+    list_filter = ("estado", VerificacionFilter, "especie", "tipo", "marca")
+    search_fields = ("nombre", "marca", "linea", "clave")
+    readonly_fields = ("creado_en", "actualizado_en")
+
+    @admin.display(description="Presentaciones")
+    def presentaciones(self, obj):
+        return obj.productos.count()

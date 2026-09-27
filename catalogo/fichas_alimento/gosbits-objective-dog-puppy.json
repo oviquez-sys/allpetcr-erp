@@ -1,0 +1,101 @@
+{
+ "clave": "gosbits-objective-dog-puppy",
+ "marca": "Gosbi",
+ "linea": "Objective Dog",
+ "nombre": "Objective Dog Puppy",
+ "especie": "perro",
+ "tipo": "snack",
+ "etapas": [
+  "cachorro"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Premio funcional semihúmedo para cachorro, con pollo y DHA de algas.",
+ "descripcion": "Con una sola fuente de proteína para que sea fácil de digerir. Es un premio: complementa la dieta diaria, no la reemplaza.",
+ "beneficios": [
+  {
+   "clave": "dha",
+   "texto": "DHA de algas para el desarrollo cognitivo."
+  },
+  {
+   "clave": "inmunidad",
+   "texto": "Prebióticos MOS que apoyan sus defensas."
+  },
+  {
+   "clave": "digestion",
+   "texto": "Una sola proteína, fácil de digerir."
+  }
+ ],
+ "ingredientes": "Pollo (pollo fresco min. 40 % antes de la cocción, pollo deshidratado), guisantes, patata deshidratada (10 %), glicerina, productos de levaduras (20 g/kg), aceite de salmón, algas marines (Schizochytrium limacinum), sustancias minerales.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "24",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "11",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "7",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "2",
+   "unidad": "%"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "",
+   "valor": "219",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "",
+   "valor": "20",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 3200,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbits-objective-dog-puppy/96",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8436566803953"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "GOS-71695"
+ ]
+}

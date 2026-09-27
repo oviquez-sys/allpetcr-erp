@@ -1,0 +1,260 @@
+{
+ "clave": "nutrisource-adult-chicken-and-rice-small-bites-dog-food",
+ "marca": "NutriSource",
+ "linea": "",
+ "nombre": "Adult Chicken & Rice Small Bites",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo, arroz",
+ "descripcion_corta": "Alimento seco NutriSource para perros, con pollo como primer ingrediente.",
+ "descripcion": "El fabricante lo formula según los perfiles nutricionales de AAFCO para todas las etapas de vida, incluido el crecimiento de perros de raza grande (70 lb o más en edad adulta). Incluye Good4Life, la mezcla de la marca con prebióticos, probióticos y minerales para la salud intestinal. Incluye los posbióticos Come·pooch·a de la marca.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Prebióticos y probióticos que apoyan la digestión."
+  },
+  {
+   "clave": "articulaciones",
+   "texto": "Glucosamina y condroitina para las articulaciones."
+  },
+  {
+   "clave": "masa_muscular",
+   "texto": "Proteína animal para músculos y huesos fuertes."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Nutrientes para piel y pelaje sanos."
+  },
+  {
+   "clave": "omega",
+   "texto": "Aporta ácidos grasos omega 3 y 6."
+  }
+ ],
+ "ingredientes": "chicken, chicken meal, brown rice, barley, chicken fat (preserved with tocopherols and citric acid), dried plain beet pulp, natural chicken and turkey flavors, oatmeal, flax seed, menhaden fishmeal, potassium chloride, brewers dried yeast, salt, choline chloride, DL methionine, minerals (zinc proteinate, iron proteinate, selenium yeast, copper proteinate, magnesium oxide, manganese proteinate, ethylenediamine dihydroiodide), vitamins (vitamin E supplement, niacin supplement, biotin, d-calcium pantothenate, vitamin A supplement, thiamine mononitrate, pyridoxine hydrochloride, riboflavin supplement, vitamin B12 supplement, vitamin D3 supplement, folic acid), lactic acid, L-ascorbyl-2-polyphosphate (source of vitamin C), yucca schidigera extract, yeast culture, dried Aspergillus oryzae fermentation extract, dried Bacillus subtilis fermentation product, dried Bacillus licheniformis fermentation product, dried Trichoderma longibrachiatum fermentation extract, dried Enterococcus faecium fermentation product, dried Lactobacillus acidophilus fermentation product, dried Bacillus subtilis fermentation extract, calcium carbonate, taurine, L-carnitine, rosemary extract",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "26.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "16.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "4.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "10.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Metionina",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "EPA + DHA",
+   "calificador": "min",
+   "valor": "0.05",
+   "unidad": "%"
+  },
+  {
+   "clave": "hierro",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "125",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Cobre",
+   "calificador": "min",
+   "valor": "12.4",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Manganeso",
+   "calificador": "min",
+   "valor": "12",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "120",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "selenio",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Colina",
+   "calificador": "min",
+   "valor": "1800",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "2.6",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.7",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.1",
+   "unidad": "%"
+  },
+  {
+   "clave": "glucosamina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "790",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "condroitina",
+   "etiqueta": "Sulfato de condroitina",
+   "calificador": "min",
+   "valor": "1800",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "l_carnitina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "20",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (Saccharomyces cerevisiae, Bacillus subtilis, Bacillus licheniformis, Enterococcus faecium, Lactobacillus acidophilus)",
+   "calificador": "min",
+   "valor": "100 millones",
+   "unidad": "UFC/lb"
+  }
+ ],
+ "kcal_kg": 4020.0,
+ "kcal_unidad": 425.0,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Guía diaria de alimentación del fabricante",
+  "columnas": [
+   "Peso (lb)",
+   "Peso (kg)",
+   "0 a 3 meses (tazas)",
+   "3 a 6 meses (tazas)",
+   "6 meses a adulto (tazas)",
+   "Adulto (tazas)",
+   "Menos activo (tazas)"
+  ],
+  "filas": [
+   [
+    "1–5",
+    "0–2",
+    "5/8–7/8",
+    "1/2–2/3",
+    "3/8–5/8",
+    "1/4–1/2",
+    "1/4–1/3"
+   ],
+   [
+    "5–10",
+    "2–5",
+    "7/8–1 1/2",
+    "2/3–1 1/8",
+    "5/8–1",
+    "1/2–3/4",
+    "1/3–1/2"
+   ],
+   [
+    "10–15",
+    "5–7",
+    "1 1/2–1 3/4",
+    "1 1/8–1 1/2",
+    "1–1 1/3",
+    "3/4–1",
+    "1/2–3/4"
+   ],
+   [
+    "15–20",
+    "7–9",
+    "1 3/4–2 1/4",
+    "1 1/2–1 7/8",
+    "1 1/3–1 5/8",
+    "1–1 1/8",
+    "3/4–7/8"
+   ],
+   [
+    "20–30",
+    "9–14",
+    "2 1/4–3",
+    "1 7/8–2 1/3",
+    "1 5/8–2",
+    "1 1/8–1 1/2",
+    "7/8–1 1/8"
+   ]
+  ],
+  "nota": "Dividir la cantidad en 2 a 3 comidas al día. Una taza medidora de 8 oz (250 cc) contiene aproximadamente 109 g de este alimento. La cantidad varía según actividad, edad, raza y ambiente. Consultá a tu veterinario si tu mascota está muy delgada o con sobrepeso."
+ },
+ "fuentes": [
+  {
+   "url": "https://discovernutrisource.com/products/adult-chicken-and-rice-small-bites-dog-food",
+   "tipo": "fabricante",
+   "entidad": "Tuffy's Pet Foods (NutriSource)",
+   "region": "EE. UU.",
+   "verificado_en": "2026-09-26",
+   "actualizado_fabricante": "2026-09-26T23:38:02-05:00",
+   "upc_oficiales": [
+    "073893260158",
+    "073893260165"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "BEL-26015",
+  "BEL-26016"
+ ]
+}

@@ -1,0 +1,97 @@
+{
+ "clave": "gosbi-exclusive-dog-adult-mini-fish",
+ "marca": "Gosbi",
+ "linea": "Exclusive Dog",
+ "nombre": "Exclusive Dog Adult Mini Fish",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "pequena"
+ ],
+ "necesidades": [],
+ "proteina_principal": "Pescado",
+ "sabor": "Pescado",
+ "descripcion_corta": "Alimento seco completo para perro adulto de raza mini, con pescado y arroz como único cereal.",
+ "descripcion": "Receta de la gama Exclusive con croqueta pequeña y la fórmula ProVital de la marca. Tamaño de la croqueta: ±10 mm.",
+ "beneficios": [
+  {
+   "clave": "piel_pelaje",
+   "texto": "Omega 3 del pescado para piel cuidada y pelaje brillante."
+  },
+  {
+   "clave": "articulaciones",
+   "texto": "El omega 3 ayuda a mantener las articulaciones."
+  }
+ ],
+ "ingredientes": "Pescado (31 %) (Micromesistius poutassou deshidratado (15 %), Salmo salar deshidratado (12 %), aceite de salmón), arroz (20 %), guisantes (12 %), lentejas (8 %), grasa de pollo, pulpa de manzana seca (6 %), patata (5 %), frutas y verduras (4 %) (pulpa de remolacha seca, zanahoria deshidratada, pulpa de tomate, pulpa de fruta seca (pera, piña)), huevo deshidratado (1 %), aceite de linaza, levadura de cerveza inactivada, sustancias minerales + FÓRMULA PROVITAL (1 %): alfalfa deshidratada, inulina de achicoria (FOS), productos de levaduras (MOS), glucosamina (1000 mg/kg), condroitina (800 mg/kg), aceite de oliva, yuca de Mojave, mejillón de labios verdes, krill marino, espinaca deshidratada, productos de la transformación de plantas (Tagetes sp. (fuente natural de luteína), diente de león, hojas de menta, manzanilla, frutos rojos, tomillo, orégano, cardo mariano, romero, aloe vera), aceite de borraja, algas marinas deshidratadas (espirulina), brócoli deshidratado.",
+ "aditivos": "Vitaminas: Vitamina A 16000 UI, vitamina B1 40 mg, vitamina B2 20 mg, vitamina B6 13 mg, vitamina B12 0,3 mg, vitamina C 70 mg, vitamina D3 1600 UI, vitamina E 200 mg, taurina 2 g, ácido fólico 5 mg, biotina 1 mg, L-carnitina 50 mg. Oligoelementos: Fe (quelato de hierro (II) de hidrolizados de proteínas) 60 mg, Zn (quelato de zinc de hidrolizados de proteínas) 60 mg, Mn (quelato de manganeso de hidrolizados de proteínas) 21 mg, Cu (quelato de cobre (II) de hidrolizados de proteínas) 6,9 mg, I (yodato cálcico anhidro) 1,5 mg, Se (levadura selenizada Saccharomyces cerevisiae CNCM I-3060, inactivada) 0,12 mg. Aromas: Extracto de cítricos 5 mg, extracto de té 5 mg. Conservantes y antioxidantes.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "28",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "17",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "7",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "2.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Omega-3",
+   "calificador": "",
+   "valor": "1.9",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Omega-6",
+   "calificador": "",
+   "valor": "2.3",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 3903,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbi-exclusive-dog-adult-mini-fish/47",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8437015611198"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "GOS-938"
+ ]
+}

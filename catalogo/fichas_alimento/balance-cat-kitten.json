@@ -1,0 +1,53 @@
+{
+ "clave": "balance-cat-kitten",
+ "marca": "Balance",
+ "linea": "",
+ "nombre": "Balance Cat Kitten",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "gatito"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "",
+ "sabor": "",
+ "descripcion_corta": "Alimento seco completo para gatito.",
+ "descripcion": "Alimento completo y balanceado de Belina, producido en Costa Rica, libre de soya y gluten.",
+ "beneficios": [
+  {
+   "clave": "corazon",
+   "texto": "Taurina para el corazón y el sistema digestivo."
+  },
+  {
+   "clave": "vision",
+   "texto": "Taurina que también cuida la visión."
+  },
+  {
+   "clave": "desarrollo",
+   "texto": "Ácido fólico, indispensable en animales jóvenes."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.belinanutricion.com/product?referenceCode=BALANCECATKITTEN",
+   "tipo": "fabricante",
+   "entidad": "Belina Nutrición (fabricante de Balance)",
+   "region": "Costa Rica",
+   "verificado_en": "2026-09-26"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "Belina no publica ingredientes ni análisis garantizado: faltan (tomarlos del empaque o de la ficha técnica).",
+ "skus": [
+  "BEL-53522"
+ ]
+}

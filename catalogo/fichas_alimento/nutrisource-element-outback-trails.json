@@ -1,0 +1,53 @@
+{
+ "clave": "nutrisource-element-outback-trails",
+ "marca": "NutriSource",
+ "linea": "Element Series",
+ "nombre": "Element Series Outback Trails (cordero, canguro y jabalí)",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Cordero",
+ "sabor": "",
+ "descripcion_corta": "Alimento seco para perro adulto, con cordero, canguro y jabalí.",
+ "descripcion": "Dieta rica en proteína animal, sin legumbres ni papas, con la mezcla Good4Life de prebióticos y probióticos y omega 3 y 6 equilibrados.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Good4Life: prebióticos y probióticos para la digestión."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Omega 3 y 6 para piel sana y pelaje brillante."
+  },
+  {
+   "clave": "corazon",
+   "texto": "L-carnitina, taurina y metionina para el corazón."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.belinanutricion.com/product?referenceCode=NUTRISOURCEELEMENTSERIESCORDEROCANGUROYJABALI",
+   "tipo": "distribuidor_cr",
+   "entidad": "Belina Nutrición (distribuidor oficial de NutriSource en Costa Rica)",
+   "region": "Costa Rica",
+   "verificado_en": "2026-09-26"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "Belina no publica ingredientes ni análisis garantizado: faltan (tomarlos del empaque o de la ficha técnica). El fabricante (discovernutrisource.com) ya no publica esta fórmula; la fuente es el distribuidor oficial en Costa Rica. El empaque dice 'Outback Trails'. No se marcó 'libre de granos': Belina solo dice 'sin legumbres ni papas' y la línea Element Series tiene recetas con y sin granos.",
+ "skus": [
+  "BEL-30001"
+ ]
+}

@@ -1,0 +1,89 @@
+{
+ "clave": "nutrisource-chicken-lamb-ocean-fish-wet-dog-food",
+ "marca": "NutriSource",
+ "linea": "",
+ "nombre": "Chicken, Lamb & Ocean Fish Wet Dog Food",
+ "especie": "perro",
+ "tipo": "humedo",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo, pescado, cordero",
+ "descripcion_corta": "Alimento húmedo NutriSource para perros, con pollo como primer ingrediente.",
+ "descripcion": "El fabricante lo formula según los perfiles nutricionales de AAFCO para todas las etapas de vida, incluido el crecimiento de perros de raza grande (70 lb o más en edad adulta). Incluye Good4Life, la mezcla de la marca con prebióticos, probióticos y minerales para la salud intestinal. Incluye los posbióticos Come·pooch·a de la marca.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Prebióticos y probióticos que apoyan la digestión."
+  },
+  {
+   "clave": "alta_proteina",
+   "texto": "Receta rica en proteína animal."
+  }
+ ],
+ "ingredientes": "chicken, chicken broth, chicken liver, brown rice flour, barley, lamb, whitefish, liquid Lactobacillus acidophilus fermentation product, coconut glycerin, dried egg product, natural flavor, agar-agar, flaxseed, potassium chloride, marine microalgae oil, cranberries, magnesium proteinate, salt, taurine, choline chloride, minerals (zinc proteinate, iron proteinate, copper proteinate, selenium yeast, manganese proteinate, ethylenediamine dihydroiodide), hydrolyzed yeast, vitamins (vitamin E supplement, niacin, thiamine mononitrate, d-calcium pantothenate, vitamin A supplement, riboflavin supplement, vitamin B12 supplement, pyridoxine hydrochloride, biotin, folic acid, vitamin D3 supplement), yucca schidigera extract, brewers dried yeast",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "8.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "6.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "1.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "78.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.04",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 1175.0,
+ "kcal_unidad": 411.0,
+ "unidad_kcal": "lata de 12.3 oz",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://discovernutrisource.com/products/chicken-lamb-ocean-fish-wet-dog-food",
+   "tipo": "fabricante",
+   "entidad": "Tuffy's Pet Foods (NutriSource)",
+   "region": "EE. UU.",
+   "verificado_en": "2026-09-26",
+   "actualizado_fabricante": "2026-09-26T23:41:21-05:00",
+   "upc_oficiales": [
+    "073893021070"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "Identificados por nombre, presentación y foto del empaque (el código de Belina no coincide con el SKU del fabricante): BEL-93021.",
+ "skus": [
+  "BEL-93021"
+ ]
+}

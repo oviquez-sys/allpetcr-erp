@@ -1,0 +1,88 @@
+{
+ "clave": "gosbits-sticks-dog-lamb",
+ "marca": "Gosbi",
+ "linea": "Sticks",
+ "nombre": "Sticks Dog Lamb",
+ "especie": "perro",
+ "tipo": "snack",
+ "etapas": [],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Cordero",
+ "sabor": "Cordero",
+ "descripcion_corta": "Barrita semihúmeda de cordero para premiar al perro.",
+ "descripcion": "Lista corta de ingredientes para minimizar intolerancias. Es un premio: complementa la dieta diaria, no la reemplaza.",
+ "beneficios": [
+  {
+   "clave": "dental",
+   "texto": "Barrita para masticar que ayuda al cuidado dental."
+  },
+  {
+   "clave": "inmunidad",
+   "texto": "Cordero rico en zinc para el sistema inmune."
+  }
+ ],
+ "ingredientes": "Cordero (cordero fresco min. 40 % antes de la cocción, cordero deshidratado), guisantes, patata deshidratada, glicerina, productos de levaduras (fuente de MOS), fructosa, aceite de salmón, sustancias minerales.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "24",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "11",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "7",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "2",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "",
+   "valor": "20",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 3280,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbits-sticks-dog-lamb/103",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8436566800112"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "GOS-71010"
+ ]
+}

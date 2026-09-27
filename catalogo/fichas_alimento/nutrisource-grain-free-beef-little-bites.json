@@ -1,0 +1,73 @@
+{
+ "clave": "nutrisource-grain-free-beef-little-bites",
+ "marca": "NutriSource",
+ "linea": "Grain Free",
+ "nombre": "Grain Free Beef Little Bites",
+ "especie": "perro",
+ "tipo": "snack",
+ "etapas": [],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Res",
+ "sabor": "Res",
+ "descripcion_corta": "Premio NutriSource para perros, con res como primer ingrediente.",
+ "descripcion": "Es un premio: complementa la dieta diaria, no la reemplaza. Receta libre de granos.",
+ "beneficios": [],
+ "ingredientes": "beef, peas, potato flour, chickpeas, cane molasses, vegetable glycerin, flax seed, pork plasma, salmon oil (preserved with tocopherols), sweet potatoes, calcium lactate, natural flavor, lactic acid, salt, zinc propionate, calcium propionate (a preservative), preserved with citric acid and tocopherols, yucca schidigera extract, L-carnitine, rosemary extract",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "13.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "6.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "5.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "30.0",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 2978.0,
+ "kcal_unidad": 3.0,
+ "unidad_kcal": "premio",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://discovernutrisource.com/products/grain-free-beef-little-bites",
+   "tipo": "fabricante",
+   "entidad": "Tuffy's Pet Foods (NutriSource)",
+   "region": "EE. UU.",
+   "verificado_en": "2026-09-26",
+   "actualizado_fabricante": "2026-09-26T23:38:49-05:00",
+   "upc_oficiales": [
+    "073893800170"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "BEL-80017"
+ ]
+}

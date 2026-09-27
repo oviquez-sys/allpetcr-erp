@@ -301,6 +301,25 @@ el nombre corto del producto.
 - Desde la sandbox de Claude la API de Hacienda solo responde por WebFetch:
   `curl` la bloquea el proxy.
 
+## Fichas de alimento (26/09/2026)
+
+Información oficial de cada FÓRMULA de alimento (no de cada bolsa): beneficios,
+"ideal para", análisis garantizado, ingredientes, guía de alimentación y
+fuentes con fecha. Modelo `catalogo.FichaAlimento`; cada `Producto` apunta a
+la suya por `ficha_alimento`. El sitio la recibe en el detalle de la API.
+
+- Las fichas viven como JSON en `catalogo/fichas_alimento/` (versionadas en
+  git) y se pasan a la base con `manage.py cargar_fichas_alimento`
+  (`CARGAR_FICHAS_ALIMENTO.bat` para el servidor). Editar la ficha en el admin
+  sirve, pero la próxima carga del JSON la pisa: corregir en el JSON.
+- Etiquetas (etapas, necesidades, beneficios, nutrientes): vocabulario cerrado
+  en `catalogo/alimentos.py`. Una clave nueva va ahí primero.
+- Valores del análisis en formato canónico (punto decimal, sin miles).
+- Estados: `verificado` y `parcial` se publican; `sin_investigar` y `revisar`, no.
+- Regla absoluta: nada se deduce ni se copia de otra fórmula. Si el fabricante
+  no lo publica, el campo queda vacío y la sección no se muestra.
+- Fichas viejas: filtro "última verificación" en el admin.
+
 ## Reglas del proyecto
 
 **Los comentarios explican el *porqué*, no el *qué*.** Es la característica

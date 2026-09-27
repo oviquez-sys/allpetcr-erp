@@ -1,0 +1,123 @@
+{
+ "clave": "natsbi-steamed-dog-chicken-and-duck",
+ "marca": "Natsbi",
+ "linea": "Steamed Dog",
+ "nombre": "Steamed Dog Chicken & Duck",
+ "especie": "perro",
+ "tipo": "humedo",
+ "etapas": [
+  "cachorro",
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo y pato",
+ "descripcion_corta": "Comida natural completa cocinada al vapor para perro, con pollo y pato.",
+ "descripcion": "Cocinada al vapor sin agua añadida, con 60 % de pollo y 30 % de pato. Se conserva a temperatura ambiente; una vez abierta, hasta 2 días en refrigeración.",
+ "beneficios": [
+  {
+   "clave": "digestion",
+   "texto": "Prebióticos que apoyan la salud intestinal."
+  },
+  {
+   "clave": "masa_muscular",
+   "texto": "Hierro y vitaminas B para músculos y huesos."
+  },
+  {
+   "clave": "inmunidad",
+   "texto": "Ayuda a fortalecer sus defensas."
+  }
+ ],
+ "ingredientes": "Pollo* (60 %), pato* (30 %), arroz* (5 %), verduras* (4 %) (zanahoria* (3 %), calabacín* (0,5 %), chirivía* (0,5 %)), aceite de salmón (0,5 %), sustancias minerales, inulina de achicoria (1 g/kg), productos de levaduras (400 mg/kg). *Ingredientes naturales",
+ "aditivos": "Vitaminas: Vitamina A 12000 UI, Vitamina D3 300 UI, Vitamina E 80 mg. Oligoelementos: Fe (quelato de hierro (II) de hidrolizados proteicos) 50 mg, I (yodato de calcio anhidro) 0,5 mg, Zn (quelato de zinc de hidrolizados proteicos) 40 mg, Cu (quelato de cobre (II) de hidrolizados proteicos) 6 mg, Mn (quelato de manganeso de hidrolizados proteicos) 25 mg.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "18",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "15",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "4",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "0.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "0.6",
+   "unidad": "%"
+  },
+  {
+   "clave": "sodio",
+   "etiqueta": "Sodio",
+   "calificador": "",
+   "valor": "0.12",
+   "unidad": "%"
+  },
+  {
+   "clave": "potasio",
+   "etiqueta": "Potasio",
+   "calificador": "",
+   "valor": "0.4",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "",
+   "valor": "64",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 2055,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/natsbi-steamed-dog-chicken-and-duck/81",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8436566804981",
+    "8436566807128"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "GOS-71849 figura en el ERP como 'Natsbi Steamed Duck', pero el empaque dice Chicken & Duck (60 % pollo, 30 % pato).",
+ "skus": [
+  "GOS-71849",
+  "GOS-72169"
+ ]
+}

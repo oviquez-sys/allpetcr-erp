@@ -1,0 +1,86 @@
+{
+ "clave": "gosbi-fresko-cat-sterilized-tuna-loin-with-shrimp",
+ "marca": "Gosbi",
+ "linea": "Fresko Cat",
+ "nombre": "Fresko Cat Sterilized Tuna loin with Shrimp",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "esterilizado"
+ ],
+ "proteina_principal": "Atún",
+ "sabor": "Lomo de atún y gambas",
+ "descripcion_corta": "Alimento húmedo complementario para gato esterilizado, con lomo de atún y gambas.",
+ "descripcion": "Es un alimento complementario: se sirve junto con un alimento completo. Ingredientes cocinados en su caldo, con arroz como carbohidrato digestible y algas marinas.",
+ "beneficios": [
+  {
+   "clave": "masa_muscular",
+   "texto": "Proteína de calidad para mantener la masa muscular."
+  }
+ ],
+ "ingredientes": "Filete de atún 55 %, gambas 5 %, arroz, algas secas (Laminaria sp.).",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "12",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "1.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "1.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "0.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "",
+   "valor": "80",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 804,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbi-fresko-cat-sterilized-tuna-loin-with-shrimp/223",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8435814901328"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "GOS-977"
+ ]
+}

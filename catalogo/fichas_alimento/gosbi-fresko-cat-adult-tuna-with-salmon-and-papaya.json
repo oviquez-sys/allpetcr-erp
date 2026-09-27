@@ -1,0 +1,92 @@
+{
+ "clave": "gosbi-fresko-cat-adult-tuna-with-salmon-and-papaya",
+ "marca": "Gosbi",
+ "linea": "Fresko Cat",
+ "nombre": "Fresko Cat Adult Tuna with Salmon and Papaya",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Atún",
+ "sabor": "Atún, salmón y papaya",
+ "descripcion_corta": "Alimento húmedo complementario para gato adulto, con atún, salmón y papaya.",
+ "descripcion": "Es un alimento complementario: se sirve junto con un alimento completo. Ingredientes cocinados en su caldo.",
+ "beneficios": [
+  {
+   "clave": "masa_muscular",
+   "texto": "Atún con proteína de calidad para la masa muscular."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "El salmón cuida piel y pelaje."
+  },
+  {
+   "clave": "antioxidantes",
+   "texto": "Papaya con fibra, vitaminas y antioxidantes."
+  }
+ ],
+ "ingredientes": "Atún 50 %, salmón 5 %, papaya 4 %, arroz, algas secas (Laminaria sp.).",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "11",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "2",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "1.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "0.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "",
+   "valor": "80",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 821,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbi-fresko-cat-adult-tuna-with-salmon-and-papaya/218",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8435814901267"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "La descripción oficial dice 'sin cereales' pero la composición incluye un cereal; no se marcó 'libre de granos'.",
+ "skus": [
+  "GOS-980"
+ ]
+}

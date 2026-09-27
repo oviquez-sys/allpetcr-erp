@@ -1,0 +1,92 @@
+{
+ "clave": "purevita-beef-dog-entree",
+ "marca": "PureVita",
+ "linea": "PureVita",
+ "nombre": "Beef Dog Entrée",
+ "especie": "perro",
+ "tipo": "humedo",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos",
+  "ingredientes_limitados"
+ ],
+ "proteina_principal": "Res",
+ "sabor": "Res, hígado",
+ "descripcion_corta": "Alimento húmedo PureVita para perros, con res como primer ingrediente.",
+ "descripcion": "El fabricante lo formula según los perfiles nutricionales de AAFCO para todas las etapas de vida, incluido el crecimiento de perros de raza grande (70 lb o más en edad adulta). Receta libre de granos. Dieta de ingredientes limitados con una sola fuente de proteína animal. Incluye Good4Life, la mezcla de la marca con prebióticos, probióticos y minerales para la salud intestinal. Incluye los posbióticos Come·pooch·a de la marca.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Prebióticos y probióticos que apoyan la digestión."
+  },
+  {
+   "clave": "alta_proteina",
+   "texto": "Receta rica en proteína animal."
+  }
+ ],
+ "ingredientes": "beef, beef broth, beef liver, beef lung, chickpea flour, ground flaxseed, liquid lactobacillus acidophilus fermentation product, coconut glycerin, agar-agar, brewers dried yeast, potassium chloride, salt, dicalcium phosphate, dried chicory root, minerals (zinc proteinate, iron proteinate, copper proteinate, selenium yeast, manganese proteinate, ethylenediamine dihydroiodide), taurine, marine microalgae oil, vitamins (vitamin E supplement, niacin, thiamine mononitrate, d-calcium pantothenate, vitamin A supplement, riboflavin supplement, vitamin B12 supplement, pyridoxine hydrochloride, biotin, folic acid, vitamin D3 supplement), hydrolyzed yeast, dried kelp, yucca schidigera extract",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "9.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "6.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "1.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "78.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.04",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 1148.0,
+ "kcal_unidad": 401.0,
+ "unidad_kcal": "lata de 12.3 oz",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://discovernutrisource.com/products/beef-dog-entree",
+   "tipo": "fabricante",
+   "entidad": "Tuffy's Pet Foods (NutriSource)",
+   "region": "EE. UU.",
+   "verificado_en": "2026-09-26",
+   "actualizado_fabricante": "2026-09-26T23:38:10-05:00",
+   "upc_oficiales": [
+    "073893061076"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "BEL-96107"
+ ]
+}

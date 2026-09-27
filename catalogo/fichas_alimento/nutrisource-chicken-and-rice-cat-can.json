@@ -1,0 +1,93 @@
+{
+ "clave": "nutrisource-chicken-and-rice-cat-can",
+ "marca": "NutriSource",
+ "linea": "",
+ "nombre": "Chicken & Rice Cat Formula",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo, arroz",
+ "descripcion_corta": "Alimento húmedo NutriSource para gatos, con pollo como primer ingrediente.",
+ "descripcion": "El fabricante lo formula según los perfiles nutricionales de AAFCO para todas las etapas de vida. Incluye Good4Life, la mezcla de la marca con prebióticos, probióticos y minerales para la salud intestinal.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Prebióticos y probióticos que apoyan la digestión."
+  },
+  {
+   "clave": "alta_proteina",
+   "texto": "Receta rica en proteína animal."
+  },
+  {
+   "clave": "hidratacion",
+   "texto": "El alimento húmedo aporta hidratación."
+  }
+ ],
+ "ingredientes": "chicken, chicken broth, chicken liver, brown rice, yeast extract, dried egg product, dehydrated alfalfa meal, flaxseed, agar-agar, natural flavor, potassium chloride, salmon oil (preserved with tocopherols), choline chloride, salt, taurine, minerals (iron proteinate, zinc proteinate, copper proteinate, manganese proteinate, sodium selenite, ethylenediamine dihydroiodide), vitamins (vitamin E supplement, niacin, thiamine mononitrate, d-calcium pantothenate, vitamin A supplement, riboflavin supplement, vitamin B12 supplement, pyridoxine hydrochloride, biotin, folic acid, vitamin D3 supplement), brewers dried yeast, hydrolyzed yeast, dried kelp, yucca schidigera extract",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "9.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "6.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "1.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "78.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "",
+   "calificador": "",
+   "valor": "0.05",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 1175.0,
+ "kcal_unidad": 185.0,
+ "unidad_kcal": "lata de 5.5 oz",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://discovernutrisource.com/products/chicken-and-rice-cat-can",
+   "tipo": "fabricante",
+   "entidad": "Tuffy's Pet Foods (NutriSource)",
+   "region": "EE. UU.",
+   "verificado_en": "2026-09-26",
+   "actualizado_fabricante": "2026-09-26T23:41:13-05:00",
+   "upc_oficiales": [
+    "073893020158"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "Identificados por nombre, presentación y foto del empaque (el código de Belina no coincide con el SKU del fabricante): BEL-20158.",
+ "skus": [
+  "BEL-20158"
+ ]
+}

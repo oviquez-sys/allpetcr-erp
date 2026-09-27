@@ -1,0 +1,105 @@
+{
+ "clave": "gosbi-original-cat-adult-urinary",
+ "marca": "Gosbi",
+ "linea": "Original Cat",
+ "nombre": "Original Cat Adult Urinary",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "urinaria"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Alimento seco completo para gato adulto con tendencia a problemas urinarios.",
+ "descripcion": "Incluye glucosamina natural de crustáceos para las vías urinarias, con pollo como proteína principal y salmón y atún en menor proporción.",
+ "beneficios": [
+  {
+   "clave": "urinaria",
+   "texto": "Glucosamina para cuidar las vías urinarias."
+  },
+  {
+   "clave": "articulaciones",
+   "texto": "La glucosamina también cuida las articulaciones."
+  },
+  {
+   "clave": "masa_muscular",
+   "texto": "Proteína magra para la masa muscular."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Omega 3 para piel y pelaje saludables."
+  }
+ ],
+ "ingredientes": "Proteína de pollo deshidratada (28 %), arroz (min. 19 %), salmón, atún, maíz, grasa de pollo, aceite de pescado, levadura de cerveza, aceite de salmón, pulpa de remolacha, fibra de arroz, hidrolizado de crustáceos (fuente de glucosamina), yuca de Mojave, algas marinas, romero, sustancias minerales.",
+ "aditivos": "Vitaminas: Vitamina A 22000 UI, vitamina D3 1500 UI, vitamina E 120 mg, taurina 1200 mg. Oligoelementos: Fe (sulfato de hierro monohidratado) 320 mg, I (yoduro de potasio) 0,5 mg, Cu (sulfato cúprico pentahidratado) 8 mg, Mn (óxido manganoso) 6 mg, Zn (sulfato de zinc monohidratado) 110 mg, Zn (quelato de zinc de hidrolizados de proteínas) 35 mg, Se (selenito de sodio) 0,2 mg. Aminoácidos: DL-Metionina 4000 mg. Conservantes y antioxidantes naturales.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "35",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "15",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "7",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "3",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "",
+   "valor": "6",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 3870,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbi-original-cat-adult-urinary/124",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8436566800266"
+   ]
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "La fuente oficial publica Fósforo, Sodio como 0 % (valor redondeado a entero). Se omitió para no mostrar un dato engañoso: verificar contra el empaque.",
+ "skus": [
+  "GOS-71003"
+ ]
+}

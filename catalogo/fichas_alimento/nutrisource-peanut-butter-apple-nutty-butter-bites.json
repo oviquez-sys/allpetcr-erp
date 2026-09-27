@@ -1,0 +1,71 @@
+{
+ "clave": "nutrisource-peanut-butter-apple-nutty-butter-bites",
+ "marca": "NutriSource",
+ "linea": "",
+ "nombre": "Peanut Butter & Apple Nutty Butter Bites",
+ "especie": "perro",
+ "tipo": "snack",
+ "etapas": [],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "",
+ "sabor": "Manzana, mantequilla de maní",
+ "descripcion_corta": "Premio NutriSource para perros.",
+ "descripcion": "Es un premio: complementa la dieta diaria, no la reemplaza.",
+ "beneficios": [],
+ "ingredientes": "sorghum, barley, coconut glycerin, cane molasses, brewers dried yeast, sweet potatoes, peanut butter, apples, dried cultured skim milk, lactic acid, natural flavor, preserved with tocopherols, rosemary extract",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "8.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "1.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "5.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "30.0",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 2410.0,
+ "kcal_unidad": 4.2,
+ "unidad_kcal": "premio",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://discovernutrisource.com/products/peanut-butter-apple-nutty-butter-bites",
+   "tipo": "fabricante",
+   "entidad": "Tuffy's Pet Foods (NutriSource)",
+   "region": "EE. UU.",
+   "verificado_en": "2026-09-26",
+   "actualizado_fabricante": "2026-09-26T23:39:10-05:00",
+   "upc_oficiales": [
+    "073893800507"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "BEL-80050"
+ ]
+}

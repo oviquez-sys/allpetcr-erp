@@ -1,0 +1,93 @@
+{
+ "clave": "gosbi-delicat-sterilized-chicken",
+ "marca": "Gosbi",
+ "linea": "Delicat",
+ "nombre": "Delicat Sterilized Chicken",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "esterilizado",
+  "control_peso",
+  "libre_granos"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Paté húmedo completo y bajo en grasa para gato esterilizado, a base de pollo.",
+ "descripcion": "Cocinado al vapor, con fibras de psyllium, inulina y algas para la digestión, en una receta baja en grasa.",
+ "beneficios": [
+  {
+   "clave": "control_peso",
+   "texto": "Receta baja en grasa para cuidar la línea."
+  },
+  {
+   "clave": "digestion",
+   "texto": "Psyllium, inulina y algas para la digestión."
+  },
+  {
+   "clave": "masa_muscular",
+   "texto": "Proteína de calidad para músculos fuertes."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Omega 6 para piel y pelo."
+  }
+ ],
+ "ingredientes": "Pollo (65 %), caldo, zanahoria (6 %), sustancias minerales, productos de levaduras, semillas de plantago (Psyllium), inulina de achicoria, algas marinas.",
+ "aditivos": "Vitaminas: Vitamina E 20 UI, taurina 1200 mg, L-carnitina 10 mg. Oligoelementos: Fe (quelato de hierro (II) de hidrolizados de proteínas) 20 mg, Zn (quelato de zinc de hidrolizados de proteínas) 20 mg, Cu (quelato de cobre (II) de hidrolizados de proteínas) 2 mg, Mn (quelato de manganeso de hidrolizados de proteínas) 2 mg, Se (levadura selenizada Saccharomyces cerevisiae CNCMI-3060, inactivada) 0,02 mg.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "12",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "4",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "",
+   "valor": "80",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 889,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbi-delicat-sterilized-chicken/134",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8436566806442"
+   ]
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "La fuente oficial publica Fibra bruta como 0 % (valor redondeado a entero). Se omitió para no mostrar un dato engañoso: verificar contra el empaque.",
+ "skus": [
+  "GOS-72000"
+ ]
+}

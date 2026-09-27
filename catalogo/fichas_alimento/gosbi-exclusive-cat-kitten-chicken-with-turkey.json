@@ -1,0 +1,89 @@
+{
+ "clave": "gosbi-exclusive-cat-kitten-chicken-with-turkey",
+ "marca": "Gosbi",
+ "linea": "Exclusive Cat",
+ "nombre": "Exclusive Cat Kitten Chicken with Turkey",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "gatito"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo y pavo",
+ "descripcion_corta": "Alimento seco completo para gatito, con pollo y pavo y arroz como único cereal.",
+ "descripcion": "Receta de la gama Exclusive, con aceite de salmón y la fórmula ProCatVital de la marca, pensada para que crezca sano.",
+ "beneficios": [
+  {
+   "clave": "desarrollo",
+   "texto": "Pensado para un crecimiento sano."
+  },
+  {
+   "clave": "masa_muscular",
+   "texto": "Proteínas magras para la masa muscular."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Aceite de salmón con omega 3 para piel y pelaje."
+  },
+  {
+   "clave": "inmunidad",
+   "texto": "El omega 3 apoya sus defensas."
+  }
+ ],
+ "ingredientes": "Pollo y pavo 54 % (pollo deshidratado 26 %, grasa de pollo, pavo deshidratado 10 %, hígado hidrolizado de pollo), arroz 15 %, guisantes 9 %, patata deshidratada 7 %, aceite de salmón, pulpa de remolacha seca, semillas de lino, sustancias minerales, fibra vegetal, FÓRMULA PROCATVITAL (1 %): alfalfa deshidratada, aceite de oliva (0,2 %), inulina (FOS), productos de levadura (MOS), yuca de Mojave, pulpa de achicoria seca, arándanos deshidratados, algas secas, Tagetes sp. (fuente natural de luteína), romero, espinacas secas, semillas de plantago, raíz de cúrcuma.",
+ "aditivos": "Vitaminas: Vitamina A 25000 UI, vitamina B1 24 mg, vitamina B2 16 mg, vitamina B6 12 mg, vitamina B12 0,15 mg, vitamina C 70 mg, vitamina D3 1200 UI, vitamina E 200 UI, taurina 1500 mg, ácido fólico 2,2 mg, biotina 0,5 mg, L-carnitina 150 mg. Oligoelementos: Zn (quelato de zinc de hidrolizados de proteínas) 90 mg, Fe (quelato de hierro (II) de hidrolizados de proteínas) 65 mg, Mn (quelato de manganeso de hidrolizados de proteínas) 26 mg, Cu (quelato de cobre (II) de hidrolizados de proteínas) 10 mg, I (yodato cálcico anhidro) 1,5 mg, Se (levadura selenizada Saccharomyces cerevisiae CNCMI-3060, inactivada) 0,1 mg. Aminoácidos: DL-Metionina 2821 mg. Estabilizadores de la flora intestinal: Probióticos (Enterococcus faecium DSM 10663/NCIMB 10415: 1·109 UFC). Con conservantes y antioxidantes naturales.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "36",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "20",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "8",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "2",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 4170,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbi-exclusive-cat-kitten-chicken-with-turkey/116",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8436566805650"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "GOS-71883"
+ ]
+}

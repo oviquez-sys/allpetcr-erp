@@ -1,0 +1,204 @@
+{
+ "clave": "nutrisource-senior-and-weight-management-cat-food",
+ "marca": "NutriSource",
+ "linea": "",
+ "nombre": "Senior & Weight Management Cat Food",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "senior"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "control_peso"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Alimento seco NutriSource para gatos, con pollo como primer ingrediente.",
+ "descripcion": "El fabricante lo formula según los perfiles nutricionales de AAFCO para el mantenimiento de gatos adultos. Pensado para ayudar a mantener un peso saludable.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Prebióticos y probióticos que apoyan la digestión."
+  },
+  {
+   "clave": "control_peso",
+   "texto": "Pensado para el control de peso."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Nutrientes para piel y pelaje sanos."
+  },
+  {
+   "clave": "inmunidad",
+   "texto": "Apoya el sistema inmunológico."
+  }
+ ],
+ "ingredientes": "chicken meal, peas, pea fiber, barley, oatmeal, natural flavor, dried plain beet pulp, menhaden fish meal, chicken fat (preserved with tocopherols and citric acid), yeast extract, dried yeast, dehydrated alfalfa meal, dried tomato pomace, phosphoric acid, flax seed, choline chloride, salt, DL methionine, minerals (iron proteinate, zinc proteinate, copper proteinate, manganese proteinate), brewers dried yeast, potassium chloride, dried cranberries, vitamins (vitamin A acetate, vitamin D3 supplement, vitamin E supplement, niacin, d-calcium pantothenate, thiamine mononitrate, riboflavin supplement, pyridoxine hydrochloride, folic acid, biotin, vitamin B12 supplement), inulin, taurine, calcium carbonate, L-ascorbyl-2-polyposphate (a source of vitamin C), lactic acid, inositol, yucca schidigera extract, yeast culture, dried Aspergillus oryzae fermentation extract, dried Bacillus subtilis fermentation product, dried Bacillus licheniformis fermentation product, dried Trichoderma longibrachiatum fermentation extract, dried Enterococcus faecium fermentation product, dried Lactobacillus acidophilus fermentation product, and dried Bacillus subtilis fermentation extract, rosemary extract",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "29.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "9.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "12.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "12.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "10.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "hierro",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "170",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Cobre",
+   "calificador": "min",
+   "valor": "16",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Manganeso",
+   "calificador": "min",
+   "valor": "12",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "110",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.1",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "1.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (Saccharomyces cerevisiae, Bacillus subtilis, Bacillus licheniformis, Enterococcus faecium, Lactobacillus acidophilus)",
+   "calificador": "min",
+   "valor": "100 millones",
+   "unidad": "UFC/lb"
+  }
+ ],
+ "kcal_kg": 3250.0,
+ "kcal_unidad": 319.0,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Guía diaria de alimentación del fabricante",
+  "columnas": [
+   "Peso (lb)",
+   "Peso (kg)",
+   "Ración diaria (tazas)",
+   "Ración diaria (g)"
+  ],
+  "filas": [
+   [
+    "2–4",
+    "0.9–1.8",
+    "1/8–1/4",
+    "12–24"
+   ],
+   [
+    "4–6",
+    "1.8–2.7",
+    "1/4–3/8",
+    "24–35"
+   ],
+   [
+    "6–8",
+    "2.7–3.6",
+    "3/8–1/2",
+    "35–47"
+   ],
+   [
+    "8–10",
+    "3.6–4.5",
+    "1/2–5/8",
+    "47–59"
+   ],
+   [
+    "10–12",
+    "4.5–5.4",
+    "5/8–3/4",
+    "59–71"
+   ],
+   [
+    "12–14",
+    "5.4–6.4",
+    "3/4–7/8",
+    "71–83"
+   ]
+  ],
+  "nota": "Dividir la cantidad en 2 a 3 comidas al día. Una taza medidora de 8 oz (250 cc) contiene aproximadamente 94 g de este alimento. La cantidad varía según actividad, edad, raza y ambiente. Consultá a tu veterinario si tu mascota está muy delgada o con sobrepeso."
+ },
+ "fuentes": [
+  {
+   "url": "https://discovernutrisource.com/products/senior-and-weight-management-cat-food",
+   "tipo": "fabricante",
+   "entidad": "Tuffy's Pet Foods (NutriSource)",
+   "region": "EE. UU.",
+   "verificado_en": "2026-09-26",
+   "actualizado_fabricante": "2026-09-26T23:39:31-05:00",
+   "upc_oficiales": [
+    "073893280224",
+    "073893280071"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "BEL-28007",
+  "BEL-28022"
+ ]
+}

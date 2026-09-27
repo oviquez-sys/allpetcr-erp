@@ -1,0 +1,85 @@
+{
+ "clave": "gosbi-fresko-cat-kitten-tuna-with-chicken-and-milk",
+ "marca": "Gosbi",
+ "linea": "Fresko Cat",
+ "nombre": "Fresko Cat Kitten Tuna with Chicken and Milk",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [
+  "gatito"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Atún",
+ "sabor": "Atún, pollo y leche",
+ "descripcion_corta": "Alimento húmedo complementario para gatito, con atún, pechuga de pollo y leche.",
+ "descripcion": "Es un alimento complementario: se sirve junto con un alimento completo. Ingredientes cocinados en su caldo; la leche aporta calcio.",
+ "beneficios": [
+  {
+   "clave": "masa_muscular",
+   "texto": "Proteínas de calidad para su masa muscular."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Ayuda a mantener la piel sana."
+  },
+  {
+   "clave": "desarrollo",
+   "texto": "Leche con calcio para huesos fuertes."
+  }
+ ],
+ "ingredientes": "Atún (48,6 %), pechuga de pollo (4,3 %), arroz (4 %), leche (4 %), algas marinas.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "15",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "",
+   "valor": "81",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 786,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbi-fresko-cat-kitten-tuna-with-chicken-and-milk/139",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8437015611471"
+   ]
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "La fuente oficial publica Fibra bruta como 0 % (valor redondeado a entero). Se omitió para no mostrar un dato engañoso: verificar contra el empaque.",
+ "skus": [
+  "GOS-979"
+ ]
+}

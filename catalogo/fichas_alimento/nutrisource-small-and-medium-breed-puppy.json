@@ -1,0 +1,297 @@
+{
+ "clave": "nutrisource-small-and-medium-breed-puppy",
+ "marca": "NutriSource",
+ "linea": "Grain Free",
+ "nombre": "Grain Free Small and Medium Breed Puppy",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "cachorro"
+ ],
+ "tamanos_raza": [
+  "pequena",
+  "mediana"
+ ],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Pavo",
+ "sabor": "Pescado, pavo",
+ "descripcion_corta": "Alimento seco NutriSource para perros, con pavo como primer ingrediente.",
+ "descripcion": "El fabricante lo formula según los perfiles nutricionales de AAFCO para todas las etapas de vida, excepto el crecimiento de perros de raza grande (70 lb o más en edad adulta). Receta libre de granos. Incluye Good4Life, la mezcla de la marca con prebióticos, probióticos y minerales para la salud intestinal.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Prebióticos y probióticos que apoyan la digestión."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Nutrientes para piel y pelaje sanos."
+  },
+  {
+   "clave": "omega",
+   "texto": "Aporta ácidos grasos omega 3 y 6."
+  },
+  {
+   "clave": "corazon",
+   "texto": "Nutrientes que apoyan la salud del corazón."
+  },
+  {
+   "clave": "antioxidantes",
+   "texto": "Combinación antioxidante con selenio y DHA."
+  }
+ ],
+ "ingredientes": "turkey, turkey meal, green lentils, red lentils, garbanzo beans, sunflower oil, natural chicken and turkey flavors, whitefish meal, menhaden fishmeal, dried plain beet pulp, flax seed, dried yeast, dried tomato pomace, salt, potassium chloride, DL methionine, minerals (zinc proteinate, iron proteinate, selenium yeast, copper proteinate, magnesium oxide, manganese proteinate, ethylenediamine dihydroiodide), choline chloride, brewers dried yeast, vitamins (vitamin E supplement, niacin supplement, biotin, d-calcium pantothenate, vitamin A supplement, thiamine mononitrate, pyridoxine hydrochloride, riboflavin supplement, vitamin B12 supplement, vitamin D3 supplement, folic acid), lactic acid, tocopherols (a preservative), L-ascorbyl-2-polyphosphate (source of vitamin C), yucca schidigera extract, yeast culture, dried Aspergillus oryzae fermentation extract, dried Bacillus subtilis fermentation product, dried Bacillus licheniformis fermentation product, dried Trichoderma longibrachiatum fermentation extract, dried Enterococcus faecium fermentation product, dried Lactobacillus acidophilus fermentation product, dried Bacillus subtilis fermentation extract, calcium carbonate, taurine, citric acid (a preservative), L-carnitine, rosemary extract",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "32.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "18.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "5.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "10.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Metionina",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "EPA + DHA",
+   "calificador": "min",
+   "valor": "0.1",
+   "unidad": "%"
+  },
+  {
+   "clave": "hierro",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Cobre",
+   "calificador": "min",
+   "valor": "12.4",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Manganeso",
+   "calificador": "min",
+   "valor": "13",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "165",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "selenio",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Colina",
+   "calificador": "min",
+   "valor": "1800",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "2.7",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.1",
+   "unidad": "%"
+  },
+  {
+   "clave": "l_carnitina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "40",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (Saccharomyces cerevisiae, Bacillus subtilis, Bacillus licheniformis, Enterococcus faecium, Lactobacillus acidophilus)",
+   "calificador": "min",
+   "valor": "100 millones",
+   "unidad": "UFC/lb"
+  }
+ ],
+ "kcal_kg": 4024.0,
+ "kcal_unidad": 441.0,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Guía diaria de alimentación del fabricante",
+  "columnas": [
+   "Peso (lb)",
+   "Peso (kg)",
+   "0 a 3 meses (tazas)",
+   "0 a 3 meses (g)",
+   "3 a 6 meses (tazas)",
+   "3 a 6 meses (g)",
+   "6 meses a adulto (tazas)",
+   "6 meses a adulto (g)"
+  ],
+  "filas": [
+   [
+    "0–1",
+    "0.0–0.5",
+    "3/8–1/2",
+    "41–55",
+    "1/3–3/8",
+    "36–41",
+    "1/4–1/3",
+    "27–36"
+   ],
+   [
+    "1–5",
+    "0.5–2.3",
+    "1/2–3/4",
+    "55–82",
+    "3/8–2/3",
+    "41–72",
+    "1/3–1/2",
+    "36–55"
+   ],
+   [
+    "5–10",
+    "2.3–4.5",
+    "3/4–1 1/4",
+    "82–137",
+    "2/3–1 1/8",
+    "72–123",
+    "1/2–1",
+    "55–110"
+   ],
+   [
+    "10–20",
+    "4.5–9.1",
+    "1 1/4–2",
+    "137–219",
+    "1 1/8–1 3/4",
+    "123–192",
+    "1–1 1/2",
+    "110–164"
+   ],
+   [
+    "20–30",
+    "9.1–13.6",
+    "2–2 2/3",
+    "219–292",
+    "1 3/4–2 1/4",
+    "192–247",
+    "1 1/2–2",
+    "164–219"
+   ],
+   [
+    "30–40",
+    "13.6–18.1",
+    "2 2/3–3 1/2",
+    "292–384",
+    "2 1/4–2 3/4",
+    "247–301",
+    "2–2 1/2",
+    "219–301"
+   ],
+   [
+    "40–50",
+    "18.1–22.7",
+    "3 1/2–4",
+    "384–438",
+    "2 3/4–3 1/4",
+    "301–356",
+    "2 1/2–2 3/4",
+    "274–301"
+   ],
+   [
+    "50–60",
+    "22.7–27.2",
+    "4–4 1/2",
+    "438–493",
+    "3 1/4–3 2/3",
+    "356–401",
+    "2 3/4–3",
+    "301–329"
+   ],
+   [
+    "60–70",
+    "27.2–31.8",
+    "4 1/2–5",
+    "493–548",
+    "3 2/3–4",
+    "401–438",
+    "3–3 1/2",
+    "329–384"
+   ]
+  ],
+  "nota": "Dividir la cantidad en 2 a 3 comidas al día. Una taza medidora de 8 oz (250 cc) contiene aproximadamente 110 g de este alimento. La cantidad varía según actividad, edad, raza y ambiente. Consultá a tu veterinario si tu mascota está muy delgada o con sobrepeso."
+ },
+ "fuentes": [
+  {
+   "url": "https://discovernutrisource.com/products/small-and-medium-breed-puppy",
+   "tipo": "fabricante",
+   "entidad": "Tuffy's Pet Foods (NutriSource)",
+   "region": "EE. UU.",
+   "verificado_en": "2026-09-26",
+   "actualizado_fabricante": "2026-09-26T23:39:42-05:00",
+   "upc_oficiales": [
+    "073893299752",
+    "073893299776",
+    "073893299783"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "BEL-29978"
+ ]
+}

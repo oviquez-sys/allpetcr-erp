@@ -1,0 +1,91 @@
+{
+ "clave": "purevita-beef-dog-stew-tetrapaks",
+ "marca": "PureVita",
+ "linea": "PureVita",
+ "nombre": "Beef Dog Stew TetraPaks",
+ "especie": "perro",
+ "tipo": "humedo",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "ingredientes_limitados"
+ ],
+ "proteina_principal": "Res",
+ "sabor": "Res, hígado",
+ "descripcion_corta": "Alimento húmedo PureVita para perros, con res como primer ingrediente.",
+ "descripcion": "El fabricante lo formula según los perfiles nutricionales de AAFCO para todas las etapas de vida, incluido el crecimiento de perros de raza grande (70 lb o más en edad adulta). Dieta de ingredientes limitados con una sola fuente de proteína animal. Incluye Good4Life, la mezcla de la marca con prebióticos, probióticos y minerales para la salud intestinal.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Prebióticos y probióticos que apoyan la digestión."
+  },
+  {
+   "clave": "alta_proteina",
+   "texto": "Receta rica en proteína animal."
+  }
+ ],
+ "ingredientes": "beef, beef broth, beef liver, tapioca starch, spinach, pumpkin puree, green beans, carrots, pearled barley, quinoa, tricalcium phosphate, salmon oil, sea salt, vitamins (vitamin E supplement, vitamin A supplement, niacin, pantothenic acid, thiamine mononitrate, vitamin D, riboflavin supplement, pyridoxine hydrochloride, folic acid, biotin, vitamin B12 supplement), Canola Oil, minerals (zinc proteinate, iron proteinate, copper proteinate, selenium yeast, manganese proteinate, ethylenediamine dihydroiodide), choline chloride, calcium carbonate, cinnamon ground, taurine, turmeric, hydrolyzed yeast, brewers dried yeast, yucca schidigera extract",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "8.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "6.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "1.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "80.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.01",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 951.0,
+ "kcal_unidad": 337.0,
+ "unidad_kcal": "envase de 12.5 oz",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://discovernutrisource.com/products/beef-dog-stew-tetrapaks",
+   "tipo": "fabricante",
+   "entidad": "Tuffy's Pet Foods (NutriSource)",
+   "region": "EE. UU.",
+   "verificado_en": "2026-09-26",
+   "actualizado_fabricante": "2026-09-26T23:38:13-05:00",
+   "upc_oficiales": [
+    "073893962083"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "BEL-96208"
+ ]
+}

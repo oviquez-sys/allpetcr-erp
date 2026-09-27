@@ -1,0 +1,99 @@
+{
+ "clave": "gosbi-exclusive-grain-free-dog-adult-medium-fish",
+ "marca": "Gosbi",
+ "linea": "Exclusive Grain Free Dog",
+ "nombre": "Exclusive Grain Free Dog Adult Medium Fish",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "mediana"
+ ],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Pescado",
+ "sabor": "Salmón y pescado",
+ "descripcion_corta": "Alimento seco completo sin cereales para perro adulto de raza mediana, con salmón y pescado.",
+ "descripcion": "Receta de la gama Exclusive Grain Free, con salmón y pescado como fuentes principales de proteína y la fórmula ProVital de la marca. Tamaño de la croqueta: ±23 mm.",
+ "beneficios": [
+  {
+   "clave": "piel_pelaje",
+   "texto": "Omega 3 para piel y pelaje."
+  },
+  {
+   "clave": "articulaciones",
+   "texto": "El omega 3 ayuda a mantener las articulaciones."
+  }
+ ],
+ "ingredientes": "Pescado (47 %) (Micromesistius poutassou deshidratado (19 %), Salmo salar deshidratado (12 %), pescado preparado en fresco ((7 %) Salmo salar, (7 %) Dicentrarchus labrax, Sparus aurata, Gadus morhua), aceite de salmón), almidón de patata (19 %), lentejas (12 %), grasa de pollo, boniato (9 %), frutas y verduras (9 %) (pulpa de fruta seca (manzana, pera, piña), pulpa de remolacha seca, zanahoria deshidratada, pulpa de tomate), sustancias minerales, aceite de linaza, fibra vegetal, levadura inactivada + FÓRMULA PROVITAL (1 %): alfalfa deshidratada, inulina de achicoria (FOS), productos de levaduras (MOS), glucosamina (1000 mg/kg), condroitina (800 mg/kg), aceite de oliva, yuca de Mojave, mejillón de labios verdes, krill marino, espinaca deshidratada, productos de la transformación de plantas (Tagetes sp. (fuente natural de luteína), diente de león, hojas de menta, manzanilla, frutos rojos, tomillo, orégano, cardo mariano, romero, aloe vera), aceite de borraja, algas marinas deshidratadas (espirulina), brócoli deshidratado.",
+ "aditivos": "Vitaminas: Vitamina A 16000 UI, vitamina B1 40 mg, vitamina B2 20 mg, vitamina B6 13 mg, vitamina B12 0,3 mg, vitamina C 70 mg, vitamina D3 1600 UI, vitamina E 200 mg, taurina 2 g, ácido fólico 5 mg, biotina 1 mg, L-carnitina 50 mg. Oligoelementos: Fe (quelato de hierro (II) de hidrolizados de proteínas) 60 mg, Zn (quelato de zinc de hidrolizados de proteínas) 60 mg, Mn (quelato de manganeso de hidrolizados de proteínas) 21 mg, Cu (quelato de cobre (II) de hidrolizados de proteínas) 6,9 mg, I (yodato cálcico anhidro) 1,5 mg, Se (levadura selenizada Saccharomyces cerevisiae CNCM I-3060, inactivada) 0,12 mg. Aromas: Extracto de cítricos 5 mg, extracto de té 5 mg. Conservantes y antioxidantes.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "27",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "18",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "6.9",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "3",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Omega-3",
+   "calificador": "",
+   "valor": "1.9",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Omega-6",
+   "calificador": "",
+   "valor": "2.3",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 3900,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbi-exclusive-grain-free-dog-adult-medium-fish/37",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8437015611013"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "GOS-918"
+ ]
+}

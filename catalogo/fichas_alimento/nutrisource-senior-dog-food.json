@@ -1,0 +1,280 @@
+{
+ "clave": "nutrisource-senior-dog-food",
+ "marca": "NutriSource",
+ "linea": "Grain Free",
+ "nombre": "Grain Free Senior",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "senior"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Pavo",
+ "sabor": "Pescado, pavo",
+ "descripcion_corta": "Alimento seco NutriSource para perros, con pavo como primer ingrediente.",
+ "descripcion": "El fabricante lo formula según los perfiles nutricionales de AAFCO para el mantenimiento de perros adultos. Receta libre de granos. Incluye Good4Life, la mezcla de la marca con prebióticos, probióticos y minerales para la salud intestinal.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Prebióticos y probióticos que apoyan la digestión."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Nutrientes para piel y pelaje sanos."
+  },
+  {
+   "clave": "omega",
+   "texto": "Aporta ácidos grasos omega 3 y 6."
+  },
+  {
+   "clave": "corazon",
+   "texto": "Nutrientes que apoyan la salud del corazón."
+  },
+  {
+   "clave": "antioxidantes",
+   "texto": "Combinación antioxidante con selenio y DHA."
+  }
+ ],
+ "ingredientes": "turkey, turkey meal, green lentils, red lentils, peas, garbanzo beans, natural chicken and turkey flavors, flax seed, dried plain beet pulp, sunflower oil, menhaden fishmeal, pea fiber, dried yeast, calcium carbonate, potassium chloride, salt, natural flavor, DL methionine, choline chloride, minerals (zinc proteinate, iron proteinate, selenium yeast, copper proteinate, magnesium oxide, manganese proteinate, ethylenediamine dihydroiodide), brewers dried yeast, vitamins (vitamin E supplement, niacin supplement, biotin, d-calcium pantothenate, vitamin A supplement, thiamine mononitrate, pyridoxine hydrochloride, riboflavin supplement, vitamin B12 supplement, vitamin D3 supplement, folic acid), glucosamine hydrochloride, lactic acid, L-ascorbyl-2-polyphosphate (source of vitamin C), tocopherols (a preservative), chondroitin sulfate, citric acid (a preservative), yucca schidigera extract, taurine, yeast culture, dried Aspergillus oryzae fermentation extract, dried Bacillus subtilis fermentation product, dried Bacillus licheniformis fermentation product, dried Trichoderma longibrachiatum fermentation extract, dried Enterococcus faecium fermentation product, dried Lactobacillus acidophilus fermentation product, dried Bacillus subtilis fermentation extract, L-carnitine, rosemary extract",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "28.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "12.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "7.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "10.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "DL-metionina",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "EPA + DHA",
+   "calificador": "min",
+   "valor": "0.05",
+   "unidad": "%"
+  },
+  {
+   "clave": "hierro",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "155",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Cobre",
+   "calificador": "min",
+   "valor": "10",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Manganeso",
+   "calificador": "min",
+   "valor": "15",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "170",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "selenio",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Colina",
+   "calificador": "min",
+   "valor": "1800",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "1.9",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.7",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.07",
+   "unidad": "%"
+  },
+  {
+   "clave": "glucosamina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "300",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "condroitina",
+   "etiqueta": "Sulfato de condroitina",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "l_carnitina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "40",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (Saccharomyces cerevisiae, Bacillus subtilis, Bacillus licheniformis, Enterococcus faecium, Lactobacillus acidophilus)",
+   "calificador": "min",
+   "valor": "100 millones",
+   "unidad": "UFC/lb"
+  }
+ ],
+ "kcal_kg": 3615.0,
+ "kcal_unidad": 396.0,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Guía diaria de alimentación del fabricante",
+  "columnas": [
+   "Peso (lb)",
+   "Peso (kg)",
+   "Ración diaria (tazas)",
+   "Ración diaria (g)"
+  ],
+  "filas": [
+   [
+    "1–5",
+    "0–2",
+    "1/4–1/3",
+    "27–36"
+   ],
+   [
+    "5–10",
+    "2–5",
+    "1/3–5/8",
+    "36–69"
+   ],
+   [
+    "10–15",
+    "5–7",
+    "5/8–3/4",
+    "69–82"
+   ],
+   [
+    "15–20",
+    "7–9",
+    "3/4–1",
+    "82–110"
+   ],
+   [
+    "20–30",
+    "9–14",
+    "1–1 1/4",
+    "110–137"
+   ],
+   [
+    "30–40",
+    "14–18",
+    "1 1/4–1 1/2",
+    "137–164"
+   ],
+   [
+    "40–50",
+    "18–23",
+    "1 1/2–1 3/4",
+    "164–192"
+   ],
+   [
+    "50–60",
+    "23–27",
+    "1 3/4–2",
+    "192–219"
+   ],
+   [
+    "60–70",
+    "27–32",
+    "2–2 1/4",
+    "219–247"
+   ],
+   [
+    "70–80",
+    "32–36",
+    "2 1/4–2 1/2",
+    "247–274"
+   ],
+   [
+    "80–90",
+    "36–45",
+    "2 1/2–2 3/4",
+    "274–301"
+   ]
+  ],
+  "nota": "Dividir la cantidad en 2 a 3 comidas al día. Una taza medidora de 8 oz (250 cc) contiene aproximadamente 110 g de este alimento. La cantidad varía según actividad, edad, raza y ambiente. Consultá a tu veterinario si tu mascota está muy delgada o con sobrepeso."
+ },
+ "fuentes": [
+  {
+   "url": "https://discovernutrisource.com/products/senior-dog-food",
+   "tipo": "fabricante",
+   "entidad": "Tuffy's Pet Foods (NutriSource)",
+   "region": "EE. UU.",
+   "verificado_en": "2026-09-26",
+   "actualizado_fabricante": "2026-09-26T23:39:36-05:00",
+   "upc_oficiales": [
+    "073893299554",
+    "073893299578",
+    "073893299585"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "BEL-29958"
+ ]
+}

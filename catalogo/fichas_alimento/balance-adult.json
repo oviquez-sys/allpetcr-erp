@@ -1,0 +1,50 @@
+{
+ "clave": "balance-adult",
+ "marca": "Balance",
+ "linea": "",
+ "nombre": "Balance Adult",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "mediana"
+ ],
+ "necesidades": [],
+ "proteina_principal": "",
+ "sabor": "",
+ "descripcion_corta": "Alimento seco completo para perro adulto de raza mediana.",
+ "descripcion": "Alimento completo y balanceado de Belina, producido en Costa Rica, con biotina para la etapa adulta.",
+ "beneficios": [
+  {
+   "clave": "piel_pelaje",
+   "texto": "Con biotina: almohadillas y pelaje más sanos y brillantes."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.belinanutricion.com/product?referenceCode=BALANCEADULT",
+   "tipo": "fabricante",
+   "entidad": "Belina Nutrición (fabricante de Balance)",
+   "region": "Costa Rica",
+   "verificado_en": "2026-09-26"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "Belina no publica ingredientes ni análisis garantizado: faltan (tomarlos del empaque o de la ficha técnica).",
+ "skus": [
+  "BEL-53302",
+  "BEL-53303",
+  "BEL-53318",
+  "BEL-53320"
+ ]
+}

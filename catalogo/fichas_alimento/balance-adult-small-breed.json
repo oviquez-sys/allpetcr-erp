@@ -1,0 +1,49 @@
+{
+ "clave": "balance-adult-small-breed",
+ "marca": "Balance",
+ "linea": "",
+ "nombre": "Balance Adult Small Breed",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "pequena"
+ ],
+ "necesidades": [],
+ "proteina_principal": "",
+ "sabor": "",
+ "descripcion_corta": "Alimento seco completo para perro adulto de raza mini y pequeña.",
+ "descripcion": "Alimento completo y balanceado de Belina con croqueta mini, adaptada a la boca de razas pequeñas, y biotina.",
+ "beneficios": [
+  {
+   "clave": "piel_pelaje",
+   "texto": "Con biotina: almohadillas y pelaje más sanos y brillantes."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.belinanutricion.com/product?referenceCode=BALANCEADULTSMALLBREED",
+   "tipo": "fabricante",
+   "entidad": "Belina Nutrición (fabricante de Balance)",
+   "region": "Costa Rica",
+   "verificado_en": "2026-09-26"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "Belina no publica ingredientes ni análisis garantizado: faltan (tomarlos del empaque o de la ficha técnica).",
+ "skus": [
+  "BEL-53491",
+  "BEL-53492",
+  "BEL-53498"
+ ]
+}

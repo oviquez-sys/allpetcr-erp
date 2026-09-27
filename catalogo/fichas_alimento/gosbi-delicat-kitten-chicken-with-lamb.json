@@ -1,0 +1,95 @@
+{
+ "clave": "gosbi-delicat-kitten-chicken-with-lamb",
+ "marca": "Gosbi",
+ "linea": "Delicat",
+ "nombre": "Delicat Kitten Chicken with Lamb",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [
+  "gatito"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo y cordero",
+ "descripcion_corta": "Paté húmedo completo para gatito, con pollo y cordero.",
+ "descripcion": "Cocinado al vapor. El cordero aporta hierro y vitaminas del grupo B para un crecimiento equilibrado, y la receta está enriquecida con taurina.",
+ "beneficios": [
+  {
+   "clave": "desarrollo",
+   "texto": "Hierro y vitaminas B para un crecimiento equilibrado."
+  },
+  {
+   "clave": "masa_muscular",
+   "texto": "Proteína de calidad para músculos fuertes."
+  },
+  {
+   "clave": "corazon",
+   "texto": "Taurina para la salud del corazón."
+  },
+  {
+   "clave": "vision",
+   "texto": "Taurina que también apoya la visión."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Omega 6 para piel y pelo."
+  }
+ ],
+ "ingredientes": "Pollo (51 %), cordero (21 %), caldo, calabaza (2 %), sustancias minerales, aceite de salmón, productos de levaduras, inulina de achicoria, algas marinas.",
+ "aditivos": "Vitaminas: Vitamina E 20 UI, taurina 1200 mg, L-carnitina 10 mg. Oligoelementos: Fe (quelato de hierro (II) de hidrolizados de proteínas) 20 mg, Zn (quelato de zinc de hidrolizados de proteínas) 20 mg, Cu (quelato de cobre (II) de hidrolizados de proteínas) 2 mg, Mn (quelato de manganeso de hidrolizados de proteínas) 2 mg, Se (levadura selenizada Saccharomyces cerevisiae CNCMI-3060, inactivada) 0,02 mg.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "12",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "9",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "2",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "",
+   "valor": "75",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 1296,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbi-delicat-kitten-chicken-with-lamb/131",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8436566807289"
+   ]
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "La fuente oficial publica Fibra bruta como 0 % (valor redondeado a entero). Se omitió para no mostrar un dato engañoso: verificar contra el empaque.",
+ "skus": [
+  "GOS-72080"
+ ]
+}

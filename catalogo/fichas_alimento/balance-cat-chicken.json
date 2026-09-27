@@ -1,0 +1,54 @@
+{
+ "clave": "balance-cat-chicken",
+ "marca": "Balance",
+ "linea": "",
+ "nombre": "Balance Cat Chicken",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "",
+ "descripcion_corta": "Alimento seco completo sabor pollo para gato adulto.",
+ "descripcion": "Alimento completo y balanceado de Belina, producido en Costa Rica, libre de soya y gluten, con 32 % de proteína.",
+ "beneficios": [
+  {
+   "clave": "alta_proteina",
+   "texto": "32 % de proteína para su vitalidad."
+  },
+  {
+   "clave": "corazon",
+   "texto": "Taurina para el corazón y el sistema digestivo."
+  },
+  {
+   "clave": "vision",
+   "texto": "Taurina que también cuida la visión."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.belinanutricion.com/product?referenceCode=BALANCECATCHICKEN",
+   "tipo": "fabricante",
+   "entidad": "Belina Nutrición (fabricante de Balance)",
+   "region": "Costa Rica",
+   "verificado_en": "2026-09-26"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "Belina no publica ingredientes ni análisis garantizado: faltan (tomarlos del empaque o de la ficha técnica). BEL-53520 (10 kg): la foto del inventario es de un empaque anterior; Belina vende hoy Cat Chicken en 10 kg. Confirmar con la bolsa física.",
+ "skus": [
+  "BEL-53519",
+  "BEL-53520"
+ ]
+}

@@ -7,6 +7,7 @@ from django.db import models
 
 from core.models import Empresa
 
+from . import alimentos
 from .codigos import siguiente_interno
 
 validar_cabys = RegexValidator(
@@ -185,6 +186,15 @@ class Producto(models.Model):
         help_text="Lugar dentro de «La vitrina». Menor sale primero. Solo se "
                   "usa si «Destacado en home» está marcado.",
     )
+    # Ficha de alimento (26/09/2026): la información nutricional investigada
+    # vive en la FÓRMULA, no en cada bolsa. "Balance Adult" en 2, 5, 9,07 y
+    # 14,97 kg es la misma comida: se investiga una vez y las cuatro bolsas
+    # apuntan a la misma ficha. Vacío en todo lo que no es alimento.
+    ficha_alimento = models.ForeignKey(
+        "FichaAlimento", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="productos",
+        help_text="Fórmula a la que pertenece esta presentación (solo alimentos).",
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 
@@ -332,3 +342,90 @@ class CambioPrecio(models.Model):
     def variacion(self):
         """Diferencia absoluta (positiva sube, negativa baja)."""
         return self.valor_nuevo - self.valor_anterior
+
+
+class FichaAlimento(models.Model):
+    """Información oficial de UNA fórmula de alimento (26/09/2026).
+
+    INVESTIGAR → VERIFICAR → ALMACENAR → MOSTRAR
+    --------------------------------------------
+    Todo lo de acá se investiga una vez contra la fuente oficial (fabricante
+    o su distribuidor oficial en Costa Rica) y se guarda. El sitio lo lee de
+    esta tabla; nunca consulta al fabricante cuando un cliente abre la ficha.
+
+    Qué es estructurado y qué es JSON, y por qué
+    --------------------------------------------
+    Lo que va a filtrar o comparar es columna o lista de CLAVES del
+    vocabulario de catalogo/alimentos.py (especie, tipo, etapas, tamaños,
+    necesidades, proteína principal, calorías). Lo que cada fabricante
+    publica distinto —análisis garantizado, guía de alimentación, fuentes—
+    va en JSONField: una tabla por nutriente o por fila de guía serían cinco
+    tablas más para un catálogo de ~130 fórmulas, sin ganar nada que
+    PostgreSQL no haga ya sobre JSON.
+
+    Regla absoluta: un campo vacío es un dato que el fabricante no publicó.
+    Nunca se completa con el de otra fórmula ni se deduce.
+    """
+
+    clave = models.SlugField(max_length=80, unique=True, help_text="Identificador estable, ej. nutrisource-adult-chicken-rice")
+    marca = models.CharField(max_length=80)
+    linea = models.CharField(max_length=80, blank=True, help_text="Línea dentro de la marca, ej. Grain Free, Exclusive")
+    nombre = models.CharField(max_length=160, help_text="Nombre oficial de la fórmula, como lo publica el fabricante")
+    especie = models.CharField(max_length=10, choices=[(k, v) for k, v in alimentos.ESPECIES.items()])
+    tipo = models.CharField(max_length=10, choices=[(k, v) for k, v in alimentos.TIPOS.items()])
+    etapas = models.JSONField(default=list, blank=True, help_text="Claves de catalogo/alimentos.py ETAPAS")
+    tamanos_raza = models.JSONField(default=list, blank=True, help_text="Claves de TAMANOS_RAZA")
+    necesidades = models.JSONField(default=list, blank=True, help_text="Claves de NECESIDADES que declara el fabricante")
+    proteina_principal = models.CharField(max_length=60, blank=True, help_text="Primer ingrediente proteico, ej. Pollo")
+    sabor = models.CharField(max_length=120, blank=True)
+
+    descripcion_corta = models.CharField(max_length=300, blank=True)
+    descripcion = models.TextField(blank=True)
+    # [{"clave": "digestion", "texto": "Prebióticos y probióticos..."}]
+    beneficios = models.JSONField(default=list, blank=True)
+    # Lista oficial, en el orden del fabricante. No se reordena ni se "mejora".
+    ingredientes = models.TextField(blank=True)
+    aditivos = models.TextField(blank=True, help_text="Vitaminas, minerales y aditivos, tal como los declara el fabricante")
+    # [{"clave": "proteina", "etiqueta": "Proteína cruda", "calificador": "min", "valor": "26", "unidad": "%"}]
+    analisis = models.JSONField(default=list, blank=True)
+    kcal_kg = models.DecimalField(max_digits=7, decimal_places=1, null=True, blank=True, help_text="Energía metabolizable por kg")
+    kcal_unidad = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, help_text="Por taza, lata o sobre")
+    unidad_kcal = models.CharField(max_length=20, blank=True, help_text="Qué es la 'unidad' de kcal_unidad: taza, lata, sobre")
+    # {"titulo": "...", "columnas": ["Peso", "Adulto"], "filas": [["1–5 lb", "¼–⅝ taza"]], "nota": "..."}
+    guia_alimentacion = models.JSONField(default=dict, blank=True)
+
+    # [{"url": "...", "tipo": "fabricante", "entidad": "Tuffy's Pet Foods", "region": "EE. UU.", "verificado_en": "2026-09-26"}]
+    fuentes = models.JSONField(default=list, blank=True)
+    estado = models.CharField(
+        max_length=16, default="sin_investigar",
+        choices=[(k, v) for k, v in alimentos.ESTADOS.items()],
+    )
+    verificado_en = models.DateField(null=True, blank=True, help_text="Última vez que se contrastó contra la fuente oficial")
+    notas_internas = models.TextField(blank=True, help_text="Dudas, diferencias entre fuentes, qué falta. No se publica.")
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "ficha de alimento"
+        verbose_name_plural = "fichas de alimento"
+        ordering = ["marca", "nombre"]
+
+    def __str__(self):
+        return f"{self.marca} · {self.nombre}"
+
+    def clean(self):
+        errores = {}
+        for campo, vocabulario in alimentos.LISTAS.items():
+            desconocidas = [c for c in getattr(self, campo) or [] if c not in vocabulario]
+            if desconocidas:
+                errores[campo] = f"Claves desconocidas: {', '.join(desconocidas)}"
+        malas = [b.get("clave") for b in self.beneficios or [] if b.get("clave") not in alimentos.BENEFICIOS]
+        if malas:
+            errores["beneficios"] = f"Beneficios desconocidos: {', '.join(map(str, malas))}"
+        malos = [n.get("clave") for n in self.analisis or [] if n.get("clave") not in alimentos.NUTRIENTES]
+        if malos:
+            errores["analisis"] = f"Nutrientes desconocidos: {', '.join(map(str, malos))}"
+        if self.estado == "verificado" and not (self.fuentes and self.verificado_en):
+            errores["estado"] = "Una ficha verificada necesita al menos una fuente y la fecha de verificación."
+        if errores:
+            raise ValidationError(errores)

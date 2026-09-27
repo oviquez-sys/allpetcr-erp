@@ -1,0 +1,109 @@
+{
+ "clave": "gosbi-exclusive-grain-free-dog-adult-mini-light",
+ "marca": "Gosbi",
+ "linea": "Exclusive Grain Free Dog",
+ "nombre": "Exclusive Grain Free Dog Adult Mini Light",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "pequena"
+ ],
+ "necesidades": [
+  "esterilizado",
+  "control_peso",
+  "libre_granos"
+ ],
+ "proteina_principal": "Pavo",
+ "sabor": "Pavo y pescado blanco",
+ "descripcion_corta": "Alimento seco completo sin cereales para perro esterilizado de raza pequeña, con pavo y pescado blanco.",
+ "descripcion": "Receta Light de la gama Exclusive Grain Free, con proteínas magras y la fórmula ProVital de la marca. Tamaño de la croqueta: ±10 mm.",
+ "beneficios": [
+  {
+   "clave": "control_peso",
+   "texto": "Proteína magra que ayuda a mantener el peso."
+  },
+  {
+   "clave": "masa_muscular",
+   "texto": "Omega 3 que contribuye a mantener la masa muscular."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Cuida piel y pelaje."
+  },
+  {
+   "clave": "articulaciones",
+   "texto": "Cuida las articulaciones."
+  }
+ ],
+ "ingredientes": "Pavo deshidratado (24 %), almidón de patata (14 %), pescado deshidratado (Micromesistius poutassou) (12 %), frutas y verduras (11 %) (pulpa de fruta seca (manzana, pera, piña), pulpa de remolacha seca, zanahoria deshidratada, tomate deshidratado), guisantes (9 %), lentejas (7 %), fibra vegetal, grasa de pollo, boniato (4 %), huevo deshidratado (1 %), aceite de salmón, sustancias minerales, semillas de plantago, aceite de linaza + FÓRMULA PROVITAL (1 %): alfalfa deshidratada, inulina de achicoria (FOS), productos de levaduras (MOS), glucosamina (1000 mg/kg), condroitina (800 mg/kg), aceite de oliva, yuca de Mojave, mejillón de labios verdes, krill marino, espinaca deshidratada, productos de la transformación de plantas (Tagetes sp. (fuente natural de luteína), diente de león, hojas de menta, manzanilla, frutos rojos, tomillo, orégano, cardo mariano, romero, aloe vera), aceite de borraja, algas marinas deshidratadas (espirulina), brócoli deshidratado.",
+ "aditivos": "Vitaminas: Vitamina A 16000 UI, vitamina B1 40 mg, vitamina B2 20 mg, vitamina B6 13 mg, vitamina B12 0,3 mg, vitamina C 70 mg, vitamina D3 1600 UI, vitamina E 200 mg, taurina 2 g, ácido fólico 5 mg, biotina 1 mg, L-carnitina 50 mg. Oligoelementos: Fe (quelato de hierro (II) de hidrolizados de proteínas) 60 mg, Zn (quelato de zinc de hidrolizados de proteínas) 60 mg, Mn (quelato de manganeso de hidrolizados de proteínas) 21 mg, Cu (quelato de cobre (II) de hidrolizados de proteínas) 6,9 mg, I (yodato cálcico anhidro) 1,5 mg, Se (levadura selenizada Saccharomyces cerevisiae CNCM I-3060, inactivada) 0,12 mg. Aromas: extracto de cítricos 5 mg, extracto de té 5 mg. Estabilizadores de la flora intestinal: probióticos (Enterococcus faecium DSM 10663/NCIMB 10415: 1·109 UFC). Conservantes y antioxidantes.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "29",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "12",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "8.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "9",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Omega-3",
+   "calificador": "",
+   "valor": "0.6",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Omega-6",
+   "calificador": "",
+   "valor": "2.6",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 3182,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbi-exclusive-grain-free-dog-adult-mini-light/36",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8436566803236"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "GOS-71578"
+ ]
+}

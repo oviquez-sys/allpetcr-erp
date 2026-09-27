@@ -1,0 +1,97 @@
+{
+ "clave": "gosbits-objective-dog-skin-and-hair",
+ "marca": "Gosbi",
+ "linea": "Objective Dog",
+ "nombre": "Objective Dog Skin & Hair",
+ "especie": "perro",
+ "tipo": "snack",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Codorniz",
+ "sabor": "Codorniz, pato y conejo",
+ "descripcion_corta": "Premio funcional semihúmedo para el cuidado de piel y pelaje del perro adulto.",
+ "descripcion": "Con codorniz, pato y conejo, y algas marinas ricas en DHA y omega 3. Es un premio: complementa la dieta diaria, no la reemplaza.",
+ "beneficios": [
+  {
+   "clave": "piel_pelaje",
+   "texto": "Algas con DHA y omega 3 para piel y pelaje brillante."
+  },
+  {
+   "clave": "inmunidad",
+   "texto": "Proteínas que apoyan músculos y defensas."
+  }
+ ],
+ "ingredientes": "Codorniz (fresca min. 30 % antes de la cocción), guisantes, proteína deshidratada de pato (18 %), patata deshidratada, conejo (fresco 10 % antes de la cocción), glicerina, aceite de salmón, productos de levaduras (0,8 %), sustancias minerales, algas marinas (fuente de DHA).",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "24",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "11",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "8",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "2",
+   "unidad": "%"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "",
+   "valor": "438",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "",
+   "valor": "20",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 3200,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbits-objective-dog-skin-and-hair/97",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8436566803960"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "GOS-71696"
+ ]
+}

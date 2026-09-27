@@ -1,0 +1,207 @@
+{
+ "clave": "nutrisource-country-select-entr-e-cat-food",
+ "marca": "NutriSource",
+ "linea": "Grain Free",
+ "nombre": "Grain Free Country Select",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo, pato",
+ "descripcion_corta": "Alimento seco NutriSource para gatos, con pollo como primer ingrediente.",
+ "descripcion": "El fabricante lo formula según los perfiles nutricionales de AAFCO para todas las etapas de vida. Receta libre de granos. Incluye Good4Life, la mezcla de la marca con prebióticos, probióticos y minerales para la salud intestinal.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Prebióticos y probióticos que apoyan la digestión."
+  },
+  {
+   "clave": "omega",
+   "texto": "Aporta ácidos grasos omega 3 y 6."
+  },
+  {
+   "clave": "corazon",
+   "texto": "Nutrientes que apoyan la salud del corazón."
+  }
+ ],
+ "ingredientes": "chicken, duck meal, chicken meal, turkey meal, peas, sweet potatoes, chicken fat (preserved with tocopherols and citric acid), garbanzo beans, pea starch, dried yeast, natural poultry and fish flavors, flax seed, dried egg product, pea fiber, yeast extract, calcium carbonate, DL methionine, potassium chloride, choline chloride, dried whole goat milk, salmon oil (preserved with tocopherols), taurine, salt, minerals (iron proteinate, zinc proteinate, copper proteinate, sodium selenite, manganese proteinate, ethylenediamine dihydroiodide), calcium sulfate, vitamins (vitamin E supplement, niacin supplement, d-calcium pantothenate, vitamin A supplement, thiamine mononitrate, riboflavin supplement, pyridoxine hydrochloride, biotin, vitamin B12 supplement, vitamin D3 supplement, folic acid), dried pumpkin, dried blueberries, dried cranberries, dried kelp meal, inulin, hydrolyzed yeast, dried Aspergillus oryzae fermentation extract, dried Trichoderma longibrachiatum fermentation extract, lactic acid, brewers dried yeast, turmeric, dried Aspergillus niger fermentation extract, L-ascorbyl-2-polyphosphate (source of vitamin C), yeast culture, dried Bacillus subtilis fermentation product, dried Bacillus licheniformis fermentation product, dried Enterococcus faecium fermentation product, dried Lactobacillus acidophilus fermentation product, dried Bacillus subtilis fermentation extract, yucca schidigera extract, rosemary extract",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "36.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "18.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "5.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "10.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "hierro",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "140",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Cobre",
+   "calificador": "min",
+   "valor": "15",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Manganeso",
+   "calificador": "min",
+   "valor": "10",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "100",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "2.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (Saccharomyces cerevisiae, Bacillus subtilis, Bacillus licheniformis, Enterococcus faecium, Lactobacillus acidophilus)",
+   "calificador": "min",
+   "valor": "100 millones",
+   "unidad": "UFC/lb"
+  }
+ ],
+ "kcal_kg": 4023.0,
+ "kcal_unidad": 479.0,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Guía diaria de alimentación del fabricante",
+  "columnas": [
+   "Peso (lb)",
+   "Peso (kg)",
+   "Gatito, 6 a 20 semanas (tazas)",
+   "Gatito, 21 a 38 semanas (tazas)",
+   "Gatito, 39 a 52 semanas (tazas)",
+   "Adulto (tazas)"
+  ],
+  "filas": [
+   [
+    "1–4",
+    "0.5–1.8",
+    "1/4–7/8",
+    "1/8–5/8",
+    "1/8–3/8",
+    "1/8–1/4"
+   ],
+   [
+    "4–6",
+    "1.8–2.7",
+    "7/8–1 1/4",
+    "5/8–7/8",
+    "3/8–5/8",
+    "1/4–1/3"
+   ],
+   [
+    "6–8",
+    "2.7–3.6",
+    "1 1/4–1 2/3",
+    "7/8–1 1/4",
+    "5/8–7/8",
+    "1/3–3/8"
+   ],
+   [
+    "8–10",
+    "3.6–4.5",
+    "1 2/3–2 1/8",
+    "1 1/4–1 1/2",
+    "7/8–1",
+    "3/8–1/2"
+   ],
+   [
+    "10–12",
+    "4.5–5.4",
+    "2 1/8–2 1/2",
+    "1 1/2–1 7/8",
+    "1–1 1/4",
+    "1/2–5/8"
+   ],
+   [
+    "12–14",
+    "5.4–6.4",
+    "2 1/2–2 7/8",
+    "1 7/8–2 1/4",
+    "1 1/4–1 1/2",
+    "5/8–3/4"
+   ]
+  ],
+  "nota": "Dividir la cantidad en 2 a 3 comidas al día. Una taza medidora de 8 oz (250 cc) contiene aproximadamente 115 g de este alimento. La cantidad varía según actividad, edad, raza y ambiente. Consultá a tu veterinario si tu mascota está muy delgada o con sobrepeso."
+ },
+ "fuentes": [
+  {
+   "url": "https://discovernutrisource.com/products/country-select-entr-e-cat-food",
+   "tipo": "fabricante",
+   "entidad": "Tuffy's Pet Foods (NutriSource)",
+   "region": "EE. UU.",
+   "verificado_en": "2026-09-26",
+   "actualizado_fabricante": "2026-09-26T23:38:39-05:00",
+   "upc_oficiales": [
+    "073893282013",
+    "073893282020"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "BEL-28201",
+  "BEL-28202"
+ ]
+}

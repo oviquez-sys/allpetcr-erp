@@ -1,0 +1,121 @@
+{
+ "clave": "natsbi-steamed-dog-chicken",
+ "marca": "Natsbi",
+ "linea": "Steamed Dog",
+ "nombre": "Steamed Dog Chicken",
+ "especie": "perro",
+ "tipo": "humedo",
+ "etapas": [
+  "cachorro",
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Comida natural completa cocinada al vapor para perro, con 90 % de pollo.",
+ "descripcion": "Cocinada al vapor sin agua añadida. Se conserva a temperatura ambiente; una vez abierta, hasta 2 días en refrigeración.",
+ "beneficios": [
+  {
+   "clave": "digestion",
+   "texto": "Prebióticos y proteína de fácil digestión."
+  },
+  {
+   "clave": "masa_muscular",
+   "texto": "Proteína magra de pollo."
+  }
+ ],
+ "ingredientes": "Pollo* (90 %), verduras* (6 %) (zanahoria* (5 %), patata* (1 %)), manzana fresca* (1 %), aceite de salmón (1 %), arándanos deshidratados* (0,5 %), algarroba* (0,4 %), sustancias minerales, inulina de achicoria (1 g/kg), productos de levaduras (400 mg/kg). *Ingredientes naturales",
+ "aditivos": "Vitaminas: Vitamina A 12000 UI, Vitamina D3 300 UI, Vitamina E 80 mg. Oligoelementos: Fe (quelato de hierro (II) de hidrolizados proteicos) 50 mg, I (yodato de calcio anhidro) 0,5 mg, Zn (quelato de zinc de hidrolizados proteicos) 40 mg, Cu (quelato de cobre (II) de hidrolizados proteicos) 6 mg, Mn (quelato de manganeso de hidrolizados proteicos) 25 mg.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "18",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "12",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "4",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "0.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "0.9",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "0.6",
+   "unidad": "%"
+  },
+  {
+   "clave": "sodio",
+   "etiqueta": "Sodio",
+   "calificador": "",
+   "valor": "0.12",
+   "unidad": "%"
+  },
+  {
+   "clave": "potasio",
+   "etiqueta": "Potasio",
+   "calificador": "",
+   "valor": "0.4",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "",
+   "valor": "58",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 2009,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/natsbi-steamed-dog-chicken/80",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8436566804905",
+    "8436566807111"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "GOS-71847",
+  "GOS-72165"
+ ]
+}

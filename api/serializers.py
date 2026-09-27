@@ -11,7 +11,8 @@ from decimal import Decimal
 
 from rest_framework import serializers
 
-from catalogo.models import Categoria, Producto
+from catalogo import alimentos
+from catalogo.models import Categoria, FichaAlimento, Producto
 from core.imagenes import url_imagen_producto
 from pedidos.models import AvisoDisponibilidad
 
@@ -94,11 +95,96 @@ class ProductoListaSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri(ruta) if request else ruta
 
 
+def _etiquetas(claves, vocabulario):
+    return [{"clave": c, "etiqueta": vocabulario[c]} for c in claves or [] if c in vocabulario]
+
+
+class FichaAlimentoSerializer(serializers.ModelSerializer):
+    """La ficha de alimento tal como la publica el sitio (26/09/2026).
+
+    Las etiquetas (etapa, necesidad, beneficio, nutriente) salen resueltas
+    desde catalogo/alimentos.py: el sitio no repite el vocabulario, así que
+    cambiar un texto acá lo cambia en el sitio sin desplegarlo.
+
+    Quedan AFUERA a propósito: fuentes, estado y notas internas. Son la
+    trazabilidad del trabajo, no información para el cliente.
+    """
+
+    especie = serializers.SerializerMethodField()
+    tipo = serializers.SerializerMethodField()
+    etapas = serializers.SerializerMethodField()
+    tamanos_raza = serializers.SerializerMethodField()
+    necesidades = serializers.SerializerMethodField()
+    beneficios = serializers.SerializerMethodField()
+    analisis = serializers.SerializerMethodField()
+    kcal_kg = serializers.DecimalField(max_digits=7, decimal_places=1, coerce_to_string=False, allow_null=True)
+    kcal_unidad = serializers.DecimalField(max_digits=8, decimal_places=2, coerce_to_string=False, allow_null=True)
+
+    class Meta:
+        model = FichaAlimento
+        fields = [
+            "clave", "marca", "linea", "nombre", "especie", "tipo", "etapas", "tamanos_raza",
+            "necesidades", "proteina_principal", "sabor", "descripcion_corta", "descripcion",
+            "beneficios", "ingredientes", "aditivos", "analisis", "kcal_kg", "kcal_unidad",
+            "unidad_kcal", "guia_alimentacion",
+        ]
+
+    def get_especie(self, obj):
+        return {"clave": obj.especie, "etiqueta": alimentos.ESPECIES.get(obj.especie, "")}
+
+    def get_tipo(self, obj):
+        return {"clave": obj.tipo, "etiqueta": alimentos.TIPOS.get(obj.tipo, "")}
+
+    def get_etapas(self, obj):
+        return _etiquetas(obj.etapas, alimentos.ETAPAS)
+
+    def get_tamanos_raza(self, obj):
+        return _etiquetas(obj.tamanos_raza, alimentos.TAMANOS_RAZA)
+
+    def get_necesidades(self, obj):
+        return _etiquetas(obj.necesidades, alimentos.NECESIDADES)
+
+    def get_beneficios(self, obj):
+        return [
+            {"clave": b["clave"], "etiqueta": alimentos.BENEFICIOS[b["clave"]], "texto": b.get("texto", "")}
+            for b in obj.beneficios or [] if b.get("clave") in alimentos.BENEFICIOS
+        ]
+
+    def get_analisis(self, obj):
+        return [
+            {
+                "clave": n.get("clave", "otro"),
+                "etiqueta": n.get("etiqueta") or alimentos.NUTRIENTES.get(n.get("clave"), ""),
+                "calificador": alimentos.CALIFICADORES.get(n.get("calificador", ""), ""),
+                "valor": str(n.get("valor", "")),
+                "unidad": n.get("unidad", ""),
+            }
+            for n in obj.analisis or []
+        ]
+
+
+# Una ficha "sin investigar" o "requiere revisión" no se publica: mejor una
+# ficha de producto sin sección nutricional que una con datos dudosos.
+ESTADOS_PUBLICABLES = ("parcial", "verificado")
+
+
 class ProductoDetalleSerializer(ProductoListaSerializer):
-    """Para GET /productos/<sku>/. Hoy los mismos campos que la lista
-    (que ya incluye descripcion) — se mantiene como clase aparte para el
-    día que la ficha necesite algo que la lista no (ej. productos
-    relacionados calculados en el servidor)."""
+    """Para GET /productos/<sku>/: la lista más la ficha de alimento.
+
+    La ficha va SOLO en el detalle (26/09/2026): la lista la pide el sitio
+    entera en cada visita al catálogo, y sumarle ingredientes y análisis de
+    130 fórmulas la haría varias veces más pesada para nada."""
+
+    ficha_alimento = serializers.SerializerMethodField()
+
+    class Meta(ProductoListaSerializer.Meta):
+        fields = ProductoListaSerializer.Meta.fields + ["ficha_alimento"]
+
+    def get_ficha_alimento(self, obj):
+        ficha = obj.ficha_alimento
+        if not ficha or ficha.estado not in ESTADOS_PUBLICABLES:
+            return None
+        return FichaAlimentoSerializer(ficha).data
 
 
 class DisponibilidadSerializer(serializers.Serializer):

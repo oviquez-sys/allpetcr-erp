@@ -1,0 +1,49 @@
+{
+ "clave": "balance-senior-small-breed",
+ "marca": "Balance",
+ "linea": "",
+ "nombre": "Balance Senior Small Breed",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "senior"
+ ],
+ "tamanos_raza": [
+  "pequena"
+ ],
+ "necesidades": [],
+ "proteina_principal": "",
+ "sabor": "",
+ "descripcion_corta": "Alimento seco completo para perro senior de raza mini y pequeña.",
+ "descripcion": "Alimento completo y balanceado de Belina con croqueta mini, glucosamina y condroitina.",
+ "beneficios": [
+  {
+   "clave": "articulaciones",
+   "texto": "Glucosamina y condroitina para el cuidado articular."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.belinanutricion.com/product?referenceCode=BALANCESENIORSMALLBREED",
+   "tipo": "fabricante",
+   "entidad": "Belina Nutrición (fabricante de Balance)",
+   "region": "Costa Rica",
+   "verificado_en": "2026-09-26"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "Belina no publica ingredientes ni análisis garantizado: faltan (tomarlos del empaque o de la ficha técnica). En el ERP figuran como 'Balance Senior RP' (raza pequeña). La foto del inventario es de un empaque anterior: confirmar con la bolsa física.",
+ "skus": [
+  "BEL-53566",
+  "BEL-53567",
+  "BEL-53569"
+ ]
+}

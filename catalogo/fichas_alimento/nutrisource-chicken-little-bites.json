@@ -1,0 +1,71 @@
+{
+ "clave": "nutrisource-chicken-little-bites",
+ "marca": "NutriSource",
+ "linea": "",
+ "nombre": "Chicken Little Bites",
+ "especie": "perro",
+ "tipo": "snack",
+ "etapas": [],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Premio NutriSource para perros, con pollo como primer ingrediente.",
+ "descripcion": "Es un premio: complementa la dieta diaria, no la reemplaza.",
+ "beneficios": [],
+ "ingredientes": "chicken, brewers rice, brewers dried yeast, vegetable glycerin, barley, linseed meal, oat flour, oats, dried bananas, salmon oil (preserved with tocopherols), pea fiber, phosphoric acid, natural smoke flavor, salt, zinc propionate, calcium propionate (a preservative), natural flavor, preserved with citric acid and tocopherols, L-carnitine, rosemary extract",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "14.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "7.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "5.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "30.0",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 3061.0,
+ "kcal_unidad": 3.1,
+ "unidad_kcal": "premio",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://discovernutrisource.com/products/chicken-little-bites",
+   "tipo": "fabricante",
+   "entidad": "Tuffy's Pet Foods (NutriSource)",
+   "region": "EE. UU.",
+   "verificado_en": "2026-09-26",
+   "actualizado_fabricante": "2026-09-26T23:38:36-05:00",
+   "upc_oficiales": [
+    "073893800040"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "BEL-80004"
+ ]
+}

@@ -1,0 +1,229 @@
+{
+ "clave": "nutrisource-ocean-select-entr-e-cat-food",
+ "marca": "NutriSource",
+ "linea": "Grain Free",
+ "nombre": "Ocean Select Recipe",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Trucha",
+ "sabor": "Pescado, salmón",
+ "descripcion_corta": "Alimento seco NutriSource para gatos, con trucha como primer ingrediente.",
+ "descripcion": "El fabricante lo formula según los perfiles nutricionales de AAFCO para todas las etapas de vida. Receta libre de granos. Fortificado con leche de cabra de Nueva Zelanda.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Prebióticos y probióticos que apoyan la digestión."
+  },
+  {
+   "clave": "alta_proteina",
+   "texto": "Receta rica en proteína animal."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Nutrientes para piel y pelaje sanos."
+  },
+  {
+   "clave": "omega",
+   "texto": "Aporta ácidos grasos omega 3 y 6."
+  },
+  {
+   "clave": "corazon",
+   "texto": "Nutrientes que apoyan la salud del corazón."
+  }
+ ],
+ "ingredientes": "trout, whitefish meal, salmon, peas, salmon meal, sunflower oil, pea starch, dried yeast, natural flavor, pea protein, flax seed, yeast extract, pea fiber, garbanzo beans, potassium chloride, calcium carbonate, DL methionine, salmon oil (preserved with tocopherols), dried whole goat milk, choline chloride, minerals (iron proteinate, zinc proteinate, copper proteinate, sodium selenite, manganese proteinate, ethylenediamine dihydroiodide), taurine, calcium sulfate, vitamins (vitamin E supplement, niacin supplement, d-calcium pantothenate, vitamin A supplement, thiamine mononitrate, riboflavin supplement, pyridoxine hydrochloride, biotin, menadione sodium bisulfite complex (source of vitamin K activity), vitamin B12 supplement, vitamin D3 supplement, folic acid), dried pumpkin, dried blueberries, dried cranberries, dried kelp meal, inulin, hydrolyzed yeast, lactic acid, dried Aspergillus oryzae fermentation extract, dried Trichoderma longibrachiatum fermentation extract, brewers dried yeast, turmeric, dried Aspergillus niger fermentation extract, L-ascorbyl-2-polyphosphate (source of vitamin C), citric acid (a preservative), yeast culture, dried Bacillus subtilis fermentation product, dried Bacillus licheniformis fermentation product, dried Enterococcus faecium fermentation product, dried Lactobacillus acidophilus fermentation product, dried Bacillus subtilis fermentation extract, yucca schidigera extract, salt, rosemary extract",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "40.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "18.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "5.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "10.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "hierro",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "140",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Cobre",
+   "calificador": "min",
+   "valor": "20",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Manganeso",
+   "calificador": "min",
+   "valor": "10",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "1.4",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "glucosamina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "300",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "condroitina",
+   "etiqueta": "Sulfato de condroitina",
+   "calificador": "min",
+   "valor": "200",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (Saccharomyces cerevisiae, Bacillus subtilis, Bacillus licheniformis, Enterococcus faecium, Lactobacillus acidophilus)",
+   "calificador": "min",
+   "valor": "100 millones",
+   "unidad": "UFC/lb"
+  }
+ ],
+ "kcal_kg": 4006.0,
+ "kcal_unidad": 500.0,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Guía diaria de alimentación del fabricante",
+  "columnas": [
+   "Peso (lb)",
+   "Peso (kg)",
+   "Gatito, 6 a 20 semanas (tazas)",
+   "Gatito, 21 a 38 semanas (tazas)",
+   "Gatito, 39 a 52 semanas (tazas)",
+   "Adulto (tazas)"
+  ],
+  "filas": [
+   [
+    "2–4",
+    "0.9–1.8",
+    "1/2–7/8",
+    "1/3–2/3",
+    "1/4–1/2",
+    "1/8–1/4"
+   ],
+   [
+    "4–6",
+    "1.8–2.7",
+    "7/8–1 1/3",
+    "2/3–1",
+    "1/2–2/3",
+    "1/4–1/3"
+   ],
+   [
+    "6–8",
+    "2.7–3.6",
+    "1 1/3–1 3/4",
+    "1–1 1/3",
+    "2/3–7/8",
+    "1/3–1/2"
+   ],
+   [
+    "8–10",
+    "3.6–4.5",
+    "1 3/4–2 1/4",
+    "1 1/3–1 2/3",
+    "7/8–1 1/8",
+    "1/2–5/8"
+   ],
+   [
+    "10–12",
+    "4.5–5.4",
+    "2 1/4–2 2/3",
+    "1 2/3–2",
+    "1 1/8–1 1/3",
+    "5/8–2/3"
+   ],
+   [
+    "12–14",
+    "5.4–6.4",
+    "2 2/3–3 1/8",
+    "2–2 1/3",
+    "1 1/3–1 1/2",
+    "2/3–3/4"
+   ]
+  ],
+  "nota": "Dividir la cantidad en 2 a 3 comidas al día. Una taza medidora de 8 oz (250 cc) contiene aproximadamente 111 g de este alimento. La cantidad varía según actividad, edad, raza y ambiente. Consultá a tu veterinario si tu mascota está muy delgada o con sobrepeso."
+ },
+ "fuentes": [
+  {
+   "url": "https://discovernutrisource.com/products/ocean-select-entr-e-cat-food",
+   "tipo": "fabricante",
+   "entidad": "Tuffy's Pet Foods (NutriSource)",
+   "region": "EE. UU.",
+   "verificado_en": "2026-09-26",
+   "actualizado_fabricante": "2026-09-26T23:39:08-05:00",
+   "upc_oficiales": [
+    "073893281016",
+    "073893281054"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "BEL-28101",
+  "BEL-28105"
+ ]
+}

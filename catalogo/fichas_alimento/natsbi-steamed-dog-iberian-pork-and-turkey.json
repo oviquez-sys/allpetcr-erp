@@ -1,0 +1,125 @@
+{
+ "clave": "natsbi-steamed-dog-iberian-pork-and-turkey",
+ "marca": "Natsbi",
+ "linea": "Steamed Dog",
+ "nombre": "Steamed Dog Iberian Pork & Turkey",
+ "especie": "perro",
+ "tipo": "humedo",
+ "etapas": [
+  "cachorro",
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pavo",
+ "sabor": "Cerdo ibérico y pavo",
+ "descripcion_corta": "Comida natural completa cocinada al vapor para perro, con cerdo ibérico y pavo.",
+ "descripcion": "Cocinada al vapor sin agua añadida. Se conserva a temperatura ambiente; una vez abierta, hasta 2 días en refrigeración.",
+ "beneficios": [
+  {
+   "clave": "masa_muscular",
+   "texto": "Proteína magra de pavo para sus músculos."
+  },
+  {
+   "clave": "inmunidad",
+   "texto": "Ayuda a reforzar sus defensas."
+  },
+  {
+   "clave": "energia",
+   "texto": "Hierro y vitaminas B del cerdo ibérico."
+  },
+  {
+   "clave": "digestion",
+   "texto": "Prebióticos que apoyan la salud intestinal."
+  }
+ ],
+ "ingredientes": "Pavo* (46 %), cerdo ibérico* (42 %), arroz* (6 %), calabaza* (3 %), guisantes* (2 %), semillas de plantago (psyllium)* (0,5 %), aceite de salmón (0,4 %), sustancias minerales, inulina de achicoria (1 g/kg), productos de levaduras (400 mg/kg). *Ingredientes naturales",
+ "aditivos": "Vitaminas: Vitamina A 12000 UI, Vitamina D3 300 UI, Vitamina E 80 mg. Oligoelementos: Fe (quelato de hierro (II) de hidrolizados proteicos) 50 mg, I (yodato de calcio anhidro) 0,5 mg, Zn (quelato de zinc de hidrolizados proteicos) 40 mg, Cu (quelato de cobre (II) de hidrolizados proteicos) 6 mg, Mn (quelato de manganeso de hidrolizados proteicos) 25 mg.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "18",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "9",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "5",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "1.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "0.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "0.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "sodio",
+   "etiqueta": "Sodio",
+   "calificador": "",
+   "valor": "0.12",
+   "unidad": "%"
+  },
+  {
+   "clave": "potasio",
+   "etiqueta": "Potasio",
+   "calificador": "",
+   "valor": "0.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "",
+   "valor": "62",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 1630,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/natsbi-steamed-dog-iberian-pork-and-turkey/84",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8436566804967"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "GOS-71850"
+ ]
+}

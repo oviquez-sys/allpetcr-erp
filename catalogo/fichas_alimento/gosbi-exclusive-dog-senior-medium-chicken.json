@@ -1,0 +1,97 @@
+{
+ "clave": "gosbi-exclusive-dog-senior-medium-chicken",
+ "marca": "Gosbi",
+ "linea": "Exclusive Dog",
+ "nombre": "Exclusive Dog Senior Medium Chicken",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "senior"
+ ],
+ "tamanos_raza": [
+  "mediana"
+ ],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Alimento seco completo para perro senior de raza mediana, con pollo y arroz como único cereal.",
+ "descripcion": "Receta de la gama Exclusive con nutrientes fáciles de digerir para esta etapa y la fórmula ProVital de la marca. Tamaño de la croqueta: ±18 mm.",
+ "beneficios": [
+  {
+   "clave": "digestion",
+   "texto": "Nutrientes fáciles de digerir."
+  },
+  {
+   "clave": "masa_muscular",
+   "texto": "Proteína magra para músculos y huesos."
+  }
+ ],
+ "ingredientes": "Pollo deshidratado (26 %), arroz (22 %), guisantes (12 %), lentejas (10 %), frutas y verduras (8 %) (pulpa de fruta seca (manzana, pera, piña), pulpa de remolacha seca, zanahoria deshidratada, pulpa de tomate), grasa de pollo, pescado deshidratado (Micromesistius poutassou) (4 %), patata (4 %), aceite de salmón, aceite de linaza, huevo deshidratado (1 %), levadura inactivada, sustancias minerales + FÓRMULA PROVITAL (1 %): alfalfa deshidratada, inulina de achicoria (FOS), productos de levaduras (MOS), glucosamina (1000 mg/kg), condroitina (800 mg/kg), aceite de oliva, yuca de Mojave, mejillón de labios verdes, krill marino, espinaca deshidratada, productos de la transformación de plantas (Tagetes sp. (fuente natural de luteína), diente de león, hojas de menta, manzanilla, frutos rojos, tomillo, orégano, cardo mariano, romero, aloe vera), aceite de borraja, algas marinas deshidratadas (espirulina), brócoli deshidratado.",
+ "aditivos": "Vitaminas: Vitamina A 16000 UI, vitamina B1 40 mg, vitamina B2 20 mg, vitamina B6 13 mg, vitamina B12 0,3 mg, vitamina C 70 mg, vitamina D3 1600 UI, vitamina E 200 mg, taurina 2 g, ácido fólico 5 mg, biotina 1 mg, L-carnitina 50 mg. Oligoelementos: Fe (quelato de hierro (II) de hidrolizados de proteínas) 60 mg, Zn (quelato de zinc de hidrolizados de proteínas) 60 mg, Mn (quelato de manganeso de hidrolizados de proteínas) 21 mg, Cu (quelato de cobre (II) de hidrolizados de proteínas) 6,9 mg, I (yodato cálcico anhidro) 1,5 mg, Se (levadura selenizada Saccharomyces cerevisiae CNCM I-3060, inactivada) 0,12 mg. Aromas: Extracto de cítricos 5 mg, extracto de té 5 mg. Conservantes y antioxidantes.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "",
+   "valor": "28",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "",
+   "valor": "13",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "8",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra bruta",
+   "calificador": "",
+   "valor": "3.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Omega-3",
+   "calificador": "",
+   "valor": "1.1",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Omega-6",
+   "calificador": "",
+   "valor": "2.4",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 3652,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://gosbi.com/es/ES/producto/gosbi-exclusive-dog-senior-medium-chicken/58",
+   "tipo": "fabricante",
+   "entidad": "Gosbi (fabricante)",
+   "region": "España",
+   "verificado_en": "2026-09-26",
+   "ean_oficiales": [
+    "8437015611396"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "",
+ "skus": [
+  "GOS-957"
+ ]
+}

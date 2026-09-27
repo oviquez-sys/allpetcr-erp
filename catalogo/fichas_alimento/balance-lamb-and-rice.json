@@ -1,0 +1,53 @@
+{
+ "clave": "balance-lamb-and-rice",
+ "marca": "Balance",
+ "linea": "",
+ "nombre": "Balance Lamb and Rice",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "mediana",
+  "grande"
+ ],
+ "necesidades": [
+  "piel_sensible"
+ ],
+ "proteina_principal": "Cordero",
+ "sabor": "",
+ "descripcion_corta": "Alimento seco completo para perro adulto de raza mediana y grande, con hígado de cordero.",
+ "descripcion": "Elaborado con hígado de cordero hidrolizado natural, una proteína sin soya que ayuda a evitar alergias alimentarias. Recomendado especialmente para perros con piel sensible.",
+ "beneficios": [
+  {
+   "clave": "piel_pelaje",
+   "texto": "Mejora la condición de la piel y el pelaje."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.belinanutricion.com/product?referenceCode=BALANCELAMBANDRICE",
+   "tipo": "fabricante",
+   "entidad": "Belina Nutrición (fabricante de Balance)",
+   "region": "Costa Rica",
+   "verificado_en": "2026-09-26"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-09-26",
+ "notas_internas": "Belina no publica ingredientes ni análisis garantizado: faltan (tomarlos del empaque o de la ficha técnica).",
+ "skus": [
+  "BEL-53305",
+  "BEL-53306",
+  "BEL-53319",
+  "BEL-53321"
+ ]
+}
