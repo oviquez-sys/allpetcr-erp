@@ -125,3 +125,7 @@ $RECYCLE.BIN/
 
 # Configuración local de la herramienta de revisión de diseño (no es del ERP).
 /.impeccable/
+
+# ---- Armado del agente de impresion (el .exe lleva la llave del ERP) ----
+/build/
+*.spec

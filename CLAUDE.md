@@ -189,8 +189,30 @@ Cuidado con un detalle: en esa función `impresoras=[]` (máquina sin ninguna
 impresora) tiene que dar cero trabajos y `impresoras=None` (no se mandó la
 lista) tiene que darlos todos. Confundirlos revive el problema entero.
 
-- `AGENTE_IMPRESION.bat` — doble clic en la computadora de la tienda; se deja
-  abierto todo el día.
+- `AGENTE_IMPRESION.bat` — la forma vieja (ventana abierta todo el día). Queda
+  solo para diagnosticar a mano.
+
+**Programa instalable, sin .bat (27/09/2026).** `AllPetCR-Impresion.exe`
+(PyInstaller, un solo archivo, lleva Python, el agente y la llave). Doble clic
+en cualquier computadora con impresoras → se instala en
+`%LOCALAPPDATA%\AllPetCR\Impresion`, sin pedir administrador, arranca con
+Windows (entrada `Run` de HKCU) y una tarea programada lo relanza cada 10 min
+(un mutex evita copias dobles). Corre sin ventana con el logo junto al reloj
+(verde conectado / naranja sin conexión) y notifica si un trabajo falla.
+Volver a abrir el instalador = actualizar; `--desinstalar` o el menú del icono
+lo quitan.
+
+- Código: `_agente_escritorio.py` (instalar, bandeja, arranque) sobre el motor
+  `_agente_impresion.py`. Se arma con `CONSTRUIR_AGENTE_IMPRESION.bat` y queda
+  en `AllPet\INSTALADORES`, **fuera del repo**: lleva la llave adentro.
+- Rearmarlo solo si cambia la llave, la URL o el código del agente; el tiquete
+  y la etiqueta se dibujan en el servidor.
+- **Avast** revisa HTTPS con su propio certificado raíz, y Python 3.13 lo
+  rechazaba (`VERIFY_X509_STRICT`): el agente quedaba «sin conexión» para
+  siempre. `_contexto_tls` apaga solo esa exigencia; cadena y nombre se
+  siguen verificando. No «arreglarlo» apagando la verificación entera.
+- La tarea se crea desde XML: por defecto Windows no la arranca con batería y
+  la mata a las 72 h.
 
 ## Respaldos, después de la mudanza al servidor (12/09/2026)
 

@@ -18,6 +18,7 @@ DE DÓNDE SALEN LAS FOTOS
 
 Se ejecuta con CARGAR_FOTOS_EDITADAS.bat (doble clic).
 """
+import getpass
 import os
 import subprocess
 import sys
@@ -113,7 +114,10 @@ def pedir_contrasena():
             clave = ""
 
     if not clave:
-        clave = input("  Contraseña: ").strip()
+        # getpass no la muestra: la clave terminaba copiada, con el resto de la
+        # pantalla, en chats y capturas (27/09/2026).
+        print("  (Al pegarla no se ve nada: es a propósito. Pegala y dale Enter.)")
+        clave = getpass.getpass("  Contraseña: ").strip()
 
     if not clave:
         fallar("No hay contraseña.")

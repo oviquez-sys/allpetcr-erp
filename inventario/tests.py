@@ -1,5 +1,6 @@
 """Pruebas del núcleo de inventario: las reglas que protegen el negocio."""
 from decimal import Decimal
+from io import StringIO
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -231,6 +232,43 @@ class MarcadoDeEtiquetas(BaseInventario):
         otro.refresh_from_db()
         self.assertIsNone(self.producto.etiqueta_impresa_en)
         self.assertIsNone(otro.etiqueta_impresa_en)
+
+    def test_lote_solo_toca_los_que_cambian_y_dice_cuales(self):
+        """Lo que ya estaba puesto conserva su fecha, y la respuesta trae los
+        ids cambiados: es lo que usa «Deshacer» (27/09/2026)."""
+        antes = timezone.now() - timezone.timedelta(days=3)
+        otro = Producto.objects.create(
+            empresa=self.producto.empresa, sku="TEST-004", nombre="Ya puesto", precio_venta=500,
+            etiqueta_impresa_en=antes,
+        )
+        d = self.client.post(reverse("inventario:marcar_etiquetas_lote"), {
+            "ids": [self.producto.pk, otro.pk], "impresa": "1",
+        }).json()
+        self.assertEqual(d["ids"], [self.producto.pk])
+        otro.refresh_from_db()
+        self.assertEqual(otro.etiqueta_impresa_en, antes)
+
+    def test_deshacer_un_lote_respeta_lo_impreso_de_verdad(self):
+        from django.core.management import call_command
+        from impresion.models import TrabajoImpresion
+
+        empresa = self.producto.empresa
+        lote = timezone.now()
+        productos = [Producto.objects.create(empresa=empresa, sku=f"LOTE-{i}", nombre=f"P{i}",
+                                             precio_venta=500, etiqueta_impresa_en=lote)
+                     for i in range(25)]
+        suelto = Producto.objects.create(empresa=empresa, sku="SUELTO", nombre="Marcado a mano",
+                                         precio_venta=500, etiqueta_impresa_en=lote - timezone.timedelta(hours=1))
+        salio = lote - timezone.timedelta(days=1)
+        TrabajoImpresion.objects.create(tipo=TrabajoImpresion.ETIQUETA, formato=TrabajoImpresion.IMAGEN,
+                                        impresora="X", titulo="Etiqueta LOTE-0", contenido=b"",
+                                        estado=TrabajoImpresion.IMPRESO, vence_en=lote, terminado_en=salio)
+        call_command("deshacer_marcado_etiquetas", stdout=StringIO())
+        for p in productos + [suelto]:
+            p.refresh_from_db()
+        self.assertEqual(productos[0].etiqueta_impresa_en, salio)  # su etiqueta salió de verdad
+        self.assertIsNone(productos[1].etiqueta_impresa_en)
+        self.assertIsNotNone(suelto.etiqueta_impresa_en)  # marcado uno por uno: se respeta
 
     def test_pantalla_de_etiquetas_manda_el_estado_al_navegador(self):
         respuesta = self.client.get(reverse("inventario:etiquetas"))

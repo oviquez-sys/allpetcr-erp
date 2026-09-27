@@ -156,9 +156,15 @@ def marcar_etiquetas_lote(request):
     ids = request.POST.getlist("ids")
     impresa = request.POST.get("impresa") == "1"
     productos = productos_visibles(empresa_actual(request), incluir_agotados=True).filter(pk__in=ids)
+    # Solo los que cambian de estado. Así el que ya estaba puesto conserva su
+    # fecha, y la pantalla sabe exactamente qué revertir con «Deshacer»: el
+    # 27/09/2026 un clic con el buscador vacío marcó el catálogo entero y no
+    # había forma de volver atrás.
+    cambian = productos.filter(etiqueta_impresa_en__isnull=impresa)
+    ids_cambiados = list(cambian.values_list("pk", flat=True))
     valor = timezone.now() if impresa else None
-    total = productos.update(etiqueta_impresa_en=valor)
-    return JsonResponse({"ok": True, "impresa": impresa, "total": total})
+    total = cambian.update(etiqueta_impresa_en=valor)
+    return JsonResponse({"ok": True, "impresa": impresa, "total": total, "ids": ids_cambiados})
 
 
 def _hoja_de_etiquetas(request, empresa):

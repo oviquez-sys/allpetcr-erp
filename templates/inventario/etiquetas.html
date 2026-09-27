@@ -49,6 +49,9 @@ main{flex:1;display:flex;padding:14px 22px 20px;overflow:hidden}
 .lote button{font-size:12px;color:var(--brand);background:#fff;border:1px solid var(--line);
   border-radius:9px;padding:6px 11px;cursor:pointer}
 .lote button:hover{background:rgba(11,49,97,.06)}
+.lote button:disabled{color:var(--ink2);background:#f5f5f7;cursor:not-allowed}
+#toast button{margin-left:14px;background:#fff;color:var(--ink);border:none;border-radius:8px;
+  padding:5px 12px;font-size:13.5px;font-weight:600;cursor:pointer}
 .cuenta{font-size:12.5px;color:var(--ink2);margin-left:auto}
 .aviso{margin-top:10px;background:#fdf3e2;color:#8a5a08;font-size:13px;padding:9px 13px;border-radius:11px}
 /* Estado de la etiqueta (26/09/2026): separa lo ya impreso de lo pendiente
@@ -138,8 +141,8 @@ main{flex:1;display:flex;padding:14px 22px 20px;overflow:hidden}
         <option value="impresas">Etiqueta: ya impresas</option>
       </select>
       <div class="lote">
-        <button type="button" onclick="marcarVisibles(true)">✓ Marcar visibles como impresas</button>
-        <button type="button" onclick="marcarVisibles(false)">↺ Marcar visibles como pendientes</button>
+        <button type="button" id="loteSi" onclick="marcarVisibles(true)">✓ Marcar como impresas</button>
+        <button type="button" id="loteNo" onclick="marcarVisibles(false)">↺ Marcar como pendientes</button>
       </div>
       <span class="cuenta" id="cuenta"></span>
     </div>
@@ -175,12 +178,20 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => (
   {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const escUrl = s => String(s ?? '').replace(/'/g, '%27');
 
-function toast(texto, mal){
+// `accion` = {texto, alHacer}: un botón dentro del aviso (hoy solo «Deshacer»).
+// Con botón el aviso dura más: hay que darle tiempo a arrepentirse.
+function toast(texto, mal, accion){
   const t = document.getElementById('toast');
   t.textContent = texto;
+  if (accion){
+    const b = document.createElement('button');
+    b.textContent = accion.texto;
+    b.onclick = () => { t.className = ''; accion.alHacer(); };
+    t.appendChild(b);
+  }
   t.className = 'on' + (mal ? ' mal' : '');
   clearTimeout(toast._t);
-  toast._t = setTimeout(() => { t.className = ''; }, mal ? 6000 : 2600);
+  toast._t = setTimeout(() => { t.className = ''; }, accion ? 12000 : (mal ? 6000 : 2600));
 }
 
 // Sin filtros por familia: con 90 categorías los botones ocupaban la pantalla
@@ -264,6 +275,15 @@ function tarjeta(p){
 function pintarGrid(){
   encontradosActuales = filtrar();
   mostrados = Math.min(TOPE, encontradosActuales.length);
+  pintarCuenta();
+  document.getElementById('grid').innerHTML =
+    encontradosActuales.slice(0, mostrados).map(tarjeta).join('')
+    || '<p class="empty">No hay productos con ese filtro. Probá otra categoría o borrá la búsqueda.</p>';
+}
+
+// Contadores y botones de lote, sin tocar las tarjetas: se llama también al
+// imprimir, cuando redibujar la lista mandaría la pantalla al principio.
+function pintarCuenta(){
   const enCero = productos.filter(p => p.stock_actual <= 0).length;
   const cola = (!document.getElementById('verCero').checked && enCero)
     ? ` · ${enCero} en cero, ocultos (marcá la casilla para verlos)` : '';
@@ -274,9 +294,17 @@ function pintarGrid(){
   document.getElementById('cuenta').textContent =
     `${encontradosActuales.length} producto(s) · ${impresasVisibles} con etiqueta · `
     + `${encontradosActuales.length - impresasVisibles} pendientes` + cola;
-  document.getElementById('grid').innerHTML =
-    encontradosActuales.slice(0, mostrados).map(tarjeta).join('')
-    || '<p class="empty">No hay productos con ese filtro. Probá otra categoría o borrá la búsqueda.</p>';
+  // Marcar en lote solo con algo escrito en el buscador. Con el buscador
+  // vacío «lo visible» es el catálogo entero, y un clic marcó los 500 como
+  // impresos (Oscar, 27/09/2026). El botón dice cuántos va a tocar.
+  const hayBusqueda = !!document.getElementById('buscar').value.trim();
+  const pendVis = encontradosActuales.length - impresasVisibles;
+  for (const [id, n, texto] of [['loteSi', pendVis, 'impresas'], ['loteNo', impresasVisibles, 'pendientes']]){
+    const b = document.getElementById(id);
+    b.disabled = !hayBusqueda || n === 0;
+    b.textContent = `${id === 'loteSi' ? '✓' : '↺'} Marcar ${hayBusqueda ? n + ' ' : ''}como ${texto}`;
+    b.title = hayBusqueda ? '' : 'Primero buscá algo (una marca, un nombre): marca solo lo que coincide.';
+  }
 }
 
 function mostrarMas(){
@@ -371,12 +399,20 @@ async function imprimir(id){
   boton.disabled = false; boton.textContent = '🏷️ Imprimir';
 }
 
-// Actualiza `productos` (y por lo tanto `porId`) en memoria y repinta solo lo
-// que corresponde, sin pedirle la lista entera al servidor otra vez.
+// Actualiza `productos` en memoria y cambia SOLO las tarjetas afectadas, en su
+// lugar. Antes se redibujaba la lista entera y cada impresión mandaba la
+// pantalla al principio: Oscar perdía el producto donde iba (27/09/2026, y
+// ya había pasado el 24/09). Tampoco se saca de la lista un producto que
+// dejó de coincidir con el filtro (p. ej. «pendientes»): eso movería todo lo
+// de abajo. Se va al tocar «Actualizar lista» o al cambiar la búsqueda.
 function actualizarEstadoLocal(ids, valor){
   const set = new Set(ids);
   for (const p of productos) if (set.has(p.id)) p.etiqueta_impresa_en = valor;
-  pintarGrid();
+  for (const id of set){
+    const tarjetaVieja = document.getElementById('c-' + id);
+    if (tarjetaVieja) tarjetaVieja.outerHTML = tarjeta(porId[id]);
+  }
+  pintarCuenta();
 }
 
 // Marcado manual, uno por uno: no imprime nada, solo cambia el estado que
@@ -396,27 +432,46 @@ async function marcarEtiqueta(id, impresa){
   }
 }
 
-// Marcado manual EN LOTE: todo lo que está visible con el filtro actual, no
-// solo lo dibujado en pantalla (puede haber más abajo del scroll).
+// Marcado manual EN LOTE: lo que coincide con la búsqueda, no solo lo
+// dibujado en pantalla (puede haber más abajo del scroll). Solo manda los que
+// cambian de estado, y el servidor devuelve cuáles cambió: son exactamente los
+// que «Deshacer» devuelve a como estaban.
 async function marcarVisibles(impresa){
-  const lista = filtrar();
-  if (!lista.length){ toast('No hay productos con ese filtro.', true); return; }
-  const verbo = impresa ? 'marcar como YA IMPRESAS' : 'marcar como PENDIENTES';
-  if (!confirm(`¿${verbo} las ${lista.length} etiqueta(s) que están visibles con el filtro de ahora?`)) return;
+  if (!document.getElementById('buscar').value.trim()){
+    toast('Primero buscá algo (una marca, un nombre): se marca solo lo que coincide.', true);
+    return;
+  }
+  const lista = filtrar().filter(p => !!p.etiqueta_impresa_en !== impresa);
+  if (!lista.length){ toast('No hay nada que cambiar con esa búsqueda.', true); return; }
+  const verbo = impresa ? 'YA IMPRESAS' : 'PENDIENTES';
+  const ejemplos = lista.slice(0, 3).map(p => '• ' + p.nombre).join('\n')
+    + (lista.length > 3 ? `\n… y ${lista.length - 3} más` : '');
+  if (!confirm(`¿Marcar estas ${lista.length} etiqueta(s) como ${verbo}?\n\n${ejemplos}`)) return;
+  const d = await mandarLote(lista.map(p => p.id), impresa);
+  if (!d) return;
+  toast(`${d.total} etiqueta(s) marcadas como ${impresa ? 'impresas' : 'pendientes'}.`, false, {
+    texto: 'Deshacer',
+    alHacer: async () => {
+      if (await mandarLote(d.ids, !impresa)) toast('Listo, quedó como estaba.');
+    },
+  });
+}
+
+async function mandarLote(ids, impresa){
   try {
     const cuerpo = new FormData();
-    lista.forEach(p => cuerpo.append('ids', p.id));
+    ids.forEach(id => cuerpo.append('ids', id));
     cuerpo.append('impresa', impresa ? '1' : '0');
     const r = await fetch('/inventario/etiquetas/marcar-lote/', {
       method: 'POST', headers: {'X-CSRFToken': CSRF}, body: cuerpo
     });
     const d = await r.json();
-    if (!d.ok){ toast('⛔ No se pudo actualizar el lote.', true); return; }
-    const valor = impresa ? new Date().toISOString() : null;
-    actualizarEstadoLocal(lista.map(p => p.id), valor);
-    toast(`${d.total} etiqueta(s) actualizadas.`);
+    if (!d.ok){ toast('⛔ No se pudo actualizar el lote.', true); return null; }
+    actualizarEstadoLocal(d.ids, impresa ? new Date().toISOString() : null);
+    return d;
   } catch(e){
     toast('⛔ No se pudo conectar con el ERP.', true);
+    return null;
   }
 }
 

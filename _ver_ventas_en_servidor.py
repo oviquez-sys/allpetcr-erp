@@ -15,6 +15,7 @@ NO ESCRIBE NADA. Ni una fila. Se puede correr las veces que haga falta.
 
 Se ejecuta con VER_VENTAS.bat (doble clic).
 """
+import getpass
 import os
 import subprocess
 import sys
@@ -91,7 +92,10 @@ def pedir_contrasena():
         if input("  ¿Uso esa? (SI / no): ").strip().upper() not in ("", "SI", "S"):
             clave = ""
     if not clave:
-        clave = input("  Contraseña: ").strip()
+        # getpass no la muestra: la clave terminaba copiada, con el resto de la
+        # pantalla, en chats y capturas (27/09/2026).
+        print("  (Al pegarla no se ve nada: es a propósito. Pegala y dale Enter.)")
+        clave = getpass.getpass("  Contraseña: ").strip()
     if not clave:
         fallar("No hay contraseña.")
     return clave
