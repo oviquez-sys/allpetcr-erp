@@ -39,13 +39,20 @@ def precios(request):
     # es un botón y no una prohibición.
     productos = productos_visibles(empresa_actual(request), incluir_agotados=agotados)
     if q:
-        # También busca en la descripción (20/09/2026, pedido de Oscar): hay
-        # datos —color, material, presentación exacta— que solo están ahí y
-        # no en el nombre corto del producto.
-        productos = productos.filter(
-            Q(nombre__icontains=q) | Q(sku__icontains=q) | Q(codigo_barras__icontains=q)
-            | Q(descripcion__icontains=q)
-        )
+        # Busca palabra por palabra, no la frase completa (28/09/2026, pedido
+        # de Oscar: "balance 10kg" no encontraba "Balance Adulto Raza Pequeña
+        # 10kg" porque esas dos palabras no aparecen juntas y en ese orden en
+        # ningún campo). Cada palabra escrita tiene que aparecer en ALGUNO de
+        # los campos —no todas en el mismo—, y las palabras entre sí se piden
+        # todas (AND). Mismo criterio que ya usa el chat de ayuda
+        # (core/chat_tools.py::buscar_producto).
+        filtro = Q()
+        for palabra in q.split()[:6]:
+            filtro &= (
+                Q(nombre__icontains=palabra) | Q(sku__icontains=palabra)
+                | Q(codigo_barras__icontains=palabra) | Q(descripcion__icontains=palabra)
+            )
+        productos = productos.filter(filtro)
     # empresa e impuesto se traen juntos: el margen de cada fila los necesita
     # (precio sin IVA según régimen y tarifa) y si no, son 2 consultas por fila.
     productos = list(productos.select_related("empresa", "impuesto").order_by("nombre")[:60])

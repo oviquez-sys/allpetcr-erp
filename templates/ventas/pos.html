@@ -12,6 +12,7 @@
   de ₡12.500 sí llevaba punto. Ver static/js/formato.js.
 {% endcomment %}
 <script src="{% static 'js/formato.js' %}"></script>
+<script src="{% static 'js/buscador.js' %}"></script>
 <style>
 :root{
   --bg:#f5f5f7;--card:#fff;--ink:#1d1d1f;--ink2:#86868b;--line:#e8e8ed;
@@ -422,9 +423,9 @@ function filtrar(){
   }
   return productos.filter(p => {
     if (catActiva !== "Todas" && !coincideEspecie(p, catActiva)) return false;
-    if (!q) return true;
-    return p.nombre.toLowerCase().includes(q) || p.sku.includes(q) || (p.codigo_barras||'').includes(q)
-        || (p.presentacion||'').toLowerCase().includes(q) || (p.descripcion||'').toLowerCase().includes(q);
+    // Búsqueda por palabras sueltas, no por frase exacta (28/09/2026): ver
+    // static/js/buscador.js.
+    return coincideTodasLasPalabras(q, [p.nombre, p.sku, p.codigo_barras, p.presentacion, p.descripcion]);
   });
 }
 function pintarGrid(){

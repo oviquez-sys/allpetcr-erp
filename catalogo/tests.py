@@ -320,6 +320,18 @@ class BuscadorDePrecios(TestCase):
     def test_sigue_encontrando_por_nombre(self):
         self.assertEqual(self._buscar("Tazón"), ["P-200"])
 
+    def test_busca_por_varias_palabras_sueltas_sin_exigir_la_frase_completa(self):
+        """28/09/2026, pedido de Oscar: "comida azul" tiene "comida" en el
+        nombre de P-200 ("Tazón para comida") y "azul" solo en su
+        descripción — no vienen juntas en ningún campo, así que antes esto
+        no encontraba nada."""
+        self.assertEqual(self._buscar("comida azul"), ["P-200"])
+
+    def test_todas_las_palabras_tienen_que_aparecer_en_alguna_parte(self):
+        # "gallina" solo está en el peluche; "azul" solo en el tazón. Ninguno
+        # tiene las dos palabras, así que ninguno debe aparecer.
+        self.assertEqual(self._buscar("gallina azul"), [])
+
 
 class PermisosDePrecios(TestCase):
     """Solo gerente puede entrar a precios; un cajero es rebotado."""
