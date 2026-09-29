@@ -77,6 +77,19 @@ class HerramientasTest(TestCase):
         self.assertEqual(len(r["productos"]), 1)
         self.assertEqual(r["productos"][0]["sku"], "J1")
 
+    def test_buscar_producto_encuentra_peso_sin_espacio(self):
+        # 28/09/2026: el nombre queda "... 10 kg" (con espacio, por cómo se
+        # arma al cargar una compra) y "10kg" pegado antes no lo encontraba.
+        from catalogo.models import Producto
+        Producto.objects.create(
+            empresa=self.empresa, sku="BAL-10", nombre="Balance Ad Cat Chicken 10 kg",
+            precio_venta=Decimal("15000"), stock_actual=Decimal("2"),
+        )
+        r = ejecutar_herramienta("buscar_producto", {"texto": "10kg"}, usuario=self.gerente)
+        print("buscar_producto por peso sin espacio:", r)
+        self.assertEqual(len(r["productos"]), 1)
+        self.assertEqual(r["productos"][0]["sku"], "BAL-10")
+
 
 class PermisosHerramientasTest(TestCase):
     """El chat no debe ser una puerta trasera a los costos (hallazgo SEG-01).

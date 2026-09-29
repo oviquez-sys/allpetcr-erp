@@ -16,6 +16,7 @@ from core.roles import GERENTE, rol_requerido
 from core.tenancy import documento_de_empresa, empresa_actual
 
 from . import completar
+from .busqueda import formas_de_palabra
 from .consultas import pidio_agotados, productos_visibles
 from .models import Categoria, Producto
 from .services import cambiar_precio
@@ -46,12 +47,22 @@ def precios(request):
         # los campos —no todas en el mismo—, y las palabras entre sí se piden
         # todas (AND). Mismo criterio que ya usa el chat de ayuda
         # (core/chat_tools.py::buscar_producto).
+        #
+        # Cada palabra se busca en TODAS sus formas (`formas_de_palabra`):
+        # "10kg" sin espacio también tiene que encontrar "10 kg" con espacio,
+        # que es como queda el nombre al cargar una compra (presentación +
+        # nombre + marca, ver catalogo/busqueda.py). Sin esto, escribir
+        # "10kg" pegado —lo más natural al escribir rápido— no encontraba
+        # ningún alimento, aunque el producto sí existiera.
         filtro = Q()
         for palabra in q.split()[:6]:
-            filtro &= (
-                Q(nombre__icontains=palabra) | Q(sku__icontains=palabra)
-                | Q(codigo_barras__icontains=palabra) | Q(descripcion__icontains=palabra)
-            )
+            condicion_de_la_palabra = Q()
+            for forma in formas_de_palabra(palabra):
+                condicion_de_la_palabra |= (
+                    Q(nombre__icontains=forma) | Q(sku__icontains=forma)
+                    | Q(codigo_barras__icontains=forma) | Q(descripcion__icontains=forma)
+                )
+            filtro &= condicion_de_la_palabra
         productos = productos.filter(filtro)
     # empresa e impuesto se traen juntos: el margen de cada fila los necesita
     # (precio sin IVA según régimen y tarifa) y si no, son 2 consultas por fila.

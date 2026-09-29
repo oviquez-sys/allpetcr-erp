@@ -189,6 +189,7 @@ def ejecutar_herramienta(nombre, entrada, usuario=None):
         if nombre == "buscar_producto":
             from django.db.models import Q
 
+            from catalogo.busqueda import formas_de_palabra
             from catalogo.models import Producto
 
             texto = str(entrada.get("texto") or "").strip()[:80]
@@ -201,9 +202,16 @@ def ejecutar_herramienta(nombre, entrada, usuario=None):
             # "tazón" y "comida" en el nombre corto y "azul" solo en la
             # descripción. Exigir la frase completa en un único campo no
             # encontraba nada.
+            #
+            # Cada palabra se prueba en todas sus formas (28/09/2026): "10kg"
+            # también tiene que encontrar "10 kg" con espacio, que es como
+            # queda el nombre al cargar una compra (ver catalogo/busqueda.py).
             palabras = Q()
             for palabra in texto.split()[:6]:
-                palabras &= Q(nombre__icontains=palabra) | Q(descripcion__icontains=palabra)
+                condicion_de_la_palabra = Q()
+                for forma in formas_de_palabra(palabra):
+                    condicion_de_la_palabra |= Q(nombre__icontains=forma) | Q(descripcion__icontains=forma)
+                palabras &= condicion_de_la_palabra
             qs = (
                 Producto.objects.filter(empresa=empresa, activo=True)
                 .filter(filtro | palabras)

@@ -333,6 +333,51 @@ class BuscadorDePrecios(TestCase):
         self.assertEqual(self._buscar("gallina azul"), [])
 
 
+class BuscadorEncuentraPesoSinEspacio(TestCase):
+    """"10kg" tiene que encontrar "10 kg" (28/09/2026, pedido de Oscar).
+
+    Al cargar una compra, el nombre del producto se arma pegando marca +
+    nombre de factura + presentación, y la presentación siempre lleva un
+    espacio entre el número y la unidad ("Balance Ad Cat Chicken" + "10 kg",
+    ver claude/compra-belina-26-09.md). Oscar escribe "10kg" pegado — la
+    forma natural al escribir rápido — y antes eso no encontraba nada."""
+
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre="ALLPETCR.COM")
+        self.gerente = User.objects.create_user("oscar2", password="x", is_staff=True, is_superuser=True)
+        self.client.login(username="oscar2", password="x")
+        self.balance_10kg = Producto.objects.create(
+            empresa=self.empresa, sku="BAL-10", nombre="Balance Ad Cat Chicken 10 kg",
+            precio_venta=Decimal("15000"), stock_actual=Decimal("2"),
+        )
+        self.nutri_5lb = Producto.objects.create(
+            empresa=self.empresa, sku="NUT-5", nombre="NutriSource Adult Dog 5 lb",
+            precio_venta=Decimal("9000"), stock_actual=Decimal("4"),
+        )
+        self.correa = Producto.objects.create(
+            empresa=self.empresa, sku="COR-1", nombre="Correa Retráctil 5m",
+            precio_venta=Decimal("6000"), stock_actual=Decimal("6"),
+        )
+
+    def _buscar(self, q):
+        r = self.client.get(reverse("catalogo:precios"), {"q": q})
+        return [p.sku for p in r.context["productos"]]
+
+    def test_10kg_pegado_encuentra_10_kg_con_espacio(self):
+        self.assertEqual(self._buscar("10kg"), ["BAL-10"])
+
+    def test_funciona_con_otras_unidades_de_peso(self):
+        self.assertEqual(self._buscar("5lb"), ["NUT-5"])
+
+    def test_combinado_con_otra_palabra(self):
+        self.assertEqual(self._buscar("balance 10kg"), ["BAL-10"])
+        self.assertEqual(self._buscar("nutri 10kg"), [])
+
+    def test_no_confunde_un_numero_sin_unidad_con_uno_que_si_la_lleva(self):
+        # "Correa Retráctil 5m" no debe salir al buscar "5kg".
+        self.assertEqual(self._buscar("5kg"), [])
+
+
 class PermisosDePrecios(TestCase):
     """Solo gerente puede entrar a precios; un cajero es rebotado."""
 
