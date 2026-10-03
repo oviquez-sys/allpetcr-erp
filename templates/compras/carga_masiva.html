@@ -49,7 +49,7 @@ tr.mal td{background:#fff5f4}
         {% for e in revision.errores_generales %}<div class="aviso mal">{{ e }}</div>{% endfor %}
       {% elif revision.valida %}
         <div class="aviso bien">Todo en orden: {{ revision.filas|length }} fila(s), {{ revision.nuevos }} producto(s) nuevo(s),
-          total de la factura (sin IVA) ₡{{ revision.total|crc:0 }}. Revise y confirme.</div>
+          total de la factura (sin IVA) ₡{{ revision.total|crc:0 }}{% if tradicional %}, IVA ₡{{ encabezado.iva|crc:2 }}{% endif %}. Revise y confirme.</div>
       {% else %}
         <div class="aviso mal">Hay {{ revision.con_errores|length }} fila(s) con errores (en rojo). Corrija el archivo y vuelva a subirlo: no se carga nada a medias.</div>
       {% endif %}

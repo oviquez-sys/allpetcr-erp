@@ -402,6 +402,18 @@ def carga_masiva(request):
         "iva": (request.POST.get("iva") or "0").strip() or "0",
     }
     ctx["encabezado"] = encabezado
+    # El IVA se escribe como se lee en la factura: «39.534,28». Antes se
+    # convertía recién al confirmar y solo cambiando la coma por punto, así
+    # que «39.534,28» daba «39.534.28», reventaba y el aviso decía apenas
+    # «Datos inválidos» (02/10/2026, factura de Special Care). Ahora se lee
+    # con el mismo lector de montos de la plantilla y, si no es un número,
+    # se avisa en la vista previa con el valor que no se entendió.
+    iva = cm._numero(encabezado["iva"])
+    if iva is None or iva < 0:
+        messages.error(request, f"El IVA de la factura «{encabezado['iva']}» no es un monto válido. "
+                                "Escríbalo como sale en la factura, por ejemplo 39.534,28.")
+        return render(request, "compras/carga_masiva.html", ctx)
+    encabezado["iva"] = str(iva)
     archivo = request.FILES.get("archivo")
     if archivo is None:
         messages.error(request, "Elija el archivo de Excel o CSV.")
@@ -448,9 +460,9 @@ def carga_masiva_confirmar(request):
         compra = cm.aplicar(
             empresa=empresa, filas=datos["filas"], proveedor=proveedor, sucursal=sucursal,
             forma_pago=enc["forma_pago"], factura_proveedor=enc["factura_proveedor"],
-            iva=Decimal(enc["iva"].replace(",", ".")), usuario=request.user,
+            iva=cm._numero(enc["iva"]), usuario=request.user,
         )
-    except (ValidationError, Proveedor.DoesNotExist, InvalidOperation) as e:
+    except (ValidationError, Proveedor.DoesNotExist, InvalidOperation, TypeError) as e:
         mensaje = " ".join(e.messages) if isinstance(e, ValidationError) else "Datos inválidos."
         messages.error(request, f"No se cargó nada: {mensaje}")
         return redirect("compras:carga_masiva")

@@ -217,3 +217,32 @@ class EtiquetasDeLaCompra(BaseCompras):
         r = self.client.post(reverse("impresion:etiquetas_compra", args=[compra.pk]), HTTP_ACCEPT="application/json")
         self.assertTrue(r.json()["ok"])
         self.assertEqual(TrabajoImpresion.objects.filter(tipo=TrabajoImpresion.ETIQUETA).count(), 4)
+
+
+class IvaDeLaFacturaComoSeLee(BaseCompras):
+    """02/10/2026: el IVA «39.534,28» (como sale en la factura de Special Care)
+    reventaba al confirmar con un «Datos inválidos» sin explicación."""
+
+    def setUp(self):
+        super().setUp()
+        from core.models import Empresa
+        self.empresa.regimen = Empresa.Regimen.TRADICIONAL
+        self.empresa.save()
+        self.client.force_login(self.usuario)
+
+    def subir(self, iva):
+        return self.client.post(reverse("compras:carga_masiva"), {
+            "proveedor_id": self.proveedor.pk, "factura_proveedor": "FE-1", "forma_pago": "CON", "iva": iva,
+            "archivo": _excel([["", "Saco nuevo", 10, 8517.60, 19290, 0]])})
+
+    def test_iva_con_punto_de_miles_y_coma_decimal(self):
+        r = self.subir("39.534,28")
+        self.assertIn("firma", r.context)
+        self.client.post(reverse("compras:carga_masiva_confirmar"), {"firma": r.context["firma"]})
+        self.assertEqual(Compra.objects.get().iva, Decimal("39534.28"))
+
+    def test_iva_que_no_es_numero_se_avisa_en_la_vista_previa(self):
+        r = self.subir("treinta mil")
+        self.assertContains(r, "no es un monto válido")
+        self.assertNotIn("firma", r.context)
+        self.assertEqual(Compra.objects.count(), 0)
