@@ -21,11 +21,31 @@ el navegador —también desde el celular— y con las mismas garantías:
 
 CÓMO SE RECONOCE UN PRODUCTO
 ----------------------------
-Por el código de barras si la fila lo trae (el de fábrica o el interno); si
-no, por el nombre exacto (sin mayúsculas ni tildes). Si no aparece, es un
-producto NUEVO y entonces el nombre y el precio de venta son obligatorios.
-Un nombre que coincide con dos productos distintos es un error: adivinar
-cuál es ingresaría mercadería al producto equivocado.
+Por el código interno (SKU) si la fila lo trae; si no, por el código de
+barras (el de fábrica o el interno); si no, por el nombre exacto (sin
+mayúsculas ni tildes). Si no aparece, es un producto NUEVO y entonces el
+nombre y el precio de venta son obligatorios. Un nombre que coincide con dos
+productos distintos es un error: adivinar cuál es ingresaría mercadería al
+producto equivocado.
+
+LAS COLUMNAS «CÓDIGO (SKU)» Y «DESCRIPCIÓN» (02/10/2026)
+--------------------------------------------------------
+Al cargar la primera factura con esta pantalla (Buen Amigo + Special Care)
+faltaban dos cosas que las cargas anteriores por comando sí hacían:
+
+- **Elegir el SKU del producto nuevo.** Sin la columna, el ERP le inventa
+  uno («NP2610…») y se rompen dos convenciones: los productos de Buen Amigo
+  usan como SKU el código REF del catálogo del proveedor (el que Oscar busca
+  y el que sale en la factura), y las fotos se asocian POR SKU
+  (`cargar_fotos_por_sku`): con un SKU inventado no hay forma de prepararle
+  la foto antes de cargarlo.
+- **La descripción pública.** Sin ella, cada producto nuevo salía sin texto
+  en la web hasta llenarlo aparte en «Completar catálogo».
+
+Las dos son opcionales: una plantilla vieja, sin esas columnas, funciona
+igual que antes. En un producto que ya existe, la descripción solo se
+completa si estaba vacía — misma regla que marca, presentación y mascota:
+la carga nunca pisa un dato puesto a mano.
 """
 import csv
 import io
@@ -54,6 +74,13 @@ COLUMNAS = [
     ("categoria", "Categoría", "Opcional. Como aparece en el ERP, ej. «Juguetes › Pelotas»."),
     ("presentacion", "Presentación", "Opcional, ej. «Talla M» o «15 kg»."),
     ("mascota", "Mascota", f"Opcional: {', '.join(MASCOTAS)}."),
+    # Al final a propósito: así una plantilla descargada antes del 02/10/2026
+    # sigue sirviendo tal cual (las columnas se reconocen por el título, no
+    # por la posición).
+    ("sku", "Código (SKU)", "Opcional. Código interno del producto, ej. el REF del catálogo del proveedor. "
+                            "Si existe, la fila es de ese producto; si es nuevo, se crea con ese código."),
+    ("descripcion", "Descripción", "Opcional. Texto público que se ve en la página web. "
+                                   "En un producto existente solo se usa si no tenía descripción."),
 ]
 MAX_FILAS = 1000
 
@@ -70,7 +97,14 @@ _ALIAS.update({_plano(k): v for k, v in {
     "producto": "nombre", "descripcion": "nombre", "cant": "cantidad", "unidades": "cantidad",
     "costo": "costo_unitario", "precio": "precio_venta", "precio venta": "precio_venta",
     "bonificacion": "bonificadas", "regalo": "bonificadas", "especie": "mascota",
+    "sku": "sku", "codigo interno": "sku", "codigo (ref)": "sku", "ref": "sku",
+    "descripcion publica": "descripcion", "descripcion web": "descripcion",
 }.items()})
+# «Descripción» a secas siempre fue sinónimo de «Nombre» (mucha gente llama
+# así a la columna del producto en la factura). Con la columna nueva hay que
+# desempatar: si el archivo trae «Nombre», «Descripción» es la descripción
+# pública; si no trae «Nombre», sigue siendo el nombre. Ver `revisar()`.
+_ALIAS[_plano("Descripción")] = "descripcion"
 
 
 @dataclass
@@ -87,6 +121,8 @@ class Fila:
     categoria_txt: str = ""
     presentacion: str = ""
     mascota: str = ""
+    sku: str = ""
+    descripcion: str = ""
     producto_id: int | None = None
     precio_actual: str = ""
     errores: list = field(default_factory=list)
@@ -141,8 +177,9 @@ def plantilla_excel() -> bytes:
         celda.font = Font(bold=True, color="FFFFFF")
         celda.fill = PatternFill("solid", fgColor="0B3161")
     ws.append(["7501234567895", "Ejemplo: Arnés acolchado talla M (borre esta fila)", 12, 2500, 6900, 1,
-               "Marca X", "Paseo › Arneses", "Talla M", "Perro"])
-    for i, ancho in enumerate([18, 42, 10, 14, 15, 12, 16, 26, 16, 14], start=1):
+               "Marca X", "Paseo › Arneses", "Talla M", "Perro", "",
+               "Arnés acolchado con cierre de clic y argolla metálica para la correa."])
+    for i, ancho in enumerate([18, 42, 10, 14, 15, 12, 16, 26, 16, 14, 14, 60], start=1):
         ws.column_dimensions[chr(64 + i)].width = ancho
     ayuda = wb.create_sheet("Instrucciones")
     ayuda.append(["Columna", "Qué va"])
@@ -180,6 +217,17 @@ def _texto(valor) -> str:
     return " ".join(str(valor).split())
 
 
+def _texto_con_renglones(valor) -> str:
+    """Como `_texto`, pero respeta los saltos de línea: las descripciones
+    públicas llevan una lista de viñetas («• Talla M», «• Ancho: 1 cm»), una
+    por renglón, y el sitio las muestra así. Aplanarlas las juntaba en un
+    solo párrafo ilegible."""
+    if valor is None:
+        return ""
+    renglones = [" ".join(r.split()) for r in str(valor).replace("\r\n", "\n").replace("\r", "\n").split("\n")]
+    return "\n".join(r for r in renglones if r)
+
+
 def _numero(valor):
     """Número de lo que escriba la gente: «2.500», «2500,50», «₡2 500». None si no es número."""
     texto = _texto(valor).replace("₡", "").replace("¢", "").replace(" ", "")
@@ -206,12 +254,18 @@ def revisar(empresa, archivo) -> Revision:
         rev.errores_generales.append("No se pudo leer el archivo. Use la plantilla (.xlsx) o un .csv.")
         return rev
     columnas = {}
+    titulos = {_plano(t) for t in encabezado}
     for i, titulo in enumerate(encabezado):
         clave = _ALIAS.get(_plano(titulo))
+        # «Descripción» sin una columna «Nombre» al lado es el nombre del
+        # producto, como siempre se aceptó (ver el comentario de _ALIAS).
+        if clave == "descripcion" and _plano(titulo) == _plano("Descripción") and not (
+                titulos & {_plano("Nombre"), _plano("Producto")}):
+            clave = "nombre"
         if clave and clave not in columnas:
             columnas[clave] = i
     faltan = [et for c, et, _ in COLUMNAS[:4] if c not in columnas and c != "codigo_barras" and c != "nombre"]
-    if "codigo_barras" not in columnas and "nombre" not in columnas:
+    if not ({"codigo_barras", "nombre", "sku"} & set(columnas)):
         faltan.insert(0, "Código de barras o Nombre")
     if faltan:
         rev.errores_generales.append(f"Faltan columnas: {', '.join(faltan)}. Descargue la plantilla.")
@@ -220,6 +274,12 @@ def revisar(empresa, archivo) -> Revision:
     productos = list(Producto.objects.filter(empresa=empresa, activo=True))
     por_codigo = {p.codigo_barras: p for p in productos if p.codigo_barras}
     por_sku = {p.sku: p for p in productos}
+    # El SKU es único en TODA la base (no por empresa ni solo entre activos):
+    # crear uno que ya usa un producto inactivo o de otra empresa revienta al
+    # guardar. Se avisa en la vista previa, no a mitad de la carga.
+    skus_ocupados = set(Producto.objects.values_list("sku", flat=True))
+    codigos_ocupados = set(Producto.objects.exclude(codigo_barras="").values_list("codigo_barras", flat=True))
+    skus_vistos = {}
     por_nombre = {}
     for p in productos:
         por_nombre.setdefault(_plano(p.nombre), []).append(p)
@@ -230,13 +290,18 @@ def revisar(empresa, archivo) -> Revision:
             i = columnas.get(clave)
             return _texto(cruda[i]) if i is not None and i < len(cruda) else ""
 
+        def descripcion_cruda():
+            i = columnas.get("descripcion")
+            return _texto_con_renglones(cruda[i]) if i is not None and i < len(cruda) else ""
+
         if not any(_texto(v) for v in cruda):
             continue
         if len(rev.filas) >= MAX_FILAS:
             rev.errores_generales.append(f"El archivo pasa de {MAX_FILAS} filas: divídalo en dos.")
             break
         f = Fila(numero=n, codigo_barras=celda("codigo_barras"), nombre=celda("nombre")[:200],
-                 marca=celda("marca")[:80], presentacion=celda("presentacion")[:120])
+                 marca=celda("marca")[:80], presentacion=celda("presentacion")[:120],
+                 sku=celda("sku")[:30], descripcion=descripcion_cruda())
         if f.nombre.lower().startswith("ejemplo:"):
             continue   # la fila de ejemplo de la plantilla
 
@@ -254,15 +319,42 @@ def revisar(empresa, archivo) -> Revision:
         if Decimal(f.bonificadas) < 0:
             f.errores.append("Las bonificadas no pueden ser negativas.")
 
-        # ¿Qué producto es?
+        # ¿Qué producto es? Primero por SKU, si la fila lo trae: es el código
+        # que menos se repite y el que identifica al producto en todo el ERP.
         producto = None
-        if f.codigo_barras:
+        if f.sku:
+            if f.sku in skus_vistos:
+                f.errores.append(f"El código {f.sku} ya viene en la fila {skus_vistos[f.sku]}: "
+                                 "sume las cantidades en una sola fila.")
+            skus_vistos[f.sku] = n
+            producto = por_sku.get(f.sku)
+            if producto is None:
+                if f.sku in skus_ocupados:
+                    f.errores.append(f"El código {f.sku} ya lo usa un producto inactivo o de otra empresa. "
+                                     "Reactívelo en el panel de administración o use otro código.")
+                otro = por_codigo.get(f.codigo_barras) if f.codigo_barras else None
+                if otro is not None:
+                    # Crearlo duplicaría el producto con el mismo código de
+                    # barras: la pistola ya no sabría cuál de los dos es.
+                    f.errores.append(f"El código de barras {f.codigo_barras} ya es del producto "
+                                     f"«{otro.nombre}» (código {otro.sku}). Revise cuál de los dos es el correcto.")
+                elif f.codigo_barras and f.codigo_barras in codigos_ocupados:
+                    f.errores.append(f"El código de barras {f.codigo_barras} ya lo usa un producto inactivo.")
+                if f.codigo_barras and f.codigo_barras in codigos_vistos:
+                    f.errores.append(f"El código de barras {f.codigo_barras} ya viene en la fila "
+                                     f"{codigos_vistos[f.codigo_barras]}.")
+                if f.codigo_barras:
+                    codigos_vistos[f.codigo_barras] = n
+        elif f.codigo_barras:
             producto = por_codigo.get(f.codigo_barras) or por_sku.get(f.codigo_barras)
             if f.codigo_barras in codigos_vistos:
                 f.errores.append(f"El código {f.codigo_barras} ya viene en la fila {codigos_vistos[f.codigo_barras]}: "
                                  "sume las cantidades en una sola fila.")
             codigos_vistos[f.codigo_barras] = n
-        if producto is None and f.nombre and not f.codigo_barras:
+        # Con SKU no se busca por nombre: un código que no existe es la orden
+        # de crear ESE producto, aunque ya haya otro que se llame igual (las
+        # variantes de Buen Amigo comparten nombre y se distinguen por código).
+        if producto is None and f.nombre and not f.codigo_barras and not f.sku:
             candidatos = por_nombre.get(_plano(f.nombre), [])
             if len(candidatos) > 1:
                 f.errores.append(f"Hay {len(candidatos)} productos que se llaman «{f.nombre}»: "
@@ -312,23 +404,31 @@ def aplicar(*, empresa, filas: list[dict], proveedor, sucursal, forma_pago, fact
             if f.cambia_precio:
                 precios.append((producto, Decimal(f.precio_venta)))
             campos = []
-            for campo in ("marca", "presentacion", "mascota"):
+            for campo in ("marca", "presentacion", "mascota", "descripcion"):
                 if getattr(f, campo) and not getattr(producto, campo):
                     setattr(producto, campo, getattr(f, campo))
                     campos.append(campo)
             if f.categoria_id and not producto.categoria_id:
                 producto.categoria_id = f.categoria_id
                 campos.append("categoria")
+            # Encontrado por SKU y sin código de barras propio: se le pone el
+            # de la fila (el de fábrica), salvo que ya sea de otro producto.
+            if (f.sku and f.codigo_barras and not producto.codigo_barras
+                    and not Producto.objects.filter(codigo_barras=f.codigo_barras).exists()):
+                producto.codigo_barras = f.codigo_barras
+                campos.append("codigo_barras")
             if campos:   # solo completa lo vacío: nunca pisa datos puestos a mano
                 producto.save(update_fields=campos + ["actualizado_en"])
         else:
             if f.codigo_barras and Producto.objects.filter(codigo_barras=f.codigo_barras).exists():
                 raise ValidationError(f"Fila {f.numero}: el código {f.codigo_barras} ya existe.")
+            if f.sku and Producto.objects.filter(sku=f.sku).exists():
+                raise ValidationError(f"Fila {f.numero}: el código {f.sku} ya existe.")
             from .views import _generar_sku
             producto = Producto.objects.create(
-                empresa=empresa, sku=_generar_sku(), nombre=f.nombre, codigo_barras=f.codigo_barras,
+                empresa=empresa, sku=f.sku or _generar_sku(), nombre=f.nombre, codigo_barras=f.codigo_barras,
                 precio_venta=Decimal(f.precio_venta), marca=f.marca, presentacion=f.presentacion,
-                mascota=f.mascota, categoria_id=f.categoria_id,
+                mascota=f.mascota, categoria_id=f.categoria_id, descripcion=f.descripcion,
             )
         lineas.append({"producto": producto, "cantidad": Decimal(f.cantidad),
                        "cantidad_bonificada": Decimal(f.bonificadas), "costo_unitario": Decimal(f.costo_unitario)})

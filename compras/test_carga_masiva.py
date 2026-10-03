@@ -120,6 +120,88 @@ class CargaMasiva(BaseCompras):
         self.assertContains(r, "productos que se llaman")
 
 
+_CON_SKU = ("Código de barras", "Nombre", "Cantidad", "Costo unitario", "Precio de venta", "Bonificadas",
+            "Marca", "Categoría", "Presentación", "Mascota", "Código (SKU)", "Descripción")
+
+
+class CargaMasivaConSkuYDescripcion(BaseCompras):
+    """02/10/2026: columnas opcionales «Código (SKU)» y «Descripción».
+
+    Sin el SKU, un producto nuevo recibía un código inventado y la foto —que se
+    asocia por SKU— no se podía preparar antes; sin la descripción, salía sin
+    texto en la web."""
+
+    def setUp(self):
+        super().setUp()
+        self.producto.codigo_barras = "7501234567895"
+        self.producto.save()
+        self.client.force_login(self.usuario)
+
+    def subir(self, archivo):
+        return self.client.post(reverse("compras:carga_masiva"), {
+            "proveedor_id": self.proveedor.pk, "factura_proveedor": "F-901", "forma_pago": "CON", "archivo": archivo})
+
+    def confirmar(self, archivo):
+        r = self.subir(archivo)
+        self.assertIn("firma", r.context, msg=[f.errores for f in r.context["revision"].filas])
+        return self.client.post(reverse("compras:carga_masiva_confirmar"), {"firma": r.context["firma"]})
+
+    def test_producto_nuevo_se_crea_con_el_sku_y_la_descripcion_de_la_fila(self):
+        self.confirmar(_excel([["7852052752085", "Collar estampado", 12, 304.17, 850, 0, "", "", "", "Perro",
+                                "75208", "Collar ajustable de 1 cm de ancho."]], _CON_SKU))
+        nuevo = Producto.objects.get(sku="75208")
+        self.assertEqual(nuevo.codigo_barras, "7852052752085")
+        self.assertEqual(nuevo.descripcion, "Collar ajustable de 1 cm de ancho.")
+        self.assertEqual(nuevo.stock_actual, Decimal("12"))
+
+    def test_la_descripcion_conserva_los_renglones_de_las_vinetas(self):
+        texto = "Collar básico.\n• Largo: 20 a 35 cm\n• Ancho: 1 cm"
+        self.confirmar(_excel([["", "Collar", 1, 100, 500, 0, "", "", "", "", "C-1", texto]], _CON_SKU))
+        self.assertEqual(Producto.objects.get(sku="C-1").descripcion, texto)
+
+    def test_el_sku_reconoce_al_producto_existente_aunque_no_traiga_codigo_de_barras(self):
+        self.confirmar(_excel([["", "", 3, 1520, "", 0, "", "", "", "", self.producto.sku, ""]], _CON_SKU))
+        self.producto.refresh_from_db()
+        self.assertEqual(Producto.objects.count(), 1)
+        self.assertEqual(self.producto.stock_actual, Decimal("13"))
+
+    def test_la_descripcion_solo_completa_la_vacia(self):
+        self.producto.descripcion = "Texto puesto a mano"
+        self.producto.save()
+        self.confirmar(_excel([["", "", 1, 100, "", 0, "", "", "", "", self.producto.sku, "Otro texto"]], _CON_SKU))
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.descripcion, "Texto puesto a mano")
+
+    def test_sku_nuevo_con_codigo_de_barras_de_otro_producto_es_error(self):
+        r = self.subir(_excel([["7501234567895", "Otra cosa", 1, 100, 500, 0, "", "", "", "", "NUEVO-1", ""]],
+                              _CON_SKU))
+        self.assertContains(r, "ya es del producto")
+        self.assertNotIn("firma", r.context)
+
+    def test_sku_de_un_producto_inactivo_es_error_en_la_vista_previa(self):
+        Producto.objects.create(empresa=self.empresa, sku="VIEJO", nombre="Viejo", precio_venta=1, activo=False)
+        r = self.subir(_excel([["", "Nuevo", 1, 100, 500, 0, "", "", "", "", "VIEJO", ""]], _CON_SKU))
+        self.assertContains(r, "producto inactivo")
+        self.assertNotIn("firma", r.context)
+
+    def test_con_sku_no_se_confunde_con_otro_del_mismo_nombre(self):
+        self.confirmar(_excel([["", self.producto.nombre, 2, 100, 500, 0, "", "", "", "", "VAR-2", ""]], _CON_SKU))
+        self.assertTrue(Producto.objects.filter(sku="VAR-2").exists())
+        self.assertEqual(Producto.objects.count(), 2)
+
+    def test_descripcion_sin_columna_nombre_sigue_siendo_el_nombre(self):
+        r = self.subir(_excel([["", "Pelota roja", 2, 100, 500]],
+                              ("Código de barras", "Descripción", "Cantidad", "Costo unitario", "Precio de venta")))
+        self.assertEqual(r.context["revision"].filas[0].nombre, "Pelota roja")
+        self.assertEqual(r.context["revision"].filas[0].descripcion, "")
+
+    def test_la_plantilla_trae_las_columnas_nuevas(self):
+        r = self.client.get(reverse("compras:carga_masiva_plantilla"))
+        encabezado = [c.value for c in load_workbook(io.BytesIO(r.content)).active[1]]
+        self.assertIn("Código (SKU)", encabezado)
+        self.assertIn("Descripción", encabezado)
+
+
 @override_settings(IMPRESION_FORZAR_AGENTE=True, IMPRESORA_ETIQUETAS="Etiquetas de prueba")
 class EtiquetasDeLaCompra(BaseCompras):
     """INV-08: una etiqueta por unidad recibida, bonificadas incluidas."""

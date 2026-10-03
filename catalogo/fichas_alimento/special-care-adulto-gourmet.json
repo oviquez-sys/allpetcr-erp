@@ -1,0 +1,75 @@
+{
+ "clave": "special-care-adulto-gourmet",
+ "marca": "Special Care",
+ "linea": "",
+ "nombre": "Special Care Adulto Gourmet",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "mediana",
+  "grande"
+ ],
+ "necesidades": [],
+ "proteina_principal": "",
+ "sabor": "",
+ "descripcion_corta": "Alimento seco completo para perro adulto de raza mediana y grande.",
+ "descripcion": "Alimento premium completo para perros adultos de razas medianas y grandes, con 25 % de proteína, arroz, remolacha y camote.",
+ "beneficios": [
+  {
+   "clave": "articulaciones",
+   "texto": "Con condroitina y glucosamina para proteger las articulaciones."
+  },
+  {
+   "clave": "dental",
+   "texto": "Con polifosfato, que ayuda a prevenir el sarro."
+  },
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Con prebióticos MOS, que favorecen la flora intestinal."
+  },
+  {
+   "clave": "omega",
+   "texto": "Enriquecido con ácidos grasos omega 3 y 6."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "25",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.maquilalama.com/specialcare",
+   "tipo": "distribuidor_cr",
+   "entidad": "La Maquila Lama S.A. (distribuidor de Special Care en Costa Rica)",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-02"
+  },
+  {
+   "url": "https://www.maquilalama.com/specialcare",
+   "tipo": "empaque",
+   "entidad": "Foto oficial del saco de 10,1 kg publicada por La Maquila Lama",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-02"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-02",
+ "notas_internas": "SABOR SIN CONFIRMAR: la página de La Maquila Lama dice 'Pollo, arroz, remolacha y camote' y la foto oficial del saco dice 'Carne, arroz, beterraba e batata doce'. Confirmar con el saco real (02/10/2026) y completar sabor y proteina_principal. Falta análisis completo, ingredientes y guía.",
+ "skus": [
+  "SPC-MPET022"
+ ]
+}

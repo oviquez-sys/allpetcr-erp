@@ -62,7 +62,8 @@ tr.mal td{background:#fff5f4}
           <tr class="{% if f.errores %}mal{% endif %}">
             <td>{{ f.numero }}</td>
             <td>{% if f.nuevo %}<span class="tag nuevo">Nuevo</span>{% else %}<span class="tag exis">Existe</span>{% endif %}</td>
-            <td>{{ f.nombre|default:"—" }}{% if f.codigo_barras %}<br><small>{{ f.codigo_barras }}</small>{% endif %}
+            <td>{{ f.nombre|default:"—" }}{% if f.sku or f.codigo_barras %}<br><small>{% if f.sku %}Código {{ f.sku }}{% endif %}{% if f.sku and f.codigo_barras %} · {% endif %}{{ f.codigo_barras }}</small>{% endif %}
+              {% if f.descripcion %}<br><small title="{{ f.descripcion }}">📝 {{ f.descripcion|truncatechars:70 }}</small>{% endif %}
               {% for e in f.errores %}<div class="err">⛔ {{ e }}</div>{% endfor %}</td>
             <td class="n">{{ f.cantidad|floatformat:"-2" }}</td>
             <td class="n">{{ f.bonificadas|floatformat:"-2" }}</td>

@@ -1,0 +1,75 @@
+{
+ "clave": "special-care-adulto-razas-pequenas",
+ "marca": "Special Care",
+ "linea": "",
+ "nombre": "Special Care Adulto Razas Pequeñas",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "pequena"
+ ],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo, arroz, remolacha, yuca y linaza",
+ "descripcion_corta": "Alimento seco completo para perro adulto de raza pequeña.",
+ "descripcion": "Alimento premium completo para perros adultos de razas pequeñas, con 26 % de proteína y sabor a pollo, arroz, remolacha, yuca y linaza.",
+ "beneficios": [
+  {
+   "clave": "articulaciones",
+   "texto": "Con condroitina y glucosamina para proteger las articulaciones."
+  },
+  {
+   "clave": "dental",
+   "texto": "Con polifosfato, que ayuda a prevenir el sarro."
+  },
+  {
+   "clave": "digestion",
+   "texto": "Extracto de Yucca schidigera, que ayuda a reducir el olor de las heces."
+  },
+  {
+   "clave": "omega",
+   "texto": "Enriquecido con ácidos grasos omega 3 y 6."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "26",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.maquilalama.com/specialcare",
+   "tipo": "distribuidor_cr",
+   "entidad": "La Maquila Lama S.A. (distribuidor de Special Care en Costa Rica)",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-02"
+  },
+  {
+   "url": "https://www.maquilalama.com/specialcare",
+   "tipo": "empaque",
+   "entidad": "Foto oficial del saco de 10,1 kg publicada por La Maquila Lama",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-02"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-02",
+ "notas_internas": "La Maquila Lama publica solo proteína, sabor y beneficios. Falta análisis garantizado completo, ingredientes y guía de alimentación (tomarlos del empaque). La foto oficial es del saco brasileño (texto en portugués).",
+ "skus": [
+  "SPC-MPET023",
+  "SPC-MPET025"
+ ]
+}
