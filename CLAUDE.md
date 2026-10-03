@@ -342,6 +342,17 @@ la suya por `ficha_alimento`. El sitio la recibe en el detalle de la API.
   no lo publica, el campo queda vacío y la sección no se muestra.
 - Fichas viejas: filtro "última verificación" en el admin.
 
+## Tope de descuento disfrazado en el POS (02/10/2026)
+
+Pedido de Oscar: al negociar un descuento frente al cliente, saber hasta dónde
+ceder sin que se note. En el POS, solo para gerentes, cada tarjeta y cada línea
+del carrito llevan dos dígitos gris claro sin rótulo (p. ej. `38`): el descuento
+máximo en % sin vender bajo costo = margen sin IVA redondeado hacia abajo. En la
+línea del carrito se tiñe rosado si el descuento escrito lo pasa. **Es a
+propósito casi invisible y sin explicación: no "mejorarlo" poniéndole rótulo.**
+Lógica en `ventas.views._filas_pos(con_tope=...)`; pruebas en
+`ventas/test_tope_descuento.py` (incluye que al cajero no le llegue).
+
 ## Reglas del proyecto
 
 **Los comentarios explican el *porqué*, no el *qué*.** Es la característica

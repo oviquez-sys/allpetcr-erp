@@ -48,7 +48,7 @@ def pos(request):
     # venta que deje el stock en negativo. Ofrecer en pantalla lo que la venta
     # va a rechazar solo produce un error a mitad del cobro, con el cliente
     # esperando.
-    productos = _filas_pos(productos_visibles(empresa))
+    productos = _filas_pos(productos_visibles(empresa), con_tope=es_gerente(request.user))
     clientes = list(
         Cliente.objects.filter(activo=True, empresa=empresa)
         .values("id", "nombre", "limite_credito", "saldo", "email")
@@ -71,8 +71,18 @@ def pos(request):
     })
 
 
-def _filas_pos(queryset):
-    """Productos como los necesita el POS en el navegador (JSON)."""
+def _filas_pos(queryset, con_tope=False):
+    """Productos como los necesita el POS en el navegador (JSON).
+
+    `con_tope` agrega a cada producto el descuento máximo que se le puede
+    dar sin vender bajo costo (pedido de Oscar, 02/10/2026: saber hasta dónde
+    ceder al negociar). Es el margen sobre el precio sin IVA, redondeado hacia
+    abajo: un descuento de X % sobre el precio con IVA baja el precio sin IVA
+    en el mismo X %, así que el margen ES el tope exacto, y redondear hacia
+    arriba dejaría vender unos colones bajo costo.
+
+    Solo para gerentes: el tope delata el costo, y el cajero no lo necesita
+    porque sus descuentos ya están limitados (SEC-001)."""
     filas = list(
         queryset.select_related("categoria")
         .values("id", "sku", "nombre", "codigo_barras", "precio_venta",
@@ -87,6 +97,16 @@ def _filas_pos(queryset):
         p["mascota"] = p.get("mascota") or ""
         p["descripcion"] = p.get("descripcion") or ""
         completar_foto(p)
+    if con_tope:
+        # El margen sale del modelo (una sola fórmula para todo el ERP), no
+        # se recalcula acá con los campos de .values().
+        margenes = {
+            prod.pk: prod.margen_pct
+            for prod in queryset.select_related("empresa", "impuesto")
+        }
+        for p in filas:
+            margen = margenes.get(p["id"])
+            p["tope"] = max(0, int(margen // 1)) if margen is not None else None
     return filas
 
 
@@ -117,7 +137,8 @@ def producto_por_codigo(request):
                              "error": f"«{producto.nombre}» existe, pero el sistema dice que hay 0. "
                                       "Un gerente tiene que registrar la entrada de mercadería "
                                       "(o un ajuste) antes de venderlo."})
-    return JsonResponse({"ok": True, "producto": _filas_pos(qs.filter(pk=producto.pk))[0]})
+    return JsonResponse({"ok": True, "producto": _filas_pos(qs.filter(pk=producto.pk),
+                                                           con_tope=es_gerente(request.user))[0]})
 
 
 @rol_requerido(CAJERO, GERENTE)

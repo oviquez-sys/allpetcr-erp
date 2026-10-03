@@ -93,6 +93,12 @@ main{flex:1;display:grid;grid-template-columns:1fr 400px;gap:14px;padding:12px 2
 .linea-x .descbox{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)}
 .linea-x .descbox input{width:56px;padding:4px 7px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;text-align:right;font-weight:600}
 .linea-x .regtxt{font-size:12.5px;color:var(--purple);font-weight:600}
+/* Tope de descuento (02/10/2026). A propósito casi invisible: se negocia con
+   el cliente mirando la pantalla, y tiene que pasar por un código interno.
+   Solo llega para gerentes (ver ventas.views._filas_pos). */
+.ref{font-size:10px;color:#c7c7cc;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:.03em;margin-left:5px}
+.linea-x .ref{margin-left:auto}
+.linea-x .ref.pasado{color:#e3a29b}
 .tot.d{display:flex;justify-content:space-between;font-size:16px;color:var(--ink2);margin-bottom:9px}
 .empty{color:var(--ink2);padding:24px 10px;text-align:center;font-size:14px}
 .empty .big{font-size:28px;display:block;margin-bottom:6px}
@@ -444,7 +450,7 @@ function pintarGrid(){
       <div class="n">${esc(p.nombre)}</div>
       <div class="cat">${esc(p.categoria)}</div>${pres}
       <div class="fila-p"><span class="p">${fmt(p.precio_venta)}</span>
-      <span class="s" data-stock="${p.id}">quedan ${disp}</span></div></div>`;
+      <span class="s"><span data-stock="${p.id}">quedan ${disp}</span>${refTope(p)}</span></div></div>`;
   }).join('') || (soloEscaneados
       ? '<p class="empty">Escaneá el siguiente producto, o tocá «Ver todo el catálogo».</p>'
       : '<p class="empty">No hay productos con ese filtro. Probá otra categoría o borrá la búsqueda.</p>');
@@ -469,6 +475,15 @@ function refrescarStock(id){
 // donde esté el foco. Si después de tocar un producto el cursor se queda en
 // el catálogo, el siguiente escaneo se pierde y hay que hacer clic en la caja
 // de búsqueda para cada producto. Se llama tras cada acción del carrito.
+// refTope() — el descuento máximo sin vender bajo costo, disfrazado de código
+// interno: dos dígitos grises, sin rótulo. `tope` solo viene para gerentes.
+// `pasado` lo tiñe apenas cuando el descuento escrito ya deja la línea bajo
+// costo; el servidor igual lo frena (permitir_bajo_costo), esto es para
+// darse cuenta antes de cobrar.
+function refTope(p, pasado){
+  if (p.tope == null) return '';
+  return `<span class="ref${pasado ? ' pasado' : ''}">${String(p.tope).padStart(2, '0')}</span>`;
+}
 function volverAlEscaner(){ document.getElementById('buscar').focus(); }
 
 function agregar(id){
@@ -531,7 +546,8 @@ function pintar(){
          <span class="regtxt">Sale del inventario a costo, sin cobro</span>
          <span class="descbox">Motivo <input type="text" maxlength="200" value="${esc(it.motivo_regalia||'')}" placeholder="obligatorio" onchange="setMotivoRegalia(${id}, this.value)"></span>`
       : `<button class="toggle" onclick="toggleRegalo(${id})">🎁 Regalo</button>
-         <span class="descbox">Descuento <input type="number" min="0" max="100" step="0.01" value="${it.descuento_pct||''}" placeholder="0" onchange="setDescuentoPct(${id}, this.value)"> %</span>`;
+         <span class="descbox">Descuento <input type="number" min="0" max="100" step="0.01" value="${it.descuento_pct||''}" placeholder="0" onchange="setDescuentoPct(${id}, this.value)"> %</span>
+         ${refTope(p, (it.descuento_pct||0) > p.tope)}`;
     return `<div class="linea">${fotoHTML(p, 46, 'clickable-product-img')}<span class="nm">${esc(p.nombre)}</span>
       <span class="qtn"><button onclick="quitar(${id})">−</button><b>${it.cantidad}</b><button onclick="agregar(${id})">＋</button></span>
       <span class="mt">${mt}</span></div>
