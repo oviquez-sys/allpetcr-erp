@@ -353,6 +353,24 @@ propósito casi invisible y sin explicación: no "mejorarlo" poniéndole rótulo
 Lógica en `ventas.views._filas_pos(con_tope=...)`; pruebas en
 `ventas/test_tope_descuento.py` (incluye que al cajero no le llegue).
 
+## Aviso de agotados (02/10/2026)
+
+Pedido de Oscar: cuando un producto que tuvo existencia queda en cero, alarma
+visible y una lista (con código del proveedor) para decidir si se vuelve a
+pedir. La decisión es del negocio.
+
+- Modelo `inventario.Agotamiento`. Lo abre y lo cierra SOLO
+  `registrar_movimiento` (`_avisar_agotamiento`): salida VEN/REG/AJU/TRA que
+  deja stock 0 → abre; cualquier entrada → cierra (`repuesto_en`). La
+  anulación de una compra (DEV negativo) no avisa. Uno abierto por producto
+  (restricción en la base).
+- Pantalla `inventario:agotados` (gerente) y Excel `inventario:agotados_excel`,
+  ambos de `inventario/agotados.filas`. Código del proveedor = SKU sin BEL-/
+  GOS-/ZDG-/SPC-; los NP… no se muestran.
+- Alarma: banner rojo en el Inicio (sin caché) y aviso en el POS
+  (`agotados` en la respuesta de la venta). El cajero no ve costos.
+- La migración 0007 creó los avisos de lo que ya estaba agotado.
+
 ## Reglas del proyecto
 
 **Los comentarios explican el *porqué*, no el *qué*.** Es la característica

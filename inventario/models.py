@@ -99,3 +99,63 @@ class MovimientoInventario(models.Model):
 
     def __str__(self):
         return f"{self.get_tipo_display()} {self.cantidad:+} × {self.producto.sku} ({self.referencia})"
+
+
+class Agotamiento(models.Model):
+    """Aviso de que un producto que SÍ tuvo existencia se quedó en cero.
+
+    Pedido de Oscar (02/10/2026): cuando algo se agota por una venta, una
+    regalía o lo que sea, tiene que saltar un aviso visible y quedar en una
+    lista con el código del proveedor, para decidir si se vuelve a pedir o no
+    se compra más. La decisión es del negocio; el sistema solo se encarga de
+    que ningún agotado pase sin que alguien lo vea.
+
+    Por qué un modelo y no solo "productos con stock 0": la regla del 02/08
+    esconde de todas las pantallas lo que no tiene existencia, así que un
+    agotado desaparece sin ruido. Además hay que guardar la decisión que se
+    tomó y cuándo se agotó, cosas que el stock no sabe.
+
+    Lo crea y lo cierra `inventario.services.registrar_movimiento` —la única
+    puerta del stock—, así que no hay forma de vaciar un producto sin que
+    quede el aviso. Uno abierto por producto a la vez; los viejos quedan como
+    historia ("se agotó tres veces este año" también es un dato para decidir).
+    """
+
+    class Decision(models.TextChoices):
+        PENDIENTE = "PEN", "Por decidir"
+        PEDIR = "PED", "Volver a pedir"
+        NO_COMPRAR = "NO", "No comprar más"
+
+    producto = models.ForeignKey(Producto, on_delete=models.PROTECT, related_name="agotamientos")
+    # El movimiento que lo dejó en cero: de ahí sale cómo salió (venta,
+    # regalía, ajuste) y con qué documento. Puede faltar en los avisos que se
+    # crearon para lo que ya estaba agotado antes de existir esta función.
+    movimiento = models.ForeignKey(
+        MovimientoInventario, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    tipo_salida = models.CharField(max_length=3, choices=MovimientoInventario.Tipo.choices, blank=True)
+    fecha = models.DateTimeField(help_text="Cuándo quedó en cero")
+    decision = models.CharField(max_length=3, choices=Decision.choices, default=Decision.PENDIENTE)
+    nota = models.CharField(max_length=200, blank=True)
+    decidido_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    decidido_en = models.DateTimeField(null=True, blank=True)
+    # Se llena solo cuando vuelve a haber existencia (compra, devolución,
+    # ajuste). Mientras esté vacío, el aviso sigue abierto.
+    repuesto_en = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "producto agotado"
+        verbose_name_plural = "productos agotados"
+        ordering = ["-fecha", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["producto"],
+                condition=models.Q(repuesto_en__isnull=True),
+                name="un_agotamiento_abierto_por_producto",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.producto.sku} agotado el {self.fecha:%d/%m/%Y}"

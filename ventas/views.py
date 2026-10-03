@@ -322,6 +322,22 @@ def _respuesta_venta(factura, *, impreso=False, error_impresion="", trabajo=None
         "encolado": trabajo is not None,
         "trabajo_url": reverse("impresion:estado_trabajo", args=[trabajo.pk]) if trabajo else "",
         "error_impresion": error_impresion,
+        "agotados": [] if repetida else _agotados_en_la_venta(factura),
+    })
+
+
+def _agotados_en_la_venta(factura):
+    """Productos que esta venta dejó en cero (02/10/2026).
+
+    El cajero es el primero en enterarse de que algo se acabó: el POS se lo
+    muestra en el momento para que avise o lo anote. El aviso formal (la lista
+    con decisión) lo abrió ya `registrar_movimiento`; esto solo lo hace
+    visible en la caja. Sin costos: es pantalla de cajero.
+    """
+    return sorted({
+        linea.producto.nombre
+        for linea in factura.lineas.select_related("producto")
+        if linea.producto.stock_actual == 0
     })
 
 

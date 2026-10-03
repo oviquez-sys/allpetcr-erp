@@ -52,6 +52,13 @@ a{text-decoration:none;color:inherit}
 .greeting .subtitle{font-size:18px;color:var(--ink2);margin-top:8px;font-weight:400}
 
 /* ===== HERO ===== */
+.agotados{display:flex;align-items:center;gap:16px;background:#fff0ee;border:2px solid var(--red);border-radius:20px;
+  padding:16px 20px;margin:18px 0 22px;color:#8a1f16;text-decoration:none}
+.agotados .ic{flex:none;width:44px;height:44px;border-radius:50%;background:var(--red);display:flex;align-items:center;justify-content:center}
+.agotados .ic svg{width:24px;height:24px;stroke:#fff;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.agotados .t{font-size:17px;font-weight:800}
+.agotados .d{font-size:14px;margin-top:2px}
+.agotados .ir{margin-left:auto;font-weight:700;white-space:nowrap}
 .hero{position:relative;overflow:hidden;border-radius:28px;padding:40px 44px;color:#fff;
   background:linear-gradient(135deg,#0B3161 0%,#1a4a7a 100%);
   box-shadow:0 8px 24px rgba(11,49,97,.18);
@@ -234,6 +241,21 @@ a{text-decoration:none;color:inherit}
       <span class="cta">Abrir caja <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
     </div>
   </a>
+  {% endif %}
+
+  {% comment %}
+    Alarma de agotados (pedido de Oscar, 02/10/2026). Va arriba de todo y en
+    rojo porque un producto agotado es venta que se pierde mientras nadie
+    decide. El gerente entra a decidir; el cajero solo ve el aviso (la lista
+    lleva costos) para pasarle la voz al encargado. Se apaga cuando cada
+    agotado tiene decisión o vuelve a entrar mercadería.
+  {% endcomment %}
+  {% if agotados_por_decidir %}
+  {% if es_gerente %}<a class="agotados" href="{% url 'inventario:agotados' %}">{% else %}<div class="agotados">{% endif %}
+    <div class="ic"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
+    <div><div class="t">{{ agotados_por_decidir }} producto{{ agotados_por_decidir|pluralize }} se agot{{ agotados_por_decidir|pluralize:"ó,aron" }}</div>
+      <div class="d">{% if es_gerente %}Decidan si se vuelve{{ agotados_por_decidir|pluralize:",n" }} a pedir o no se compra{{ agotados_por_decidir|pluralize:",n" }} más.{% else %}Avísele al encargado para que decida si se vuelve a pedir.{% endif %}</div></div>
+    {% if es_gerente %}<span class="ir">Ver lista →</span></a>{% else %}</div>{% endif %}
   {% endif %}
 
   {% if es_gerente %}

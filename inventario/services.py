@@ -9,6 +9,8 @@
    llegará con el POS (S3) como permiso explícito.
 3. Costo promedio ponderado: se recalcula solo en entradas con costo.
 4. El kardex guarda stock y costo resultantes: historial auditable.
+5. Aviso de agotado (02/10/2026): una salida que deja el producto en cero
+   abre un `Agotamiento`; una entrada que le devuelve existencia lo cierra.
 """
 from decimal import Decimal
 
@@ -17,7 +19,7 @@ from django.db import transaction
 
 from catalogo.models import Producto
 
-from .models import Bodega, MovimientoInventario
+from .models import Agotamiento, Bodega, MovimientoInventario
 
 
 @transaction.atomic
@@ -71,4 +73,37 @@ def registrar_movimiento(
     producto.stock_actual = nuevo_stock
     producto.costo_promedio = nuevo_costo
     producto.save(update_fields=["stock_actual", "costo_promedio", "actualizado_en"])
+    _avisar_agotamiento(producto, movimiento)
     return movimiento
+
+
+# Salidas que cuentan como "se agotó". Queda fuera la anulación de una compra
+# (DEV negativo): eso corrige una compra mal digitada, no es mercadería que
+# se vendió o se regaló hasta acabarse. Avisar ahí sería ruido, y un aviso que
+# suele ser ruido enseña a no leerlo.
+SALIDAS_QUE_AGOTAN = {
+    MovimientoInventario.Tipo.VENTA,
+    MovimientoInventario.Tipo.REGALIA,
+    MovimientoInventario.Tipo.AJUSTE,
+    MovimientoInventario.Tipo.TRANSFERENCIA,
+}
+
+
+def _avisar_agotamiento(producto, movimiento):
+    """Abre o cierra el aviso de agotado. Corre dentro de la misma
+    transacción que el movimiento: si la venta se cae, el aviso tampoco
+    queda."""
+    if movimiento.cantidad < 0 and movimiento.stock_resultante == 0:
+        if movimiento.tipo not in SALIDAS_QUE_AGOTAN:
+            return
+        # La fila del producto está bloqueada (select_for_update arriba), así
+        # que dos cajas no pueden abrir dos avisos a la vez.
+        if not Agotamiento.objects.filter(producto=producto, repuesto_en__isnull=True).exists():
+            Agotamiento.objects.create(
+                producto=producto, movimiento=movimiento,
+                tipo_salida=movimiento.tipo, fecha=movimiento.fecha,
+            )
+    elif movimiento.cantidad > 0:
+        Agotamiento.objects.filter(producto=producto, repuesto_en__isnull=True).update(
+            repuesto_en=movimiento.fecha
+        )

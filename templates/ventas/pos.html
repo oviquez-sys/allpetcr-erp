@@ -182,6 +182,8 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 #ultima .vuelto{font-size:22px;font-weight:800;color:#1c7a36;margin-top:2px}
 #ultima .imp{font-size:13px;color:var(--ink2);margin-top:6px}
 #ultima .imp.mal{color:var(--red);font-weight:600}
+#ultima .agotado{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff0ee;border:2px solid var(--red);color:#8a1f16;font-weight:700;font-size:14px}
+#ultima .agotado ul{margin:4px 0 0 18px;padding:0;font-weight:600}
 #ultima .bts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 #ultima .bts button,#ultima .bts a{font-size:13px;padding:7px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--brand);cursor:pointer}
 .cli-fila{display:flex;gap:8px;margin-bottom:12px}
@@ -735,6 +737,14 @@ function mostrarUltima(d){
                                                  : `No salió el tiquete. ${d.error_impresion||''}`);
   if (!d.impreso && !d.repetida) imp.classList.add('mal');
   u.appendChild(imp);
+  // Alarma de agotado (02/10/2026): esta venta se llevó la última unidad.
+  if (d.agotados && d.agotados.length){
+    const ag = document.createElement('div'); ag.className = 'agotado';
+    ag.textContent = d.agotados.length === 1 ? '⚠️ Se agotó este producto:' : `⚠️ Se agotaron ${d.agotados.length} productos:`;
+    const ul = document.createElement('ul');
+    d.agotados.forEach(n => { const li = document.createElement('li'); li.textContent = n; ul.appendChild(li); });
+    ag.appendChild(ul); u.appendChild(ag);
+  }
   const bts = document.createElement('div'); bts.className = 'bts';
   const b1 = document.createElement('button'); b1.type='button'; b1.textContent = '🖨️ Reimprimir'; b1.addEventListener('click', reimprimir);
   const b2 = document.createElement('button'); b2.type='button'; b2.textContent = '✉️ Enviar por correo'; b2.addEventListener('click', enviarCorreo);

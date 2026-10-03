@@ -50,6 +50,10 @@ def dashboard(request):
         return render(request, "core/dashboard.html", ctx)
     ctx.update(indicadores(empresa))
     ctx["empresa"] = empresa
+    # Alarma de agotados (02/10/2026). Fuera de `indicadores` a propósito:
+    # esos se cachean dos minutos y un aviso de "se acabó" tiene que verse ya.
+    from inventario.agotados import por_decidir
+    ctx["agotados_por_decidir"] = por_decidir(empresa)
     return render(request, "core/dashboard.html", ctx)
 
 

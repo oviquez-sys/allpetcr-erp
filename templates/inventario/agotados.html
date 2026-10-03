@@ -1,0 +1,109 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Productos agotados{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.ag-wrap{max-width:1200px;margin:0 auto}
+.ag-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.ag-sub{font-size:14px;color:#6e6e73;margin-bottom:16px;line-height:1.5}
+.ag-card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:16px}
+.ag-barra{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.ag-tab{padding:8px 14px;border-radius:980px;border:1px solid #d9d9de;background:#fff;color:#0B3161;font-size:14px;text-decoration:none}
+.ag-tab.on{background:#0B3161;color:#fff;border-color:#0B3161}
+.ag-btn{display:inline-block;padding:10px 16px;border:none;border-radius:12px;background:#0B3161;color:#fff;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none}
+.ag-btn.sec{background:#fff;color:#0B3161;border:1px solid #0B3161}
+a.ag-btn,a.ag-btn:link,a.ag-btn:visited,a.ag-btn:hover{color:#fff}
+.ag-barra .ag-btn{margin-left:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-size:12px;color:#6e6e73;padding:8px 10px;border-bottom:1px solid #eee;white-space:nowrap}
+td{padding:10px;border-bottom:1px solid #f4f4f6;vertical-align:top}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.prod{display:flex;gap:10px;align-items:flex-start}
+.prod small{color:#6e6e73}
+.cod{font-weight:700;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;padding:2px 8px;border-radius:980px;font-size:11.5px;font-weight:600}
+.tag.PEN{background:#fff0ee;color:#b5231a}
+.tag.PED{background:rgba(11,49,97,.1);color:#0B3161}
+.tag.NO{background:#efeff1;color:#3a3a3c}
+.dec{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.dec select,.dec input{padding:7px 9px;border:1px solid #d9d9de;border-radius:9px;font-size:13px;background:#fbfbfd}
+.dec input{width:150px}
+.dec button{padding:7px 12px;border-radius:9px;border:1px solid #0B3161;background:#0B3161;color:#fff;font-size:13px;cursor:pointer}
+.quien{font-size:11.5px;color:#6e6e73;margin-top:4px}
+.aviso{padding:12px 16px;border-radius:12px;margin-bottom:14px;font-size:14px}
+.aviso.mal{background:#fff0ee;color:#8a1f16}
+.aviso.bien{background:#eefaf1;color:#1c6b30}
+.vacio{padding:30px;text-align:center;color:#6e6e73}
+@media(max-width:800px){.tabla-scroll{overflow-x:auto}}
+</style>{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="ag-wrap">
+  <div class="ag-title">Productos agotados</div>
+  <div class="ag-sub">Cada producto que tuvo existencia y se quedó en cero (por venta, regalía o ajuste) aparece aquí.
+    Decidan si se vuelve a pedir o no se compra más. Cuando vuelve a entrar mercadería, sale solo de la lista.</div>
+
+  {% if messages %}{% for m in messages %}<div class="aviso {% if m.tags == 'error' %}mal{% else %}bien{% endif %}">{{ m }}</div>{% endfor %}{% endif %}
+
+  <div class="ag-card">
+    <div class="ag-barra">
+      {% for clave, etiqueta in vistas.items %}
+        <a class="ag-tab {% if clave == vista %}on{% endif %}" href="?ver={{ clave }}">{{ etiqueta }}{% if clave == "pendientes" and por_decidir %} ({{ por_decidir }}){% endif %}</a>
+      {% endfor %}
+      <a class="ag-btn" href="{% url 'inventario:agotados_excel' %}?ver={{ vista }}">⬇ Descargar Excel</a>
+    </div>
+
+    {% if filas %}
+    <div class="tabla-scroll">
+    <table>
+      <thead><tr>
+        <th>Código proveedor</th><th>Producto</th><th>Proveedor</th>
+        <th class="n">Último costo</th><th class="n">Precio</th>
+        <th class="n">Vendidas {{ dias }} días</th><th>Se agotó</th><th>Decisión</th>
+      </tr></thead>
+      <tbody>
+      {% for f in filas %}
+        <tr>
+          <td class="cod">{{ f.codigo_proveedor|default:"—" }}</td>
+          <td><div class="prod">{% foto_producto f.producto 44 "clickable-product-img" %}
+            <div>{{ f.producto.nombre }}<br>
+              <small>{% if f.producto.codigo_barras %}Barras {{ f.producto.codigo_barras }} · {% endif %}SKU {{ f.producto.sku }}{% if f.producto.marca %} · {{ f.producto.marca }}{% endif %}</small>
+              {% if f.veces > 1 %}<br><small>Se ha agotado {{ f.veces }} veces</small>{% endif %}
+            </div></div></td>
+          <td>{{ f.proveedor|default:"—" }}{% if f.ultima_factura %}<br><small>Fact. {{ f.ultima_factura }}</small>{% endif %}</td>
+          <td class="n">{% if f.ultimo_costo is not None %}₡{{ f.ultimo_costo|crc:0 }}{% else %}—{% endif %}</td>
+          <td class="n">₡{{ f.producto.precio_venta|crc:0 }}</td>
+          <td class="n">{{ f.vendidas|floatformat:"-2" }}</td>
+          <td>{{ f.aviso.fecha|date:"d/m/Y" }}<br><small>{{ f.salida }}{% if f.referencia %} · {{ f.referencia }}{% endif %}</small>
+            {% if f.aviso.repuesto_en %}<br><small>Repuesto el {{ f.aviso.repuesto_en|date:"d/m/Y" }}</small>{% endif %}</td>
+          <td>
+            {% if f.aviso.repuesto_en %}
+              <span class="tag {{ f.aviso.decision }}">{{ f.aviso.get_decision_display }}</span>
+              {% if f.aviso.nota %}<div class="quien">{{ f.aviso.nota }}</div>{% endif %}
+            {% else %}
+            <form method="post" action="?ver={{ vista }}" class="dec">
+              {% csrf_token %}<input type="hidden" name="aviso" value="{{ f.aviso.pk }}">
+              <select name="decision" aria-label="Decisión">
+                {% for valor, etiqueta in decisiones %}<option value="{{ valor }}" {% if valor == f.aviso.decision %}selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
+              </select>
+              <input name="nota" value="{{ f.aviso.nota }}" placeholder="Nota (opcional)" maxlength="200">
+              <button>Guardar</button>
+            </form>
+            {% endif %}
+            {% if f.aviso.decidido_por %}<div class="quien">{{ f.aviso.decidido_por.get_full_name|default:f.aviso.decidido_por.username }} · {{ f.aviso.decidido_en|date:"d/m/Y" }}</div>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+      <div class="vacio">{% if vista == "pendientes" %}No hay agotados por decidir.{% elif vista == "abiertos" %}No hay productos agotados.{% else %}Todavía no hay historial.{% endif %}</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

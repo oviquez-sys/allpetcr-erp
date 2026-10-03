@@ -3,7 +3,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -16,8 +16,10 @@ from core.imagenes import completar_foto, datos_foto
 from core.roles import CAJERO, GERENTE, rol_requerido
 from core.tenancy import empresa_actual
 
+from . import agotados as ag
 from .etiquetas import TOPE_ETIQUETAS, seleccionar_para_etiquetas, svg_barcode
 from .forms import AjusteInventarioForm
+from .models import Agotamiento
 from .services import registrar_movimiento
 
 # Tope de tarjetas dibujadas de una vez. Igual que en el POS: más allá de esto
@@ -242,3 +244,59 @@ def codigos_barras(request):
         "cambios": plan["cambios"],
         "total": len(productos),
     })
+
+
+@rol_requerido(GERENTE)
+@require_http_methods(["GET", "POST"])
+def agotados(request):
+    """Productos que se agotaron y la decisión de qué hacer con cada uno.
+
+    Solo gerente: la lista lleva el último costo de compra. El cajero se
+    entera de que algo se agotó en el POS y en el Inicio, sin costos.
+    """
+    empresa = empresa_actual(request)
+    vista = request.GET.get("ver", "pendientes")
+    if vista not in ag.VISTAS:
+        vista = "pendientes"
+    if request.method == "POST":
+        aviso = get_object_or_404(
+            Agotamiento, pk=request.POST.get("aviso"), producto__empresa=empresa
+        )
+        decision = request.POST.get("decision", "")
+        if decision not in Agotamiento.Decision.values:
+            messages.error(request, "Elija una decisión de la lista.")
+        else:
+            aviso.decision = decision
+            aviso.nota = (request.POST.get("nota") or "").strip()[:200]
+            # Volver a "Por decidir" borra quién decidió: si no, la lista
+            # diría que alguien decidió algo que en realidad quedó abierto.
+            pendiente = decision == Agotamiento.Decision.PENDIENTE
+            aviso.decidido_por = None if pendiente else request.user
+            aviso.decidido_en = None if pendiente else timezone.now()
+            aviso.save(update_fields=["decision", "nota", "decidido_por", "decidido_en"])
+            messages.success(request, f"{aviso.producto.nombre}: {aviso.get_decision_display()}.")
+        return redirect(f"{request.path}?ver={vista}")
+    return render(request, "inventario/agotados.html", {
+        "title": "Productos agotados",
+        "filas": ag.filas(empresa, vista),
+        "vista": vista,
+        "vistas": ag.VISTAS,
+        "por_decidir": ag.por_decidir(empresa),
+        "decisiones": Agotamiento.Decision.choices,
+        "dias": ag.DIAS_VENTANA,
+    })
+
+
+@rol_requerido(GERENTE)
+def agotados_excel(request):
+    empresa = empresa_actual(request)
+    vista = request.GET.get("ver", "pendientes")
+    if vista not in ag.VISTAS:
+        vista = "pendientes"
+    r = HttpResponse(
+        ag.excel(empresa, vista),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    nombre = f"agotados_{timezone.localdate():%Y-%m-%d}.xlsx"
+    r["Content-Disposition"] = f'attachment; filename="{nombre}"'
+    return r
