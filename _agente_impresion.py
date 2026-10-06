@@ -113,8 +113,12 @@ def _pedir(ruta: str, datos: dict | None = None, metodo: str = "GET"):
         return json.loads(r.read().decode("utf-8"))
 
 
-def imprimir(trabajo: dict) -> tuple[bool, str]:
-    """Manda un trabajo a la impresora. Devuelve (salió bien, detalle)."""
+def imprimir(trabajo: dict) -> tuple[bool, str, bool]:
+    """Manda un trabajo a la impresora.
+
+    Devuelve (salió bien, detalle, devolver). `devolver` es True cuando la
+    impresora no está conectada a ESTA computadora: el trabajo no falló, le
+    tocó a la máquina equivocada, y vuelve a la cola para la otra."""
     from impresion import windows
 
     contenido = base64.b64decode(trabajo["contenido_b64"])
@@ -130,24 +134,31 @@ def imprimir(trabajo: dict) -> tuple[bool, str]:
                 float(trabajo["ancho_mm"]), float(trabajo["alto_mm"]),
                 titulo=titulo,
             )
-        return True, ""
+        return True, "", False
+    except windows.ImpresoraNoDisponible as e:
+        return False, str(e), True
     except windows.ErrorDeImpresion as e:
-        return False, str(e)
+        return False, str(e), False
     except Exception as e:  # pragma: no cover - depende del hardware
-        return False, f"{type(e).__name__}: {e}"
+        return False, f"{type(e).__name__}: {e}", False
 
 
 def impresoras_de_esta_maquina() -> list:
-    """Las colas que esta computadora tiene instaladas ahora mismo.
+    """Las impresoras CONECTADAS a esta computadora ahora mismo.
 
     Se le mandan al ERP en cada consulta para que solo le dé los trabajos que
     esta máquina puede imprimir de verdad. Sin esto, el agente abierto en la
     casa de Oscar se llevaría el tiquete de una venta hecha en la tienda y el
-    cliente se quedaría sin comprobante (ver cola.tomar_pendientes)."""
+    cliente se quedaría sin comprobante (ver cola.tomar_pendientes).
+
+    Conectadas, no instaladas (06/10/2026): en la tienda las dos computadoras
+    tienen las colas instaladas y el cable va a una u otra según el horario.
+    Con la lista de instaladas, la que no tenía el cable se llevaba el trabajo
+    y fallaba (ver windows.impresoras_conectadas)."""
     from impresion import windows
 
     try:
-        return windows.listar_impresoras()
+        return windows.impresoras_conectadas()
     except Exception:
         return []
 
@@ -191,16 +202,23 @@ def una_vuelta(estado: Estado | None = None, al_imprimir: AlImprimir | None = No
     )
     trabajos = respuesta.get("trabajos", []) if respuesta else []
     for t in trabajos:
-        ok, detalle = imprimir(t)
+        ok, detalle, devolver = imprimir(t)
         etiqueta = t.get("titulo") or t.get("tipo")
-        anotar(f"{'✅' if ok else '⛔'} {etiqueta}" + (f" — {detalle}" if detalle else ""))
-        if estado is not None:
-            estado.contar(ok)
-        if al_imprimir:
-            al_imprimir(ok, etiqueta, detalle)
+        if devolver:
+            # La impresora se desenchufó entre la consulta y la impresión (o
+            # Windows tardó en marcarla). No es un error para esta máquina:
+            # sin aviso en pantalla y de vuelta a la cola para la otra.
+            anotar(f"↩ {etiqueta} — devuelto a la cola: {detalle}")
+        else:
+            anotar(f"{'✅' if ok else '⛔'} {etiqueta}" + (f" — {detalle}" if detalle else ""))
+            if estado is not None:
+                estado.contar(ok)
+            if al_imprimir:
+                al_imprimir(ok, etiqueta, detalle)
         try:
             _pedir("/impresion/agente/resultado/",
-                   {"id": t["id"], "ok": ok, "detalle": detalle}, metodo="POST")
+                   {"id": t["id"], "ok": ok, "detalle": detalle, "devolver": devolver},
+                   metodo="POST")
         except Exception as e:
             # Si no se pudo avisar, el trabajo queda «tomado» y vence solo.
             # Peor sería reintentar e imprimirlo dos veces.
@@ -219,10 +237,11 @@ def comprobar_arranque() -> list:
     con un cliente esperando el tiquete. Devuelve las impresoras vistas."""
     vistas = impresoras_de_esta_maquina()
     if vistas:
-        anotar("Impresoras que veo en esta computadora: " + ", ".join(vistas))
+        anotar("Impresoras conectadas a esta computadora: " + ", ".join(vistas))
     else:
-        anotar("⚠ Esta computadora no tiene ninguna impresora instalada. "
-               "El agente igual se conecta, pero no va a recibir trabajos.")
+        anotar("⚠ Esta computadora no tiene ninguna impresora conectada ahora. "
+               "El agente igual se conecta y empieza a recibir trabajos apenas "
+               "se enchufe una.")
     try:
         _pedir("/impresion/agente/pendientes/?cuantos=1&impresoras=")
         anotar("Conectado al ERP. Esperando trabajos…")

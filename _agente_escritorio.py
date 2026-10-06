@@ -218,12 +218,13 @@ def instalar(silencioso: bool = False) -> int:
 
     if not silencioso:
         impresoras = motor.impresoras_de_esta_maquina()
-        lista = "\n".join(f"   • {i}" for i in impresoras) or "   (ninguna: esta computadora no va a imprimir nada)"
+        lista = ("\n".join(f"   • {i}" for i in impresoras)
+                 or "   (ninguna conectada ahora: va a imprimir apenas se le enchufe una)")
         mensaje("Listo. La impresión quedó instalada en esta computadora.\n\n"
                 "Arranca sola cada vez que se enciende Windows: no hay que abrir nada.\n"
                 "Vas a ver el logo de AllPet junto al reloj; al pasarle el mouse\n"
                 "te dice si está conectado.\n\n"
-                f"Impresoras que veo acá:\n{lista}"
+                f"Impresoras conectadas ahora:\n{lista}"
                 + ("" if tarea_ok else "\n\n(Nota: no se pudo crear el reinicio automático cada "
                    f"{MINUTOS_ENTRE_REVISIONES} min; el arranque con Windows sí quedó.)"))
     return 0

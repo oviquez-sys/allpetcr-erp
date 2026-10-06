@@ -99,12 +99,25 @@ def tomar_pendientes(cuantos: int = 5, impresoras=None) -> list[TrabajoImpresion
     return pendientes
 
 
-def reportar(trabajo_id: int, ok: bool, detalle: str = "") -> bool:
-    """El agente cuenta cómo le fue. Devuelve False si el trabajo no existe."""
+def reportar(trabajo_id: int, ok: bool, detalle: str = "", devolver: bool = False) -> bool:
+    """El agente cuenta cómo le fue. Devuelve False si el trabajo no existe.
+
+    `devolver` (06/10/2026): la impresora no estaba conectada a esa
+    computadora. El trabajo vuelve a PENDIENTE para que lo tome la que sí la
+    tiene, en vez de quedar en ERROR. Pasa cuando se desenchufa el cable justo
+    entre la consulta del agente y la impresión. Solo se devuelve lo que sigue
+    TOMADO: un trabajo ya vencido o cerrado no revive."""
     try:
         trabajo = TrabajoImpresion.objects.get(pk=trabajo_id)
     except TrabajoImpresion.DoesNotExist:
         return False
+    if devolver and not ok:
+        if trabajo.estado == TrabajoImpresion.TOMADO:
+            trabajo.estado = TrabajoImpresion.PENDIENTE
+            trabajo.tomado_en = None
+            trabajo.detalle = detalle[:2000]
+            trabajo.save(update_fields=["estado", "tomado_en", "detalle"])
+        return True
     trabajo.estado = TrabajoImpresion.IMPRESO if ok else TrabajoImpresion.ERROR
     trabajo.detalle = detalle[:2000]
     trabajo.terminado_en = timezone.now()

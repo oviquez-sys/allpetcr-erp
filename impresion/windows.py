@@ -24,6 +24,7 @@ Dos caminos de impresión, y no son intercambiables:
 from __future__ import annotations
 
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -42,13 +43,32 @@ _DM_PAPERWIDTH = 0x00000008
 _HORZRES = 8
 _VERTRES = 10
 
-# Bit de "usar impresora sin conexión" en los atributos de la cola.
+# Bit de "usar impresora sin conexión" en los atributos de la cola. Windows
+# lo enciende solo cuando la impresora USB se desconecta (se vio en la tienda
+# el 08/09/2026, ver `resolver`).
 _SIN_CONEXION = 0x400
+# Estados de la cola que también significan "no hay aparato del otro lado":
+# PRINTER_STATUS_OFFLINE y PRINTER_STATUS_NOT_AVAILABLE. Algunos drivers
+# avisan por acá en vez de por el atributo; se miran los dos.
+_ESTADOS_SIN_CONEXION = 0x80 | 0x1000
+
+# Sufijo que Windows le pone a la cola duplicada cuando la impresora se
+# reconecta en otro puerto: «Xprinter XP-360B (Copiar 1)». En inglés, «Copy».
+_SUFIJO_COPIA = re.compile(r"\s*\((?:copiar|copia|copy)\s*\d+\)\s*$", re.IGNORECASE)
 
 
 class ErrorDeImpresion(Exception):
     """Falla al imprimir. Lleva un mensaje entendible por el personal de la
     tienda, no una traza técnica: quien lo lee está con un cliente enfrente."""
+
+
+class ImpresoraNoDisponible(ErrorDeImpresion):
+    """La impresora no está conectada a ESTA computadora (o no existe acá).
+
+    Se separa del resto de las fallas porque no es un error del trabajo: es
+    que le tocó a la computadora equivocada. El agente lo devuelve a la cola
+    para que lo imprima la que sí tiene la impresora enchufada, en vez de
+    darlo por fallido (ver `_agente_impresion.una_vuelta`)."""
 
 
 def _pywin32():
@@ -94,18 +114,49 @@ def existe(nombre: str) -> bool:
 
 
 def sin_conexion(nombre: str) -> bool:
-    """True si Windows tiene esa cola marcada «usar impresora sin conexión».
+    """True si Windows ve esa cola sin aparato del otro lado: marcada «usar
+    impresora sin conexión» (lo que hace sola cuando se desenchufa el USB) o
+    con estado «sin conexión / no disponible».
 
     Una cola así acepta los trabajos, los guarda y no los manda nunca: desde
     afuera parece que se imprimió y no sale nada."""
     win32print = _pywin32()
     manejador = win32print.OpenPrinter(nombre)
     try:
-        return bool(win32print.GetPrinter(manejador, 2)["Attributes"] & _SIN_CONEXION)
+        datos = win32print.GetPrinter(manejador, 2)
+        return bool(datos["Attributes"] & _SIN_CONEXION
+                    or datos["Status"] & _ESTADOS_SIN_CONEXION)
     except Exception:  # pragma: no cover - depende del sistema
         return False
     finally:
         win32print.ClosePrinter(manejador)
+
+
+def nombre_base(nombre: str) -> str:
+    """«Xprinter XP-360B (Copiar 1)» → «Xprinter XP-360B»."""
+    return _SUFIJO_COPIA.sub("", nombre)
+
+
+def impresoras_conectadas() -> list[str]:
+    """Las impresoras que esta computadora puede usar AHORA, no las instaladas.
+
+    Pedido de Oscar (06/10/2026): en la tienda se usan dos computadoras en
+    horarios distintos y las impresoras se pasan de una a la otra. Las dos
+    tienen las colas instaladas, y Windows las deja en la lista aunque el
+    cable esté en la otra máquina. Como el agente mandaba esa lista, la
+    computadora sin cable se llevaba el tiquete, fallaba y avisaba un error,
+    mientras la que sí tenía la impresora se quedaba sin trabajo.
+
+    Por eso se descartan las colas sin conexión. Y si la viva es una copia
+    («… (Copiar 1)»), se informa también el nombre original: el ERP encola con
+    el nombre configurado y `resolver` se encarga de imprimir por la copia."""
+    vivas = set()
+    for nombre in listar_impresoras():
+        if sin_conexion(nombre):
+            continue
+        vivas.add(nombre)
+        vivas.add(nombre_base(nombre))
+    return sorted(vivas)
 
 
 def resolver(nombre: str) -> str:
@@ -144,12 +195,12 @@ def resolver(nombre: str) -> str:
         return elegida
 
     if nombre in disponibles:
-        raise ErrorDeImpresion(
-            f"La impresora «{nombre}» está marcada «usar sin conexión» en Windows, "
-            "así que acepta los trabajos y no los imprime. Revisá que esté "
-            "encendida y conectada, y quitale esa marca."
+        raise ImpresoraNoDisponible(
+            f"La impresora «{nombre}» aparece sin conexión en esta computadora "
+            "(desenchufada, apagada o marcada «usar sin conexión»). Revisá que "
+            "esté encendida y con el cable puesto en esta computadora."
         )
-    raise ErrorDeImpresion(
+    raise ImpresoraNoDisponible(
         f"Windows no encuentra la impresora «{nombre}». "
         f"Instaladas ahora mismo: {', '.join(disponibles) or 'ninguna'}."
     )

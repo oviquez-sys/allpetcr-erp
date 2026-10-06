@@ -107,7 +107,10 @@ def resultado(request):
     except (ValueError, KeyError, TypeError):
         return JsonResponse({"ok": False, "error": "Datos inválidos."}, status=400)
 
-    encontrado = cola.reportar(trabajo_id, ok, str(datos.get("detalle", "")))
+    # `devolver` lo mandan los agentes desde el 06/10/2026; uno viejo no lo
+    # manda y todo sigue como antes.
+    encontrado = cola.reportar(trabajo_id, ok, str(datos.get("detalle", "")),
+                               devolver=bool(datos.get("devolver")))
     if not encontrado:
         return JsonResponse({"ok": False, "error": "Ese trabajo no existe."}, status=404)
     return JsonResponse({"ok": True})

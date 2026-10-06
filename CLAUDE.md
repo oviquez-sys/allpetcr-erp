@@ -189,6 +189,18 @@ Cuidado con un detalle: en esa función `impresoras=[]` (máquina sin ninguna
 impresora) tiene que dar cero trabajos y `impresoras=None` (no se mandó la
 lista) tiene que darlos todos. Confundirlos revive el problema entero.
 
+**Conectadas, no instaladas (06/10/2026).** En la tienda se usan dos
+computadoras en horarios distintos y el cable de las impresoras pasa de una a
+otra. Windows deja las colas listadas aunque el cable esté en la otra máquina,
+así que la que no lo tenía se llevaba el trabajo y mostraba un error. Ahora el
+agente manda `windows.impresoras_conectadas()` (descarta colas «sin conexión»:
+atributo 0x400 o estado offline/no disponible; una copia «(Copiar N)» viva
+cuenta como la original). Y si igual le toca un trabajo y la impresora no está
+(`ImpresoraNoDisponible`), lo devuelve: `resultado` con `devolver=True` →
+`cola.reportar` lo pasa a PENDIENTE sin aviso en pantalla. Los agentes viejos
+no mandan `devolver` y siguen igual hasta reinstalarlos. Requiere rearmar el
+.exe. Pruebas en `impresion/test_dos_computadoras.py`.
+
 - `AGENTE_IMPRESION.bat` — la forma vieja (ventana abierta todo el día). Queda
   solo para diagnosticar a mano.
 
