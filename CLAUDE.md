@@ -407,6 +407,15 @@ línea y al registrar se recalculaba el precio que se acababa de poner
 (₡55.900 → ₡56.000 por el redondeo, o más bajo si había unidades de regalo).
 El producto nuevo entra ahora con `gan: null`: queda el precio que se vio.
 
+**Distribución (v5, 12/10/2026).** Pedido: "que absolutamente todo se pueda
+ver bien". La lista de lo recibido va arriba con todo el alto; proveedor,
+factura, forma de pago e IVA van abajo en dos filas junto a "Registrar" (paso
+3). El chat de ayuda va abajo a la IZQUIERDA en esta pantalla (a la derecha
+tapaba el botón de registrar) y la grilla tiene relleno abajo para que la
+última fila suba por encima. "Cómo se usa" pasó a la barra de arriba. Con
+alto ≤ 820 px los tres pasos se esconden. Probado en 1920×1080, 1366×768,
+1280×720 y 390 px de ancho (sin desborde horizontal).
+
 ## Reglas del proyecto
 
 **Los comentarios explican el *porqué*, no el *qué*.** Es la característica
