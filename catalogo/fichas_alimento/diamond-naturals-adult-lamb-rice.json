@@ -1,0 +1,74 @@
+{
+ "clave": "diamond-naturals-adult-lamb-rice",
+ "marca": "Diamond Naturals",
+ "linea": "",
+ "nombre": "Diamond Naturals Adult Dog Lamb Meal & Rice",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Cordero",
+ "sabor": "Cordero y arroz",
+ "descripcion_corta": "Cordero y arroz para perros adultos.",
+ "descripcion": "Con ácidos grasos omega que ayudan a mantener la piel sana y el pelo brillante.",
+ "beneficios": [
+  {
+   "clave": "piel_pelaje",
+   "texto": "Omega para piel sana y pelo brillante."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "23",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "14",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "4",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "10",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.diamondpet.com/dog/diamond-naturals/adult-dog-lamb-meal-rice/",
+   "tipo": "fabricante",
+   "entidad": "Diamond Pet Foods",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-12"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-12",
+ "notas_internas": "Datos del sitio oficial de Estados Unidos; confirmar contra el empaque que vende Yanyunis en Costa Rica. Ingredientes completos pendientes.",
+ "skus": [
+  "DIA-123"
+ ]
+}

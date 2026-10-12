@@ -1,0 +1,74 @@
+{
+ "clave": "proseries-fish-rice",
+ "marca": "ProSeries",
+ "linea": "",
+ "nombre": "ProSeries Pescado y Arroz",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [],
+ "tamanos_raza": [],
+ "necesidades": [
+  "digestion_sensible"
+ ],
+ "proteina_principal": "Pescado",
+ "sabor": "Pescado y arroz",
+ "descripcion_corta": "Para perros con sensibilidad alimenticia.",
+ "descripcion": "Fórmula 100 % libre de maíz, trigo, soya, pollo, cordero y carne de res.",
+ "beneficios": [
+  {
+   "clave": "articulaciones",
+   "texto": "Con glucosamina y condroitina."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "21",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "12",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "4",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "10",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 3560,
+ "kcal_unidad": 480,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://proseriespet.ca/es/pescado-y-arroz",
+   "tipo": "fabricante",
+   "entidad": "ProSeries (Corey Nutrition Company, Canadá)",
+   "region": "Canadá",
+   "verificado_en": "2026-10-12"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-12",
+ "notas_internas": "Sitio oficial en español. Ingredientes completos disponibles en la fuente; no se copiaron.",
+ "skus": [
+  "PRS-FR-272"
+ ]
+}

@@ -1,0 +1,78 @@
+{
+ "clave": "proseries-puppy",
+ "marca": "ProSeries",
+ "linea": "",
+ "nombre": "ProSeries Cachorros",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "cachorro"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "",
+ "descripcion_corta": "Para cachorros activos y en crecimiento.",
+ "descripcion": "Preparado nutricional especial para cachorros activos y en crecimiento y para perras gestantes y lactantes.",
+ "beneficios": [
+  {
+   "clave": "desarrollo",
+   "texto": "Para cachorros en crecimiento y perras gestantes o lactantes."
+  },
+  {
+   "clave": "articulaciones",
+   "texto": "Con glucosamina y condroitina."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "26",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "16",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "3.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "10",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 3615,
+ "kcal_unidad": 470,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://proseriespet.ca/es/cachorros",
+   "tipo": "fabricante",
+   "entidad": "ProSeries (Corey Nutrition Company, Canadá)",
+   "region": "Canadá",
+   "verificado_en": "2026-10-12"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-12",
+ "notas_internas": "Sitio oficial en español. Ingredientes completos disponibles en la fuente; no se copiaron.",
+ "skus": [
+  "PRS-PUP-272"
+ ]
+}

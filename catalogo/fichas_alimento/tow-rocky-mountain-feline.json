@@ -1,0 +1,84 @@
+{
+ "clave": "tow-rocky-mountain-feline",
+ "marca": "Taste of the Wild",
+ "linea": "",
+ "nombre": "Taste of the Wild Rocky Mountain Feline",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Venado asado",
+ "sabor": "Venado asado y salmón ahumado",
+ "descripcion_corta": "Receta sin granos con 42 % de proteína para gatos de todas las edades.",
+ "descripcion": "Venado asado y salmón ahumado, con legumbres, vegetales y frutas, para la proteína que necesita un cuerpo delgado y sano.",
+ "beneficios": [
+  {
+   "clave": "alta_proteina",
+   "texto": "42 % de proteína."
+  },
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Con probióticos específicos para la especie."
+  },
+  {
+   "clave": "antioxidantes",
+   "texto": "Antioxidantes de vegetales, legumbres y frutas."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "42",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "18",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "3",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "10",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.tasteofthewildpetfood.com/cat/grain-free/rocky-mountain-with-roasted-venison-smoke-flavored-salmon",
+   "tipo": "fabricante",
+   "entidad": "Taste of the Wild (Diamond Pet Foods)",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-12"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-12",
+ "notas_internas": "Datos del sitio oficial de Estados Unidos (bolsa de 5 lb). La bolsa que vende Yanyunis en Costa Rica es de 2 kg; confirmar el análisis contra el empaque. Ingredientes completos pendientes (el sitio solo muestra los destacados).",
+ "skus": [
+  "TOW-2591"
+ ]
+}

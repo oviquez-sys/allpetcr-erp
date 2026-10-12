@@ -1,0 +1,81 @@
+{
+ "clave": "diamond-naturals-senior-dog",
+ "marca": "Diamond Naturals",
+ "linea": "",
+ "nombre": "Diamond Naturals Senior Dog Chicken, Egg & Oatmeal",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "senior"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo, huevo y avena",
+ "descripcion_corta": "Fórmula para perros mayores con pollo, huevo y avena.",
+ "descripcion": "Receta pensada para las necesidades de los perros que envejecen.",
+ "beneficios": [
+  {
+   "clave": "articulaciones",
+   "texto": "Con glucosamina."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "25",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "11",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "3",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "10",
+   "unidad": "%"
+  },
+  {
+   "clave": "l_carnitina",
+   "etiqueta": "L-carnitina",
+   "calificador": "min",
+   "valor": "500",
+   "unidad": "mg/kg"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.diamondpet.com/dog/diamond-naturals/senior-dog-chicken-egg-oatmeal/",
+   "tipo": "fabricante",
+   "entidad": "Diamond Pet Foods",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-12"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-12",
+ "notas_internas": "Datos del sitio oficial de Estados Unidos; confirmar contra el empaque que vende Yanyunis en Costa Rica. Ingredientes completos pendientes.",
+ "skus": [
+  "DIA-10066"
+ ]
+}

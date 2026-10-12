@@ -1,0 +1,85 @@
+{
+ "clave": "diamond-naturals-skin-coat-salmon",
+ "marca": "Diamond Naturals",
+ "linea": "",
+ "nombre": "Diamond Naturals Skin & Coat All Life Stages Salmon & Potato",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Salmón",
+ "sabor": "Salmón y papa",
+ "descripcion_corta": "Salmón y papa para la piel y el pelaje, en todas las etapas.",
+ "descripcion": "Receta diseñada para ayudar a mantener la piel sana y el pelaje.",
+ "beneficios": [
+  {
+   "clave": "piel_pelaje",
+   "texto": "Diseñada para la piel y el pelaje."
+  },
+  {
+   "clave": "dha",
+   "texto": "Con DHA."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "25",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "14",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "5.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "10",
+   "unidad": "%"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "min",
+   "valor": "0.05",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.diamondpet.com/dog/diamond-naturals/skin-coat-all-life-stages-dog-salmon-potato-formula/",
+   "tipo": "fabricante",
+   "entidad": "Diamond Pet Foods",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-12"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-12",
+ "notas_internas": "Datos del sitio oficial de Estados Unidos; confirmar contra el empaque que vende Yanyunis en Costa Rica. Ingredientes completos pendientes.",
+ "skus": [
+  "DIA-10089"
+ ]
+}

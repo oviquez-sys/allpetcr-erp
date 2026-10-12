@@ -1,0 +1,84 @@
+{
+ "clave": "tow-lowland-creek-feline",
+ "marca": "Taste of the Wild",
+ "linea": "",
+ "nombre": "Taste of the Wild Lowland Creek Feline",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Pato",
+ "sabor": "Codorniz y pato asados",
+ "descripcion_corta": "Receta sin granos con codorniz y pato para gatos de todas las edades.",
+ "descripcion": "Codorniz y pato de libre pastoreo, proteínas muy digeribles, para el gato que prefiere el ave.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Probióticos específicos para la digestión y las defensas."
+  },
+  {
+   "clave": "corazon",
+   "texto": "Taurina para el corazón y la vista."
+  },
+  {
+   "clave": "antioxidantes",
+   "texto": "Antioxidantes de vegetales, legumbres y frutas."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "36",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "16",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "3",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "10",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.tasteofthewildpetfood.com/cat/grain-free/lowland-creek-with-roasted-quail-roasted-duck",
+   "tipo": "fabricante",
+   "entidad": "Taste of the Wild (Diamond Pet Foods)",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-12"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-12",
+ "notas_internas": "Datos del sitio oficial de Estados Unidos (bolsa de 5 lb). La bolsa que vende Yanyunis en Costa Rica es de 2 kg; confirmar el análisis contra el empaque. Ingredientes completos pendientes (el sitio solo muestra los destacados).",
+ "skus": [
+  "TOW-9767"
+ ]
+}

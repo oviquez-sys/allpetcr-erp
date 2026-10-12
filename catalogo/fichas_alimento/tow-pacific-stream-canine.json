@@ -1,0 +1,74 @@
+{
+ "clave": "tow-pacific-stream-canine",
+ "marca": "Taste of the Wild",
+ "linea": "",
+ "nombre": "Taste of the Wild Pacific Stream Canine",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Salmón",
+ "sabor": "Salmón y salmón ahumado",
+ "descripcion_corta": "Receta sin granos con salmón: proteína de pescado de fácil digestión.",
+ "descripcion": "Salmón y salmón ahumado con camote, lentejas, arándanos y frambuesas.",
+ "beneficios": [
+  {
+   "clave": "digestion",
+   "texto": "Proteína de pescado que aporta energía fácil de digerir."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "25",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "15",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "4",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "10",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.tasteofthewildpetfood.com/dog/grain-free/pacific-stream-with-smoke-flavored-salmon",
+   "tipo": "fabricante",
+   "entidad": "Taste of the Wild (Diamond Pet Foods)",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-12"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-12",
+ "notas_internas": "Datos del sitio oficial de Estados Unidos (bolsa de 5 lb). La bolsa que vende Yanyunis en Costa Rica es de 2 kg; confirmar el análisis contra el empaque. Ingredientes completos pendientes (el sitio solo muestra los destacados).",
+ "skus": [
+  "TOW-2564"
+ ]
+}

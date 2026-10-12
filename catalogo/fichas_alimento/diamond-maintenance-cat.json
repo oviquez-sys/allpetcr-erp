@@ -1,0 +1,69 @@
+{
+ "clave": "diamond-maintenance-cat",
+ "marca": "Diamond",
+ "linea": "",
+ "nombre": "Diamond Maintenance Cat",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "",
+ "descripcion_corta": "Fórmula de mantenimiento para gatos adultos.",
+ "descripcion": "La nutrición que tu gato adulto necesita para su salud y bienestar general.",
+ "beneficios": [],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "30",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "15",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "3",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "10",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.diamondpet.com/cat/diamond/maintenance/",
+   "tipo": "fabricante",
+   "entidad": "Diamond Pet Foods",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-12"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-12",
+ "notas_internas": "Datos del sitio oficial de Estados Unidos; confirmar contra el empaque que vende Yanyunis en Costa Rica. Ingredientes completos pendientes.",
+ "skus": [
+  "DIA-445"
+ ]
+}

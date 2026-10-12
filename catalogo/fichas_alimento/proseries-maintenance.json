@@ -1,0 +1,74 @@
+{
+ "clave": "proseries-maintenance",
+ "marca": "ProSeries",
+ "linea": "",
+ "nombre": "ProSeries Mantenimiento",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "",
+ "descripcion_corta": "Para perros adultos.",
+ "descripcion": "Para perros adultos, incluidos los perros de trabajo y de deporte fuera de temporada.",
+ "beneficios": [
+  {
+   "clave": "articulaciones",
+   "texto": "Con glucosamina y condroitina."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "26",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "15",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "3.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "10",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 3639,
+ "kcal_unidad": 490,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://proseriespet.ca/es/mantenimiento",
+   "tipo": "fabricante",
+   "entidad": "ProSeries (Corey Nutrition Company, Canadá)",
+   "region": "Canadá",
+   "verificado_en": "2026-10-12"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-12",
+ "notas_internas": "Sitio oficial en español. Ingredientes completos disponibles en la fuente; no se copiaron.",
+ "skus": [
+  "PRS-MTC-272"
+ ]
+}

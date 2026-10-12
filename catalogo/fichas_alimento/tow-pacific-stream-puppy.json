@@ -1,0 +1,76 @@
+{
+ "clave": "tow-pacific-stream-puppy",
+ "marca": "Taste of the Wild",
+ "linea": "",
+ "nombre": "Taste of the Wild Pacific Stream Puppy",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "cachorro"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Salmón",
+ "sabor": "Salmón y salmón ahumado",
+ "descripcion_corta": "Receta sin granos con salmón en croqueta pequeña para cachorros.",
+ "descripcion": "Salmón y salmón ahumado en una croqueta pequeña, fácil de comer para cachorros.",
+ "beneficios": [
+  {
+   "clave": "desarrollo",
+   "texto": "Formulada para cachorros."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "27",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "15",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "5",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "10",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.tasteofthewildpetfood.com/dog/grain-free/pacific-stream-puppy-with-smoke-flavored-salmon",
+   "tipo": "fabricante",
+   "entidad": "Taste of the Wild (Diamond Pet Foods)",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-12"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-12",
+ "notas_internas": "Datos del sitio oficial de Estados Unidos (bolsa de 5 lb). La bolsa que vende Yanyunis en Costa Rica es de 2 kg; confirmar el análisis contra el empaque. Ingredientes completos pendientes (el sitio solo muestra los destacados).",
+ "skus": [
+  "TOW-2582"
+ ]
+}
