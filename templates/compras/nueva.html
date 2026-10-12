@@ -87,15 +87,23 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
 .fp button.on{background:var(--brand);border-color:var(--brand);color:#fff}
 
 #lineas{flex:1;overflow-y:auto;margin:8px -4px 0;padding:0 4px;border-top:1px solid var(--line)}
-.linea{display:flex;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid var(--line)}
-.linea .nm{flex:1;font-weight:600;font-size:13px;line-height:1.25}
-.linea input[type=number]{width:52px;text-align:center;padding:7px 4px;border:1px solid var(--line);border-radius:8px;font-size:13px}
+.linea{padding:11px 0 9px;border-bottom:1px solid var(--line);border-radius:10px}
+.linea-top{display:flex;align-items:center;gap:8px}
+.linea .nm{flex:1;font-weight:600;font-size:13.5px;line-height:1.25}
+.linea-campos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.linea-campos label{display:block}
+.linea input[type=number]{width:100%;text-align:center;padding:8px 4px;border:1px solid var(--line);border-radius:9px;font-size:14px}
+.linea .cant input{border-color:var(--brand2);font-weight:700}
+@keyframes recien{from{background:#E4F1F4}to{background:transparent}}
+.linea.recien{animation:recien 1.6s ease-out}
+.np-seccion{font-size:12px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.04em;margin:4px 0 8px}
+.campo2 input.np-grande{font-size:17px;font-weight:700;border-color:var(--brand2)}
 .linea .x{width:26px;height:26px;border:none;background:none;color:var(--red);font-size:18px;cursor:pointer}
 .linea .mt{width:74px;text-align:right;font-weight:700;font-size:13px}
 .linea .bonif input{background:#FFF8E8;border-color:#E8CE96!important}
 .real{font-size:11px;color:var(--ink2);padding:0 0 9px 2px;margin-top:-6px;border-bottom:1px solid var(--line)}
 .real b{color:var(--ink)}
-.linea .lbl{font-size:10.5px;color:var(--ink2);display:block;text-align:center;margin-bottom:2px}
+.linea .lbl{font-size:11.5px;color:var(--ink2);display:block;text-align:center;margin-bottom:3px}
 .fila3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 @media(max-width:520px){.fila3{grid-template-columns:1fr}}
 .np-aviso{font-size:12px;color:var(--ink2);background:#F6F7F9;border-radius:8px;padding:9px 12px;margin-top:10px;line-height:1.4}
@@ -172,7 +180,7 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
 <div class="steps">
   <span><b>1.</b> Buscá el producto que llegó</span>
   <span><b>2.</b> Poné cantidad, promoción, costo y ganancia</span>
-  <span class="version-pag" title="Si no ves este sello, la página está en caché: Ctrl+F5">v3 · 02-09-2026</span>
+  <span class="version-pag" title="Si no ves este sello, la página está en caché: Ctrl+F5">v4 · 12-10-2026</span>
   <span><b>3.</b> Elegí el proveedor y registrá</span>
 </div>
 
@@ -239,10 +247,10 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
 <div class="overlay" id="ayuda" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sheet">
     <h2>Cómo recibir mercadería</h2>
-    <div class="step2"><div class="n">1</div><div class="st">Escaneá o buscá cada producto que llegó y tocalo para agregarlo a la lista de la derecha. Si es un producto que nunca habías comprado, tocá "➕ Producto nuevo" para crearlo al vuelo.</div></div>
-    <div class="step2"><div class="n">2</div><div class="st">Ajustá la <b>cantidad</b> y el <b>costo</b> con el que te lo vendió el proveedor (no el precio de venta).</div></div>
-    <div class="step2"><div class="n">+</div><div class="st">Si te dieron una <b>promoción tipo 12+1 o 100+20</b>, poné las facturadas en "cant." y las regaladas en "<b>+ gratis</b>". La factura se registra por lo que te cobran, el inventario sube por todo lo que llegó, y el sistema calcula solo cuánto te costó de verdad cada unidad.</div></div>
-    <div class="step2"><div class="n">+</div><div class="st">Si querés <b>recalcular el precio de venta</b>, escribí en "<b>gan. %</b>" cuánto querés ganarle sobre el costo (110 = el precio queda en 2,1 veces el costo). El sistema lo calcula sobre el costo <i>real</i> —con la bonificación ya repartida— y lo redondea a la centena. Si lo dejás vacío, el precio no se toca.{% if tradicional %} El precio que calcula <b>ya incluye el IVA</b>, y la ganancia se mide sobre lo que te queda sin IVA.{% endif %}</div></div>
+    <div class="step2"><div class="n">1</div><div class="st">Escaneá o buscá cada producto que llegó y tocalo para agregarlo a la lista de la derecha. Si es un producto que nunca habías comprado, tocá "➕ Producto nuevo": ahí mismo ponés cuántas llegaron.</div></div>
+    <div class="step2"><div class="n">2</div><div class="st">En la lista de la derecha, cada producto tiene su casilla de <b>Cantidad</b> (con borde azul) y de <b>Costo c/u</b>: ajustá la cantidad y el costo con el que te lo vendió el proveedor (no el precio de venta).</div></div>
+    <div class="step2"><div class="n">+</div><div class="st">Si te dieron una <b>promoción tipo 12+1 o 100+20</b>, poné las facturadas en "Cantidad" y las regaladas en "<b>De regalo</b>". La factura se registra por lo que te cobran, el inventario sube por todo lo que llegó, y el sistema calcula solo cuánto te costó de verdad cada unidad.</div></div>
+    <div class="step2"><div class="n">+</div><div class="st">Si querés <b>recalcular el precio de venta</b>, escribí en "<b>Ganancia %</b>" cuánto querés ganarle sobre el costo (110 = el precio queda en 2,1 veces el costo). El sistema lo calcula sobre el costo <i>real</i> —con la bonificación ya repartida— y lo redondea a la centena. Si lo dejás vacío, el precio no se toca.{% if tradicional %} El precio que calcula <b>ya incluye el IVA</b>, y la ganancia se mide sobre lo que te queda sin IVA.{% endif %}</div></div>
     {% if tradicional %}<div class="step2"><div class="n">+</div><div class="st">Si el proveedor te dio <b>factura electrónica</b> a nombre de AllPetCR, anotá los costos <b>sin IVA</b> y el IVA total en "<b>IVA de la factura</b>": ese IVA te lo descuenta Hacienda. Sin factura, anotá el costo con todo incluido y el IVA en 0.</div></div>{% endif %}
     <div class="step2"><div class="n">3</div><div class="st">Elegí el proveedor (o escribí uno nuevo si no está en la lista) y si es de contado o a crédito.</div></div>
     <div class="step2"><div class="n">4</div><div class="st">Tocá <b>Registrar compra</b>. El stock y la contabilidad se actualizan solos, no hay que hacer nada más.</div></div>
@@ -281,11 +289,26 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
         <input id="npPresentacion" placeholder="Ej. Talla M">
       </div>
     </div>
+    {% comment %} Cantidad en el mismo formulario (12/10/2026): antes el producto
+       entraba con 1 unidad y la cantidad se cambiaba después, en la lista de la
+       derecha, en una casilla de 52 px rotulada "cant.". Oscar no la encontró. {% endcomment %}
+    <div class="np-seccion">Lo que llegó</div>
     <div class="fila3">
       <div class="campo2">
-        <label>Costo de esta compra</label>
+        <label>Cantidad que llegó *</label>
+        <input id="npCantidad" type="number" min="1" step="any" value="1" class="np-grande">
+      </div>
+      <div class="campo2">
+        <label>De regalo (promo)</label>
+        <input id="npGratis" type="number" min="0" step="any" placeholder="0" title="Si el proveedor regaló unidades, p. ej. 12+1: aquí va el 1">
+      </div>
+      <div class="campo2">
+        <label>Costo por unidad</label>
         <input id="npCosto" type="number" min="0" step="any" placeholder="₡" oninput="npRecalcularPrecio()">
       </div>
+    </div>
+    <div class="np-seccion">Precio de venta</div>
+    <div class="fila3">
       <div class="campo2">
         <label>Ganancia %</label>
         <input id="npGanancia" type="number" min="0" step="any" placeholder="Ej. 110" oninput="npRecalcularPrecio()">
@@ -294,13 +317,14 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
         <label>Precio de venta *</label>
         <input id="npPrecio" type="number" min="0" step="any" placeholder="₡" oninput="npRecalcularGanancia()">
       </div>
+      <div class="campo2"></div>
     </div>
     <div id="npAviso" class="np-aviso">Poné el costo y la ganancia, y el precio se calcula solo. O escribí el precio directo y te digo qué ganancia es.</div>
     <div class="campo2">
       <label>Foto del producto (opcional)</label>
       <input id="npFoto" type="file" accept="image/*" style="padding:8px 12px">
     </div>
-    <button class="close" onclick="guardarProductoNuevo()">Agregar y sumar a la compra</button>
+    <button class="close" onclick="guardarProductoNuevo()">Crear y agregar a la compra</button>
     <button class="close" style="background:#fff;color:var(--ink2);border:1px solid var(--line);margin-top:8px" onclick="cerrarNuevoProducto()">Cancelar</button>
   </div>
 </div>
@@ -460,6 +484,8 @@ function abrirNuevoProducto(codigo){
   document.getElementById('npPrecio').value = '';
   document.getElementById('npCosto').value = '';
   document.getElementById('npGanancia').value = '';
+  document.getElementById('npCantidad').value = 1;
+  document.getElementById('npGratis').value = '';
   npPintarAviso();
   document.getElementById('npFoto').value = '';
   document.getElementById('modalProducto').classList.add('on');
@@ -511,6 +537,9 @@ async function guardarProductoNuevo(){
   const precio_venta = document.getElementById('npPrecio').value;
   if (!nombre){ msg("Ponele un nombre al producto.", true); return; }
   if (!precio_venta || +precio_venta <= 0){ msg("Poné un precio de venta válido.", true); return; }
+  const cantidadNp = parseFloat(document.getElementById('npCantidad').value);
+  if (!(cantidadNp > 0)){ msg("Poné cuántas unidades llegaron.", true); return; }
+  const gratisNp = Math.max(0, parseFloat(document.getElementById('npGratis').value) || 0);
 
   let foto_base64 = null;
   const fotoFile = document.getElementById('npFoto').files[0];
@@ -556,19 +585,19 @@ async function guardarProductoNuevo(){
     }
     if (!cats.includes(p.categoria)) { cats.push(p.categoria); cats.sort((a,b)=> a==='Todas'?-1:b==='Todas'?1:a.localeCompare(b,'es')); }
     const costo = +(document.getElementById('npCosto').value || 0);
-    // La ganancia que se puso en el modal se hereda a la línea: si no, el
-    // producto entraría a la compra con el precio ya fijado pero la línea
-    // mostraría el campo vacío, y no se entendería de dónde salió.
-    const ganNp = document.getElementById('npGanancia').value;
-    carrito[p.id] = { cantidad: 1, bonif: 0, costo,
-                      gan: (ganNp === '' || isNaN(+ganNp)) ? null : +ganNp };
+    // La ganancia NO se hereda a la línea (12/10/2026): el producto ya se
+    // creó con el precio que se vio en el formulario. Heredarla hacía que al
+    // registrar se recalculara ese precio con la ganancia redondeada (₡55.900
+    // pasaba a ₡56.000) o con el costo bajado por las unidades de regalo
+    // (pasaba a ₡47.900), sin que nadie lo pidiera.
+    carrito[p.id] = { cantidad: cantidadNp, bonif: gratisNp, costo, gan: null };
     cerrarNuevoProducto();
-    poblarCategorias(); pintarGrid(); pintarLineas();
+    poblarCategorias(); pintarGrid(); pintarLineas(); resaltarLinea(p.id);
     // Si la foto se rechazó (no era imagen, pesaba de más), el producto SÍ se
     // creó pero sin imagen. Antes eso pasaba en silencio y el usuario no
     // entendía por qué faltaba la foto (auditoría 2026-07-28, BE-03/SEG-06).
     if (d.aviso) msg(`⚠️ "${p.nombre}" se creó, pero la foto no: ${d.aviso}`, true);
-    else msg(`✅ "${p.nombre}" creado y agregado a la compra.`);
+    else msg(`✅ "${p.nombre}" creado y agregado a la compra: ${cantidadNp + gratisNp} unidades.`);
   } catch(e){ msg("⛔ No se pudo conectar con el servidor.", true); }
 }
 
@@ -603,6 +632,18 @@ function agregar(id){
   if (!carrito[id]) carrito[id] = { cantidad: 1, bonif: 0, gan: null, costo: p.costo_promedio || 0 };
   else carrito[id].cantidad += 1;
   pintarLineas();
+  resaltarLinea(id);
+}
+// La lista de la derecha crece hacia abajo y lo recién agregado puede quedar
+// fuera de la vista: se lleva a la vista y parpadea, para que se vea dónde
+// quedó y dónde se cambia la cantidad.
+function resaltarLinea(id){
+  const el = document.getElementById('linea-' + id);
+  if (!el) return;
+  el.scrollIntoView({block: 'nearest', behavior: 'smooth'});
+  el.classList.remove('recien');
+  void el.offsetWidth;  // reinicia la animación si se agrega dos veces seguidas
+  el.classList.add('recien');
 }
 function quitarLinea(id){ delete carrito[id]; pintarLineas(); }
 function cambiarCantidad(id, v){
@@ -667,15 +708,22 @@ function pintarLineas(){
       ? `<div class="precio-linea">Precio de venta: <b>${fmt(p.precio_venta)}</b> → <span class="nuevo">${fmt(precioNuevo)}</span> · margen <b>${margen.toFixed(0)}%</b> sobre la venta</div>`
       : `<div class="precio-linea">Precio actual <b>${fmt(p.precio_venta)}</b>${ganActual !== null ? ` · ganancia de hoy <b>${ganActual.toFixed(0)}%</b>` : ''} · escribí una ganancia para recalcularlo</div>`;
 
-    return `<div class="linea">
-      ${fotoHTML(p, 40, 'clickable-product-img')}
-      <span class="nm">${esc(p.nombre)}</span>
-      <span><span class="lbl">cant.</span><input type="number" min="0.01" step="any" value="${l.cantidad}" onchange="cambiarCantidad(${id}, this.value)"></span>
-      <span class="bonif"><span class="lbl">+ gratis</span><input type="number" min="0" step="any" value="${bonif}" onchange="cambiarBonif(${id}, this.value)"></span>
-      <span><span class="lbl">costo</span><input type="number" min="0" step="any" value="${l.costo}" onchange="cambiarCosto(${id}, this.value)"></span>
-      <span class="gan"><span class="lbl">gan. %</span><input type="number" min="0" step="any" value="${gan === null ? '' : gan}" placeholder="${ganActual !== null ? ganActual.toFixed(0) : '—'}" onchange="cambiarGanancia(${id}, this.value)"></span>
-      <span class="mt">${fmt(l.cantidad*l.costo)}</span>
-      <button class="x" onclick="quitarLinea(${id})">✕</button></div>${aviso}${precioInfo}`;
+    // Dos filas (12/10/2026): arriba qué es y cuánto suma; abajo las cuatro
+    // casillas con su nombre completo. En una sola fila no cabían en 400 px:
+    // los rótulos eran "cant." y "gan. %" en letra de 10 px y no se veían.
+    return `<div class="linea" id="linea-${id}">
+      <div class="linea-top">
+        ${fotoHTML(p, 40, 'clickable-product-img')}
+        <span class="nm">${esc(p.nombre)}</span>
+        <span class="mt">${fmt(l.cantidad*l.costo)}</span>
+        <button class="x" onclick="quitarLinea(${id})" title="Quitar de la compra">✕</button>
+      </div>
+      <div class="linea-campos">
+        <label class="cant"><span class="lbl">Cantidad</span><input type="number" min="0.01" step="any" value="${l.cantidad}" onchange="cambiarCantidad(${id}, this.value)"></label>
+        <label class="bonif"><span class="lbl">De regalo</span><input type="number" min="0" step="any" value="${bonif}" onchange="cambiarBonif(${id}, this.value)"></label>
+        <label><span class="lbl">Costo c/u</span><input type="number" min="0" step="any" value="${l.costo}" onchange="cambiarCosto(${id}, this.value)"></label>
+        <label class="gan"><span class="lbl">Ganancia %</span><input type="number" min="0" step="any" value="${gan === null ? '' : gan}" placeholder="${ganActual !== null ? ganActual.toFixed(0) : '—'}" onchange="cambiarGanancia(${id}, this.value)"></label>
+      </div></div>${aviso}${precioInfo}`;
   }).join('') : '<div class="empty"><span class="big">📦</span>Buscá o tocá un producto<br>para empezar a recibir</div>';
   const total = ids.reduce((a,id)=>a + carrito[id].cantidad*carrito[id].costo, 0);
   const iva = ivaFactura();

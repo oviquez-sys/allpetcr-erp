@@ -361,6 +361,23 @@ class AltaRapidaDeProducto(BaseCompras):
         self.assertEqual(producto.stock_actual, Decimal("4"))
         self.assertEqual(producto.costo_promedio, Decimal("8000.00"))
 
+    def test_devuelve_el_precio_para_mostrarlo_en_la_compra(self):
+        # Sin el precio, la línea del producto recién creado decía "₡" vacío.
+        d = self.client.post(
+            reverse("compras:producto_nuevo"),
+            data=json.dumps({"nombre": "Diamond 18 kg", "precio_venta": 55900, "marca": "Diamond"}),
+            content_type="application/json",
+        ).json()
+        self.assertEqual(d["producto"]["precio_venta"], 55900.0)
+        self.assertEqual(d["producto"]["marca"], "Diamond")
+
+    def test_el_formulario_de_producto_nuevo_pide_la_cantidad(self):
+        # Pedido de Oscar (12/10/2026): "no hay donde poner la cantidad".
+        r = self.client.get(reverse("compras:nueva"))
+        self.assertContains(r, 'id="npCantidad"')
+        self.assertContains(r, "Cantidad que llegó")
+        self.assertContains(r, 'id="npGratis"')
+
     def test_producto_nuevo_con_foto_en_base64(self):
         # Imagen PNG mínima (1x1 pixel) en base64
         foto_png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg=="

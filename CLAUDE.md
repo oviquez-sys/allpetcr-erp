@@ -393,6 +393,20 @@ pedir. La decisión es del negocio.
   (`agotados` en la respuesta de la venta). El cajero no ve costos.
 - La migración 0007 creó los avisos de lo que ya estaba agotado.
 
+## Recibir mercadería más clara (12/10/2026)
+
+Oscar creó un producto nuevo desde "Recibir mercadería" y no encontró dónde
+poner la cantidad: entraba con 1 y se cambiaba en una casilla de 52 px
+rotulada "cant.". Ahora el formulario de producto nuevo pide **Cantidad que
+llegó** y **De regalo** junto al costo por unidad, y cada línea de la compra
+va en dos filas con rótulos completos (Cantidad · De regalo · Costo c/u ·
+Ganancia %); lo recién agregado se lleva a la vista y parpadea.
+
+Se corrigió de paso un error: la ganancia del formulario se heredaba a la
+línea y al registrar se recalculaba el precio que se acababa de poner
+(₡55.900 → ₡56.000 por el redondeo, o más bajo si había unidades de regalo).
+El producto nuevo entra ahora con `gan: null`: queda el precio que se vio.
+
 ## Reglas del proyecto
 
 **Los comentarios explican el *porqué*, no el *qué*.** Es la característica

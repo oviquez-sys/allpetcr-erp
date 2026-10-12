@@ -357,6 +357,9 @@ def producto_nuevo(request):
         "producto": {
             "id": producto.id, "sku": producto.sku, "nombre": producto.nombre,
             "codigo_barras": producto.codigo_barras, "costo_promedio": 0.0,
+            # El precio viaja de vuelta (12/10/2026): sin él, la tarjeta y la
+            # línea de la compra mostraban "₡" vacío para el producto recién creado.
+            "precio_venta": float(producto.precio_venta), "marca": producto.marca,
             "stock_actual": 0.0, "presentacion": producto.presentacion,
             "categoria": categoria.nombre if categoria else "Sin categoría",
             **datos_foto(producto),
