@@ -751,7 +751,7 @@ function pintarLineas(){
   }).join('') : '<div class="empty"><span class="big">📦</span>Buscá o tocá un producto<br>para empezar a recibir</div>';
   const unidades = ids.reduce((a,id)=>a + (+carrito[id].cantidad || 0) + (+carrito[id].bonif || 0), 0);
   document.getElementById('cuenta').textContent = ids.length
-    ? `${ids.length} producto${ids.length === 1 ? '' : 's'} · ${unidades.toLocaleString('es-CR')} unidades` : '';
+    ? `${ids.length} producto${ids.length === 1 ? '' : 's'} · ${AllPetFormato.numeroCRC(unidades)} unidades` : '';
   const total = ids.reduce((a,id)=>a + carrito[id].cantidad*carrito[id].costo, 0);
   const iva = ivaFactura();
   // Con IVA, se muestra el total de la factura para compararlo con el papel:

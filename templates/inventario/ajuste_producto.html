@@ -1,0 +1,219 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Ajustes · {{ producto.nombre }}{% endblock %}
+
+{% block extrahead %}{{ block.super }}<script src="{% static 'js/formato.js' %}"></script><style>
+body{background-color:#f5f5f7 !important}
+.ap-wrap{max-width:1180px;margin:0 auto;padding-bottom:90px}
+.ap-volver{display:inline-block;font-size:14px;color:#0B3161 !important;margin-bottom:12px}
+.ap-card{background:#fff;border-radius:18px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:16px}
+.ap-card h2{font-size:17px;font-weight:700;margin:0 0 4px;color:#1d1d1f;background:none;padding:0;text-transform:none;letter-spacing:-.01em}
+.ap-card .ex{font-size:13px;color:#6e6e73;margin-bottom:14px;line-height:1.45}
+.ap-head{display:flex;gap:18px;align-items:center}
+.ap-head .info{flex:1;min-width:0}
+.ap-head .nombre{font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.ap-head .cods{font-size:13px;color:#6e6e73;margin-top:4px}
+.ap-kpis{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.ap-kpi{background:#f5f7fa;border-radius:12px;padding:8px 14px;font-size:12px;color:#6e6e73}
+.ap-kpi b{display:block;font-size:18px;color:#1d1d1f;font-variant-numeric:tabular-nums}
+.ap-kpi.stock b{color:#0B3161;font-size:22px}
+.ap-kpi.cero b{color:#b5231a}
+.ap-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px;align-items:start}
+@media(max-width:1000px){.ap-grid{grid-template-columns:minmax(0,1fr)}}
+.ap-f{margin-bottom:12px}
+.ap-f label{display:block;font-size:12.5px;font-weight:600;color:#6e6e73;margin-bottom:5px}
+.ap-f input[type=text],.ap-f input[type=number],.ap-f select,.ap-f textarea{width:100% !important;box-sizing:border-box;font-size:15px !important;padding:10px 12px !important;border-radius:11px !important;font-family:inherit}
+.ap-f textarea{resize:vertical}
+.ap-f .err{color:#b5231a;font-size:12.5px;margin-top:4px}
+.ap-f .help{color:#86868b;font-size:12px;margin-top:4px}
+.ap-f.check label{display:flex;align-items:center;gap:8px;font-size:14px;color:#1d1d1f;font-weight:500}
+.ap-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ap-3{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px}
+@media(max-width:560px){.ap-2,.ap-3{grid-template-columns:1fr}}
+#id_cantidad_real{font-size:22px !important;font-weight:700;border:2px solid #0B3161 !important}
+.ap-dif{font-size:14px;border-radius:10px;padding:10px 12px;margin:-2px 0 12px;background:#f5f7fa;color:#3a3a3c}
+.ap-dif.mas{background:#eefaf1;color:#1c6b30}
+.ap-dif.menos{background:#fff0ee;color:#8a1f16}
+.ap-btn{display:inline-block;padding:13px 22px;border:none;border-radius:12px;background:#0B3161;color:#fff !important;font-size:15px;font-weight:600;cursor:pointer}
+.ap-btn:hover{filter:brightness(1.1)}
+.ap-errors{background:#fff0ee;color:#8a1f16;border-radius:12px;padding:10px 14px;font-size:14px;margin-bottom:12px}
+.ap-errors ul{margin:0;padding-left:18px}
+.ap-msg{padding:12px 16px;border-radius:12px;margin-bottom:14px;font-size:14.5px}
+.ap-msg.success{background:#eefaf1;color:#1c6b30}
+.ap-msg.error{background:#fff0ee;color:#8a1f16}
+.ap-foto{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.ap-foto .marco{width:200px;height:200px;border-radius:16px;background:#f2f2f5;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:48px}
+.ap-foto .marco img{width:100%;height:100%;object-fit:contain}
+.ap-foto .lado{flex:1;min-width:200px}
+.ap-mov{width:100%;border-collapse:collapse;font-size:13px}
+.ap-mov td{padding:7px 6px;border-bottom:1px solid #f0f0f3;vertical-align:top}
+.ap-mov td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ap-mov small{color:#6e6e73}
+</style>{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="ap-wrap">
+  <a class="ap-volver" href="{% url 'inventario:ajustes' %}">← Ajustes de inventario</a>
+
+  <div class="ap-card ap-head">
+    {% foto_producto producto 96 %}
+    <div class="info">
+      <div class="nombre">{{ producto.nombre }}{% if not producto.activo %} <span style="font-size:13px;color:#8a1f16">(inactivo)</span>{% endif %}</div>
+      <div class="cods">Código {{ producto.sku }}{% if producto.codigo_barras %} · Barras {{ producto.codigo_barras }}{% endif %}{% if producto.categoria %} · {{ producto.categoria.nombre }}{% endif %}</div>
+      <div class="ap-kpis">
+        <div class="ap-kpi stock {% if producto.stock_actual <= 0 %}cero{% endif %}">El sistema dice<b>{{ producto.stock_actual|floatformat:"-2" }}</b></div>
+        <div class="ap-kpi">Precio de venta<b>₡{{ producto.precio_venta|crc:0 }}</b></div>
+        <div class="ap-kpi">Costo promedio<b>₡{{ producto.costo_promedio|crc:0 }}</b></div>
+        {% if producto.costo_promedio > 0 and producto.margen_pct is not None %}<div class="ap-kpi">Margen sin IVA<b>{{ producto.margen_pct|floatformat:0 }}%</b></div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="ap-grid">
+    <div>
+      {# ---- Existencia ---- #}
+      <div class="ap-card" id="existencia">
+        <h2>Cuántas hay</h2>
+        <div class="ex">Escribí cuántas contaste de verdad. El sistema saca la diferencia y la registra como ajuste, con tu nombre y el motivo.</div>
+        <form method="post">
+          {% csrf_token %}<input type="hidden" name="accion" value="existencia">
+          {% if form_existencia.non_field_errors %}<div class="ap-errors">{{ form_existencia.non_field_errors }}</div>{% endif %}
+          <div class="ap-f">
+            <label for="id_cantidad_real">{{ form_existencia.cantidad_real.label }}</label>
+            {{ form_existencia.cantidad_real }}
+            {% for e in form_existencia.cantidad_real.errors %}<div class="err">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="ap-dif" id="dif">El sistema dice {{ producto.stock_actual|floatformat:"-2" }}.</div>
+          <div class="ap-f" id="filaCosto">
+            <label for="id_costo_unitario">{{ form_existencia.costo_unitario.label }}</label>
+            {{ form_existencia.costo_unitario }}
+            <div class="help">{% if producto.costo_promedio %}Si lo dejás vacío se usa el costo promedio (₡{{ producto.costo_promedio|crc:0 }}).{% else %}Este producto todavía no tiene costo: ponelo sin IVA, como dice la factura.{% endif %}</div>
+            {% for e in form_existencia.costo_unitario.errors %}<div class="err">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="ap-f">
+            <label for="id_tipo">{{ form_existencia.tipo.label }}</label>
+            {{ form_existencia.tipo }}
+            {% for e in form_existencia.tipo.errors %}<div class="err">{{ e }}</div>{% endfor %}
+          </div>
+          <div class="ap-f">
+            <label for="id_motivo">{{ form_existencia.motivo.label }}</label>
+            {{ form_existencia.motivo }}
+            {% for e in form_existencia.motivo.errors %}<div class="err">{{ e }}</div>{% endfor %}
+          </div>
+          {% if form_existencia.bodega.is_hidden %}{{ form_existencia.bodega }}{% else %}
+          <div class="ap-f"><label for="id_bodega">Bodega</label>{{ form_existencia.bodega }}</div>{% endif %}
+          <button class="ap-btn" type="submit">Corregir existencia</button>
+        </form>
+      </div>
+
+      {# ---- Foto ---- #}
+      <div class="ap-card" id="foto">
+        <h2>Foto</h2>
+        <div class="ex">La que se ve en el ERP y en el sitio. Mejor cuadrada y con fondo blanco.</div>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}<input type="hidden" name="accion" value="foto">
+          {% if error_foto %}<div class="ap-errors">{{ error_foto }}</div>{% endif %}
+          <div class="ap-foto">
+            <div class="marco" id="marcoFoto">{% if foto.imagen %}<img src="{{ foto.imagen }}" alt="{{ producto.nombre }}">{% else %}🐾{% endif %}</div>
+            <div class="lado">
+              <div class="ap-f">
+                <label for="inFoto">Foto nueva (JPG, PNG o WebP, hasta 5 MB)</label>
+                <input id="inFoto" type="file" name="foto" accept="image/png,image/jpeg,image/webp">
+              </div>
+              <button class="ap-btn" type="submit">Cambiar foto</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      {# ---- Últimos movimientos ---- #}
+      <div class="ap-card">
+        <h2>Últimos movimientos</h2>
+        <div class="ex">De dónde sale la existencia de hoy.</div>
+        {% if movimientos %}
+        <table class="ap-mov">
+          {% for m in movimientos %}
+          <tr>
+            <td>{{ m.fecha|date:"d/m/Y H:i" }}<br><small>{{ m.get_tipo_display }}{% if m.referencia %} · {{ m.referencia }}{% endif %}{% if m.usuario %} · {{ m.usuario.get_full_name|default:m.usuario.username }}{% endif %}</small>{% if m.motivo %}<br><small>{{ m.motivo }}</small>{% endif %}</td>
+            <td class="n">{{ m.cantidad|floatformat:"-2" }}</td>
+            <td class="n"><small>queda</small> {{ m.stock_resultante|floatformat:"-2" }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% else %}<div class="ex">Todavía no tiene movimientos.</div>{% endif %}
+      </div>
+    </div>
+
+    {# ---- Datos ---- #}
+    <div class="ap-card" id="datos">
+      <h2>Datos del producto</h2>
+      <div class="ex">El código interno ({{ producto.sku }}) no se cambia: es con el que lo reconocen las cargas y las fotos. El costo y la existencia tampoco: cambian solos con las compras, las ventas y los ajustes.</div>
+      <form method="post">
+        {% csrf_token %}<input type="hidden" name="accion" value="datos">
+        {% if form_datos.errors %}<div class="ap-errors">Revisá los campos marcados en rojo.</div>{% endif %}
+        {% with f=form_datos %}
+        <div class="ap-f"><label for="{{ f.nombre.id_for_label }}">Nombre</label>{{ f.nombre }}{% for e in f.nombre.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+        <div class="ap-2">
+          <div class="ap-f"><label for="{{ f.precio_venta.id_for_label }}">{{ f.precio_venta.label }}</label>{{ f.precio_venta }}{% for e in f.precio_venta.errors %}<div class="err">{{ e }}</div>{% endfor %}<div class="help">Cada cambio queda en el historial de precios.</div></div>
+          <div class="ap-f"><label for="{{ f.codigo_barras.id_for_label }}">{{ f.codigo_barras.label }}</label>{{ f.codigo_barras }}{% for e in f.codigo_barras.errors %}<div class="err">{{ e }}</div>{% endfor %}<div class="help">Si lo cambiás, hay que imprimirle etiqueta nueva.</div></div>
+        </div>
+        <div class="ap-2">
+          <div class="ap-f"><label for="{{ f.marca.id_for_label }}">Marca</label>{{ f.marca }}{% for e in f.marca.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+          <div class="ap-f"><label for="{{ f.mascota.id_for_label }}">{{ f.mascota.label }}</label>{{ f.mascota }}{% for e in f.mascota.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+        </div>
+        <div class="ap-2">
+          <div class="ap-f"><label for="{{ f.categoria.id_for_label }}">{{ f.categoria.label }}</label>{{ f.categoria }}{% for e in f.categoria.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+          <div class="ap-f"><label for="{{ f.presentacion.id_for_label }}">{{ f.presentacion.label }}</label>{{ f.presentacion }}{% for e in f.presentacion.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+        </div>
+        <div class="ap-3">
+          <div class="ap-f"><label for="{{ f.peso_valor.id_for_label }}">{{ f.peso_valor.label }}</label>{{ f.peso_valor }}{% for e in f.peso_valor.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+          <div class="ap-f"><label for="{{ f.peso_unidad.id_for_label }}">{{ f.peso_unidad.label }}</label>{{ f.peso_unidad }}{% for e in f.peso_unidad.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+          <div class="ap-f"><label for="{{ f.stock_minimo.id_for_label }}">{{ f.stock_minimo.label }}</label>{{ f.stock_minimo }}{% for e in f.stock_minimo.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+        </div>
+        <div class="ap-f"><label for="{{ f.descripcion.id_for_label }}">{{ f.descripcion.label }}</label>{{ f.descripcion }}{% for e in f.descripcion.errors %}<div class="err">{{ e }}</div>{% endfor %}</div>
+        <div class="ap-2">
+          <div class="ap-f"><label for="{{ f.cabys.id_for_label }}">{{ f.cabys.label }}</label>{{ f.cabys }}{% for e in f.cabys.errors %}<div class="err">{{ e }}</div>{% endfor %}<div class="help">13 dígitos. Si no estás seguro, dejalo como está.</div></div>
+          <div class="ap-f check" style="align-self:center"><label>{{ f.activo }} {{ f.activo.label }}</label></div>
+        </div>
+        {% endwith %}
+        <button class="ap-btn" type="submit">Guardar datos</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // La diferencia se muestra mientras se escribe, para que nadie guarde un
+  // "+120" queriendo decir 12.
+  var sistema = {{ producto.stock_actual|stringformat:"f" }};
+  var input = document.getElementById('id_cantidad_real');
+  var dif = document.getElementById('dif');
+  var filaCosto = document.getElementById('filaCosto');
+  function fmt(n){ return AllPetFormato.numeroCRC(n); }  // mismo formato que el resto del ERP
+  function pintar(){
+    var v = input.value.trim();
+    filaCosto.style.display = 'none';
+    if (v === '' || isNaN(+v)){ dif.className = 'ap-dif'; dif.textContent = 'El sistema dice ' + fmt(sistema) + '.'; return; }
+    var d = (+v) - sistema;
+    if (d > 0){ dif.className = 'ap-dif mas'; dif.innerHTML = 'Se van a <b>sumar ' + fmt(d) + '</b> unidades (de ' + fmt(sistema) + ' a ' + fmt(+v) + ').'; filaCosto.style.display = ''; }
+    else if (d < 0){ dif.className = 'ap-dif menos'; dif.innerHTML = 'Se van a <b>restar ' + fmt(-d) + '</b> unidades (de ' + fmt(sistema) + ' a ' + fmt(+v) + ').'; }
+    else { dif.className = 'ap-dif'; dif.textContent = 'Coincide con el sistema: no hay nada que ajustar.'; }
+  }
+  input.addEventListener('input', pintar); pintar();
+  {% if form_existencia.costo_unitario.errors %}filaCosto.style.display = '';{% endif %}
+
+  // Vista previa de la foto elegida, antes de subirla.
+  var inFoto = document.getElementById('inFoto');
+  inFoto.addEventListener('change', function(){
+    var f = inFoto.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function(){ document.getElementById('marcoFoto').innerHTML = '<img src="' + r.result + '" alt="Vista previa">'; };
+    r.readAsDataURL(f);
+  });
+})();
+</script>
+{% endblock %}

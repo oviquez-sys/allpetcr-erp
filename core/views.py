@@ -284,8 +284,11 @@ registrado el cambio, quién lo hizo y por qué) y ver su historial de precios \
 y de costos (kardex).
 
 Inventario:
-- Ajuste de inventario (/inventario/ajuste/) — corregir el stock de un \
-producto cuando no coincide con la realidad (rotura, pérdida, conteo físico).
+- Ajustes de inventario (/inventario/ajustes/, en Administración → \
+Herramientas, solo gerentes) — buscar un producto y corregir cuántas hay \
+(se escribe lo que hay de verdad y el sistema saca la diferencia), cambiar \
+sus datos (nombre, código de barras, marca, categoría, descripción, precio, \
+activo) y cambiar su foto.
 - Etiquetas/códigos de barra (/inventario/etiquetas/) — generar e imprimir \
 etiquetas para los productos.
 

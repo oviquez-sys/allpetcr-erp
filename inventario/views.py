@@ -3,6 +3,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -18,7 +19,7 @@ from core.tenancy import empresa_actual
 
 from . import agotados as ag
 from .etiquetas import TOPE_ETIQUETAS, seleccionar_para_etiquetas, svg_barcode
-from .forms import AjusteInventarioForm
+from .forms import AjusteInventarioForm, DatosProductoForm, ExistenciaRealForm
 from .models import Agotamiento
 from .services import registrar_movimiento
 
@@ -30,8 +31,12 @@ TOPE_TARJETAS = 150
 
 @rol_requerido(GERENTE)
 def ajuste_inventario(request):
-    """Único camino de ajuste manual: pasa por el servicio de dominio,
-    exige motivo y queda auditado con usuario e IP."""
+    """Pantalla vieja de ajuste (pedía la diferencia). Desde el 12/10/2026 la
+    reemplaza "Ajustes de inventario"; el GET redirige allá para que un
+    marcador viejo no lleve a la pantalla anterior. El POST se conserva para
+    que nada que la use a mano se rompa de golpe."""
+    if request.method != "POST":
+        return redirect("inventario:ajustes")
     form = AjusteInventarioForm(request.POST or None, empresa=empresa_actual(request))
     if request.method == "POST" and form.is_valid():
         datos = form.cleaned_data
@@ -64,6 +69,120 @@ def ajuste_inventario(request):
     return render(request, "inventario/ajuste.html", {
         "form": form, "title": "Ajuste de inventario", "fotos": fotos,
     })
+
+
+# --------------------------------------------------------------------------
+# Ajustes de inventario (12/10/2026, a pedido de Oscar)
+# --------------------------------------------------------------------------
+# Vive en Administración → Herramientas. Una lista para encontrar el producto
+# (escáner, nombre o descripción) y una página por producto con tres cosas:
+# cuántas hay, sus datos y su foto.
+
+@rol_requerido(GERENTE)
+def ajustes(request):
+    empresa = empresa_actual(request)
+    # ── EXCEPCIÓN DELIBERADA a la regla "solo en existencia" del 02/08/2026 ──
+    # Esta lista existe para corregir: el producto que el sistema cree en cero
+    # (y no lo está) y el inactivo que hay que volver a activar son justo los
+    # que se vienen a buscar. Por eso ni se filtra por stock ni por activo.
+    productos = list(
+        Producto.objects.filter(empresa=empresa)
+        .select_related("categoria")
+        .order_by("-activo", "nombre")
+    )
+    return render(request, "inventario/ajustes.html", {
+        "title": "Ajustes de inventario", "productos": productos,
+    })
+
+
+@rol_requerido(GERENTE)
+def ajuste_producto(request, producto_id):
+    empresa = empresa_actual(request)
+    producto = get_object_or_404(Producto, pk=producto_id, empresa=empresa)
+    accion = request.POST.get("accion") if request.method == "POST" else None
+
+    form_existencia = ExistenciaRealForm(
+        request.POST if accion == "existencia" else None, producto=producto, empresa=empresa,
+    )
+    form_datos = DatosProductoForm(request.POST if accion == "datos" else None, instance=producto)
+    error_foto = ""
+
+    if accion == "existencia" and form_existencia.is_valid():
+        d = form_existencia.cleaned_data
+        try:
+            mov = registrar_movimiento(
+                producto=producto, bodega=d["bodega"], tipo="AJU", cantidad=d["diferencia"],
+                costo_unitario=d.get("costo_unitario") or 0,
+                referencia=f"AJ-{timezone.now():%Y%m%d-%H%M%S}",
+                motivo=f"[{d['tipo']}] {d['motivo']}"[:200], usuario=request.user,
+            )
+            messages.success(request, f"Existencia corregida: {_num(mov.cantidad, signo=True)} unidades. "
+                                      f"Ahora el sistema dice {_num(mov.stock_resultante)}.")
+            return redirect("inventario:ajuste_producto", producto_id=producto.pk)
+        except ValidationError as e:
+            form_existencia.add_error(None, e)
+
+    elif accion == "datos" and form_datos.is_valid():
+        from catalogo.services import cambiar_precio
+
+        nuevo_precio = form_datos.cleaned_data["precio_venta"]
+        # El precio se lee ANTES de guardar el formulario: save() refresca la
+        # instancia y la comparación tiene que ser contra el precio de antes.
+        cambio_precio = nuevo_precio != producto.precio_venta
+        with transaction.atomic():  # datos y precio se guardan juntos o nada
+            form_datos.save()
+            if cambio_precio:
+                cambiar_precio(producto=producto, nuevo_precio=nuevo_precio, usuario=request.user,
+                               motivo="Cambio desde Ajustes de inventario")
+        messages.success(request, "Datos guardados." + (" El cambio de precio quedó en su historial." if cambio_precio else ""))
+        return redirect("inventario:ajuste_producto", producto_id=producto.pk)
+
+    elif accion == "foto":
+        error_foto = _guardar_foto_nueva(request, producto)
+        if not error_foto:
+            messages.success(request, "Foto cambiada. En el sitio se ve en la próxima visita.")
+            return redirect("inventario:ajuste_producto", producto_id=producto.pk)
+
+    producto.refresh_from_db()
+    return render(request, "inventario/ajuste_producto.html", {
+        "title": producto.nombre, "producto": producto,
+        "form_existencia": form_existencia, "form_datos": form_datos, "error_foto": error_foto,
+        "foto": datos_foto(producto),
+        # Los últimos movimientos, para ver de dónde sale la existencia antes
+        # de corregirla (¿una venta?, ¿una compra que no se registró?).
+        "movimientos": producto.kardex.select_related("usuario").order_by("-fecha", "-id")[:8],
+    })
+
+
+def _num(valor, signo=False):
+    """12.00 → "12"; 2.50 → "2.5". Las existencias casi siempre son enteras
+    y "12.00 unidades" se lee como un error."""
+    texto = format(valor.normalize(), "f")
+    return ("+" + texto) if signo and valor > 0 else texto
+
+
+def _guardar_foto_nueva(request, producto):
+    """Guarda la foto subida. Devuelve "" si salió bien o el error a mostrar.
+
+    El archivo lleva la fecha en el nombre (`<sku>-<fecha>.<ext>`): el sitio y
+    Cloudflare guardan las fotos en caché hasta 30 días por dirección, así que
+    con el mismo nombre de antes el cliente seguiría viendo la foto vieja.
+    """
+    from compras.views import _validar_foto  # misma validación que el alta rápida
+    from core.imagenes import guardar_imagen_producto
+
+    archivo = request.FILES.get("foto")
+    if not archivo:
+        return "Elegí una foto primero."
+    contenido = archivo.read()
+    try:
+        ext = _validar_foto(contenido)
+    except ValidationError as e:
+        return " ".join(e.messages)
+    nombre = f"{producto.sku}-{timezone.now():%Y%m%d%H%M%S}{ext}"
+    producto.imagen = guardar_imagen_producto(nombre, contenido)
+    producto.save(update_fields=["imagen", "actualizado_en"])
+    return ""
 
 
 @rol_requerido(CAJERO, GERENTE)

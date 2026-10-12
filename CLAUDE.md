@@ -416,6 +416,29 @@ tapaba el botón de registrar) y la grilla tiene relleno abajo para que la
 alto ≤ 820 px los tres pasos se esconden. Probado en 1920×1080, 1366×768,
 1280×720 y 390 px de ancho (sin desborde horizontal).
 
+## Ajustes de inventario (12/10/2026)
+
+Pedido de Oscar: sacar el ajuste de Etiquetas y tener en Administración →
+Herramientas una pantalla "Ajustes de inventario" para corregir existencias,
+todos los datos del producto y su foto.
+
+- `inventario:ajustes` (lista con buscador; escáner + Enter abre el producto)
+  y `inventario:ajuste_producto` (una página por producto, tres formularios
+  con `accion` = existencia / datos / foto). Solo gerente.
+- Existencia: se escribe **lo que hay de verdad** (`ExistenciaRealForm`) y el
+  sistema registra la diferencia como AJU por `registrar_movimiento`. Si se
+  suman unidades y el producto no tiene costo, el costo es obligatorio; si
+  tiene, se usa el promedio.
+- Datos: `DatosProductoForm` (sin SKU, costo ni existencia). El precio pasa por
+  `cambiar_precio` en la misma transacción, así queda en su historial.
+- Foto: se guarda como `<sku>-<fecha>.<ext>` para que el sitio/Cloudflare no
+  sigan mostrando la vieja; valida con `compras.views._validar_foto`.
+- La lista NO filtra por existencia ni por activo (EXCEPCIÓN DELIBERADA,
+  comentada en la vista). `/inventario/ajuste/` GET redirige a la nueva.
+- Ojo: un ajuste no genera asiento contable (solo kardex). Si unidades
+  faltantes venían en una factura ya registrada sin esa línea, lo correcto es
+  completar la compra, no ajustar.
+
 ## Reglas del proyecto
 
 **Los comentarios explican el *porqué*, no el *qué*.** Es la característica

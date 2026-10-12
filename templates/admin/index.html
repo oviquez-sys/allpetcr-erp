@@ -108,6 +108,7 @@ body.dashboard #content-main{display:block}
 .i-rep{background:linear-gradient(140deg,#ff9f0a,#f59e0b)}
 .i-repo{background:linear-gradient(140deg,#2d6bb0,#0B3161)}
 .i-cod{background:linear-gradient(140deg,#0B3161,#1f5a8f)}
+.i-aju{background:linear-gradient(140deg,#1E7A4B,#0f5132)}
 .i-pre{background:linear-gradient(140deg,#E0B24E,#CD963A)}
 .i-arq{background:linear-gradient(140deg,#34c759,#248a3d)}
 .i-act{background:linear-gradient(140deg,#5e5ce6,#3634a3)}
@@ -248,6 +249,12 @@ body.dashboard #content-main{display:block}
     <a class="ax-tool" href="/reportes/reposicion/">
       <div class="ti i-repo"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div>
       <div><div class="th">Qué reponer</div><div class="td">Cuánto pedir de cada producto según lo que vende de verdad, no según un mínimo fijo.</div></div>
+    </a>
+    {% comment %} Ajustes de inventario (12/10/2026): antes vivía escondido detrás de
+       Etiquetas. Va primero porque es lo que se busca cuando algo no calza. {% endcomment %}
+    <a class="ax-tool" href="{% url 'inventario:ajustes' %}">
+      <div class="ti i-aju"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M9 12h6M12 9v6"/></svg></div>
+      <div><div class="th">Ajustes de inventario</div><div class="td">Corregir cuántas hay de un producto, cambiar sus datos, su precio o su foto.</div></div>
     </a>
     <a class="ax-tool" href="/inventario/etiquetas/">
       <div class="ti i-cod"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></div>

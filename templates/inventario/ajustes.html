@@ -1,0 +1,103 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Ajustes de inventario{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.aj-wrap{max-width:980px;margin:0 auto;padding-bottom:90px}
+.aj-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.aj-sub{font-size:14px;color:#6e6e73;margin-bottom:16px;line-height:1.5}
+.aj-card{background:#fff;border-radius:18px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05)}
+#buscar{width:100%;padding:15px 18px !important;font-size:16px !important;border-radius:14px !important}
+.aj-cuenta{font-size:12.5px;color:#6e6e73;margin:10px 4px 6px}
+.fila{display:flex;align-items:center;gap:12px;padding:10px 8px;border-bottom:1px solid #f0f0f3;border-radius:10px;color:#1d1d1f !important;text-decoration:none !important}
+.fila:hover{background:#f5f8fb}
+.fila .nm{flex:1;min-width:0}
+.fila .nm b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fila .nm small{color:#6e6e73;font-size:12px}
+.fila .st{text-align:right;font-size:13px;white-space:nowrap;min-width:70px}
+.fila .st b{font-size:16px;font-variant-numeric:tabular-nums}
+.fila .st.cero b{color:#b5231a}
+.fila .pr{text-align:right;font-size:13px;color:#6e6e73;min-width:80px;font-variant-numeric:tabular-nums}
+.fila .ir{color:#0B3161;font-size:18px}
+.tag-in{display:inline-block;background:#efeff1;color:#3a3a3c;border-radius:980px;font-size:11px;font-weight:600;padding:1px 8px;margin-left:6px}
+.vacio{padding:30px;text-align:center;color:#6e6e73}
+@media(max-width:640px){.fila .pr{display:none}}
+</style>{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="aj-wrap">
+  <div class="aj-title">Ajustes de inventario</div>
+  <div class="aj-sub">Buscá el producto para corregir <b>cuántas hay</b>, cambiar <b>sus datos</b> o <b>su foto</b>.
+    Aparecen todos, también los que el sistema cree en cero y los inactivos.</div>
+
+  <div class="aj-card">
+    <input id="buscar" placeholder="🔎 Escaneá el código de barras, o escribí nombre, código o descripción…" autofocus autocomplete="off">
+    <div class="aj-cuenta" id="cuenta"></div>
+    <div id="lista">
+      {% for p in productos %}
+      <a class="fila" href="{% url 'inventario:ajuste_producto' p.pk %}"
+         data-b="{{ p.nombre|lower }} {{ p.sku|lower }} {{ p.codigo_barras }} {{ p.marca|lower }} {{ p.descripcion|lower|truncatechars:400 }}"
+         data-codigos="{{ p.sku|lower }} {{ p.codigo_barras }}">
+        {% foto_producto p 44 %}
+        <span class="nm"><b>{{ p.nombre }}{% if not p.activo %}<span class="tag-in">inactivo</span>{% endif %}</b>
+          <small>{% if p.codigo_barras %}Barras {{ p.codigo_barras }} · {% endif %}{{ p.sku }}{% if p.marca %} · {{ p.marca }}{% endif %}{% if p.categoria %} · {{ p.categoria.nombre }}{% endif %}</small></span>
+        <span class="st {% if p.stock_actual <= 0 %}cero{% endif %}"><small>hay</small> <b>{{ p.stock_actual|floatformat:"-2" }}</b></span>
+        <span class="pr">₡{{ p.precio_venta|crc:0 }}</span>
+        <span class="ir">›</span>
+      </a>
+      {% empty %}
+      <div class="vacio">No hay productos todavía.</div>
+      {% endfor %}
+    </div>
+    <div class="vacio" id="sinres" style="display:none">Ningún producto coincide con la búsqueda.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Se dibujan todos (son unos cientos) y se filtran acá: así el escáner
+  // responde al instante, sin ir al servidor por cada letra.
+  var TOPE = 80;
+  var filas = Array.prototype.slice.call(document.querySelectorAll('#lista .fila'));
+  var input = document.getElementById('buscar');
+  function norm(t){ return (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+  filas.forEach(function(f){ f._b = norm(f.dataset.b); f._c = (f.dataset.codigos || '').split(' '); });
+  function filtrar(){
+    var q = norm(input.value.trim());
+    var palabras = q ? q.split(/\s+/) : [];
+    var vistos = 0, total = 0;
+    filas.forEach(function(f){
+      // Cada palabra puede estar en cualquier parte (nombre, código o
+      // descripción): "taza azul" encuentra la taza aunque "azul" esté solo
+      // en la descripción.
+      var ok = palabras.every(function(w){ return f._b.indexOf(w) >= 0; });
+      if (ok) total++;
+      var mostrar = ok && vistos < TOPE;
+      f.style.display = mostrar ? '' : 'none';
+      if (mostrar) vistos++;
+    });
+    document.getElementById('sinres').style.display = total ? 'none' : '';
+    document.getElementById('cuenta').textContent = q
+      ? total + ' coinciden' + (total > TOPE ? ' (se muestran los primeros ' + TOPE + ': afiná la búsqueda)' : '')
+      : filas.length + ' productos' + (filas.length > TOPE ? ' · se muestran los primeros ' + TOPE + ', buscá para ver el resto' : '');
+  }
+  input.addEventListener('input', filtrar);
+  input.addEventListener('keydown', function(e){
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    // La pistola manda el código y un Enter: si el código es exacto, se abre
+    // el producto directo. Si no, se abre el único resultado, si hay uno.
+    var q = norm(input.value.trim());
+    var exacto = filas.filter(function(f){ return f._c.indexOf(q) >= 0; });
+    var visibles = filas.filter(function(f){ return f.style.display !== 'none'; });
+    var destino = exacto.length === 1 ? exacto[0] : (visibles.length === 1 ? visibles[0] : null);
+    if (destino) window.location = destino.href;
+  });
+  filtrar();
+})();
+</script>
+{% endblock %}
