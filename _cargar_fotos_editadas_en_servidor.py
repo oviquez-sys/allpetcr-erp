@@ -10,6 +10,10 @@ QUÉ HACE
     foto: sin esa bandera, `cargar_fotos_por_sku` las salta para no pisar una
     foto ya curada. Acá sí queremos pisarla.
 
+    --solo-cambiadas (12/10/2026) porque la carpeta junta las fotos de todas
+    las compras: las que ya se subieron iguales se saltan, y solo suben las
+    nuevas o las que se retocaron.
+
 DE DÓNDE SALEN LAS FOTOS
     De la carpeta conectada "imagenes editadas". El nombre del archivo tiene
     que ser el código (SKU) exacto, ej. "75564.png" -> producto 75564. Lo que
@@ -170,7 +174,7 @@ def main():
     print("  Subiendo y asociando (puede tardar varios minutos)...")
     print("-" * 66)
     proceso = subprocess.run(
-        [sys.executable, "manage.py", "cargar_fotos_por_sku", str(carpeta), "--reemplazar"],
+        [sys.executable, "manage.py", "cargar_fotos_por_sku", str(carpeta), "--reemplazar", "--solo-cambiadas"],
         env=entorno,
     )
     if proceso.returncode != 0:

@@ -296,6 +296,16 @@ Regla de Oscar: **donde se hable de un producto, se ve su foto.**
 - El chat de ayuda tiene la herramienta `buscar_producto` y la respuesta trae
   la foto de cada producto que devolvieron las herramientas.
 
+**Solo las fotos nuevas (12/10/2026).** Las carpetas de fotos juntan todas
+las compras (la de alimentos oficiales ya tenía 145) y los .bat las volvían a
+subir todas. Ahora `CARGAR_FOTOS_ALIMENTOS.bat` y `CARGAR_FOTOS_EDITADAS.bat`
+usan `cargar_fotos_por_sku --solo-cambiadas`: se salta la foto cuyo archivo ya
+está en el bucket con los mismos bytes (`core.imagenes.ya_guardada_igual`,
+compara el ETag/MD5 sin descargar). No se exige que el producto siga
+apuntando a ella: si después le pusieron otra foto, fue a propósito y no se le
+devuelve la vieja. El de alimentos primero corre `--simular` y le muestra a
+Oscar la cuenta real antes de pedirle el SI.
+
 ## Búsqueda por descripción (20/09/2026)
 
 Regla de Oscar: los buscadores de producto deben encontrar por **nombre o

@@ -574,6 +574,71 @@ class CargarFotosPorSku(TestCase):
             call_command("cargar_fotos_por_sku", "/carpeta/que/no/existe/de/verdad", stdout=StringIO())
 
 
+class SoloLasFotosNuevas(CargarFotosPorSku):
+    """--solo-cambiadas y --simular (pedido de Oscar, 12/10/2026): la carpeta
+    de fotos oficiales tenía 145 fotos y la compra nueva traía 16; el .bat
+    quería volver a subirlas todas."""
+
+    def _producto(self, sku):
+        return Producto.objects.create(empresa=self.empresa, sku=sku, nombre=f"Producto {sku}",
+                                       precio_venta=Decimal("1000"))
+
+    def _cargar(self, *extra):
+        salida = StringIO()
+        call_command("cargar_fotos_por_sku", str(self.carpeta), "--reemplazar", "--solo-cambiadas",
+                     *extra, stdout=salida)
+        return salida.getvalue()
+
+    def test_la_ya_subida_igual_se_salta_y_la_nueva_sube(self):
+        viejo, nuevo = self._producto("BEL-1"), self._producto("TOW-1")
+        self._escribir("BEL-1.webp", b"vieja")
+        self._cargar()
+        self._escribir("TOW-1.webp", b"nueva")
+        salida = self._cargar()
+        self.assertIn("Listo: 1 foto(s)", salida)
+        self.assertIn("1 ya estaban subidas iguales", salida)
+        nuevo.refresh_from_db()
+        self.assertEqual(nuevo.imagen, "productos/TOW-1.webp")
+
+    def test_la_retocada_con_el_mismo_nombre_si_sube(self):
+        p = self._producto("DIA-1")
+        self._escribir("DIA-1.webp", b"primera")
+        self._cargar()
+        self._escribir("DIA-1.webp", b"retocada")
+        self.assertIn("Listo: 1 foto(s)", self._cargar())
+        from django.core.files.storage import default_storage
+        with default_storage.open("productos/DIA-1.webp") as f:
+            self.assertEqual(f.read(), b"retocada")
+
+    def test_no_le_devuelve_la_foto_vieja_al_que_ya_tiene_otra(self):
+        # Se le subió la oficial y después le pusieron una editada a mano: correr
+        # la carga oficial otra vez no debe pisar la editada.
+        p = self._producto("GOS-1")
+        self._escribir("GOS-1.webp", b"oficial")
+        self._cargar()
+        Producto.objects.filter(pk=p.pk).update(imagen="productos/GOS-1.png")
+        self._cargar()
+        p.refresh_from_db()
+        self.assertEqual(p.imagen, "productos/GOS-1.png")
+
+    def test_simular_no_toca_nada_y_dice_la_cuenta(self):
+        p = self._producto("PRS-1")
+        self._escribir("PRS-1.webp", b"x")
+        salida = self._cargar("--simular")
+        self.assertIn("Fotos para subir: 1", salida)
+        self.assertIn("PRS-1", salida)
+        p.refresh_from_db()
+        self.assertEqual(p.imagen, "")
+        from django.core.files.storage import default_storage
+        self.assertFalse(default_storage.exists("productos/PRS-1.webp"))
+
+    def test_el_bat_lee_la_cuenta_de_la_simulacion(self):
+        import importlib
+        modulo = importlib.import_module("_cargar_fotos_oficiales_en_servidor")
+        self.assertEqual(modulo.nuevas_en("Fotos para subir: 16\n    TOW-2591 — x"), 16)
+        self.assertIsNone(modulo.nuevas_en("Listo: 3 foto(s) cargadas."))
+
+
 class ReporteNombresIncompletos(TestCase):
     """Comando reporte_nombres_incompletos (Bloque 1, 2026-08-28): solo
     lista, nunca corrige."""
@@ -1079,3 +1144,49 @@ class AdminMuestraVitrinaDeLaHome(TestCase):
     def test_se_puede_filtrar_por_destacado(self):
         r = self.client.get(reverse("admin:catalogo_producto_changelist"), {"destacado_home__exact": "1"})
         self.assertEqual(r.status_code, 200)
+
+
+class FotoYaGuardadaEnElBucket(TestCase):
+    """En el bucket se compara la huella MD5 (ETag) sin descargar la foto."""
+
+    def _almacen(self, etag, contenido_remoto=b""):
+        from unittest import mock
+        almacen = mock.Mock()
+        almacen.exists.return_value = True
+        almacen.size.return_value = len(contenido_remoto)
+        almacen.bucket.Object.return_value.e_tag = etag
+        almacen.open.return_value.__enter__ = lambda s: mock.Mock(read=lambda: contenido_remoto)
+        almacen.open.return_value.__exit__ = lambda s, *a: False
+        return almacen
+
+    def test_etag_igual_y_distinto(self):
+        import hashlib
+        from unittest import mock
+
+        from core import imagenes
+        foto = b"bytes-de-la-foto"
+        md5 = hashlib.md5(foto).hexdigest()
+        with mock.patch.object(imagenes, "default_storage", self._almacen(f'"{md5}"', foto)) as alm:
+            self.assertTrue(imagenes.ya_guardada_igual("productos/X.webp", foto))
+            alm.open.assert_not_called()
+        otra = b"otros-bytes-mismo-largo"[:len(foto)]
+        with mock.patch.object(imagenes, "default_storage", self._almacen(f'"{md5}"', foto)):
+            self.assertFalse(imagenes.ya_guardada_igual("productos/X.webp", otra))
+
+    def test_etag_de_subida_por_partes_compara_byte_a_byte(self):
+        from unittest import mock
+
+        from core import imagenes
+        foto = b"abc"
+        with mock.patch.object(imagenes, "default_storage", self._almacen('"d41d8-2"', foto)) as alm:
+            self.assertTrue(imagenes.ya_guardada_igual("productos/X.webp", foto))
+            alm.open.assert_called_once()
+
+    def test_si_no_se_puede_leer_se_vuelve_a_subir(self):
+        from unittest import mock
+
+        from core import imagenes
+        almacen = mock.Mock()
+        almacen.exists.side_effect = OSError("sin red")
+        with mock.patch.object(imagenes, "default_storage", almacen):
+            self.assertFalse(imagenes.ya_guardada_igual("productos/X.webp", b"x"))

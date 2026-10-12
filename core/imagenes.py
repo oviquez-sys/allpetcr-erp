@@ -8,6 +8,7 @@ funcionar el día que se apunte a S3 — así que todo pasa por acá, que usa
 `default_storage` y por lo tanto respeta el interruptor sin que el resto del
 código sepa ni le importe dónde está el archivo de verdad.
 """
+import hashlib
 import io
 import logging
 import posixpath
@@ -34,6 +35,37 @@ def guardar_imagen_producto(nombre_archivo: str, contenido: bytes) -> str:
     guardada = default_storage.save(ruta, ContentFile(contenido))
     generar_miniatura(guardada, forzar=True)
     return guardada
+
+
+def ya_guardada_igual(ruta: str, contenido: bytes) -> bool:
+    """¿El archivo guardado en `ruta` tiene EXACTAMENTE estos bytes?
+
+    Para subir solo las fotos nuevas o cambiadas (12/10/2026): la carpeta de
+    fotos oficiales junta todas las compras, y volver a subir 145 fotos para
+    agregar 16 tarda minutos y pisa sin necesidad lo que ya estaba bien.
+
+    Se compara el CONTENIDO, no la fecha ni el nombre: una foto retocada con
+    el mismo nombre tiene que volver a subirse, y una copiada de nuevo sin
+    cambios no. En el bucket se usa la huella MD5 que guarda con cada archivo
+    (ETag), así no hay que descargar la foto para compararla; si esa huella no
+    está o no es un MD5 simple, se descarga y se compara byte a byte.
+
+    Ante cualquier duda (no se pudo leer) devuelve False: lo peor que pasa es
+    que se vuelva a subir una foto igual, nunca que se salte una nueva.
+    """
+    try:
+        if not default_storage.exists(ruta) or default_storage.size(ruta) != len(contenido):
+            return False
+        bucket = getattr(default_storage, "bucket", None)
+        if bucket is not None:
+            etag = (bucket.Object(ruta).e_tag or "").strip('"')
+            if etag and "-" not in etag:
+                return etag == hashlib.md5(contenido).hexdigest()
+        with default_storage.open(ruta, "rb") as archivo:
+            return archivo.read() == contenido
+    except Exception:
+        logger.warning("No se pudo comparar %s con la foto local; se vuelve a subir.", ruta, exc_info=True)
+        return False
 
 
 def url_imagen_producto(ruta: str) -> str:

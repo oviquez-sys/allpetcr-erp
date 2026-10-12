@@ -1,13 +1,16 @@
 """Sube las fotos OFICIALES de alimentos y las asocia en el servidor (27/09/2026).
 
 QUÉ HACE, EN ORDEN
-    1. Lista las fotos de IMAGENES\\alimentos-oficiales-subir (una por SKU,
+    1. Cuenta las fotos de IMAGENES\\alimentos-oficiales-subir (una por SKU,
        ya revisadas y aprobadas por Oscar en revision.html).
     2. Pide la contraseña de la base del servidor (la misma de siempre).
-    3. Te pregunta si seguís.
-    4. Si escribís SI, corre `cargar_fotos_por_sku --reemplazar` contra el
-       servidor: cada foto sube al bucket y el producto queda apuntando a ella.
-       Solo cambia la foto: no toca precios, existencias, nombres ni SKU.
+    3. Revisa contra el servidor cuáles son NUEVAS o CAMBIADAS (12/10/2026):
+       la carpeta junta todas las compras, y las que ya están subidas iguales
+       se saltan. Muestra la lista y te pregunta si seguís.
+    4. Si escribís SI, corre `cargar_fotos_por_sku --reemplazar
+       --solo-cambiadas` contra el servidor: cada foto sube al bucket y el
+       producto queda apuntando a ella. Solo cambia la foto: no toca precios,
+       existencias, nombres ni SKU.
 
 Las fotos van en WebP a propósito: la foto vieja era .jpg o .png, así que la
 nueva queda en OTRA dirección. Con la misma dirección, el sitio y Cloudflare
@@ -27,6 +30,14 @@ from _cargar_fotos_editadas_en_servidor import (
 CARPETA = Path(__file__).resolve().parents[2] / "IMAGENES" / "alimentos-oficiales-subir"
 
 
+def nuevas_en(salida):
+    """Cuántas fotos dice la simulación que hay para subir (None si no lo dice)."""
+    for linea in salida.splitlines():
+        if linea.startswith("Fotos para subir:"):
+            return int(linea.split(":")[1])
+    return None
+
+
 def main():
     print()
     print("=" * 66)
@@ -41,15 +52,10 @@ def main():
     if not fotos:
         fallar(f"No hay fotos .webp en {CARPETA}")
     print(f"  Carpeta: {CARPETA}")
-    print(f"  Fotos a subir: {len(fotos)} (reemplazan la foto actual de cada producto)")
-    print()
-    for i in range(0, len(fotos), 6):
-        print("   " + "  ".join(f.stem.ljust(10) for f in fotos[i:i + 6]))
+    print(f"  Fotos en la carpeta: {len(fotos)}. Se suben solo las nuevas o cambiadas.")
     print()
 
     clave = pedir_contrasena()
-    if input(f"\n  ¿Subo estas {len(fotos)} fotos al servidor? (escribí SI y Enter): ").strip().upper() != "SI":
-        fallar("Cancelado por vos. No se subió nada.")
 
     entorno = os.environ.copy()
     entorno.update({
@@ -61,11 +67,36 @@ def main():
         "AWS_S3_CUSTOM_DOMAIN": f"{BUCKET}.{REGION}.digitaloceanspaces.com",
         "AWS_ACCESS_KEY_ID": ACCESS_KEY_ID, "AWS_SECRET_ACCESS_KEY": SECRET_ACCESS_KEY,
     })
+    comando = [sys.executable, "manage.py", "cargar_fotos_por_sku", str(CARPETA), "--reemplazar", "--solo-cambiadas"]
+    print()
+    print("  Revisando cuáles ya están en el servidor (tarda un momento)...")
+    print()
+    revision = subprocess.run(comando + ["--simular"], env=entorno, capture_output=True, text=True, encoding="utf-8")
+    print(revision.stdout)
+    if revision.returncode != 0:
+        print(revision.stderr)
+        fallar("No pude revisar las fotos contra el servidor. El mensaje de arriba dice por qué.")
+    cuantas = nuevas_en(revision.stdout)
+    if cuantas is None:
+        fallar("La revisión no dijo cuántas fotos hay para subir. Avisale a Claude.")
+    if cuantas == 0:
+        if "sin producto" in revision.stdout:
+            print("  Las fotos de arriba «sin producto» son de productos que todavía no")
+            print("  existen en el ERP. Cargue primero el Excel de la compra y vuelva a")
+            print("  correr esto.")
+        else:
+            print("  No hay fotos nuevas: todas las de la carpeta ya están subidas.")
+        print()
+        input("  Presioná Enter para cerrar.")
+        return
+    if input(f"\n  ¿Subo estas {cuantas} fotos al servidor? (escribí SI y Enter): ").strip().upper() != "SI":
+        fallar("Cancelado por vos. No se subió nada.")
+
     print()
     print("-" * 66)
-    print("  Subiendo y asociando (puede tardar varios minutos)...")
+    print("  Subiendo y asociando...")
     print("-" * 66)
-    proceso = subprocess.run([sys.executable, "manage.py", "cargar_fotos_por_sku", str(CARPETA), "--reemplazar"], env=entorno)
+    proceso = subprocess.run(comando, env=entorno)
     if proceso.returncode != 0:
         fallar("Algo falló. El mensaje de arriba dice qué.")
     print()
