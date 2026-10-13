@@ -332,12 +332,16 @@ class ManadaRegaliaView(APIView):
     sola."""
 
     def get(self, request):
+        from manada.correo import correo_activo
         from manada.models import Regalia
 
         regalia = Regalia.vigente(empresa_actual(request))
+        # `correo_activo`: si el ERP no puede mandar correos, el sitio esconde
+        # el registro por correo (el código solo viaja por correo) y deja Google.
         if regalia is None:
-            return Response({"activa": False})
+            return Response({"activa": False, "correo_activo": correo_activo()})
         return Response({
+            "correo_activo": correo_activo(),
             "activa": True,
             "porcentaje": format(regalia.porcentaje.normalize(), "f"),
             "texto": regalia.texto_cliente,

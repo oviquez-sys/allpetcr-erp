@@ -324,11 +324,18 @@ class APIManada(ConRegalia):
 
     def test_regalia_vigente(self):
         r = self.api.get(reverse("api:manada_regalia"))
-        self.assertEqual(r.data, {"activa": True, "porcentaje": "10",
+        self.assertEqual(r.data, {"activa": True, "porcentaje": "10", "correo_activo": True,
                                   "texto": "10 % de descuento en tu primera compra", "dias_vigencia": 0})
         self.regalia.activa = False
         self.regalia.save()
-        self.assertEqual(self.api.get(reverse("api:manada_regalia")).data, {"activa": False})
+        self.assertEqual(self.api.get(reverse("api:manada_regalia")).data, {"activa": False, "correo_activo": True})
+
+    def test_sin_servicio_de_correo_no_dice_que_lo_mando(self):
+        from django.test import override_settings
+        with override_settings(EMAIL_BACKEND="django.core.mail.backends.console.EmailBackend"):
+            r = self.post()
+            self.assertFalse(r.data["correo_enviado"])
+            self.assertFalse(self.api.get(reverse("api:manada_regalia")).data["correo_activo"])
 
     def test_datos_malos(self):
         self.assertEqual(self.post(email="nada").status_code, 400)

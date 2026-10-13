@@ -17,10 +17,21 @@ def url_sitio() -> str:
     return getattr(settings, "SITIO_WEB_URL", "https://www.allpetcr.com").rstrip("/")
 
 
+def correo_activo() -> bool:
+    """Sin un servicio de correo configurado, Django usa el backend de consola:
+    "envía" imprimiendo en el registro del servidor y no llega nada. Hay que
+    distinguirlo, o la página le diría al cliente "te mandamos tu código" sin
+    que salga ningún correo (pasó el 13/10/2026: en el servidor no estaba
+    RESEND_API_KEY)."""
+    return "console" not in settings.EMAIL_BACKEND
+
+
 def enviar_bienvenida(resultado) -> bool:
     """Devuelve True si el correo salió. Un fallo NO revierte el registro: el
     cliente ya quedó en la base y el cupón existe; lo peor que pasa es que lo
     pida en caja por su correo y el cajero lo encuentra en el admin."""
+    if not correo_activo():
+        return False
     cliente, cupon, perfil = resultado.cliente, resultado.cupon, resultado.perfil
     if cupon is None and not perfil.token_mascotas:
         return False
