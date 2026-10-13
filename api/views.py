@@ -242,3 +242,104 @@ class EstadoPedidoView(APIView):
             ],
         })
         return Response(datos.data)
+
+
+# --- Manada AllPetcr (13/10/2026) -------------------------------------------
+# El sitio registra a quien escanea el QR de la tienda. Igual que el resto de
+# la API: lo llama el servidor del sitio con su token, nunca el navegador.
+
+class ManadaRegistroView(APIView):
+    """POST {email, nombre?, telefono?, google_sub?, verificado, acepta_promociones, fuente?}
+
+    `verificado` lo pone el sitio SOLO cuando Google confirmó el correo. Sin
+    eso, la respuesta no trae el código del cupón ni la llave de mascotas:
+    ambos viajan únicamente al correo, que es la prueba de que es suyo."""
+
+    def post(self, request):
+        from manada.correo import enviar_bienvenida
+        from manada.services import registrar_miembro
+
+        datos = request.data if isinstance(request.data, dict) else {}
+        verificado = datos.get("verificado") is True
+        try:
+            resultado = registrar_miembro(
+                empresa=empresa_actual(request),
+                email=str(datos.get("email") or ""),
+                nombre=str(datos.get("nombre") or ""),
+                telefono=str(datos.get("telefono") or ""),
+                google_sub=str(datos.get("google_sub") or "") if verificado else "",
+                verificado=verificado,
+                acepta_promociones=datos.get("acepta_promociones") is True,
+                fuente=str(datos.get("fuente") or ""),
+            )
+        except DjangoValidationError as e:
+            raise ValidationError(" ".join(e.messages))
+
+        correo_enviado = enviar_bienvenida(resultado)
+        cupon = resultado.cupon
+        perfil = resultado.perfil
+        salida = {
+            "nombre": resultado.cliente.nombre,
+            "cliente_nuevo": resultado.cliente_nuevo,
+            "correo_enviado": correo_enviado,
+            "mascotas_pendientes": perfil.mascotas_registradas_en is None,
+            "cupon": None,
+        }
+        if cupon is not None:
+            salida["cupon"] = {
+                "porcentaje": format(cupon.porcentaje.normalize(), "f"),
+                "descripcion": cupon.descripcion,
+                "vence_en": cupon.vence_en,
+                "estado": cupon.estado,
+                "nuevo": resultado.cupon_nuevo,
+            }
+            if verificado:
+                salida["cupon"]["codigo"] = cupon.codigo
+        if verificado and perfil.token_mascotas:
+            salida["token_mascotas"] = perfil.token_mascotas
+        return Response(salida, status=status.HTTP_201_CREATED if resultado.cliente_nuevo else status.HTTP_200_OK)
+
+
+class ManadaMascotasView(APIView):
+    """GET ?t=<llave> -> si la llave sirve todavía (para no mostrarle el
+    formulario a quien ya lo llenó). POST {token, mascotas:[...]} -> las guarda
+    una sola vez."""
+
+    def get(self, request):
+        from manada.models import PerfilManada
+
+        token = (request.query_params.get("t") or "").strip()
+        perfil = (PerfilManada.objects.select_related("cliente").filter(token_mascotas=token).first()
+                  if len(token) >= 20 else None)
+        if perfil is None:
+            return Response({"valido": False})
+        return Response({"valido": True, "nombre": perfil.cliente.nombre.split(" ")[0]})
+
+    def post(self, request):
+        from manada.services import registrar_mascotas
+
+        datos = request.data if isinstance(request.data, dict) else {}
+        try:
+            perfil = registrar_mascotas(token=str(datos.get("token") or ""), mascotas=datos.get("mascotas"))
+        except DjangoValidationError as e:
+            raise ValidationError(" ".join(e.messages))
+        return Response({"ok": True, "mascotas": perfil.cliente.mascotas.count()}, status=status.HTTP_201_CREATED)
+
+
+class ManadaRegaliaView(APIView):
+    """GET -> la regalía vigente, para que la página del QR diga lo mismo que
+    va a recibir el cliente. Si Oscar la cambia en el admin, la página cambia
+    sola."""
+
+    def get(self, request):
+        from manada.models import Regalia
+
+        regalia = Regalia.vigente(empresa_actual(request))
+        if regalia is None:
+            return Response({"activa": False})
+        return Response({
+            "activa": True,
+            "porcentaje": format(regalia.porcentaje.normalize(), "f"),
+            "texto": regalia.texto_cliente,
+            "dias_vigencia": regalia.dias_vigencia,
+        })

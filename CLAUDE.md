@@ -439,6 +439,32 @@ todos los datos del producto y su foto.
   faltantes venían en una factura ya registrada sin esa línea, lo correcto es
   completar la compra, no ajustar.
 
+## La manada AllPetcr.com — clientes por QR (13/10/2026)
+
+Pedido de Oscar: QR en la tienda → `www.allpetcr.com/manada?o=qr-tienda` →
+registro con Google o con correo → cupón de bienvenida (hoy 10 %, primera
+compra, un solo uso por persona) → opcional "Contanos de tu mascota", una vez.
+
+- App `manada`: `Regalia` (la edita el gerente en el admin; UNA activa; cada
+  cupón copia el % al emitirse), `PerfilManada` (OneToOne con `ventas.Cliente`:
+  NO hay una segunda tabla de clientes), `Mascota`, `Cupon`.
+- Un cupón por cliente: restricción en la base (`un_cupon_bienvenida_por_cliente`);
+  se busca por `google_sub` y por correo para no duplicar personas.
+- Se quema en `ventas.services.registrar_venta(cupon=...)`, con
+  `select_for_update`, en la MISMA transacción que la venta. Gana el mayor
+  entre el descuento del cajero y el del cupón (no se suman). El tope de 15 %
+  del cajero no frena el cupón; el piso de costo sí. Anular la venta libera
+  el cupón; una devolución parcial no.
+- API (token del sitio): `manada/registro/`, `manada/mascotas/`, `manada/regalia/`.
+  **Sin `verificado: true` la API NO devuelve el código ni la llave de
+  mascotas**: van solo al correo, que es la verificación del registro por
+  correo. `verificado` lo pone el sitio únicamente cuando Google confirmó el
+  correo (`email_verified`).
+- POS: casilla dorada «Cupón de la manada» (`ventas:cupon` revisa sin quemar).
+- Correo: `manada/correo.py` + `templates/manada/correo_bienvenida.*`;
+  `SITIO_WEB_URL` arma el enlace de mascotas.
+- Pruebas: `manada/tests.py`.
+
 ## Reglas del proyecto
 
 **Los comentarios explican el *porqué*, no el *qué*.** Es la característica

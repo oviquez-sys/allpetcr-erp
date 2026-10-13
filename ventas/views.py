@@ -181,6 +181,26 @@ def cliente_rapido(request):
     return JsonResponse({"ok": True, "ya_existia": False, "cliente": _cliente_json(cliente)})
 
 
+@rol_requerido(CAJERO, GERENTE)
+def cupon(request):
+    """Revisa un cupón de la manada ANTES de cobrar, para que el cajero vea
+    el descuento aplicado y a nombre de quién está. No lo marca usado: eso
+    pasa solo al registrar la venta (ventas.services.registrar_venta)."""
+    from manada.services import cupon_para_venta
+
+    sesion = sesion_abierta_de(request.user)
+    if sesion is None:
+        return JsonResponse({"ok": False, "error": "No tiene una caja abierta."}, status=400)
+    try:
+        c = cupon_para_venta(sesion.sucursal.empresa, request.GET.get("codigo", ""))
+    except ValidationError as e:
+        return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)
+    return JsonResponse({
+        "ok": True, "codigo": c.codigo, "porcentaje": float(c.porcentaje),
+        "descripcion": c.descripcion, "cliente": _cliente_json(c.cliente),
+    })
+
+
 def _cliente_json(c):
     return {"id": c.id, "nombre": c.nombre, "email": c.email,
             "limite_credito": float(c.limite_credito), "saldo": float(c.saldo),
@@ -256,6 +276,7 @@ def vender(request):
             pagos=datos.get("pagos"),
             clave_pos=clave_pos,
             monto_recibido=datos.get("recibido"),
+            cupon=(str(datos.get("cupon") or "").strip()[:30] or None),
         )
     except ValidationError as e:
         return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)

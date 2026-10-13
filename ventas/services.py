@@ -85,7 +85,7 @@ def _validar_pagos(pagos, total):
 def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
                     permitir_bajo_costo=False, permitir_descuento_alto=False,
                     permitir_regalia_alta=False, pagos=None, clave_pos=None,
-                    monto_recibido=None) -> FacturaVenta:
+                    monto_recibido=None, cupon=None) -> FacturaVenta:
     """lineas: iterable de dicts {"producto_id": int, "cantidad": Decimal}.
 
     permitir_bajo_costo: por defecto NO se puede vender un producto por debajo
@@ -110,7 +110,15 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     reintento de la red).
 
     monto_recibido: efectivo que entregó el cliente; si viene, se guarda el
-    vuelto (VEN-03)."""
+    vuelto (VEN-03).
+
+    cupon: código de la manada (manada.Cupon), de un solo uso. Su porcentaje
+    se aplica a cada línea que no sea regalía (si la línea ya traía un
+    descuento mayor, queda el mayor: no se suman). El cupón se marca usado en
+    ESTA transacción: si la venta falla, el cupón sigue disponible. El tope
+    de descuento del cajero (SEC-001) no frena el porcentaje del cupón, que
+    ya lo autorizó el negocio al definir la regalía; el piso de costo sí
+    sigue mandando."""
     if clave_pos:
         ya_hecha = FacturaVenta.objects.filter(clave_pos=clave_pos).first()
         if ya_hecha is not None:
@@ -135,6 +143,19 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     bodega = Bodega.principal_de(sucursal)
     if bodega is None:
         raise ValidationError("La sucursal no tiene bodega configurada.")
+
+    cupon_obj = None
+    pct_cupon = Decimal("0")
+    if cupon:
+        from manada.services import cupon_para_venta
+        # Con bloqueo de fila: dos cajas cobrando con el mismo cupón a la vez
+        # → la segunda espera, lo encuentra usado y su venta no se registra.
+        cupon_obj = cupon_para_venta(empresa, cupon, bloquear=True)
+        pct_cupon = cupon_obj.porcentaje
+        if cliente is None:
+            # La compra queda a nombre de quien trae el cupón: así la base de
+            # la manada sabe qué compró cada uno.
+            cliente = cupon_obj.cliente
 
     numero = Consecutivo.tomar(empresa, "FV")
     # Segunda mirada, ya con el consecutivo bloqueado: si dos envíos del mismo
@@ -199,6 +220,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             desc_pct = Decimal(str(linea.get("descuento_pct", 0) or 0))
             if desc_pct < 0 or desc_pct > 100:
                 raise ValidationError(f"Porcentaje de descuento inválido para {producto.nombre} (0-100).")
+            desc_pct = max(desc_pct, pct_cupon)
             # Calcular automáticamente el monto del descuento
             desc_l = (bruto_linea * desc_pct / 100).quantize(Decimal("0.01"))
             total_linea = bruto_linea - desc_l
@@ -211,8 +233,9 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             if not permitir_bajo_costo and producto.costo_promedio > 0:
                 precio_efectivo = sub_l / cantidad
                 if precio_efectivo < producto.costo_promedio:
+                    por_cupon = " (por el cupón)" if pct_cupon and desc_pct == pct_cupon else ""
                     raise ValidationError(
-                        f"{producto.nombre}: el precio con descuento, sin IVA (₡{precio_efectivo:.2f}), "
+                        f"{producto.nombre}: el precio con descuento{por_cupon}, sin IVA (₡{precio_efectivo:.2f}), "
                         f"queda por debajo del costo (₡{producto.costo_promedio}). "
                         "Un gerente debe autorizar la venta bajo costo."
                     )
@@ -220,7 +243,8 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             # piso de costo — un producto con margen amplio puede aceptar un
             # descuento grande sin bajar del costo, y aun así representar una
             # fuga de margen que un cajero no debería poder decidir solo.
-            if not permitir_descuento_alto and desc_pct > DESCUENTO_MAXIMO_SIN_AUTORIZACION:
+            if (not permitir_descuento_alto and desc_pct > DESCUENTO_MAXIMO_SIN_AUTORIZACION
+                    and desc_pct > pct_cupon):
                 raise ValidationError(
                     f"{producto.nombre}: un descuento de {desc_pct}% supera el "
                     f"{DESCUENTO_MAXIMO_SIN_AUTORIZACION}% que un cajero puede aplicar sin "
@@ -272,6 +296,14 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
         factura.monto_recibido, factura.vuelto = recibido, recibido - efectivo
         campos += ["monto_recibido", "vuelto"]
     factura.save(update_fields=campos)
+
+    if cupon_obj is not None:
+        if descuento_total <= 0:
+            # Todo regalía: el cupón no rebajó nada. Se rechaza en vez de
+            # quemarlo en una venta donde el cliente no recibió el beneficio.
+            raise ValidationError("El cupón no se puede usar en una venta sin productos cobrados.")
+        from manada.services import marcar_usado
+        marcar_usado(cupon_obj, factura)
 
     # Una venta 100% regalía tiene total 0: no mueve caja (evita el
     # movimiento de monto cero, que además es inválido).
@@ -342,6 +374,11 @@ def anular_factura(*, factura, motivo, usuario) -> FacturaVenta:
         # Cancela la CxC y libera el crédito (bloquea si ya tiene abonos).
         from .cxc import cancelar_cxc_por_anulacion
         cancelar_cxc_por_anulacion(factura=factura, usuario=usuario)
+    # El cupón de la manada vuelve a quedar disponible: una venta anulada no
+    # fue la "primera compra" de nadie.
+    from manada.services import liberar_por_anulacion
+    liberar_por_anulacion(factura)
+
     factura.estado = FacturaVenta.Estado.ANULADA
     factura.motivo_anulacion = motivo.strip()
     factura.anulada_en = timezone.now()

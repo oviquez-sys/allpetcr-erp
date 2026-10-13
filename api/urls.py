@@ -13,4 +13,7 @@ urlpatterns = [
     path("pedidos/reservar-stock/", views.ReservarStockView.as_view(), name="reservar_stock"),
     path("pedidos/", views.PedidosView.as_view(), name="pedidos"),
     path("pedidos/<str:numero>/estado/", views.EstadoPedidoView.as_view(), name="pedido_estado"),
+    path("manada/registro/", views.ManadaRegistroView.as_view(), name="manada_registro"),
+    path("manada/mascotas/", views.ManadaMascotasView.as_view(), name="manada_mascotas"),
+    path("manada/regalia/", views.ManadaRegaliaView.as_view(), name="manada_regalia"),
 ]

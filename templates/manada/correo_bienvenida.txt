@@ -1,0 +1,17 @@
+{% autoescape off %}¡Hola{% if nombre %}, {{ nombre }}{% endif %}!
+
+Ya sos parte de la manada AllPetcr.com.
+{% if cupon %}
+Tu código: {{ cupon.codigo }}
+{{ cupon.descripcion }}.{% if cupon.vence_en %} Válido hasta el {{ cupon.vence_en|date:"d/m/Y" }}.{% endif %}
+
+Mostralo en la caja de la tienda cuando hagás tu compra. Es de un solo uso.
+{% endif %}{% if url_mascotas %}
+¿Nos contás de tu mascota? Así te avisamos de lo que le sirve a ella:
+{{ url_mascotas }}
+{% endif %}
+Te esperamos en la tienda: de la entrada principal de la UNA, 100 m oeste, Heredia.
+WhatsApp: 8856-2992 · {{ url_sitio }}
+
+Recibiste este correo porque te registraste en la manada AllPetcr.com.
+{% endautoescape %}

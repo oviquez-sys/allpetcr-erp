@@ -189,6 +189,18 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 .cli-fila{display:flex;gap:8px;margin-bottom:12px}
 .cli-fila #cliente{margin-bottom:0;flex:1}
 .cli-fila button{padding:0 14px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--brand);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+/* Cupón de la manada (13/10/2026). Dorado de la marca: se distingue a simple
+   vista de un descuento manual, que es del cajero y no del cliente. */
+.cupon-fila{display:flex;gap:8px;margin:-4px 0 12px}
+.cupon-fila input{flex:1;min-width:0;padding:9px 12px;border:1px dashed #CC9539;border-radius:10px;font-size:14px;
+  background:#fffaf0;text-transform:uppercase;letter-spacing:.04em}
+.cupon-fila input::placeholder{text-transform:none;letter-spacing:0;color:#9a7a45}
+.cupon-fila button{padding:0 14px;border-radius:10px;border:1px solid #CC9539;background:#fff;color:#7F5B25;font-size:14px;font-weight:600;cursor:pointer}
+.cupon-on{display:flex;align-items:center;gap:10px;margin:-4px 0 12px;padding:9px 12px;border-radius:10px;
+  background:#fbf3e4;border:1px solid #e7cf9f;font-size:13.5px;color:#5c4219}
+.cupon-on b{font-variant-numeric:tabular-nums}
+.cupon-on .x{margin-left:auto;border:0;background:none;color:#7F5B25;font-size:13px;cursor:pointer;text-decoration:underline}
+.linea-x .cupontxt{font-size:12px;color:#7F5B25;font-weight:600}
 .busca-fila{display:flex;gap:8px}
 .busca-fila #buscar{flex:1}
 #btnCamara{display:none;padding:0 16px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:22px;cursor:pointer}
@@ -246,6 +258,11 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
       <select id="cliente"><option value="">Cliente: Consumidor final</option></select>
       <button type="button" id="btnCliNuevo" title="Registrar un cliente nuevo">＋ Cliente</button>
     </div>
+    <div class="cupon-fila" id="cuponFila">
+      <input id="cuponCodigo" placeholder="🎟 Cupón de la manada (si el cliente trae uno)" autocomplete="off" spellcheck="false" maxlength="20" aria-label="Cupón de la manada">
+      <button type="button" id="btnCupon">Aplicar</button>
+    </div>
+    <div class="cupon-on" id="cuponOn" hidden></div>
     <div id="lineas"></div>
     <div id="totales"></div>
     <div class="pagos cuatro">
@@ -328,7 +345,8 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
     <div class="step2"><div class="n">3</div><div class="st">Tocá cómo paga: <b>Efectivo</b>, <b>Tarjeta</b> o <b>SINPE</b>. Sale el tiquete solo.</div></div>
     <div class="step2"><div class="n">4</div><div class="st">Si el cliente lleva fiado, elegí su nombre arriba y usá <b>Fiado</b>.</div></div>
     <div class="step2"><div class="n">5</div><div class="st"><b>Descuento o regalo.</b> Debajo de cada producto en la venta podés poner un <b>descuento</b> en porcentaje (%), o marcarlo como <b>🎁 Regalo</b> (sale gratis, pero igual descuenta del inventario y se registra el costo).</div></div>
-    <div class="step2"><div class="n">6</div><div class="st"><b>Con el teclado es más rápido.</b> <b>F1</b> cobra en efectivo (escribí con cuánto paga y Enter; Enter solo = pagó exacto), <b>F2</b> con tarjeta, <b>F3</b> por SINPE y <b>F4</b> pago mixto. <b>Esc</b> limpia la búsqueda y devuelve el cursor al escáner.</div></div>
+    <div class="step2"><div class="n">6</div><div class="st"><b>🎟 Cupón de la manada.</b> Si el cliente trae un código (empieza con AP-), escribilo en la casilla dorada y Enter. El descuento se aplica a toda la venta y el cupón queda usado al cobrar: no sirve dos veces.</div></div>
+    <div class="step2"><div class="n">7</div><div class="st"><b>Con el teclado es más rápido.</b> <b>F1</b> cobra en efectivo (escribí con cuánto paga y Enter; Enter solo = pagó exacto), <b>F2</b> con tarjeta, <b>F3</b> por SINPE y <b>F4</b> pago mixto. <b>Esc</b> limpia la búsqueda y devuelve el cursor al escáner.</div></div>
     <button class="close" onclick="document.getElementById('ayuda').classList.remove('on')">Entendido</button>
   </div>
 </div>
@@ -341,6 +359,10 @@ const clientes = JSON.parse(document.getElementById('datos-clientes').textConten
 const porId = Object.fromEntries(productos.map(p=>[p.id,p]));
 // carrito[id] = { cantidad, descuento_pct (porcentaje 0-100), regalia }
 let carrito = {};
+// Cupón de la manada aplicado a la venta en curso: {codigo, porcentaje,
+// descripcion, cliente:{nombre,...}} o null. Se revisa en el servidor al
+// aplicarlo, y el servidor lo vuelve a validar (y lo quema) al cobrar.
+let cupon = null;
 
 const selCli = document.getElementById('cliente');
 clientes.forEach(c => {
@@ -522,11 +544,14 @@ function setMotivoRegalia(id, v){
   it.motivo_regalia = v;
   // No repinta: perdería el foco del input en cada tecla (SEC-006).
 }
+// Descuento que de verdad lleva la línea: el mayor entre el que puso el
+// cajero y el del cupón. No se suman — así lo cobra también el servidor.
+function pctLinea(it){ return Math.max(it.descuento_pct||0, cupon ? cupon.porcentaje : 0); }
 function totalLinea(id){
   const p = porId[id], it = carrito[id];
   if (it.regalia) return 0;
   const bruto = p.precio_venta * it.cantidad;
-  const monto_desc = (bruto * (it.descuento_pct||0) / 100);
+  const monto_desc = (bruto * pctLinea(it) / 100);
   return Math.max(0, bruto - monto_desc);
 }
 function pintar(){
@@ -537,7 +562,7 @@ function pintar(){
     let mt;
     if (it.regalia){
       mt = `<span class="orig">${fmt(bruto)}</span><span class="now regtxt">REGALO</span>`;
-    } else if (it.descuento_pct > 0){
+    } else if (pctLinea(it) > 0){
       // Precio original tachado arriba, precio con descuento abajo
       mt = `<span class="orig">${fmt(bruto)}</span><span class="now">${fmt(totalLinea(id))}</span>`;
     } else {
@@ -549,7 +574,8 @@ function pintar(){
          <span class="descbox">Motivo <input type="text" maxlength="200" value="${esc(it.motivo_regalia||'')}" placeholder="obligatorio" onchange="setMotivoRegalia(${id}, this.value)"></span>`
       : `<button class="toggle" onclick="toggleRegalo(${id})">🎁 Regalo</button>
          <span class="descbox">Descuento <input type="number" min="0" max="100" step="0.01" value="${it.descuento_pct||''}" placeholder="0" onchange="setDescuentoPct(${id}, this.value)"> %</span>
-         ${refTope(p, (it.descuento_pct||0) > p.tope)}`;
+         ${cupon && cupon.porcentaje >= (it.descuento_pct||0) ? `<span class="cupontxt">🎟 ${cupon.porcentaje}% cupón</span>` : ''}
+         ${refTope(p, pctLinea(it) > p.tope)}`;
     return `<div class="linea">${fotoHTML(p, 46, 'clickable-product-img')}<span class="nm">${esc(p.nombre)}</span>
       <span class="qtn"><button onclick="quitar(${id})">−</button><b>${it.cantidad}</b><button onclick="agregar(${id})">＋</button></span>
       <span class="mt">${mt}</span></div>
@@ -688,12 +714,14 @@ async function cobrar(medio, extra = {}){
       method:'POST',
       headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
       body: JSON.stringify({medio_pago: medio, lineas: lineasCarrito(), cliente_id: clienteId || null,
-                            clave, pagos: extra.pagos || null, recibido: extra.recibido || null})
+                            clave, pagos: extra.pagos || null, recibido: extra.recibido || null,
+                            cupon: cupon ? cupon.codigo : null})
     });
     const d = await r.json();
     if (d.ok){
       if (!d.repetida) Object.entries(carrito).forEach(([id,c])=>{ porId[id].stock_actual -= c.cantidad; });
       carrito = {};
+      quitarCupon(false);             // el cupón ya quedó usado en esta venta
       clave = null;                   // la próxima venta lleva una clave nueva
       soloEscaneados = false;         // la venta terminó: vuelve el catálogo entero
       pintar();
@@ -879,6 +907,44 @@ document.getElementById('buscar').addEventListener('input', () => {
   if (document.getElementById('buscar').value.trim()) soloEscaneados = false;
   pintarGrid();
 });
+// --- Cupón de la manada (13/10/2026) ---------------------------------------
+function pintarCupon(){
+  const fila = document.getElementById('cuponFila'), on = document.getElementById('cuponOn');
+  if (cupon){
+    on.innerHTML = `🎟 <span>Cupón <b>${esc(cupon.codigo)}</b>: <b>${esc(cupon.porcentaje)}%</b> — ${esc(cupon.cliente.nombre)}</span>
+      <button type="button" class="x" onclick="quitarCupon(true)">Quitar</button>`;
+    on.hidden = false; fila.hidden = true;
+  } else {
+    on.hidden = true; fila.hidden = false;
+  }
+}
+function quitarCupon(repintar){
+  cupon = null;
+  document.getElementById('cuponCodigo').value = '';
+  pintarCupon();
+  if (repintar) pintar();
+}
+async function aplicarCupon(){
+  const inp = document.getElementById('cuponCodigo');
+  const codigo = inp.value.trim();
+  if (!codigo){ msg("Escriba el código del cupón.", true); inp.focus(); return; }
+  try {
+    const r = await fetch("{% url 'ventas:cupon' %}?codigo=" + encodeURIComponent(codigo));
+    const d = await r.json();
+    if (!d.ok){ msg("⛔ " + d.error, true); inp.select(); return; }
+    cupon = {codigo: d.codigo, porcentaje: d.porcentaje, descripcion: d.descripcion, cliente: d.cliente};
+    pintarCupon(); pintar();
+    msg(`Cupón aplicado: ${d.porcentaje}% a ${d.cliente.nombre}. Se marca usado al cobrar.`);
+    volverAlEscaner();
+  } catch(e){
+    msg("⛔ No se pudo revisar el cupón. Revise la conexión e intente de nuevo.", true);
+  }
+}
+document.getElementById('btnCupon').addEventListener('click', aplicarCupon);
+document.getElementById('cuponCodigo').addEventListener('keydown', e=>{
+  if (e.key === 'Enter'){ e.preventDefault(); aplicarCupon(); }
+});
+
 document.getElementById('buscar').addEventListener('keydown', e=>{
   if (e.key !== 'Enter') return;
   const q = e.target.value.trim();

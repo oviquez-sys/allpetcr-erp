@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
+<body style="margin:0;padding:0;background:#FAF8F4;font-family:Arial,Helvetica,sans-serif;color:#041326;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#FAF8F4;padding:24px 12px;">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#FFFFFF;border:1px solid #E6DFD4;border-radius:16px;overflow:hidden;">
+  <tr><td style="background:#092E5E;padding:22px 24px;color:#FFFFFF;font-size:20px;letter-spacing:.5px;">
+    <b>AllPet</b><span style="color:#CC9539;"><b>cr</b></span><b>.com</b>
+  </td></tr>
+  <tr><td style="padding:28px 24px 8px;">
+    <p style="margin:0 0 6px;font-size:22px;color:#092E5E;">¡Hola{% if nombre %}, {{ nombre }}{% endif %}!</p>
+    <p style="margin:0;font-size:15px;line-height:1.6;">Ya sos parte de la manada AllPetcr.com.</p>
+  </td></tr>
+  {% if cupon %}
+  <tr><td style="padding:20px 24px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:2px dashed #CC9539;border-radius:12px;background:#F5F0E8;">
+      <tr><td align="center" style="padding:20px 12px;">
+        <div style="font-size:12px;letter-spacing:1.5px;color:#7F5B25;text-transform:uppercase;">Tu código</div>
+        <div style="font-size:32px;font-weight:bold;letter-spacing:3px;color:#092E5E;margin:8px 0;font-family:'Courier New',monospace;">{{ cupon.codigo }}</div>
+        <div style="font-size:15px;color:#041326;">{{ cupon.descripcion }}</div>
+        {% if cupon.vence_en %}<div style="font-size:13px;color:#7B8A9D;margin-top:6px;">Válido hasta el {{ cupon.vence_en|date:"d/m/Y" }}</div>{% endif %}
+      </td></tr>
+    </table>
+    <p style="margin:14px 0 0;font-size:14px;line-height:1.6;">Mostralo en la caja de la tienda cuando hagás tu compra. Es de un solo uso.</p>
+  </td></tr>
+  {% endif %}
+  {% if url_mascotas %}
+  <tr><td style="padding:8px 24px 20px;">
+    <p style="margin:0 0 12px;font-size:14px;line-height:1.6;">¿Nos contás de tu mascota? Así te avisamos de lo que de verdad le sirve.</p>
+    <a href="{{ url_mascotas }}" style="display:inline-block;background:#092E5E;color:#FFFFFF;text-decoration:none;padding:12px 20px;border-radius:9999px;font-size:14px;">Contanos de tu mascota</a>
+  </td></tr>
+  {% endif %}
+  <tr><td style="padding:18px 24px 24px;border-top:1px solid #E6DFD4;font-size:12px;line-height:1.6;color:#7B8A9D;">
+    De la entrada principal de la UNA, 100 m oeste, Heredia.<br>
+    WhatsApp 8856-2992 · <a href="{{ url_sitio }}" style="color:#7F5B25;">www.allpetcr.com</a><br>
+    Recibiste este correo porque te registraste en la manada AllPetcr.com.
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>

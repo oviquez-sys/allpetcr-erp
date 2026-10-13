@@ -99,6 +99,7 @@ INSTALLED_APPS = [
     "facturacion_electronica",
     "api",
     "impresion",
+    "manada",  # clientes registrados por el QR de la tienda (13/10/2026)
 ]
 
 MIDDLEWARE = [
@@ -455,6 +456,11 @@ elif os.environ.get("EMAIL_HOST_PASSWORD"):
     EMAIL_TIMEOUT = int(os.environ.get("EMAIL_TIMEOUT", "60"))
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# --- Manada AllPetcr (13/10/2026) ---
+# Dirección pública del sitio: con ella arma el correo de bienvenida el
+# enlace a "Contanos de tu mascota".
+SITIO_WEB_URL = os.environ.get("SITIO_WEB_URL", "https://www.allpetcr.com")
 
 # --- Reporte diario a los socios (FRA-004, auditoría 2026-08-15) ---
 # Control detectivo contra fraude interno: un resumen automático de cada día
