@@ -4,13 +4,18 @@ El sitio web (allpetcr-web) llama a estas funciones a través de la API
 (api/views.py), servidor a servidor y con token. La caja las usa a través de
 ventas.services.registrar_venta.
 """
+import base64
+import binascii
+import io
 import logging
 import secrets
+import uuid
 from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
 from django.utils import timezone
@@ -27,6 +32,43 @@ logger = logging.getLogger(__name__)
 _ALFABETO = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 PREFIJO_CUPON = "AP-"
 MAX_MASCOTAS = 5
+# El sitio ya la achica en el celular antes de mandarla (~150 KB); esto es el
+# techo para lo que llegue sin achicar.
+MAX_FOTO_BYTES = 6 * 1024 * 1024
+LADO_MAX_FOTO = 1200
+
+
+def _foto_limpia(dato, nombre_mascota):
+    """Recibe la foto como texto base64 (con o sin el prefijo "data:image/...")
+    y devuelve un JPEG nuevo, de 1200 px como máximo.
+
+    Se vuelve a dibujar la imagen en vez de guardar el archivo tal cual por
+    dos razones: (1) las fotos de celular traen escondida la ubicación GPS de
+    la casa del cliente, y no queremos guardarla; (2) un archivo que solo
+    dice ser imagen no pasa por Pillow sin romperse."""
+    from PIL import Image, ImageOps, UnidentifiedImageError
+
+    if not isinstance(dato, str) or not dato:
+        return None
+    if dato.startswith("data:"):
+        dato = dato.split(",", 1)[-1]
+    if len(dato) > MAX_FOTO_BYTES * 4 // 3 + 4:
+        raise ValidationError(f"La foto de {nombre_mascota} es muy pesada. Probá con otra.")
+    try:
+        crudo = base64.b64decode(dato, validate=True)
+        imagen = Image.open(io.BytesIO(crudo))
+        imagen.load()
+    except (binascii.Error, ValueError, UnidentifiedImageError, OSError, Image.DecompressionBombError):
+        raise ValidationError(f"La foto de {nombre_mascota} no se pudo leer. Probá con otra.")
+    imagen = ImageOps.exif_transpose(imagen)   # que no quede de lado
+    if imagen.mode not in ("RGB", "L"):
+        fondo = Image.new("RGB", imagen.size, (255, 255, 255))
+        fondo.paste(imagen.convert("RGBA"), mask=imagen.convert("RGBA").split()[-1])
+        imagen = fondo
+    imagen.thumbnail((LADO_MAX_FOTO, LADO_MAX_FOTO))
+    salida = io.BytesIO()
+    imagen.convert("RGB").save(salida, "JPEG", quality=85, optimize=True)   # sin exif=: sale limpia
+    return ContentFile(salida.getvalue(), name=f"{uuid.uuid4().hex}.jpg")
 
 
 def _nuevo_codigo() -> str:
@@ -209,13 +251,18 @@ def registrar_mascotas(*, token, mascotas) -> PerfilManada:
                 raise ValidationError(f"El peso de {nombre} debe ser un número.")
             if peso <= 0 or peso > 150:
                 raise ValidationError(f"Revisá el peso de {nombre} (en kilos).")
-        nuevas.append(Mascota(
+        nuevas.append((Mascota(
             cliente=perfil.cliente, nombre=nombre, especie=especie,
             raza=" ".join(str(m.get("raza") or "").split())[:80],
             fecha_nacimiento_aprox=_fecha_nacimiento(m.get("edad_anios"), m.get("edad_meses")),
             peso_kg=peso, notas=" ".join(str(m.get("notas") or "").split())[:200],
-        ))
-    Mascota.objects.bulk_create(nuevas)
+        ), _foto_limpia(m.get("foto"), nombre)))
+    # Todo se valida ANTES de guardar nada: si la foto de la tercera mascota
+    # no sirve, no quedan las dos primeras a medias.
+    for mascota, foto in nuevas:
+        if foto is not None:
+            mascota.foto.save(foto.name, foto, save=False)
+        mascota.save()
     perfil.token_mascotas = ""
     perfil.mascotas_registradas_en = timezone.now()
     perfil.save(update_fields=["token_mascotas", "mascotas_registradas_en"])

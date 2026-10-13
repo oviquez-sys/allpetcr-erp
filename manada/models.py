@@ -14,6 +14,7 @@ terminan en dos versiones de la misma persona que nadie concilia. Lo propio
 de la manada (cómo se registró, su consentimiento, sus mascotas, sus cupones)
 cuelga del Cliente de siempre.
 """
+from django.core.files.storage import storages
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
@@ -112,6 +113,12 @@ class PerfilManada(models.Model):
         return f"{self.cliente.nombre} <{self.cliente.email}>"
 
 
+def _almacen_privado():
+    # Callable y no el almacén en sí: así la migración no guarda en qué
+    # bucket vive, y cambiar de almacenamiento no pide migrar.
+    return storages["privado"]
+
+
 class Mascota(models.Model):
     class Especie(models.TextChoices):
         PERRO = "PER", "Perro"
@@ -130,6 +137,9 @@ class Mascota(models.Model):
                                   validators=[MinValueValidator(0)])
     notas = models.CharField(max_length=200, blank=True,
                              help_text="Alimento que come, alergias o lo que el cliente quiso contar.")
+    # La sube el cliente desde el sitio. Se guarda ya achicada y sin datos
+    # ocultos de la cámara (ver manada.services._foto_limpia).
+    foto = models.ImageField(upload_to="mascotas/", storage=_almacen_privado, blank=True)
     creada_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:

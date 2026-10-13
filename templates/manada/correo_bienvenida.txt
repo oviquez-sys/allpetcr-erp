@@ -7,7 +7,7 @@ Tu código: {{ cupon.codigo }}
 
 Mostralo en la caja de la tienda cuando hagás tu compra. Es de un solo uso.
 {% endif %}{% if url_mascotas %}
-¿Nos contás de tu mascota? Así te avisamos de lo que le sirve a ella:
+Tu peludo también es parte de la manada. Contanos quién es y subí su foto:
 {{ url_mascotas }}
 {% endif %}
 Te esperamos en la tienda: de la entrada principal de la UNA, 100 m oeste, Heredia.

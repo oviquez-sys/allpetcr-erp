@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.http import HttpResponse
 from django.utils import timezone
+from django.utils.html import format_html
 
 from core.tenancy import empresa_actual
 
@@ -159,11 +160,26 @@ class CuponAdmin(admin.ModelAdmin):
 
 @admin.register(Mascota)
 class MascotaAdmin(admin.ModelAdmin):
-    list_display = ("nombre", "especie", "raza", "edad", "peso_kg", "cliente", "creada_en")
+    list_display = ("miniatura", "nombre", "especie", "raza", "edad", "peso_kg", "cliente", "creada_en")
     list_filter = ("especie", "creada_en")
     search_fields = ("nombre", "raza", "cliente__nombre", "cliente__email")
     list_select_related = ("cliente",)
-    readonly_fields = ("cliente", "creada_en")
+    readonly_fields = ("cliente", "creada_en", "foto_grande")
+    exclude = ("foto",)
+
+    @admin.display(description="Foto")
+    def miniatura(self, obj):
+        # La foto es privada: .url da un enlace firmado que vence en una hora.
+        if not obj.foto:
+            return "—"
+        return format_html('<img src="{}" style="width:44px;height:44px;object-fit:cover;border-radius:50%">',
+                           obj.foto.url)
+
+    @admin.display(description="Foto")
+    def foto_grande(self, obj):
+        if not obj.foto:
+            return "—"
+        return format_html('<img src="{}" style="max-width:320px;border-radius:12px">', obj.foto.url)
 
     def has_add_permission(self, request):
         return False

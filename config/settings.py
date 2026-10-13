@@ -301,6 +301,24 @@ if os.environ.get("MEDIA_STORAGE_BACKEND") == "s3":
                 "file_overwrite": False,
             },
         },
+        # Fotos de las mascotas de los clientes (13/10/2026): son datos de
+        # clientes, no catálogo. Mismo bucket, pero PRIVADAS: cada vista las
+        # pide con un enlace firmado que vence en una hora. Las de producto
+        # siguen públicas arriba.
+        "privado": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "bucket_name": os.environ["AWS_STORAGE_BUCKET_NAME"],
+                "endpoint_url": os.environ.get("AWS_S3_ENDPOINT_URL") or None,
+                "region_name": os.environ.get("AWS_S3_REGION_NAME") or None,
+                "access_key": os.environ.get("AWS_ACCESS_KEY_ID"),
+                "secret_key": os.environ.get("AWS_SECRET_ACCESS_KEY"),
+                "default_acl": "private",
+                "querystring_auth": True,
+                "querystring_expire": 3600,
+                "file_overwrite": False,
+            },
+        },
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
         },
@@ -308,6 +326,9 @@ if os.environ.get("MEDIA_STORAGE_BACKEND") == "s3":
 else:
     STORAGES = {
         "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "privado": {
             "BACKEND": "django.core.files.storage.FileSystemStorage",
         },
         "staticfiles": {

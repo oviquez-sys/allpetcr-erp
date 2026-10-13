@@ -248,6 +248,37 @@ class Mascotas(ConRegalia):
         with self.assertRaisesMessage(ValidationError, "ya se usó"):
             registrar_mascotas(token=self.r.perfil.token_mascotas, mascotas=[{"nombre": "X", "especie": "PER"}])
 
+    def test_foto_se_achica_y_pierde_los_datos_de_la_camara(self):
+        import base64, io
+        from PIL import Image
+        crudo = io.BytesIO()
+        exif = Image.Exif()
+        exif[0x010F] = "MarcaDeCamara"
+        Image.new("RGB", (3000, 2000), (200, 150, 60)).save(crudo, "JPEG", exif=exif)
+        dato = "data:image/jpeg;base64," + base64.b64encode(crudo.getvalue()).decode()
+        with self.settings(MEDIA_ROOT=self._tmp()):
+            registrar_mascotas(token=self.r.perfil.token_mascotas,
+                               mascotas=[{"nombre": "Cookie", "especie": "PER", "foto": dato}])
+            m = Mascota.objects.get(nombre="Cookie")
+            with m.foto.open("rb") as f:
+                guardada = Image.open(f)
+                guardada.load()
+            self.assertEqual(max(guardada.size), 1200)
+            self.assertEqual(len(guardada.getexif()), 0)
+
+    def test_foto_que_no_es_imagen(self):
+        import base64
+        with self.assertRaisesMessage(ValidationError, "no se pudo leer"):
+            registrar_mascotas(token=self.r.perfil.token_mascotas, mascotas=[
+                {"nombre": "Cookie", "especie": "PER", "foto": base64.b64encode(b"no soy foto").decode()}])
+        self.assertEqual(Mascota.objects.count(), 0)
+
+    def _tmp(self):
+        import shutil, tempfile
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        return d
+
     def test_validaciones(self):
         token = self.r.perfil.token_mascotas
         for malas, texto in [
