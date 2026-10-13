@@ -254,8 +254,13 @@ el contraste entre los documentos y el saldo guardado en la ficha del cliente.
 Acceso Rápido desde Inicio:
 - "Vender" → /pos/ — Punto de venta (POS). Todos los cajeros pueden vender acá.
 - "Abrir caja" (/caja/abrir/) o "Cerrar caja" (/caja/cerrar/) según el estado actual.
-- "Recibir" → /compras/ — Registrar mercadería que llega de un proveedor \
-(solo gerentes).
+- "Recibir mercadería" → /compras/ — Registrar mercadería que llega de un \
+proveedor (solo gerentes). Adentro, arriba, está "Cargar desde Excel" para \
+cargar una compra grande de una sola vez (ya NO es botón del Inicio).
+- "Manada" → /admin/manada/perfilmanada/ — Los clientes que se registraron \
+con el QR de la tienda o la página /manada: correo, WhatsApp, mascotas (con \
+foto) y su cupón de bienvenida. Se exporta a Excel con la acción "Exportar \
+los seleccionados a Excel" (solo gerentes).
 - "Admin" → /admin/ — Panel administrativo (solo gerentes). Acá están el \
 resumen del mes, el centro de reportes, los códigos de barras, precios y \
 márgenes, el arqueo de caja y todas las tablas del sistema.

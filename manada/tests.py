@@ -394,6 +394,12 @@ class AdminManada(ConRegalia):
         self.assertEqual(r.status_code, 200)
         self.assertIn("spreadsheetml", r["Content-Type"])
 
+    def test_el_inicio_tiene_la_manada_y_no_cargar_excel(self):
+        r = self.client.get("/")
+        self.assertContains(r, reverse("admin:manada_perfilmanada_changelist"))
+        self.assertContains(r, "Recibir mercadería")
+        self.assertNotContains(r, ">Cargar Excel<")
+
     def test_pantallas_del_admin_abren(self):
         self.registrar()
         for nombre in ["manada_regalia", "manada_perfilmanada", "manada_cupon", "manada_mascota"]:

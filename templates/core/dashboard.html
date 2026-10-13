@@ -128,6 +128,11 @@ a{text-decoration:none;color:inherit}
 .i-chart{background:linear-gradient(140deg,#ff9f0a,#f59e0b)}
 .i-admin{background:linear-gradient(140deg,#0B3161,#1f5a8f)}
 .i-revert{background:linear-gradient(140deg,#ff3b30,#d70015)}
+/* Manada (13/10/2026): el dorado de la marca, la única ficha que lo usa. La
+   huella va rellena y no en trazo como los demás íconos: en trazo, cuatro
+   deditos de 4 px quedan como círculos vacíos y no se reconoce. */
+.i-manada{background:linear-gradient(140deg,#d9a54a,#a87830)}
+.i-manada svg{fill:#fff;stroke:none}
 
 /* ===== ADVICE (una tarjeta, filas) ===== */
 .adv{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
@@ -317,8 +322,13 @@ a{text-decoration:none;color:inherit}
       {% endcomment %}
       <a class="qa-item" href="{% url 'ventas:historial' %}"><div class="qa-ic i-sell"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div><div class="lb">Historial</div></a>
       {% if es_gerente %}
-      <a class="qa-item" href="{% url 'compras:carga_masiva' %}"><div class="qa-ic i-box"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13l6 6M15 13l-6 6"/></svg></div><div class="lb">Cargar Excel</div></a>
-      <a class="qa-item" href="/compras/"><div class="qa-ic i-box"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div><div class="lb">Recibir</div></a>
+      {% comment %}
+        "Cargar Excel" salió de acá (13/10/2026, pedido de Oscar): vive dentro
+        de "Recibir mercadería", que ya tenía el enlace arriba. Su lugar lo
+        ocupa la Manada: la base de clientes del QR de la tienda.
+      {% endcomment %}
+      <a class="qa-item" href="{% url 'admin:manada_perfilmanada_changelist' %}"><div class="qa-ic i-manada"><svg viewBox="2.6 2.4 18.8 18.8" aria-hidden="true"><ellipse cx="5.6" cy="10.4" rx="2" ry="2.5" transform="rotate(-18 5.6 10.4)"/><ellipse cx="9.6" cy="5.9" rx="2" ry="2.6" transform="rotate(-6 9.6 5.9)"/><ellipse cx="14.4" cy="5.9" rx="2" ry="2.6" transform="rotate(6 14.4 5.9)"/><ellipse cx="18.4" cy="10.4" rx="2" ry="2.5" transform="rotate(18 18.4 10.4)"/><path d="M12 11.6c-2.9 0-5.6 3.6-5.6 6.1 0 1.7 1.3 2.6 2.8 2.6 1.2 0 1.8-.6 2.8-.6s1.6.6 2.8.6c1.5 0 2.8-.9 2.8-2.6 0-2.5-2.7-6.1-5.6-6.1z"/></svg></div><div class="lb">Manada</div></a>
+      <a class="qa-item" href="/compras/"><div class="qa-ic i-box"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div><div class="lb">Recibir mercadería</div></a>
       <a class="qa-item" href="/admin/"><div class="qa-ic i-admin"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div><div class="lb">Admin</div></a>
       <a class="qa-item" href="/actividad/"><div class="qa-ic i-revert"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg></div><div class="lb">Reversas</div></a>
       {% endif %}
