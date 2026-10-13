@@ -465,6 +465,21 @@ compra, un solo uso por persona) → opcional "Contanos de tu mascota", una vez.
   `SITIO_WEB_URL` arma el enlace de mascotas.
 - Pruebas: `manada/tests.py`.
 
+## Descuento por precio final y en números enteros (13/10/2026)
+
+Pedido de Oscar: los decimales en el % eran imposibles de teclear, y quería
+poner "lo dejo en ₡2.000" en vez de adivinar el %.
+
+- POS: cada línea tiene **Descuento [ ] %** (entero; "12,6" se vuelve 13) y
+  **o precio ₡[ ]** (precio final por unidad). Escribir uno borra el otro.
+- `registrar_venta` acepta `precio_final` por línea: el descuento es exacto
+  (`bruto − precio_final × cantidad`) y el % se guarda con decimales solo como
+  registro (14,89 %). Tope del cajero (15 %) y piso de costo se aplican sobre ese %.
+- Con %, el descuento se redondea a **colón entero** (`ROUND_HALF_UP`); el JS
+  del POS hace lo mismo (`Math.round`). Nada de ₡2.044,50.
+- Cupón vs. precio final: gana el que dé más descuento; no se suman.
+- Pruebas: `ventas/test_precio_final.py`.
+
 ## Reglas del proyecto
 
 **Los comentarios explican el *porqué*, no el *qué*.** Es la característica

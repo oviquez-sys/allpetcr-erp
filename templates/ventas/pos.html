@@ -91,6 +91,7 @@ main{flex:1;display:grid;grid-template-columns:1fr 400px;gap:14px;padding:12px 2
   color:var(--ink2);cursor:pointer;transition:all .15s}
 .linea-x .toggle.on{background:var(--purple);border-color:var(--purple);color:#fff;font-weight:600}
 .linea-x .descbox{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2)}
+.linea-x .descbox input.pf{width:78px}
 .linea-x .descbox input{width:56px;padding:4px 7px;border:1px solid var(--line);border-radius:8px;font-size:13.5px;text-align:right;font-weight:600}
 .linea-x .regtxt{font-size:12.5px;color:var(--purple);font-weight:600}
 /* Tope de descuento (02/10/2026). A propósito casi invisible: se negocia con
@@ -201,6 +202,9 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 .cupon-on b{font-variant-numeric:tabular-nums}
 .cupon-on .x{margin-left:auto;border:0;background:none;color:#7F5B25;font-size:13px;cursor:pointer;text-decoration:underline}
 .linea-x .cupontxt{font-size:12px;color:#7F5B25;font-weight:600}
+/* display:flex de arriba le gana al atributo hidden: sin esto quedaba una
+   franja dorada vacía debajo del cupón (13/10/2026). */
+.cupon-fila[hidden],.cupon-on[hidden]{display:none}
 .busca-fila{display:flex;gap:8px}
 .busca-fila #buscar{flex:1}
 #btnCamara{display:none;padding:0 16px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:22px;cursor:pointer}
@@ -344,7 +348,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
     <div class="step2"><div class="n">2</div><div class="st">Repetí con cada producto. A la derecha se va armando la venta con el total.</div></div>
     <div class="step2"><div class="n">3</div><div class="st">Tocá cómo paga: <b>Efectivo</b>, <b>Tarjeta</b> o <b>SINPE</b>. Sale el tiquete solo.</div></div>
     <div class="step2"><div class="n">4</div><div class="st">Si el cliente lleva fiado, elegí su nombre arriba y usá <b>Fiado</b>.</div></div>
-    <div class="step2"><div class="n">5</div><div class="st"><b>Descuento o regalo.</b> Debajo de cada producto en la venta podés poner un <b>descuento</b> en porcentaje (%), o marcarlo como <b>🎁 Regalo</b> (sale gratis, pero igual descuenta del inventario y se registra el costo).</div></div>
+    <div class="step2"><div class="n">5</div><div class="st"><b>Descuento o regalo.</b> Debajo de cada producto podés poner un <b>descuento</b> en % (número entero), o escribir directo <b>el precio</b> al que se lo dejás (ej. ₡2.000) y el sistema calcula el descuento. También podés marcarlo como <b>🎁 Regalo</b> (sale gratis, pero igual descuenta del inventario y se registra el costo).</div></div>
     <div class="step2"><div class="n">6</div><div class="st"><b>🎟 Cupón de la manada.</b> Si el cliente trae un código (empieza con AP-), escribilo en la casilla dorada y Enter. El descuento se aplica a toda la venta y el cupón queda usado al cobrar: no sirve dos veces.</div></div>
     <div class="step2"><div class="n">7</div><div class="st"><b>Con el teclado es más rápido.</b> <b>F1</b> cobra en efectivo (escribí con cuánto paga y Enter; Enter solo = pagó exacto), <b>F2</b> con tarjeta, <b>F3</b> por SINPE y <b>F4</b> pago mixto. <b>Esc</b> limpia la búsqueda y devuelve el cursor al escáner.</div></div>
     <button class="close" onclick="document.getElementById('ayuda').classList.remove('on')">Entendido</button>
@@ -357,7 +361,11 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 const productos = JSON.parse(document.getElementById('datos-productos').textContent);
 const clientes = JSON.parse(document.getElementById('datos-clientes').textContent);
 const porId = Object.fromEntries(productos.map(p=>[p.id,p]));
-// carrito[id] = { cantidad, descuento_pct (porcentaje 0-100), regalia }
+// carrito[id] = { cantidad, descuento_pct (porcentaje entero 0-100),
+//                  precio_final (₡ por unidad, o null), regalia }
+// El descuento se pone de una de dos formas (13/10/2026, pedido de Oscar):
+// un % entero, o el precio al que se le quiere dejar ("lo vendo en ₡2.000").
+// Con el precio, el % sale solo y el total cierra exacto en ese precio.
 let carrito = {};
 // Cupón de la manada aplicado a la venta en curso: {codigo, porcentaje,
 // descripcion, cliente:{nombre,...}} o null. Se revisa en el servidor al
@@ -529,15 +537,37 @@ function quitar(id){
 function toggleRegalo(id){
   const it = carrito[id]; if(!it) return;
   it.regalia = !it.regalia;
-  if (it.regalia) it.descuento = 0;   // una regalía no lleva descuento aparte
+  if (it.regalia){ it.descuento_pct = 0; it.precio_final = null; }   // una regalía no lleva descuento aparte
   pintar();
 }
+// Solo números enteros: "15", "15%" o "15,7" quedan en 15 / 16. Con decimales
+// era imposible teclear rápido en el mostrador.
+const enteroDe = v => { const n = parseFloat(String(v||'').replace(/[^\d.,]/g,'').replace(',','.')); return isNaN(n) ? 0 : Math.round(n); };
 function setDescuentoPct(id, v){
   const it = carrito[id]; if(!it) return;
-  let pct = parseFloat(v); if (isNaN(pct) || pct < 0) pct = 0;
+  let pct = enteroDe(v);
   if (pct > 100) { pct = 100; msg("El descuento no puede ser mayor que 100%.", true); }
   it.descuento_pct = pct;
+  it.precio_final = null;            // manda el % que se acaba de escribir
   pintar();
+}
+function setPrecioFinal(id, v){
+  const it = carrito[id], p = porId[id]; if(!it) return;
+  const limpio = String(v||'').trim();
+  if (!limpio){ it.precio_final = null; it.descuento_pct = 0; pintar(); return; }
+  const precio = montoDe(limpio);
+  if (precio <= 0 || precio >= p.precio_venta){
+    msg(`El precio final tiene que ser menor que ${fmt(p.precio_venta)}.`, true);
+    it.precio_final = null; it.descuento_pct = 0; pintar(); return;
+  }
+  it.precio_final = Math.round(precio);
+  it.descuento_pct = 0;
+  pintar();
+}
+// % que de verdad lleva la línea, con decimales cuando viene de un precio.
+function pctNegociado(it, p){
+  if (it.precio_final != null) return (1 - it.precio_final / p.precio_venta) * 100;
+  return it.descuento_pct || 0;
 }
 function setMotivoRegalia(id, v){
   const it = carrito[id]; if(!it) return;
@@ -546,13 +576,17 @@ function setMotivoRegalia(id, v){
 }
 // Descuento que de verdad lleva la línea: el mayor entre el que puso el
 // cajero y el del cupón. No se suman — así lo cobra también el servidor.
-function pctLinea(it){ return Math.max(it.descuento_pct||0, cupon ? cupon.porcentaje : 0); }
+function pctLinea(it, p){ return Math.max(pctNegociado(it, p), cupon ? cupon.porcentaje : 0); }
+function ganaElCupon(it, p){ return !!cupon && cupon.porcentaje > pctNegociado(it, p); }
 function totalLinea(id){
   const p = porId[id], it = carrito[id];
   if (it.regalia) return 0;
+  // Con precio final (y sin un cupón que dé más), el total es ese precio por
+  // la cantidad: exacto, sin redondeos del porcentaje. Igual que el servidor.
+  if (it.precio_final != null && !ganaElCupon(it, p)) return it.precio_final * it.cantidad;
   const bruto = p.precio_venta * it.cantidad;
-  const monto_desc = (bruto * pctLinea(it) / 100);
-  return Math.max(0, bruto - monto_desc);
+  // Descuento a colón entero, igual que el servidor (nada de ₡2.044,50).
+  return Math.max(0, bruto - Math.round(bruto * pctLinea(it, p) / 100));
 }
 function pintar(){
   const ids = Object.keys(carrito);
@@ -562,7 +596,7 @@ function pintar(){
     let mt;
     if (it.regalia){
       mt = `<span class="orig">${fmt(bruto)}</span><span class="now regtxt">REGALO</span>`;
-    } else if (pctLinea(it) > 0){
+    } else if (pctLinea(it, p) > 0){
       // Precio original tachado arriba, precio con descuento abajo
       mt = `<span class="orig">${fmt(bruto)}</span><span class="now">${fmt(totalLinea(id))}</span>`;
     } else {
@@ -573,9 +607,10 @@ function pintar(){
          <span class="regtxt">Sale del inventario a costo, sin cobro</span>
          <span class="descbox">Motivo <input type="text" maxlength="200" value="${esc(it.motivo_regalia||'')}" placeholder="obligatorio" onchange="setMotivoRegalia(${id}, this.value)"></span>`
       : `<button class="toggle" onclick="toggleRegalo(${id})">🎁 Regalo</button>
-         <span class="descbox">Descuento <input type="number" min="0" max="100" step="0.01" value="${it.descuento_pct||''}" placeholder="0" onchange="setDescuentoPct(${id}, this.value)"> %</span>
-         ${cupon && cupon.porcentaje >= (it.descuento_pct||0) ? `<span class="cupontxt">🎟 ${cupon.porcentaje}% cupón</span>` : ''}
-         ${refTope(p, pctLinea(it) > p.tope)}`;
+         <span class="descbox">Descuento <input type="text" inputmode="numeric" maxlength="5" value="${it.precio_final != null ? '' : (it.descuento_pct||'')}" placeholder="${it.precio_final != null ? Math.round(pctNegociado(it, p)) : '0'}" onchange="setDescuentoPct(${id}, this.value)"> %</span>
+         <span class="descbox">o precio ₡<input class="pf" type="text" inputmode="numeric" maxlength="9" value="${it.precio_final != null ? it.precio_final : ''}" placeholder="${Math.round(p.precio_venta)}" onchange="setPrecioFinal(${id}, this.value)"></span>
+         ${ganaElCupon(it, p) || (cupon && !pctNegociado(it, p)) ? `<span class="cupontxt">🎟 ${cupon.porcentaje}% cupón</span>` : ''}
+         ${refTope(p, pctLinea(it, p) > p.tope)}`;
     return `<div class="linea">${fotoHTML(p, 46, 'clickable-product-img')}<span class="nm">${esc(p.nombre)}</span>
       <span class="qtn"><button onclick="quitar(${id})">−</button><b>${it.cantidad}</b><button onclick="agregar(${id})">＋</button></span>
       <span class="mt">${mt}</span></div>
@@ -618,7 +653,8 @@ function totalCarrito(){ return Object.keys(carrito).reduce((a,id)=>a + totalLin
 function lineasCarrito(){
   return Object.entries(carrito).map(([id,c])=>({
     producto_id:+id, cantidad:c.cantidad,
-    descuento_pct: c.regalia ? 0 : (c.descuento_pct||0),
+    descuento_pct: c.regalia || c.precio_final != null ? 0 : (c.descuento_pct||0),
+    precio_final: c.regalia ? null : c.precio_final,
     es_regalia: !!c.regalia,
     motivo: c.regalia ? (c.motivo_regalia||'').trim() : '',
   }));

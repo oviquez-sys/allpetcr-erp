@@ -9,7 +9,7 @@ decide el desglose de impuestos según el régimen de la empresa:
   se desglosa subtotal e impuesto, y aquí se activará el adaptador de
   facturación electrónica v4.4.
 """
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -220,9 +220,29 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             desc_pct = Decimal(str(linea.get("descuento_pct", 0) or 0))
             if desc_pct < 0 or desc_pct > 100:
                 raise ValidationError(f"Porcentaje de descuento inválido para {producto.nombre} (0-100).")
-            desc_pct = max(desc_pct, pct_cupon)
-            # Calcular automáticamente el monto del descuento
-            desc_l = (bruto_linea * desc_pct / 100).quantize(Decimal("0.01"))
+            # Precio final por unidad (13/10/2026, pedido de Oscar): "lo vendo
+            # en ₡2.000" en vez de adivinar qué % da ₡2.000. El porcentaje sale
+            # de ahí con decimales (14,89 %) para que el total cierre EXACTO en
+            # lo que se le dijo al cliente; el cajero nunca lo teclea. Pasa por
+            # las mismas reglas de abajo: tope del cajero y piso de costo.
+            precio_final = linea.get("precio_final")
+            desc_l = None
+            if precio_final not in (None, ""):
+                precio_final = Decimal(str(precio_final)).quantize(Decimal("0.01"))
+                if precio_final < 0 or precio_final > precio:
+                    raise ValidationError(
+                        f"{producto.nombre}: el precio final debe estar entre ₡0 y su precio de ₡{precio:,.0f}."
+                    )
+                desc_l = bruto_linea - (precio_final * cantidad).quantize(Decimal("0.01"))
+                desc_pct = (desc_l * 100 / bruto_linea).quantize(Decimal("0.01")) if bruto_linea else Decimal("0")
+            if pct_cupon > desc_pct:
+                # El cupón da más que lo negociado: gana el cupón (no se suman).
+                desc_pct, desc_l = pct_cupon, None
+            if desc_l is None:
+                # A colón entero (13/10/2026): 13 % de ₡2.350 son ₡305,50 y el
+                # total quedaba en ₡2.044,50 — nadie cobra ni da vuelto en
+                # céntimos. Se redondea el descuento, no el precio.
+                desc_l = (bruto_linea * desc_pct / 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
             total_linea = bruto_linea - desc_l
             sub_l, imp_l = _desglose_fiscal(empresa, producto, total_linea)
             # Bloqueo de venta bajo costo: lo que le queda al negocio por
