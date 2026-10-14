@@ -219,3 +219,40 @@ class Cupon(models.Model):
     @property
     def estado_display(self):
         return {"USADO": "usado", "VENCIDO": "vencido", "DISPONIBLE": "disponible"}[self.estado]
+
+
+class PosibleDuplicado(models.Model):
+    """Dos clientes que podrían ser la misma persona (14/10/2026).
+
+    Al reconocer a alguien se cruzan cédula, teléfono y correo. Si dos datos
+    apuntan a clientes distintos —o un cliente nuevo se llama igual que uno
+    viejo— el sistema NO los une solo: unir por error le pegaría a una persona
+    las compras y los recordatorios de otra, que es peor que tener la misma
+    persona dos veces. Lo decide alguien de la tienda desde la ficha.
+    """
+
+    class Resolucion(models.TextChoices):
+        UNIDOS = "UNI", "Se unieron (era la misma persona)"
+        DISTINTOS = "DIS", "Son personas distintas"
+
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="posibles_duplicados")
+    otro = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="+")
+    motivo = models.CharField(max_length=200, help_text="Qué dato coincide y qué dato no.")
+    origen = models.CharField(max_length=80, blank=True, help_text="Dónde se detectó: caja, pedido web, registro.")
+    creado_en = models.DateTimeField(auto_now_add=True)
+    resolucion = models.CharField(max_length=3, choices=Resolucion.choices, blank=True)
+    resuelto_en = models.DateTimeField(null=True, blank=True)
+    resuelto_por = models.ForeignKey("auth.User", null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+
+    class Meta:
+        verbose_name = "posible duplicado"
+        verbose_name_plural = "posibles duplicados"
+        ordering = ["-creado_en"]
+        constraints = [
+            # El mismo par se avisa una sola vez: si ya se decidió que son
+            # distintos, volver a detectarlo no debe insistir.
+            models.UniqueConstraint(fields=["cliente", "otro"], name="un_aviso_por_par_de_clientes"),
+        ]
+
+    def __str__(self):
+        return f"{self.cliente} ↔ {self.otro}"

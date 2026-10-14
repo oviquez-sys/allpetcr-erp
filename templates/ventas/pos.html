@@ -266,7 +266,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
       <button type="button" id="btnCliNuevo" title="Registrar un cliente nuevo">＋ Cliente</button>
     </div>
     <div class="cupon-fila" id="cuponFila">
-      <input id="cuponCodigo" placeholder="🎟 Cupón o WhatsApp del cliente" autocomplete="off" spellcheck="false" maxlength="20" aria-label="Cupón de la manada o número de WhatsApp del cliente">
+      <input id="cuponCodigo" placeholder="🎟 Cupón, WhatsApp o cédula del cliente" autocomplete="off" spellcheck="false" maxlength="60" aria-label="Cupón de la manada, WhatsApp, cédula o correo del cliente">
       <button type="button" id="btnCupon">Aplicar</button>
       <button type="button" id="btnManada" title="Unir a la manada a un cliente que no pudo escanear el QR">🐾 Unir</button>
     </div>
@@ -367,7 +367,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
     <div class="step2"><div class="n">3</div><div class="st">Tocá cómo paga: <b>Efectivo</b>, <b>Tarjeta</b> o <b>SINPE</b>. Sale el tiquete solo.</div></div>
     <div class="step2"><div class="n">4</div><div class="st">Si el cliente lleva fiado, elegí su nombre arriba y usá <b>Fiado</b>.</div></div>
     <div class="step2"><div class="n">5</div><div class="st"><b>Descuento o regalo.</b> Debajo de cada producto podés poner un <b>descuento</b> en % (número entero), o escribir directo <b>el precio</b> al que se lo dejás (ej. ₡2.000) y el sistema calcula el descuento. También podés marcarlo como <b>🎁 Regalo</b> (sale gratis, pero igual descuenta del inventario y se registra el costo).</div></div>
-    <div class="step2"><div class="n">6</div><div class="st"><b>🎟 Cupón de la manada.</b> Si el cliente trae un código (empieza con AP-) o te dice su número de WhatsApp, escribilo en la casilla dorada y Enter. Si no pudo escanear el QR, tocá <b>🐾 Unir</b>: lo registrás ahí mismo y el regalo se aplica en esta compra. El descuento se aplica a toda la venta y el cupón queda usado al cobrar: no sirve dos veces.</div></div>
+    <div class="step2"><div class="n">6</div><div class="st"><b>🎟 Casilla dorada.</b> En <b>cada compra</b> preguntale al cliente su WhatsApp o su cédula y escribilo ahí + Enter: la venta queda a su nombre (así se arma su historial y los recordatorios de comida). Si tiene su regalo de bienvenida pendiente, se aplica solo. También acepta el código del cupón (empieza con AP-). Si no pudo escanear el QR, tocá <b>🐾 Unir</b>: lo registrás ahí mismo y el regalo se aplica en esta compra. El descuento se aplica a toda la venta y el cupón queda usado al cobrar: no sirve dos veces.</div></div>
     <div class="step2"><div class="n">7</div><div class="st"><b>Con el teclado es más rápido.</b> <b>F1</b> cobra en efectivo (escribí con cuánto paga y Enter; Enter solo = pagó exacto), <b>F2</b> con tarjeta, <b>F3</b> por SINPE y <b>F4</b> pago mixto. <b>Esc</b> limpia la búsqueda y devuelve el cursor al escáner.</div></div>
     <button class="close" onclick="document.getElementById('ayuda').classList.remove('on')">Entendido</button>
   </div>
@@ -389,6 +389,10 @@ let carrito = {};
 // descripcion, cliente:{nombre,...}} o null. Se revisa en el servidor al
 // aplicarlo, y el servidor lo vuelve a validar (y lo quema) al cobrar.
 let cupon = null;
+// Cliente reconocido por la casilla dorada SIN regalo pendiente (14/10/2026):
+// no hay descuento, pero la venta queda a su nombre y llena su historial.
+let clienteReconocido = null;
+let clientePorCasilla = false;   // el selector de cliente lo puso la casilla, no el cajero
 
 const selCli = document.getElementById('cliente');
 clientes.forEach(c => {
@@ -964,16 +968,34 @@ document.getElementById('buscar').addEventListener('input', () => {
 // --- Cupón de la manada (13/10/2026) ---------------------------------------
 function pintarCupon(){
   const fila = document.getElementById('cuponFila'), on = document.getElementById('cuponOn');
+  const compras = c => (c && c.compras != null) ? ` · ${c.compras} compra${c.compras === 1 ? '' : 's'}` : '';
   if (cupon){
-    on.innerHTML = `🎟 <span>Cupón <b>${esc(cupon.codigo)}</b>: <b>${esc(cupon.porcentaje)}%</b> — ${esc(cupon.cliente.nombre)}</span>
+    on.innerHTML = `🎟 <span>Cupón <b>${esc(cupon.codigo)}</b>: <b>${esc(cupon.porcentaje)}%</b> — ${esc(cupon.cliente.nombre)}${compras(cupon.cliente)}</span>
+      <button type="button" class="x" onclick="quitarCupon(true)">Quitar</button>`;
+    on.hidden = false; fila.hidden = true;
+  } else if (clienteReconocido){
+    on.innerHTML = `🐾 <span><b>${esc(clienteReconocido.nombre)}</b>${compras(clienteReconocido)}${clienteReconocido.aviso ? ' — ' + esc(clienteReconocido.aviso) : ''}</span>
       <button type="button" class="x" onclick="quitarCupon(true)">Quitar</button>`;
     on.hidden = false; fila.hidden = true;
   } else {
     on.hidden = true; fila.hidden = false;
   }
 }
+// Pone al cliente en el selector de arriba: es lo que viaja con la venta.
+function elegirCliente(c){
+  const sel = document.getElementById('cliente');
+  if (![...sel.options].some(o => o.value == c.id)){
+    const o = document.createElement('option'); o.value = c.id;
+    o.textContent = `${c.nombre} — disponible ${fmt(c.disponible)}`; sel.appendChild(o);
+  }
+  sel.value = c.id;
+  clientePorCasilla = true;
+}
 function quitarCupon(repintar){
   cupon = null;
+  clienteReconocido = null;
+  if (clientePorCasilla) document.getElementById('cliente').value = '';
+  clientePorCasilla = false;
   document.getElementById('cuponCodigo').value = '';
   pintarCupon();
   if (repintar) pintar();
@@ -981,14 +1003,23 @@ function quitarCupon(repintar){
 async function aplicarCupon(){
   const inp = document.getElementById('cuponCodigo');
   const codigo = inp.value.trim();
-  if (!codigo){ msg("Escriba el código del cupón.", true); inp.focus(); return; }
+  if (!codigo){ msg("Escriba el cupón, el WhatsApp o la cédula del cliente.", true); inp.focus(); return; }
   try {
     const r = await fetch("{% url 'ventas:cupon' %}?codigo=" + encodeURIComponent(codigo));
     const d = await r.json();
     if (!d.ok){ msg("⛔ " + d.error, true); inp.select(); return; }
-    cupon = {codigo: d.codigo, porcentaje: d.porcentaje, descripcion: d.descripcion, cliente: d.cliente};
+    if (d.codigo){
+      cupon = {codigo: d.codigo, porcentaje: d.porcentaje, descripcion: d.descripcion, cliente: d.cliente};
+      clienteReconocido = null;
+      msg(`Cupón aplicado: ${d.porcentaje}% a ${d.cliente.nombre}. Se marca usado al cobrar.`);
+    } else {
+      // Sin regalo pendiente: no hay descuento, pero la compra queda a su nombre.
+      cupon = null;
+      clienteReconocido = Object.assign({}, d.cliente, {aviso: d.aviso || ''});
+      msg(`🐾 ${d.cliente.nombre}: la venta queda a su nombre.`);
+    }
+    elegirCliente(d.cliente);
     pintarCupon(); pintar();
-    msg(`Cupón aplicado: ${d.porcentaje}% a ${d.cliente.nombre}. Se marca usado al cobrar.`);
     volverAlEscaner();
   } catch(e){
     msg("⛔ No se pudo revisar el cupón. Revise la conexión e intente de nuevo.", true);

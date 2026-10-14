@@ -1,0 +1,139 @@
+{% extends "admin/base_site.html" %}
+{% block title %}{{ cliente.nombre }} · Clientes{% endblock %}
+{% block extrahead %}{{ block.super }}{% include "manada/_estilos.html" %}<style>
+.head{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(140deg,#0B3161,#1f5a8f);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0}
+.nombre{font-size:22px;font-weight:700}
+.datos{font-size:13px;color:#6e6e73;margin-top:4px;line-height:1.6}
+.datos b{color:#1d1d1f}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi{background:#f5f7fa;border-radius:12px;padding:10px 14px;font-size:12px;color:#6e6e73}
+.kpi b{display:block;font-size:20px;color:#1d1d1f;margin-top:2px}
+.grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+.masc{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #ececf0;font-size:13.5px}
+.masc:last-child{border:none}
+.masc .ic{font-size:22px}
+.masc small{color:#6e6e73}
+.nota{font-size:12px;color:#6e6e73;margin-top:8px;line-height:1.5}
+.volver{display:inline-block;font-size:14px;color:#0B3161 !important;margin-bottom:12px}
+@media(max-width:860px){.grid{grid-template-columns:minmax(0,1fr)}.kpis{grid-template-columns:1fr 1fr}}
+</style>{% endblock %}
+{% block content_title %}{% endblock %}
+{% block content %}
+<div class="mn">
+  <a class="volver" href="{% url 'manada:clientes' %}">← Clientes</a>
+
+  {% for d in duplicados %}
+  <div class="aviso">
+    ⚠️ <span style="flex:1"><b>Posible duplicado:</b> {{ d.motivo }} La otra ficha es
+      <a href="{% url 'manada:ficha' d.el_otro.pk %}" style="color:#5c140f;text-decoration:underline">{{ d.el_otro.nombre }}</a>{% if d.origen %} ({{ d.origen }}){% endif %}. ¿Es la misma persona?</span>
+    <form method="post" action="{% url 'manada:resolver_duplicado' d.pk %}" onsubmit="return confirm('Todo lo de {{ d.el_otro.nombre|escapejs }} pasa a esta ficha. ¿Seguir?')">
+      {% csrf_token %}<input type="hidden" name="conservar" value="{{ cliente.pk }}"><input type="hidden" name="accion" value="unir">
+      <button class="btn azul">Sí, unir aquí</button></form>
+    <form method="post" action="{% url 'manada:resolver_duplicado' d.pk %}">
+      {% csrf_token %}<input type="hidden" name="conservar" value="{{ cliente.pk }}"><input type="hidden" name="accion" value="distintos">
+      <button class="btn gris">No, es otra persona</button></form>
+  </div>
+  {% endfor %}
+
+  <div class="card">
+    <div class="head">
+      <div class="avatar">{{ inicial }}</div>
+      <div style="flex:1;min-width:240px">
+        <div class="nombre">{{ cliente.nombre }}
+          {% if perfil %}<span class="chip oro">🐾 Manada desde {{ perfil.creado_en|date:"d/m/Y" }}</span>
+            {% if acepta %}<span class="chip ok">Acepta promociones</span>{% else %}<span class="chip no">No aceptó promociones</span>{% endif %}{% endif %}</div>
+        <div class="datos">
+          {% if cliente.telefono %}WhatsApp <b>{{ cliente.telefono }}</b>{% else %}Sin WhatsApp{% endif %}
+          · {% if cliente.identificacion %}Cédula <b>{{ cliente.identificacion }}</b>{% else %}sin cédula{% endif %}
+          {% if cliente.email %}· {{ cliente.email }}{% endif %}
+          {% if perfil %}<br>Se registró {{ perfil.get_origen_display|lower }}{% if perfil.fuente %} · llegó por «{{ perfil.fuente }}»{% endif %}{% endif %}
+        </div>
+      </div>
+      {% if whatsapp %}<a class="btn wa" href="{{ whatsapp }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}
+      <a class="btn gris" href="{% url 'admin:ventas_cliente_change' cliente.pk %}">Editar datos</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="kpis">
+      <div class="kpi">Compras<b>{{ resumen.compras }}</b></div>
+      <div class="kpi">Total gastado<b>₡{{ resumen.total|crc:0 }}</b></div>
+      <div class="kpi">Última compra<b>{% if dias_desde is None %}—{% elif dias_desde == 0 %}hoy{% else %}hace {{ dias_desde }} día{{ dias_desde|pluralize }}{% endif %}</b></div>
+      <div class="kpi">Viene cada<b>{% if resumen.cada_dias %}~{{ resumen.cada_dias }} días{% else %}—{% endif %}</b></div>
+    </div>
+    {% if resumen.marcas %}
+    <div style="margin-top:14px;font-size:12.5px;color:#6e6e73;margin-bottom:6px">Marcas que compra</div>
+    {% for m, n in resumen.marcas %}<span class="chip marca">{{ m }} · {{ n }}</span>{% endfor %}
+    {% endif %}
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h2>Su comida: cuándo se le acaba</h2>
+        <div class="ex">Calculado con el ritmo real de sus compras. Con una sola compra todavía no se sabe.</div>
+        {% if consumibles %}
+        <div class="tabla-scroll"><table class="mt">
+          <tr><th>Producto</th><th class="n">Veces</th><th class="n">Cada</th><th>Se le acaba aprox.</th><th></th></tr>
+          {% for i in consumibles %}
+          <tr>
+            <td><b>{{ i.producto.nombre }}</b><div class="prod">última: {{ i.ultima|date:"d/m/Y" }}</div></td>
+            <td class="n">{{ i.veces }}</td>
+            <td class="n">{% if i.cada_dias %}~{{ i.cada_dias }} días{% else %}—{% endif %}</td>
+            <td>{% if i.se_acaba is None %}<span class="gris">falta otra compra</span>
+                {% elif i.estado == "pronto" %}<span class="pronto">≈ {{ i.se_acaba|date:"d/m" }} · {% if i.dias_para > 0 %}en {{ i.dias_para }} día{{ i.dias_para|pluralize }}{% elif i.dias_para == 0 %}hoy{% else %}hace {{ i.dias_para|stringformat:"d"|cut:"-" }} días{% endif %}</span>
+                {% else %}<span class="bien">≈ {{ i.se_acaba|date:"d/m/Y" }}</span>{% endif %}</td>
+            <td>{% if i.enlace and i.estado == "pronto" %}<a class="btn wa" href="{{ i.enlace }}" target="_blank" rel="noopener">Avisar</a>{% endif %}</td>
+          </tr>
+          {% endfor %}
+        </table></div>
+        {% if not acepta %}<div class="nota">No tiene el botón «Avisar» porque no aceptó recibir mensajes.</div>{% endif %}
+        {% else %}<div class="vacio">No ha comprado alimento ni arena (o todavía no se registró a su nombre).</div>{% endif %}
+      </div>
+
+      <div class="card">
+        <h2>Historial de compras</h2>
+        <div class="ex">En la tienda y en el sitio web, de la más reciente a la más vieja.</div>
+        {% if compras %}
+        <div class="tabla-scroll"><table class="mt">
+          <tr><th>Fecha</th><th>Dónde</th><th>Qué compró</th><th class="n">Total</th></tr>
+          {% for c in compras %}
+          <tr>
+            <td>{{ c.fecha|date:"d/m/Y" }}<div class="prod">{{ c.numero }}</div></td>
+            <td><span class="canal {% if c.canal == 'Tienda' %}t{% else %}w{% endif %}">{{ c.canal }}</span></td>
+            <td>{% for p, q in c.lineas %}{% if not forloop.first %}<div class="prod">{% endif %}{{ p.nombre }} ×{{ q|floatformat:"-2" }}{% if not forloop.first %}</div>{% endif %}{% endfor %}
+              {% if c.con_cupon %}<div class="prod">🎟 cupón de bienvenida</div>{% endif %}</td>
+            <td class="n">₡{{ c.total|crc:0 }}</td>
+          </tr>
+          {% endfor %}
+        </table></div>
+        {% else %}<div class="vacio">Todavía no tiene compras a su nombre. En caja, escribí su WhatsApp o cédula en la casilla dorada para que queden registradas.</div>{% endif %}
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <h2>Sus mascotas</h2>
+        <div class="ex">Lo que contó al registrarse.</div>
+        {% for m in mascotas %}
+        <div class="masc"><span class="ic">{% if m.especie == "PER" %}🐕{% elif m.especie == "GAT" %}🐈{% else %}🐾{% endif %}</span>
+          <div><b>{{ m.nombre }}</b><br><small>{{ m.get_especie_display }}{% if m.raza %} · {{ m.raza }}{% endif %}{% if m.edad_texto %} · {{ m.edad_texto }}{% endif %}{% if m.peso_kg %} · {{ m.peso_kg|floatformat:"-1" }} kg{% endif %}</small>
+            {% if m.notas %}<br><small>{{ m.notas }}</small>{% endif %}</div></div>
+        {% empty %}<div class="ex" style="margin:0">No nos ha contado de sus mascotas.</div>{% endfor %}
+      </div>
+
+      <div class="card">
+        <h2>Cómo se reconoce en cada compra</h2>
+        <div class="ex">En caja se escribe su WhatsApp o su cédula en la casilla dorada. El sistema busca en este orden:</div>
+        <table class="mt">
+          <tr><td>1. Cédula</td><td class="n {% if cliente.identificacion %}bien{% else %}gris{% endif %}">{% if cliente.identificacion %}✓ {{ cliente.identificacion }}{% else %}falta{% endif %}</td></tr>
+          <tr><td>2. WhatsApp</td><td class="n {% if cliente.telefono %}bien{% else %}gris{% endif %}">{% if cliente.telefono %}✓ {{ cliente.telefono }}{% else %}falta{% endif %}</td></tr>
+          <tr><td>3. Correo</td><td class="n {% if cliente.email %}bien{% else %}gris{% endif %}">{% if cliente.email %}✓ {{ cliente.email|truncatechars:24 }}{% else %}falta{% endif %}</td></tr>
+        </table>
+        <div class="nota">Si dos datos apuntan a personas distintas, no se une solo: sale el aviso de «Posible duplicado». El nombre nunca une por sí mismo.</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

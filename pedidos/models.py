@@ -51,6 +51,12 @@ class Pedido(models.Model):
     cliente_identificacion = models.CharField(max_length=20, blank=True)
     cliente_telefono = models.CharField(max_length=30)
     cliente_email = models.EmailField(blank=True)
+    # A quién se le liga en la base de clientes (14/10/2026): se reconoce por
+    # cédula, teléfono o correo al crear el pedido (manada.identificar). Los
+    # campos cliente_* de arriba se quedan como estaban: son lo que la persona
+    # escribió ese día, y el courier los necesita aunque el cliente cambie.
+    cliente = models.ForeignKey("ventas.Cliente", null=True, blank=True, on_delete=models.PROTECT,
+                                related_name="pedidos_web")
     direccion_texto = models.CharField(max_length=300, help_text="Dirección escrita, la que necesita el courier")
     direccion_lat = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     direccion_lng = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)

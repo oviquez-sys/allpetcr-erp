@@ -1,0 +1,61 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Listas para promociones{% endblock %}
+{% block extrahead %}{{ block.super }}{% include "manada/_estilos.html" %}<style>
+.filtro{display:grid;grid-template-columns:2fr 1fr auto;gap:10px;align-items:end}
+.filtro label{display:block;font-size:12.5px;font-weight:600;color:#6e6e73;margin-bottom:5px}
+.filtro select,#mensaje{width:100%;box-sizing:border-box;font-size:15px !important;padding:10px 12px !important;border-radius:11px !important}
+#mensaje{font-family:inherit;resize:vertical}
+@media(max-width:640px){.filtro{grid-template-columns:1fr}}
+</style>{% endblock %}
+{% block content_title %}{% endblock %}
+{% block content %}
+<div class="mn">
+  <div class="mn-title">Listas para promociones</div>
+  <div class="mn-sub">Miembros que aceptaron promociones y compraron una marca en los últimos 6 meses. Solo aparecen los que dieron permiso (Ley 8968).</div>
+  {% include "manada/_pestanas.html" %}
+  <div class="card">
+    <form method="get" class="filtro">
+      <div><label for="marca">Marca que compraron</label>
+        <select id="marca" name="marca"><option value="">— cualquiera —</option>
+          {% for m, n in marcas %}<option value="{{ m }}" {% if m == marca %}selected{% endif %}>{{ m }} ({{ n }} cliente{{ n|pluralize }})</option>{% endfor %}
+        </select></div>
+      <div><label for="especie">Con mascota</label>
+        <select id="especie" name="especie"><option value="">— cualquiera —</option>
+          {% for v, t in especies %}<option value="{{ v }}" {% if v == especie %}selected{% endif %}>{{ t }}</option>{% endfor %}
+        </select></div>
+      <button class="btn azul" type="submit" style="padding:12px 18px">Ver lista</button>
+    </form>
+  </div>
+
+  {% if marca or especie %}
+  <div class="card">
+    <h2>{{ filas|length }} persona{{ filas|length|pluralize }}</h2>
+    {% if filas %}
+    <div class="ex">Escribí el mensaje una vez; {nombre} se cambia por el nombre de cada uno. Después tocá «Enviar» en cada fila.</div>
+    <textarea id="mensaje" rows="3">Hola {nombre}, esta semana tenemos {{ marca|default:"sus productos favoritos" }} en promoción en AllPetcr.com. ¿Se lo apartamos?</textarea>
+    <div class="tabla-scroll" style="margin-top:12px"><table class="mt">
+      <tr><th>Cliente</th><th class="n">Compras</th><th>Última</th><th></th></tr>
+      {% for f in filas %}
+      <tr>
+        <td><a href="{% url 'manada:ficha' f.cliente.pk %}"><b>{{ f.cliente.nombre }}</b></a><div class="prod">{{ f.cliente.telefono|default:"sin WhatsApp" }}</div></td>
+        <td class="n">{{ f.veces }}</td>
+        <td>{{ f.ultima|date:"d/m/Y" }}</td>
+        <td>{% if f.numero %}<a class="btn wa enviar" href="#" data-numero="{{ f.numero }}" data-nombre="{{ f.primer_nombre }}">Enviar</a>{% else %}<span class="chip no">sin WhatsApp</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </table></div>
+    {% else %}<div class="vacio">Nadie con permiso compró eso en los últimos 6 meses.</div>{% endif %}
+  </div>
+  {% endif %}
+</div>
+<script>
+document.querySelectorAll('.enviar').forEach(function(a){
+  a.addEventListener('click', function(e){
+    e.preventDefault();
+    var texto = document.getElementById('mensaje').value.split('{nombre}').join(a.dataset.nombre);
+    window.open('https://wa.me/' + a.dataset.numero + '?text=' + encodeURIComponent(texto), '_blank', 'noopener');
+    a.textContent = 'Enviado ✓'; a.style.background = '#8ac79c';
+  });
+});
+</script>
+{% endblock %}

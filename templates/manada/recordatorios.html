@@ -1,0 +1,41 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Recordatorios de comida{% endblock %}
+{% block extrahead %}{{ block.super }}{% include "manada/_estilos.html" %}{% endblock %}
+{% block content_title %}{% endblock %}
+{% block content %}
+<div class="mn">
+  <div class="mn-title">Recordatorios de comida</div>
+  <div class="mn-sub">A quién se le acaba el alimento o la arena en los próximos días, según su ritmo de compra.
+    El botón abre WhatsApp con el mensaje listo; revisalo y mandalo desde el teléfono de la tienda.</div>
+  {% include "manada/_pestanas.html" %}
+  <div class="card">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <span class="ex" style="margin:0">Se le acaba en los próximos:</span>
+      <a class="mn-tab {% if dias == 3 %}on{% endif %}" href="?dias=3">3 días</a>
+      <a class="mn-tab {% if dias == 7 %}on{% endif %}" href="?dias=7">7 días</a>
+      <a class="mn-tab {% if dias == 14 %}on{% endif %}" href="?dias=14">14 días</a>
+      <a class="mn-tab {% if dias == 30 %}on{% endif %}" href="?dias=30">30 días</a>
+    </div>
+    {% if filas %}
+    <div class="ex">{{ filas|length }} producto{{ filas|length|pluralize }} · {{ con_permiso }} con permiso para escribirles.</div>
+    <div class="tabla-scroll"><table class="mt">
+      <tr><th>Cliente</th><th>Qué se le acaba</th><th>Cuándo</th><th></th></tr>
+      {% for r in filas %}
+      <tr>
+        <td><a href="{% url 'manada:ficha' r.cliente.pk %}"><b>{{ r.cliente.nombre }}</b></a><div class="prod">{{ r.cliente.telefono|default:"sin WhatsApp" }}</div></td>
+        <td>{{ r.consumible.producto.nombre }}<div class="prod">lo compra cada ~{{ r.consumible.cada_dias }} días · última {{ r.consumible.ultima|date:"d/m" }}</div></td>
+        <td class="{% if r.consumible.dias_para <= 0 %}pronto{% else %}bien{% endif %}">
+          {% if r.consumible.dias_para > 0 %}en {{ r.consumible.dias_para }} día{{ r.consumible.dias_para|pluralize }}{% elif r.consumible.dias_para == 0 %}hoy{% else %}ya se le acabó{% endif %}
+          <div class="prod">≈ {{ r.consumible.se_acaba|date:"d/m/Y" }}</div></td>
+        <td>{% if r.enlace %}<a class="btn wa" href="{{ r.enlace }}" target="_blank" rel="noopener">Avisar</a>
+            {% elif not r.acepta %}<span class="chip no" title="No aceptó recibir mensajes (Ley 8968)">sin permiso</span>
+            {% else %}<span class="chip no">sin WhatsApp</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </table></div>
+    {% else %}
+    <div class="vacio">Nadie en este plazo. Los recordatorios salen cuando un cliente ya compró el mismo alimento al menos dos veces a su nombre.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

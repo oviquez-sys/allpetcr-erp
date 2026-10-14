@@ -1,0 +1,6 @@
+<div class="mn-tabs">
+  <a class="mn-tab {% if pestana == 'clientes' %}on{% endif %}" href="{% url 'manada:clientes' %}">Clientes</a>
+  <a class="mn-tab {% if pestana == 'recordatorios' %}on{% endif %}" href="{% url 'manada:recordatorios' %}">Recordatorios de comida</a>
+  <a class="mn-tab {% if pestana == 'promociones' %}on{% endif %}" href="{% url 'manada:promociones' %}">Promociones</a>
+  <a class="mn-tab {% if pestana == 'duplicados' %}on{% endif %}" href="{% url 'manada:duplicados' %}">Posibles duplicados{% if pendientes %}<span class="n">{{ pendientes }}</span>{% endif %}</a>
+</div>

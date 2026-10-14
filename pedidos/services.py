@@ -116,6 +116,13 @@ def crear_pedido(
     except IntegrityError:
         return Pedido.objects.get(empresa=empresa, referencia_pago=referencia_pago)
 
+    # Se liga con la base de clientes (14/10/2026): por cédula, teléfono o
+    # correo. Así lo que compra en el sitio aparece en su ficha junto con lo
+    # de la tienda, y sirve para los recordatorios de comida.
+    from manada.identificar import cliente_para_pedido
+    pedido.cliente = cliente_para_pedido(pedido)
+    pedido.save(update_fields=["cliente"])
+
     subtotal = impuesto = Decimal("0")
     for linea in lineas:
         producto = Producto.objects.select_for_update().get(pk=linea["producto_id"], empresa=empresa)

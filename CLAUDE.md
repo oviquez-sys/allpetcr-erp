@@ -479,6 +479,36 @@ se acordaba de su correo ni de su clave de Google. Ahora:
   quien no pudo escanear el QR; aplica el regalo en la misma venta. Exige la
   casilla "el cliente aceptó" (Ley 8968).
 
+**Historial de compras y recordatorios (14/10/2026).** Pedido de Oscar: ver
+qué compró cada cliente y cuándo, para avisarle que se le acaba la comida y
+mandarle promociones de sus marcas. Aprobó el ejemplo `ejemplo_ficha_cliente.html`.
+- **Reconocer (control cruzado)**: `manada/identificar.py` busca cédula →
+  teléfono (últimos 8 dígitos) → correo. El NOMBRE nunca une: solo sugiere
+  (`avisar_si_mismo_nombre`). Si dos datos apuntan a clientes distintos se
+  queda con el primero y crea `PosibleDuplicado` (uno por par, nunca insiste
+  si ya se decidió). `unir_clientes` mueve facturas, pedidos, CxC (+saldo),
+  mascotas, y perfil/cupón si faltaban; el absorbido queda inactivo.
+- **Caja**: la casilla dorada (`ventas:cupon`) acepta código, WhatsApp, cédula
+  o correo. Si el cliente tiene regalo disponible lo aplica; si no, igual lo
+  pone en el selector de cliente → la venta queda a su nombre. Decisión de
+  Oscar: pedir WhatsApp o cédula en CADA compra. `cliente_rapido` también
+  reconoce antes de crear.
+- **Sitio**: `Pedido.cliente` (nuevo) se llena en `crear_pedido` con
+  `cliente_para_pedido`; si no reconoce, crea el Cliente pero NO lo hace
+  miembro (falta su consentimiento). Pendiente en `allpetcr-web`: casilla
+  "Quiero unirme a la manada" en el pago.
+- **Historial** (`manada/historial.py`): facturas EMI + pedidos no cancelados.
+  "Se le acaba" = ritmo real (kilos si todos los productos dicen su contenido,
+  si no unidades); misma `ficha_alimento` = mismo alimento aunque cambie la
+  bolsa. Con una sola compra NO estima. Consumibles = raíz Alimento o Arena.
+- **Pantallas** (gerente, Admin → Herramientas → Clientes y manada):
+  `manada:clientes`, `manada:ficha`, `manada:recordatorios`,
+  `manada:promociones`, `manada:duplicados`. WhatsApp por enlace `wa.me`
+  (decisión de Oscar: a mano desde el teléfono de la tienda, sin API paga).
+  Solo quien tiene `acepta_promociones` lleva botón (Ley 8968).
+- Pruebas: `manada/test_historial.py`. Las 3 pruebas de concurrencia de
+  pedidos/facturación fallan en SQLite (sandbox): necesitan PostgreSQL.
+
 ## Descuento por precio final y en números enteros (13/10/2026)
 
 Pedido de Oscar: los decimales en el % eran imposibles de teclear, y quería

@@ -1,0 +1,80 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Clientes y manada{% endblock %}
+{% block extrahead %}{{ block.super }}{% include "manada/_estilos.html" %}<style>
+#buscar{width:100%;padding:14px 16px !important;font-size:16px !important;border-radius:14px !important;box-sizing:border-box}
+.fila{display:flex;align-items:center;gap:12px;padding:10px 8px;border-bottom:1px solid #f0f0f3;border-radius:10px;color:#1d1d1f !important}
+.fila:hover{background:#f5f8fb}
+.fila .av{width:38px;height:38px;border-radius:50%;background:#eef3fa;color:#0B3161;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.fila .nm{flex:1;min-width:0}
+.fila .nm b{font-size:14px}
+.fila .nm small{display:block;color:#6e6e73;font-size:12px}
+.fila .cp{text-align:right;font-size:12.5px;color:#6e6e73;white-space:nowrap}
+.fila .cp b{display:block;font-size:15px;color:#1d1d1f}
+.cuenta{font-size:12.5px;color:#6e6e73;margin:10px 4px 6px}
+.filtros{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+</style>{% endblock %}
+{% block content_title %}{% endblock %}
+{% block content %}
+<div class="mn">
+  <div class="mn-title">Clientes y manada</div>
+  <div class="mn-sub">Todos los clientes, con lo que compraron en la tienda y en el sitio. {{ miembros }} son de la manada 🐾.</div>
+  {% include "manada/_pestanas.html" %}
+  <div class="card">
+    <input id="buscar" placeholder="🔎 Nombre, WhatsApp, cédula o correo…" autofocus autocomplete="off">
+    <div class="filtros">
+      <button type="button" class="mn-tab on" data-f="todos">Todos</button>
+      <button type="button" class="mn-tab" data-f="manada">Solo la manada 🐾</button>
+      <button type="button" class="mn-tab" data-f="compras">Con compras</button>
+    </div>
+    <div class="cuenta" id="cuenta"></div>
+    <div id="lista">
+      {% for f in filas %}
+      <a class="fila" href="{% url 'manada:ficha' f.c.pk %}" data-m="{{ f.miembro|yesno:'1,0' }}" data-n="{{ f.compras }}"
+         data-b="{{ f.c.nombre|lower }} {{ f.c.telefono }} {{ f.c.identificacion }} {{ f.c.email|lower }}">
+        <span class="av">{{ f.c.nombre|slice:":1"|upper }}</span>
+        <span class="nm"><b>{{ f.c.nombre }}</b>{% if f.miembro %} <span class="chip oro">🐾 manada</span>{% endif %}
+          <small>{% if f.c.telefono %}WhatsApp {{ f.c.telefono }}{% endif %}{% if f.c.identificacion %} · Cédula {{ f.c.identificacion }}{% endif %}{% if f.c.email %} · {{ f.c.email }}{% endif %}</small></span>
+        <span class="cp"><b>{{ f.compras }}</b>compra{{ f.compras|pluralize }}{% if f.ultima %}<br>última {{ f.ultima|date:"d/m/Y" }}{% endif %}</span>
+      </a>
+      {% empty %}<div class="vacio">Todavía no hay clientes.</div>{% endfor %}
+    </div>
+    <div class="vacio" id="sinres" style="display:none">Nadie coincide con la búsqueda.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var TOPE = 100, filtro = 'todos';
+  var filas = Array.prototype.slice.call(document.querySelectorAll('#lista .fila'));
+  function norm(t){ return (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+  function digitos(t){ return (t || '').replace(/\D/g, ''); }
+  filas.forEach(function(f){ f._b = norm(f.dataset.b); f._d = digitos(f.dataset.b); });
+  var input = document.getElementById('buscar');
+  function pintar(){
+    var q = norm(input.value.trim()), qd = digitos(q), palabras = q ? q.split(/\s+/) : [];
+    var vistos = 0, total = 0;
+    filas.forEach(function(f){
+      // Un número se busca por sus dígitos: "8888-1234" encuentra "88881234".
+      var ok = qd.length >= 4 && qd.length === q.replace(/[\s\-+]/g, '').length
+        ? f._d.indexOf(qd) >= 0
+        : palabras.every(function(w){ return f._b.indexOf(w) >= 0; });
+      if (filtro === 'manada') ok = ok && f.dataset.m === '1';
+      if (filtro === 'compras') ok = ok && +f.dataset.n > 0;
+      if (ok) total++;
+      var ver = ok && vistos < TOPE; f.style.display = ver ? '' : 'none'; if (ver) vistos++;
+    });
+    document.getElementById('sinres').style.display = total ? 'none' : '';
+    document.getElementById('cuenta').textContent = total + ' cliente' + (total === 1 ? '' : 's') +
+      (total > TOPE ? ' · se muestran los primeros ' + TOPE + ', buscá para ver el resto' : '');
+  }
+  input.addEventListener('input', pintar);
+  document.querySelectorAll('[data-f]').forEach(function(b){
+    b.addEventListener('click', function(){
+      filtro = b.dataset.f;
+      document.querySelectorAll('[data-f]').forEach(function(x){ x.classList.toggle('on', x === b); });
+      pintar();
+    });
+  });
+  pintar();
+})();
+</script>
+{% endblock %}

@@ -16,6 +16,7 @@ urlpatterns = [
     path("impresion/", include("impresion.urls")),
     path("precios/", include("catalogo.urls")),
     path("contabilidad/", include("contabilidad.urls")),
+    path("manada/", include("manada.urls")),
     path("api/", include("api.urls")),
     path("admin/", admin.site.urls),
 ]

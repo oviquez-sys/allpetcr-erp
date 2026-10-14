@@ -170,6 +170,15 @@ def registrar_miembro(*, empresa, email="", nombre="", telefono="", google_sub="
                    .filter(empresa=empresa, email__iexact=email, activo=True).order_by("id").first())
     if cliente is None and telefono:
         cliente = cliente_por_telefono(empresa, telefono, bloquear=True)
+    # Control cruzado (14/10/2026): si el correo dice una persona y el
+    # teléfono otra, se sigue con la primera pero queda el aviso de posible
+    # duplicado para que alguien de la tienda decida.
+    if cliente is not None and email and telefono:
+        from .identificar import avisar_duplicado
+        otro = cliente_por_telefono(empresa, telefono)
+        if otro is not None and otro.pk != cliente.pk:
+            avisar_duplicado(cliente, otro, f"El correo es de {cliente.nombre}, pero el teléfono es de {otro.nombre}.",
+                             "Registro en la manada")
     cliente_nuevo = cliente is None
     if cliente_nuevo:
         cliente = Cliente.objects.create(

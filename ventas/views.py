@@ -170,35 +170,68 @@ def cliente_rapido(request):
         tipo = ""
     identificacion = (datos.get("identificacion") or "").strip()[:30]
     empresa = sesion.sucursal.empresa
-    if identificacion:
-        existente = Cliente.objects.filter(empresa=empresa, identificacion=identificacion, activo=True).first()
-        if existente is not None:
-            return JsonResponse({"ok": True, "ya_existia": True, "cliente": _cliente_json(existente)})
+    telefono = (datos.get("telefono") or "").strip()[:30]
+    # Antes de crear, se busca por cédula, teléfono y correo (14/10/2026): la
+    # misma persona con dos fichas parte su historial en dos.
+    from manada.identificar import avisar_conflictos, avisar_si_mismo_nombre, identificar
+    r = identificar(empresa, cedula=identificacion, telefono=telefono, correo=email)
+    if r.cliente is not None:
+        avisar_conflictos(r, "Caja · cliente nuevo")
+        return JsonResponse({"ok": True, "ya_existia": True, "cliente": _cliente_json(r.cliente)})
     cliente = Cliente.objects.create(
         empresa=empresa, nombre=nombre, email=email, tipo_identificacion=tipo,
-        identificacion=identificacion, telefono=(datos.get("telefono") or "").strip()[:30],
+        identificacion=identificacion, telefono=telefono,
     )
+    avisar_si_mismo_nombre(cliente, "Caja · cliente nuevo")
     return JsonResponse({"ok": True, "ya_existia": False, "cliente": _cliente_json(cliente)})
 
 
 @rol_requerido(CAJERO, GERENTE)
 def cupon(request):
-    """Revisa un cupón de la manada ANTES de cobrar, para que el cajero vea
-    el descuento aplicado y a nombre de quién está. No lo marca usado: eso
-    pasa solo al registrar la venta (ventas.services.registrar_venta)."""
+    """La casilla dorada del POS: cupón de la manada, o reconocer al cliente.
+
+    - Un código (AP-…) se revisa como siempre. No lo marca usado: eso pasa
+      solo al registrar la venta (ventas.services.registrar_venta).
+    - Un teléfono, una cédula o un correo (14/10/2026) reconocen al cliente
+      (manada.identificar: cédula → teléfono → correo). Si tiene su regalo
+      de bienvenida sin usar, se aplica; si no, la venta igual queda a su
+      nombre, sin descuento. Es lo que llena su historial de compras: sin
+      esto, desde la segunda compra el miembro era "Consumidor final".
+    """
+    from manada.identificar import avisar_conflictos, identificar_texto, solo_digitos
+    from manada.models import Cupon
     from manada.services import cupon_para_venta
 
     sesion = sesion_abierta_de(request.user)
     if sesion is None:
         return JsonResponse({"ok": False, "error": "No tiene una caja abierta."}, status=400)
-    try:
-        c = cupon_para_venta(sesion.sucursal.empresa, request.GET.get("codigo", ""))
-    except ValidationError as e:
-        return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)
-    return JsonResponse({
-        "ok": True, "codigo": c.codigo, "porcentaje": float(c.porcentaje),
-        "descripcion": c.descripcion, "cliente": _cliente_json(c.cliente),
-    })
+    empresa = sesion.sucursal.empresa
+    texto = (request.GET.get("codigo") or "").strip()
+    es_dato_de_cliente = "@" in texto or len(solo_digitos(texto)) >= 8
+    if not es_dato_de_cliente:
+        try:
+            c = cupon_para_venta(empresa, texto)
+        except ValidationError as e:
+            return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)
+        return JsonResponse(_json_cupon(c))
+
+    r = identificar_texto(empresa, texto)
+    if r.cliente is None:
+        return JsonResponse({"ok": False, "error": "No hay ningún cliente con ese dato. "
+                                                   "Si quiere unirse, use 🐾 Unir."}, status=400)
+    avisar_conflictos(r, "Caja")
+    c = Cupon.objects.filter(cliente=r.cliente, tipo=Cupon.Tipo.BIENVENIDA).select_related("cliente").first()
+    if c is not None and c.estado == "DISPONIBLE":
+        return JsonResponse(_json_cupon(c))
+    aviso = {"USADO": "Su regalo de bienvenida ya se usó.", "VENCIDO": "Su regalo de bienvenida venció."}.get(
+        c.estado if c is not None else "", "")
+    return JsonResponse({"ok": True, "codigo": None, "cliente": _cliente_json(r.cliente, con_historial=True),
+                         "aviso": aviso})
+
+
+def _json_cupon(c):
+    return {"ok": True, "codigo": c.codigo, "porcentaje": float(c.porcentaje),
+            "descripcion": c.descripcion, "cliente": _cliente_json(c.cliente, con_historial=True)}
 
 
 @rol_requerido(CAJERO, GERENTE)
@@ -246,10 +279,16 @@ def manada_rapido(request):
     })
 
 
-def _cliente_json(c):
-    return {"id": c.id, "nombre": c.nombre, "email": c.email,
-            "limite_credito": float(c.limite_credito), "saldo": float(c.saldo),
-            "disponible": float(c.limite_credito - c.saldo)}
+def _cliente_json(c, con_historial=False):
+    datos = {"id": c.id, "nombre": c.nombre, "email": c.email,
+             "limite_credito": float(c.limite_credito), "saldo": float(c.saldo),
+             "disponible": float(c.limite_credito - c.saldo)}
+    if con_historial:
+        # Para que el cajero vea a quién reconoció: "🐾 María · 4 compras".
+        from manada.historial import cantidad_de_compras
+        datos["compras"] = cantidad_de_compras(c)
+        datos["miembro"] = hasattr(c, "manada")
+    return datos
 
 
 @rol_requerido(CAJERO, GERENTE)
