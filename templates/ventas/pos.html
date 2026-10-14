@@ -205,6 +205,9 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 /* display:flex de arriba le gana al atributo hidden: sin esto quedaba una
    franja dorada vacía debajo del cupón (13/10/2026). */
 .cupon-fila[hidden],.cupon-on[hidden]{display:none}
+#btnManada{border-color:#CC9539;background:#CC9539;color:#fff;white-space:nowrap}
+.dlg label.chk{display:flex;gap:8px;align-items:center;font-weight:400;margin-top:10px}
+.dlg label.chk input{width:auto;margin:0}
 .busca-fila{display:flex;gap:8px}
 .busca-fila #buscar{flex:1}
 #btnCamara{display:none;padding:0 16px;border-radius:14px;border:1px solid var(--line);background:#fff;font-size:22px;cursor:pointer}
@@ -263,8 +266,9 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
       <button type="button" id="btnCliNuevo" title="Registrar un cliente nuevo">＋ Cliente</button>
     </div>
     <div class="cupon-fila" id="cuponFila">
-      <input id="cuponCodigo" placeholder="🎟 Cupón de la manada (si el cliente trae uno)" autocomplete="off" spellcheck="false" maxlength="20" aria-label="Cupón de la manada">
+      <input id="cuponCodigo" placeholder="🎟 Cupón o WhatsApp del cliente" autocomplete="off" spellcheck="false" maxlength="20" aria-label="Cupón de la manada o número de WhatsApp del cliente">
       <button type="button" id="btnCupon">Aplicar</button>
+      <button type="button" id="btnManada" title="Unir a la manada a un cliente que no pudo escanear el QR">🐾 Unir</button>
     </div>
     <div class="cupon-on" id="cuponOn" hidden></div>
     <div id="lineas"></div>
@@ -332,6 +336,20 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
   </form>
 </dialog>
 
+<dialog class="dlg" id="dlgManada" aria-labelledby="tMan">
+  <form method="dialog" id="frmManada">
+    <h2 id="tMan">🐾 Unir a la manada</h2>
+    <div class="sub">Para el cliente que no pudo escanear el QR. Recibe su regalo de bienvenida en esta misma compra.</div>
+    <label for="manNombre">Nombre</label><input id="manNombre" autocomplete="off">
+    <label for="manTel">WhatsApp</label><input id="manTel" autocomplete="off" inputmode="tel" placeholder="8888-8888">
+    <label for="manCorreo">Correo <span style="font-weight:400;color:var(--ink2)">(opcional)</span></label><input id="manCorreo" type="email" autocomplete="off">
+    <label class="chk"><input type="checkbox" id="manAcepto"> El cliente aceptó que guardemos sus datos</label>
+    <label class="chk"><input type="checkbox" id="manPromos"> Quiere recibir promociones por WhatsApp</label>
+    <div class="err" id="manErr"></div>
+    <div class="acc"><button type="button" data-cerrar>Cancelar</button><button class="pri" id="manOk">Unir y aplicar regalo</button></div>
+  </form>
+</dialog>
+
 <dialog class="dlg" id="dlgCamara" aria-labelledby="tCam">
   <h2 id="tCam">Escanear con la cámara</h2>
   <div class="sub">Apunte al código de barras. Se agrega solo.</div>
@@ -349,7 +367,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
     <div class="step2"><div class="n">3</div><div class="st">Tocá cómo paga: <b>Efectivo</b>, <b>Tarjeta</b> o <b>SINPE</b>. Sale el tiquete solo.</div></div>
     <div class="step2"><div class="n">4</div><div class="st">Si el cliente lleva fiado, elegí su nombre arriba y usá <b>Fiado</b>.</div></div>
     <div class="step2"><div class="n">5</div><div class="st"><b>Descuento o regalo.</b> Debajo de cada producto podés poner un <b>descuento</b> en % (número entero), o escribir directo <b>el precio</b> al que se lo dejás (ej. ₡2.000) y el sistema calcula el descuento. También podés marcarlo como <b>🎁 Regalo</b> (sale gratis, pero igual descuenta del inventario y se registra el costo).</div></div>
-    <div class="step2"><div class="n">6</div><div class="st"><b>🎟 Cupón de la manada.</b> Si el cliente trae un código (empieza con AP-), escribilo en la casilla dorada y Enter. El descuento se aplica a toda la venta y el cupón queda usado al cobrar: no sirve dos veces.</div></div>
+    <div class="step2"><div class="n">6</div><div class="st"><b>🎟 Cupón de la manada.</b> Si el cliente trae un código (empieza con AP-) o te dice su número de WhatsApp, escribilo en la casilla dorada y Enter. Si no pudo escanear el QR, tocá <b>🐾 Unir</b>: lo registrás ahí mismo y el regalo se aplica en esta compra. El descuento se aplica a toda la venta y el cupón queda usado al cobrar: no sirve dos veces.</div></div>
     <div class="step2"><div class="n">7</div><div class="st"><b>Con el teclado es más rápido.</b> <b>F1</b> cobra en efectivo (escribí con cuánto paga y Enter; Enter solo = pagó exacto), <b>F2</b> con tarjeta, <b>F3</b> por SINPE y <b>F4</b> pago mixto. <b>Esc</b> limpia la búsqueda y devuelve el cursor al escáner.</div></div>
     <button class="close" onclick="document.getElementById('ayuda').classList.remove('on')">Entendido</button>
   </div>
@@ -977,6 +995,44 @@ async function aplicarCupon(){
   }
 }
 document.getElementById('btnCupon').addEventListener('click', aplicarCupon);
+// Unir a la manada desde la caja (14/10/2026): para quien no pudo con el QR.
+document.getElementById('btnManada').addEventListener('click', () => {
+  ['manNombre','manTel','manCorreo'].forEach(i => document.getElementById(i).value = '');
+  document.getElementById('manAcepto').checked = false;
+  document.getElementById('manPromos').checked = false;
+  document.getElementById('manErr').textContent = '';
+  document.getElementById('dlgManada').showModal();
+  document.getElementById('manNombre').focus();
+});
+document.getElementById('frmManada').addEventListener('submit', async e => {
+  e.preventDefault();
+  const err = document.getElementById('manErr'); err.textContent = '';
+  const v = id => document.getElementById(id).value.trim();
+  if (!v('manNombre')){ err.textContent = 'Escriba el nombre.'; return; }
+  if (!v('manTel') && !v('manCorreo')){ err.textContent = 'Escriba el WhatsApp (o el correo).'; return; }
+  if (!document.getElementById('manAcepto').checked){ err.textContent = 'Pregúntele si acepta que guardemos sus datos y marque la casilla.'; return; }
+  try {
+    const r = await fetch("{% url 'ventas:manada_rapido' %}", {method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
+      body: JSON.stringify({nombre: v('manNombre'), telefono: v('manTel'), email: v('manCorreo'), acepto: true,
+                            promos: document.getElementById('manPromos').checked})});
+    const d = await r.json();
+    if (!d.ok){ err.textContent = d.error; return; }
+    const c = d.cliente, sel = document.getElementById('cliente');
+    if (![...sel.options].some(o => o.value == c.id)){
+      const o = document.createElement('option'); o.value = c.id; o.textContent = `${c.nombre} — disponible ${fmt(c.disponible)}`; sel.appendChild(o);
+    }
+    sel.value = c.id;
+    document.getElementById('dlgManada').close();
+    if (d.cupon){
+      document.getElementById('cuponCodigo').value = d.cupon;
+      await aplicarCupon();
+      msg(d.ya_era_miembro ? `${c.nombre} ya era de la manada: se aplicó su regalo.` : `🐾 ${c.nombre} se unió a la manada. Regalo aplicado.`);
+    } else {
+      msg(d.ya_era_miembro ? `${c.nombre} ya era de la manada; su regalo ${d.cupon_estado ? 'está ' + d.cupon_estado : 'no está disponible'}.` : `${c.nombre} se unió a la manada.`);
+    }
+  } catch(_){ err.textContent = 'No se pudo conectar con el ERP.'; }
+});
 document.getElementById('cuponCodigo').addEventListener('keydown', e=>{
   if (e.key === 'Enter'){ e.preventDefault(); aplicarCupon(); }
 });

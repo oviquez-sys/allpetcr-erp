@@ -10,6 +10,7 @@ urlpatterns = [
     path("producto/", views.producto_por_codigo, name="producto_por_codigo"),
     path("cliente-rapido/", views.cliente_rapido, name="cliente_rapido"),
     path("cupon/", views.cupon, name="cupon"),
+    path("manada-rapido/", views.manada_rapido, name="manada_rapido"),
     path("historial/", views.historial, name="historial"),
     path("tiquete/<int:factura_id>/", views.tiquete, name="tiquete"),
     path("factura/<int:factura_id>/", views.factura, name="factura"),

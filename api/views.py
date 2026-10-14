@@ -249,11 +249,16 @@ class EstadoPedidoView(APIView):
 # la API: lo llama el servidor del sitio con su token, nunca el navegador.
 
 class ManadaRegistroView(APIView):
-    """POST {email, nombre?, telefono?, google_sub?, verificado, acepta_promociones, fuente?}
+    """POST {nombre?, telefono?, email?, google_sub?, verificado, acepta_promociones, fuente?}
 
-    `verificado` lo pone el sitio SOLO cuando Google confirmó el correo. Sin
-    eso, la respuesta no trae el código del cupón ni la llave de mascotas:
-    ambos viajan únicamente al correo, que es la prueba de que es suyo."""
+    Hace falta el teléfono o el correo. `verificado` lo pone el sitio SOLO
+    cuando Google confirmó el correo.
+
+    Qué se le muestra al cliente (14/10/2026): el código y la llave de
+    mascotas viajan en la respuesta cuando el cupón SE ACABA DE CREAR en esta
+    misma petición (o con Google). A quien escribe un número o un correo que
+    ya estaba registrado no se le muestra el código de esa persona: se le dice
+    que lo pida en caja, donde basta con dar el número."""
 
     def post(self, request):
         from manada.correo import enviar_bienvenida
@@ -278,9 +283,11 @@ class ManadaRegistroView(APIView):
         correo_enviado = enviar_bienvenida(resultado)
         cupon = resultado.cupon
         perfil = resultado.perfil
+        mostrar = verificado or resultado.cupon_nuevo
         salida = {
             "nombre": resultado.cliente.nombre,
             "cliente_nuevo": resultado.cliente_nuevo,
+            "ya_era_miembro": not resultado.perfil_nuevo,
             "correo_enviado": correo_enviado,
             "mascotas_pendientes": perfil.mascotas_registradas_en is None,
             "cupon": None,
@@ -293,9 +300,9 @@ class ManadaRegistroView(APIView):
                 "estado": cupon.estado,
                 "nuevo": resultado.cupon_nuevo,
             }
-            if verificado:
+            if mostrar:
                 salida["cupon"]["codigo"] = cupon.codigo
-        if verificado and perfil.token_mascotas:
+        if (verificado or resultado.perfil_nuevo) and perfil.token_mascotas:
             salida["token_mascotas"] = perfil.token_mascotas
         return Response(salida, status=status.HTTP_201_CREATED if resultado.cliente_nuevo else status.HTTP_200_OK)
 

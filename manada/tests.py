@@ -103,6 +103,60 @@ class Registro(ConRegalia):
             self.registrar(telefono="123")
 
 
+class PorTelefono(ConRegalia):
+    def test_el_mismo_numero_escrito_distinto_es_la_misma_persona(self):
+        a = registrar_miembro(empresa=self.empresa, nombre="Rosa", telefono="8888-1234")
+        b = registrar_miembro(empresa=self.empresa, nombre="Rosa", telefono="+506 8888 1234")
+        self.assertEqual(a.cliente.pk, b.cliente.pk)
+        self.assertFalse(b.cupon_nuevo)
+        self.assertFalse(b.perfil_nuevo)
+
+    def test_usa_el_cliente_de_caja_con_ese_telefono(self):
+        viejo = Cliente.objects.create(empresa=self.empresa, nombre="Rosa (caja)", telefono="8888-1234")
+        r = registrar_miembro(empresa=self.empresa, nombre="Rosa", telefono="88881234")
+        self.assertEqual(r.cliente.pk, viejo.pk)
+
+    def test_la_caja_encuentra_el_cupon_por_el_numero(self):
+        r = registrar_miembro(empresa=self.empresa, nombre="Rosa", telefono="8888-1234")
+        self.assertEqual(cupon_para_venta(self.empresa, "8888 1234").pk, r.cupon.pk)
+        f = self.vender(cupon="88881234")
+        self.assertEqual(f.total, Decimal("4770.00"))
+        with self.assertRaisesMessage(ValidationError, "no tiene cupón"):
+            cupon_para_venta(self.empresa, "7777-0000")
+
+    def test_alguien_ajeno_no_cambia_las_preferencias(self):
+        registrar_miembro(empresa=self.empresa, nombre="Rosa", telefono="88881234", acepta_promociones=True)
+        registrar_miembro(empresa=self.empresa, nombre="X", telefono="88881234", acepta_promociones=False)
+        self.assertTrue(PerfilManada.objects.get().acepta_promociones)
+
+
+class UnirEnCaja(ConRegalia):
+    def setUp(self):
+        super().setUp()
+        cajero = User.objects.create_user("maria", password="c", is_staff=True)
+        cajero.groups.add(Group.objects.get(name="Cajero"))
+        self.client.force_login(cajero)
+
+    def post(self, **datos):
+        base = {"nombre": "Doña Rosa", "telefono": "8888-1234", "acepto": True}
+        base.update(datos)
+        return self.client.post(reverse("ventas:manada_rapido"), json.dumps(base), content_type="application/json")
+
+    def test_une_y_devuelve_el_cupon(self):
+        r = self.post()
+        self.assertEqual(r.status_code, 200, r.content)
+        self.assertTrue(r.json()["cupon"].startswith("AP-"))
+        self.assertEqual(PerfilManada.objects.get().origen, PerfilManada.Origen.CAJA)
+
+    def test_sin_aceptar_no_guarda_nada(self):
+        r = self.post(acepto=False)
+        self.assertEqual(r.status_code, 400)
+        self.assertFalse(PerfilManada.objects.exists())
+
+    def test_la_caja_tiene_el_boton(self):
+        self.assertContains(self.client.get(reverse("ventas:pos")), 'id="btnManada"')
+
+
 class Codigos(ConRegalia):
     def test_normaliza_lo_que_teclea_el_cajero(self):
         self.assertEqual(normalizar_codigo(" ap-7k3p9q "), "AP-7K3P9Q")
@@ -319,14 +373,34 @@ class APIManada(ConRegalia):
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(r.data["cupon"]["codigo"], mail.outbox[0].body)
 
-    def test_por_correo_el_codigo_solo_va_al_correo(self):
+    def test_formulario_muestra_el_codigo_nuevo_en_pantalla(self):
+        # 14/10/2026: mucha gente no se acuerda del correo; el código sale
+        # en pantalla apenas se crea, y también va al correo si lo dio.
         r = self.post()
         self.assertEqual(r.status_code, 201)
+        codigo = Cupon.objects.get().codigo
+        self.assertEqual(r.data["cupon"]["codigo"], codigo)
+        self.assertTrue(r.data["token_mascotas"])
+        self.assertIn(codigo, mail.outbox[0].body)
+
+    def test_un_registro_repetido_no_muestra_el_codigo_ajeno(self):
+        self.post()
+        r = self.post(nombre="Otro")
         self.assertNotIn("codigo", r.data["cupon"])
         self.assertNotIn("token_mascotas", r.data)
-        codigo = Cupon.objects.get().codigo
-        self.assertIn(codigo, mail.outbox[0].body)
-        self.assertIn("/manada/mascota?t=", mail.outbox[0].body)
+        self.assertTrue(r.data["ya_era_miembro"])
+
+    def test_solo_con_whatsapp(self):
+        r = self.api.post(reverse("api:manada_registro"),
+                          {"nombre": "Doña Rosa", "telefono": "8888-1234"}, format="json")
+        self.assertEqual(r.status_code, 201, r.data)
+        self.assertTrue(r.data["cupon"]["codigo"].startswith("AP-"))
+        self.assertFalse(r.data["correo_enviado"])
+        self.assertEqual(Cliente.objects.get(nombre="Doña Rosa").telefono, "88881234")
+
+    def test_sin_whatsapp_ni_correo(self):
+        r = self.api.post(reverse("api:manada_registro"), {"nombre": "X"}, format="json")
+        self.assertEqual(r.status_code, 400)
 
     def test_sin_verificar_no_se_acepta_google_sub(self):
         # Si el sitio no verificó, un google_sub suelto no puede "adueñarse"

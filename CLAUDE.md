@@ -465,6 +465,20 @@ compra, un solo uso por persona) → opcional "Contanos de tu mascota", una vez.
   `SITIO_WEB_URL` arma el enlace de mascotas.
 - Pruebas: `manada/tests.py`.
 
+**Sin correo ni contraseña (14/10/2026).** En la tienda mucha gente mayor no
+se acordaba de su correo ni de su clave de Google. Ahora:
+- Registro web: nombre + WhatsApp (correo opcional). El código sale en
+  pantalla **si el cupón se acaba de crear**; si el número ya estaba, no se
+  muestra el código de esa persona ("pedilo en caja con tu número").
+- `registrar_miembro` busca por google_sub → correo → teléfono
+  (`cliente_por_telefono`: últimos 8 dígitos, los de caja tienen guiones).
+  A un miembro existente solo se le completan datos vacíos; sus preferencias
+  solo cambian con Google.
+- La casilla dorada del POS acepta el código **o el WhatsApp** (≥ 8 dígitos).
+- Botón **🐾 Unir** en el POS (`ventas:manada_rapido`, origen CAJA): para
+  quien no pudo escanear el QR; aplica el regalo en la misma venta. Exige la
+  casilla "el cliente aceptó" (Ley 8968).
+
 ## Descuento por precio final y en números enteros (13/10/2026)
 
 Pedido de Oscar: los decimales en el % eran imposibles de teclear, y quería

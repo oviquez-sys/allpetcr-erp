@@ -76,6 +76,8 @@ class PerfilManada(models.Model):
     class Origen(models.TextChoices):
         GOOGLE = "GOO", "Google"
         CORREO = "COR", "Correo"
+        FORMULARIO = "FOR", "Formulario web"
+        CAJA = "CAJ", "En la caja"
 
     cliente = models.OneToOneField(Cliente, on_delete=models.PROTECT, related_name="manada")
     origen = models.CharField("se registró con", max_length=3, choices=Origen.choices)

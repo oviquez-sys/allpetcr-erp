@@ -33,6 +33,8 @@ def enviar_bienvenida(resultado) -> bool:
     if not correo_activo():
         return False
     cliente, cupon, perfil = resultado.cliente, resultado.cupon, resultado.perfil
+    if not cliente.email:
+        return False   # se registró solo con el WhatsApp
     if cupon is None and not perfil.token_mascotas:
         return False
     contexto = {

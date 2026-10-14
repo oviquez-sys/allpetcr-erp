@@ -201,6 +201,51 @@ def cupon(request):
     })
 
 
+@rol_requerido(CAJERO, GERENTE)
+@require_POST
+def manada_rapido(request):
+    """Une a la manada a un cliente que está en el mostrador (14/10/2026).
+
+    Para quien no puede escanear el QR —celular viejo, persona mayor—: el
+    cajero escribe nombre y WhatsApp, y el cupón queda aplicado a la venta en
+    curso. Hace falta la casilla de que el cliente aceptó (Ley 8968): el
+    cajero se lo pregunta de viva voz."""
+    from manada.models import PerfilManada
+    from manada.services import registrar_miembro
+
+    sesion = sesion_abierta_de(request.user)
+    if sesion is None:
+        return JsonResponse({"ok": False, "error": "No tiene una caja abierta."}, status=400)
+    try:
+        datos = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "Datos inválidos."}, status=400)
+    if datos.get("acepto") is not True:
+        return JsonResponse({"ok": False, "error": "Pregúntele al cliente si acepta que guardemos sus datos."},
+                            status=400)
+    if not (datos.get("nombre") or "").strip():
+        return JsonResponse({"ok": False, "error": "Escriba el nombre del cliente."}, status=400)
+    try:
+        r = registrar_miembro(
+            empresa=sesion.sucursal.empresa, nombre=datos.get("nombre") or "",
+            telefono=datos.get("telefono") or "", email=datos.get("email") or "",
+            acepta_promociones=datos.get("promos") is True, fuente="caja",
+            origen=PerfilManada.Origen.CAJA,
+        )
+    except ValidationError as e:
+        return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)
+    cupon = r.cupon
+    return JsonResponse({
+        "ok": True,
+        "ya_era_miembro": not r.perfil_nuevo,
+        "cliente": _cliente_json(r.cliente),
+        # En el mostrador sí se muestra el código aunque ya existiera: el
+        # cliente está ahí en persona.
+        "cupon": cupon.codigo if cupon is not None and cupon.estado == "DISPONIBLE" else "",
+        "cupon_estado": cupon.estado_display if cupon is not None else "",
+    })
+
+
 def _cliente_json(c):
     return {"id": c.id, "nombre": c.nombre, "email": c.email,
             "limite_credito": float(c.limite_credito), "saldo": float(c.saldo),

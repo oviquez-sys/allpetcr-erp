@@ -97,6 +97,7 @@ class ResultadoRegistro:
     cupon: Cupon | None
     cupon_nuevo: bool
     cliente_nuevo: bool
+    perfil_nuevo: bool = False
 
 
 def _limpiar_telefono(texto: str) -> str:
@@ -111,25 +112,51 @@ def _limpiar_telefono(texto: str) -> str:
     return ("+" if texto.startswith("+") else "") + digitos
 
 
+def _ocho_digitos(telefono: str) -> str:
+    """Los últimos 8 dígitos: así "8888-1234", "88881234" y "+506 8888 1234"
+    son el mismo número. En caja se escribieron de todas esas formas."""
+    return "".join(c for c in (telefono or "") if c.isdigit())[-8:]
+
+
+def cliente_por_telefono(empresa, telefono, *, bloquear=False):
+    """El cliente activo con ese número, sin importar cómo se escribió. Se
+    filtra en la base por los últimos 4 dígitos y se compara el resto acá:
+    los teléfonos guardados no tienen un formato único."""
+    ocho = _ocho_digitos(telefono)
+    if len(ocho) < 8:
+        return None
+    qs = Cliente.objects.filter(empresa=empresa, activo=True, telefono__endswith=ocho[-4:]).order_by("id")
+    if bloquear:
+        qs = qs.select_for_update()
+    return next((c for c in qs if _ocho_digitos(c.telefono) == ocho), None)
+
+
 @transaction.atomic
-def registrar_miembro(*, empresa, email, nombre="", telefono="", google_sub="",
-                      verificado=False, acepta_promociones=False, fuente="") -> ResultadoRegistro:
+def registrar_miembro(*, empresa, email="", nombre="", telefono="", google_sub="", verificado=False,
+                      acepta_promociones=False, fuente="", origen=None) -> ResultadoRegistro:
     """Une a una persona a la manada y le da el cupón de bienvenida, una sola
     vez en la vida.
 
-    - Se busca primero por la cuenta de Google y después por el correo: la
-      misma persona nunca crea dos clientes ni recibe dos cupones.
-    - Si ya existía como cliente de la caja (con ese correo), se usa ESE
-      cliente: así su historial de compras queda junto.
+    Hace falta el correo O el WhatsApp (14/10/2026: mucha gente mayor no se
+    acuerda de su correo ni de su contraseña; con el número basta).
+
+    - Se busca a la persona por su cuenta de Google, después por el correo y
+      después por el teléfono: la misma persona nunca crea dos clientes ni
+      recibe dos cupones.
+    - Si ya existía como cliente de la caja, se usa ESE cliente: así su
+      historial de compras queda junto.
     - Registrarse otra vez no da otro cupón: devuelve el que ya tiene.
     """
     email = (email or "").strip().lower()[:254]
-    try:
-        validate_email(email)
-    except ValidationError:
-        raise ValidationError("El correo no parece válido.")
+    if email:
+        try:
+            validate_email(email)
+        except ValidationError:
+            raise ValidationError("El correo no parece válido.")
     nombre = " ".join((nombre or "").split())[:150]
     telefono = _limpiar_telefono(telefono)
+    if not email and not telefono:
+        raise ValidationError("Escribí tu número de WhatsApp o tu correo.")
     google_sub = (google_sub or "").strip()[:64]
     fuente = "".join(c for c in (fuente or "").lower() if c.isalnum() or c in "-_")[:40]
 
@@ -138,45 +165,55 @@ def registrar_miembro(*, empresa, email, nombre="", telefono="", google_sub="",
         perfil = (PerfilManada.objects.select_for_update().select_related("cliente")
                   .filter(google_sub=google_sub, cliente__empresa=empresa).first())
     cliente = perfil.cliente if perfil else None
-    if cliente is None:
+    if cliente is None and email:
         cliente = (Cliente.objects.select_for_update()
                    .filter(empresa=empresa, email__iexact=email, activo=True).order_by("id").first())
+    if cliente is None and telefono:
+        cliente = cliente_por_telefono(empresa, telefono, bloquear=True)
     cliente_nuevo = cliente is None
     if cliente_nuevo:
         cliente = Cliente.objects.create(
-            empresa=empresa, nombre=nombre or email.split("@")[0], email=email, telefono=telefono,
+            empresa=empresa, nombre=nombre or (email.split("@")[0] if email else telefono),
+            email=email, telefono=telefono,
         )
     else:
+        # Solo se completan los datos que faltan: quien no se identificó con
+        # Google no puede cambiarle el correo ni el nombre a un cliente ajeno.
         cambios = []
-        if not cliente.email:
+        if email and not cliente.email:
             cliente.email = email; cambios.append("email")
         if telefono and not cliente.telefono:
             cliente.telefono = telefono; cambios.append("telefono")
-        # Un nombre "de correo" (lo que se usó cuando no dieron nombre) se
-        # reemplaza por el real; un nombre que ya escribió alguien en caja no.
-        if nombre and cliente.nombre == cliente.email.split("@")[0]:
+        provisional = {cliente.email.split("@")[0] if cliente.email else "", cliente.telefono}
+        if nombre and cliente.nombre in provisional:
             cliente.nombre = nombre; cambios.append("nombre")
         if cambios:
             cliente.save(update_fields=cambios)
 
     if perfil is None:
         perfil = PerfilManada.objects.select_for_update().filter(cliente=cliente).first()
-    if perfil is None:
+    perfil_nuevo = perfil is None
+    if perfil_nuevo:
         perfil = PerfilManada.objects.create(
             cliente=cliente,
-            origen=PerfilManada.Origen.GOOGLE if google_sub else PerfilManada.Origen.CORREO,
+            origen=origen or (PerfilManada.Origen.GOOGLE if google_sub else PerfilManada.Origen.FORMULARIO),
             google_sub=google_sub or None, fuente=fuente,
         )
-    cambios = ["acepta_promociones", "consentimiento_en"]
-    perfil.acepta_promociones = bool(acepta_promociones)
-    perfil.consentimiento_en = timezone.now()
+    cambios = []
+    # Las preferencias de un miembro que ya existía solo las cambia él mismo
+    # (entrando con Google), no cualquiera que escriba su número.
+    if perfil_nuevo or verificado:
+        perfil.acepta_promociones = bool(acepta_promociones)
+        perfil.consentimiento_en = timezone.now()
+        cambios += ["acepta_promociones", "consentimiento_en"]
     if google_sub and not perfil.google_sub:
         perfil.google_sub = google_sub; cambios.append("google_sub")
     if verificado and not perfil.correo_verificado:
         perfil.correo_verificado = True; cambios.append("correo_verificado")
     if perfil.mascotas_registradas_en is None and not perfil.token_mascotas:
         perfil.token_mascotas = secrets.token_urlsafe(32); cambios.append("token_mascotas")
-    perfil.save(update_fields=cambios)
+    if cambios:
+        perfil.save(update_fields=cambios)
 
     cupon = Cupon.objects.filter(cliente=cliente, tipo=Cupon.Tipo.BIENVENIDA).first()
     cupon_nuevo = False
@@ -196,8 +233,8 @@ def registrar_miembro(*, empresa, email, nombre="", telefono="", google_sub="",
                 # Dos registros simultáneos de la misma persona: el otro ganó.
                 cupon = Cupon.objects.get(cliente=cliente, tipo=Cupon.Tipo.BIENVENIDA)
 
-    return ResultadoRegistro(cliente=cliente, perfil=perfil, cupon=cupon,
-                             cupon_nuevo=cupon_nuevo, cliente_nuevo=cliente_nuevo)
+    return ResultadoRegistro(cliente=cliente, perfil=perfil, cupon=cupon, cupon_nuevo=cupon_nuevo,
+                             cliente_nuevo=cliente_nuevo, perfil_nuevo=perfil_nuevo)
 
 
 def _fecha_nacimiento(anios, meses) -> date | None:
@@ -273,15 +310,26 @@ def cupon_para_venta(empresa, codigo, *, bloquear=False) -> Cupon:
     """El cupón que la caja quiere aplicar, ya validado. Con `bloquear`
     toma la fila con bloqueo: lo usa registrar_venta para que dos cajas no
     puedan quemar el mismo cupón al mismo tiempo."""
-    codigo = normalizar_codigo(codigo)
-    if not codigo:
-        raise ValidationError("Escriba el código del cupón.")
+    texto = "".join(c for c in (codigo or "") if c.isalnum())
     qs = Cupon.objects.select_related("cliente", "factura")
     if bloquear:
         qs = qs.select_for_update(of=("self",))
-    cupon = qs.filter(empresa=empresa, codigo=codigo).first()
-    if cupon is None:
-        raise ValidationError(f"El cupón {codigo} no existe. Revise que esté bien escrito.")
+    # El cliente que no trae el código dice su número (14/10/2026): 8 dígitos
+    # o más es un teléfono; un código nunca pasa de 8 caracteres con el AP.
+    if texto.isdigit() and len(texto) >= 8:
+        cliente = cliente_por_telefono(empresa, texto)
+        cupon = (qs.filter(empresa=empresa, cliente=cliente, tipo=Cupon.Tipo.BIENVENIDA).first()
+                 if cliente else None)
+        if cupon is None:
+            raise ValidationError(f"El número {texto} no tiene cupón de la manada.")
+        codigo = cupon.codigo
+    else:
+        codigo = normalizar_codigo(codigo)
+        if not codigo:
+            raise ValidationError("Escriba el código del cupón o el número del cliente.")
+        cupon = qs.filter(empresa=empresa, codigo=codigo).first()
+        if cupon is None:
+            raise ValidationError(f"El cupón {codigo} no existe. Revise que esté bien escrito.")
     if cupon.usado_en:
         cuando = timezone.localtime(cupon.usado_en).strftime("%d/%m/%Y")
         donde = f" en la venta {cupon.factura.numero}" if cupon.factura_id else ""
