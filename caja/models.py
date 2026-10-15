@@ -32,6 +32,10 @@ class SesionCaja(models.Model):
                                           null=True, blank=True)
     sinpe_esperado = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     sinpe_contado = models.DecimalField("SINPE recibido", max_digits=12, decimal_places=2, null=True, blank=True)
+    # Cuántos billetes y monedas de cada uno se contaron al cerrar (14/10/2026),
+    # p. ej. {"20000": 2, "1000": 7, "100": 12}. monto_contado es su suma.
+    # Vacío en los cierres anteriores a este cambio.
+    conteo_efectivo = models.JSONField("billetes y monedas contados", null=True, blank=True)
 
     class Meta:
         verbose_name = "sesión de caja"
@@ -40,6 +44,12 @@ class SesionCaja(models.Model):
 
     def __str__(self):
         return f"Caja #{self.pk} — {self.usuario.username} ({self.get_estado_display()})"
+
+    def desglose(self):
+        """[(valor, cantidad, subtotal)] de lo contado, de mayor a menor."""
+        conteo = self.conteo_efectivo or {}
+        filas = [(int(v), int(n)) for v, n in conteo.items() if int(n)]
+        return [(v, n, v * n) for v, n in sorted(filas, reverse=True)]
 
 
 class MovimientoCaja(models.Model):

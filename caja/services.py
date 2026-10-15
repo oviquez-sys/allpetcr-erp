@@ -80,16 +80,36 @@ def esperado_por_medio(sesion) -> dict:
 
 
 @transaction.atomic
-def cerrar_caja(*, sesion, monto_contado, usuario=None, tarjeta_contado=None, sinpe_contado=None) -> SesionCaja:
+def cerrar_caja(*, sesion, monto_contado=None, usuario=None, tarjeta_contado=None, sinpe_contado=None,
+                conteo=None) -> SesionCaja:
     """Arqueo: se registra lo contado físicamente y se calcula la diferencia
     contra lo esperado. La sesión queda inmutable.
 
     tarjeta_contado / sinpe_contado (CAJ-02): lo que dice el cierre del
     datáfono y lo que de verdad entró por SINPE. Opcionales: vacío = no se
-    revisó, que no es lo mismo que cero."""
+    revisó, que no es lo mismo que cero.
+
+    conteo: {"20000": 2, "500": 6, ...}. Si viene, el efectivo contado es su
+    suma y queda guardado el desglose."""
     sesion = SesionCaja.objects.select_for_update().get(pk=sesion.pk)
     if sesion.estado != SesionCaja.Estado.ABIERTA:
         raise ValidationError("La sesión ya está cerrada.")
+    if conteo is not None:
+        # Conteo por billete y moneda (14/10/2026): el total lo calcula el
+        # servidor, no se confía en el que mostró el navegador.
+        from .denominaciones import TODAS, total
+        limpio = {}
+        for valor, cantidad in conteo.items():
+            if int(valor) not in TODAS:
+                raise ValidationError(f"₡{valor} no es un billete ni una moneda vigente.")
+            if int(cantidad) < 0:
+                raise ValidationError("La cantidad de billetes o monedas no puede ser negativa.")
+            if int(cantidad):
+                limpio[str(int(valor))] = int(cantidad)
+        sesion.conteo_efectivo = limpio
+        monto_contado = total(limpio)
+    if monto_contado is None:
+        raise ValidationError("Falta el efectivo contado.")
     monto_contado = Decimal(monto_contado)
     if monto_contado < 0:
         raise ValidationError("El monto contado no puede ser negativo.")

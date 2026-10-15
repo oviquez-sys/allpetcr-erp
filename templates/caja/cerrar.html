@@ -31,6 +31,31 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
 .cc-msg{padding:13px 18px;border-radius:14px;font-size:14.5px;margin-bottom:18px}
 .cc-msg.success{background:rgba(52,199,89,.12);color:#1c6b30}
 .cc-msg.info{background:rgba(11,49,97,.1);color:var(--brand)}
+/* Conteo por billete y moneda (14/10/2026): se anota cuántos hay de cada uno
+   y el total se va sumando solo. */
+.cc-head{position:sticky;top:0;z-index:2;background:#fff;display:flex;align-items:baseline;justify-content:space-between;
+  padding:4px 0 14px;margin-bottom:6px;border-bottom:1px solid #f0f0f2}
+.cc-head h2{font-size:19px;font-weight:700;margin:0;padding:0;background:none;color:#1d1d1f;text-transform:none;letter-spacing:-.01em}
+.cc-total{font-size:24px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:#1d1d1f}
+.cc-grupo{font-size:12.5px;font-weight:600;color:#86868b;text-transform:uppercase;letter-spacing:.06em;margin:18px 0 4px}
+.den{display:grid;grid-template-columns:1fr auto 104px;align-items:center;gap:14px;padding:9px 0;border-bottom:1px solid #f4f4f6}
+.den:last-of-type{border-bottom:none}
+.den-v{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;color:#1d1d1f}
+.den-n{display:flex;align-items:center;background:#f2f2f5;border-radius:12px;padding:3px}
+.den-n button{width:36px;height:36px;border:0;border-radius:9px;background:transparent;font-size:20px;line-height:1;color:#0b3161;cursor:pointer}
+.den-n button:hover{background:#fff}
+.den-n input{width:64px;border:0;background:transparent;text-align:center;font-size:17px;font-weight:600;
+  font-family:inherit;padding:6px 0;outline:none;-moz-appearance:textfield;font-variant-numeric:tabular-nums}
+.den-n input::-webkit-outer-spin-button,.den-n input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.den-n:focus-within{box-shadow:0 0 0 3px rgba(11,49,97,.18);background:#fff}
+.den-s{text-align:right;font-size:15px;color:#86868b;font-variant-numeric:tabular-nums}
+.den-s.si{color:#1d1d1f;font-weight:600}
+.den-err{grid-column:1/-1;color:#b5231a;font-size:12.5px}
+.cc-pie{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:14px;border-top:1.5px solid #e8e8ed;font-size:15px;color:#6e6e73}
+.cc-pie b{font-size:20px;color:#1d1d1f;font-variant-numeric:tabular-nums}
+.cc-card h3{font-size:17px;font-weight:700;margin:0 0 14px;padding:0;background:none;color:#1d1d1f;text-transform:none}
+.cc-row+.cc-row{margin-top:16px}
+@media (max-width:600px){.cc-card{padding:22px 18px}.den{grid-template-columns:1fr auto;gap:8px 12px}.den-s{grid-column:1/-1;text-align:left;font-size:13px;margin-top:-4px}}
 .cc-movtitle{font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#6e6e73;margin:0 0 14px 4px}
 .cc-movcard{background:#fff;border:.5px solid rgba(0,0,0,.06);border-radius:20px;overflow:hidden;
   box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05)}
@@ -47,24 +72,39 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
   <div class="cc-icon"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5h.01M18 14.5h.01"/></svg></div>
   <div class="cc-title">Cierre de caja #{{ sesion.pk }}</div>
   {% if sesion.usuario_id != request.user.id %}<div class="cc-sub">Esta caja la abrió <b>{{ sesion.usuario.username }}</b>; se comparte entre quienes venden en la tienda.</div>{% endif %}
-  <div class="cc-sub"><b>Contá el efectivo físico ANTES de continuar.</b> El sistema calcula el monto esperado y la diferencia al confirmar (arqueo ciego: así el conteo no se acomoda al número esperado).</div>
+  <div class="cc-sub"><b>Contá el efectivo de la gaveta.</b> Lo que se esperaba y la diferencia se ven al cerrar, no antes: así el conteo es honesto.</div>
 
   {% if messages %}{% for m in messages %}
     <div class="cc-msg {{ m.tags }}">{{ m }}</div>
   {% endfor %}{% endif %}
 
-  <div class="cc-card">
-    <form method="post">
-      {% csrf_token %}
-      {% if form.non_field_errors %}<div class="cc-errors">{{ form.non_field_errors }}</div>{% endif %}
+  <form method="post" id="cierre">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="cc-errors">{{ form.non_field_errors }}</div>{% endif %}
 
-      <div class="cc-row">
-        <label for="{{ form.monto_contado.id_for_label }}">{{ form.monto_contado.label }}</label>
-        {{ form.monto_contado }}
-        <div class="cc-help">{{ form.monto_contado.help_text }}</div>
-        {% if form.monto_contado.errors %}<div class="cc-help" style="color:#b5231a">{{ form.monto_contado.errors|join:", " }}</div>{% endif %}
+    <div class="cc-card">
+      <div class="cc-head"><h2>Efectivo</h2><span class="cc-total" id="total">₡0</span></div>
+      <div class="cc-help" style="margin-top:0">Anotá cuántos billetes y monedas hay de cada uno. El total se suma solo.</div>
+      {% for grupo, campos in grupos %}
+      <div class="cc-grupo">{{ grupo }}</div>
+      {% for valor, campo in campos %}
+      <div class="den">
+        <label class="den-v" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        <div class="den-n">
+          <button type="button" tabindex="-1" data-paso="-1" aria-label="Uno menos">−</button>
+          {{ campo }}
+          <button type="button" tabindex="-1" data-paso="1" aria-label="Uno más">+</button>
+        </div>
+        <div class="den-s" data-sub>₡0</div>
+        {% if campo.errors %}<div class="den-err">{{ campo.errors|join:", " }}</div>{% endif %}
       </div>
-      {% for campo in form %}{% if campo.name != "monto_contado" %}
+      {% endfor %}{% endfor %}
+      <div class="cc-pie"><span id="piezas">Nada contado todavía</span><b id="total2">₡0</b></div>
+    </div>
+
+    <div class="cc-card">
+      <h3>Datáfono y SINPE</h3>
+      {% for campo in form %}{% if campo.name == "tarjeta_contado" or campo.name == "sinpe_contado" %}
       <div class="cc-row">
         <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
         {{ campo }}
@@ -72,13 +112,12 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
         {% if campo.errors %}<div class="cc-help" style="color:#b5231a">{{ campo.errors|join:", " }}</div>{% endif %}
       </div>
       {% endif %}{% endfor %}
-
       <div class="cc-actions">
-        <button type="submit" class="cc-btn" onclick="return confirm('¿Confirma el cierre? La sesión quedará inmutable.');">Cerrar caja</button>
+        <button type="submit" class="cc-btn">Cerrar caja</button>
         <a class="cc-back" href="{% url 'ventas:pos' %}">← Volver al POS</a>
       </div>
-    </form>
-  </div>
+    </div>
+  </form>
 
   <div class="cc-movtitle">Movimientos de la sesión</div>
   <div class="cc-movcard">
@@ -99,4 +138,47 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
     </table>
   </div>
 </div>
+<script src="{% static 'js/formato.js' %}"></script>
+<script>
+(function () {
+  var form = document.getElementById("cierre");
+  var campos = Array.prototype.slice.call(form.querySelectorAll("input[data-valor]"));
+  var crc = function (n) { return "₡" + AllPetFormato.numeroCRC(n, 0); };
+  function cantidad(i) { var n = parseInt(i.value, 10); return isNaN(n) || n < 0 ? 0 : n; }
+  function sumar() {
+    var total = 0, piezas = 0;
+    campos.forEach(function (i) {
+      var n = cantidad(i), sub = n * parseInt(i.dataset.valor, 10);
+      var celda = i.closest(".den").querySelector("[data-sub]");
+      celda.textContent = crc(sub);
+      celda.classList.toggle("si", n > 0);
+      total += sub; piezas += n;
+    });
+    document.getElementById("total").textContent = crc(total);
+    document.getElementById("total2").textContent = crc(total);
+    document.getElementById("piezas").textContent = piezas ? piezas + (piezas === 1 ? " billete o moneda" : " billetes y monedas") : "Nada contado todavía";
+    return total;
+  }
+  campos.forEach(function (i, k) {
+    i.addEventListener("input", sumar);
+    i.addEventListener("focus", function () { i.select(); });
+    // Enter pasa al siguiente, no cierra la caja por accidente.
+    i.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); var sig = campos[k + 1] || document.getElementById("id_tarjeta_contado"); if (sig) sig.focus(); }
+    });
+  });
+  form.querySelectorAll("[data-paso]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var i = b.parentNode.querySelector("input");
+      i.value = Math.max(0, cantidad(i) + parseInt(b.dataset.paso, 10)) || "";
+      sumar();
+    });
+  });
+  form.addEventListener("submit", function (e) {
+    var total = sumar();
+    if (!confirm("¿Cerrar la caja con " + crc(total) + " en efectivo?\nDespués de cerrar ya no se puede cambiar.")) e.preventDefault();
+  });
+  sumar();
+})();
+</script>
 {% endblock %}

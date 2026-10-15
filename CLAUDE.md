@@ -516,6 +516,24 @@ mandarle promociones de sus marcas. Aprobó el ejemplo `ejemplo_ficha_cliente.ht
 - Pruebas: `manada/test_historial.py`. Las 3 pruebas de concurrencia de
   pedidos/facturación fallan en SQLite (sandbox): necesitan PostgreSQL.
 
+## Cierre de caja contando billetes y monedas (14/10/2026)
+
+Pedido de Oscar: en el cierre, anotar cuántos billetes y monedas hay de cada
+denominación y que el sistema vaya sumando.
+
+- Denominaciones en `caja/denominaciones.py` (ÚNICA lista; fuente BCCR,
+  revisada el 14/10/2026): billetes 20.000/10.000/5.000/2.000/1.000 y monedas
+  500/100/50/25/10. Sin el billete de ₡50.000 ni la moneda de ₡5 (fuera de
+  circulación). Si el BCCR cambia algo, se cambia solo esa lista.
+- `CerrarCajaForm` arma campos `den_<valor>`; vacío = 0. El total lo calcula el
+  SERVIDOR (`cerrar_caja(conteo=...)`); lo que sume el navegador es solo para
+  verlo. Se guarda el desglose en `SesionCaja.conteo_efectivo` (JSON) y se ve
+  en el admin. Los cierres viejos quedan con `null`.
+- Sigue siendo arqueo ciego: el total contado se ve; lo esperado, solo al cerrar.
+- Pantalla: − número + por fila, subtotal, total fijo arriba de la tarjeta;
+  Enter pasa a la siguiente casilla (no cierra). Pruebas en
+  `caja/test_conteo_billetes.py`.
+
 ## Descuento por precio final y en números enteros (13/10/2026)
 
 Pedido de Oscar: los decimales en el % eran imposibles de teclear, y quería

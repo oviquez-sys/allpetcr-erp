@@ -34,11 +34,12 @@ def cerrar(request):
     if not sesion:
         messages.info(request, "No tiene una caja abierta.")
         return redirect("caja:abrir")
-    form = CerrarCajaForm(request.POST or None)
+    # Con todo vacío (no había efectivo) el POST llega sin datos: igual es un cierre.
+    form = CerrarCajaForm(request.POST if request.method == "POST" else None)
     if request.method == "POST" and form.is_valid():
         try:
             sesion = services.cerrar_caja(
-                sesion=sesion, monto_contado=form.cleaned_data["monto_contado"], usuario=request.user,
+                sesion=sesion, conteo=form.cleaned_data["conteo"], usuario=request.user,
                 tarjeta_contado=form.cleaned_data.get("tarjeta_contado"),
                 sinpe_contado=form.cleaned_data.get("sinpe_contado"),
             )
@@ -55,4 +56,7 @@ def cerrar(request):
         except ValidationError as e:
             form.add_error(None, e)
     movimientos = sesion.movimientos.all()[:50]
-    return render(request, "caja/cerrar.html", {"form": form, "sesion": sesion, "movimientos": movimientos})
+    return render(request, "caja/cerrar.html", {
+        "form": form, "sesion": sesion, "movimientos": movimientos,
+        "grupos": [("Billetes", form.billetes()), ("Monedas", form.monedas())],
+    })

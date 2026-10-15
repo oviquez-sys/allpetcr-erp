@@ -19,6 +19,15 @@ class SesionCajaAdmin(SoloLectura, admin.ModelAdmin):
     list_display = ("id", "sucursal", "usuario", "estado", "monto_apertura",
                     "monto_esperado", "monto_contado", "diferencia", "abierta_en", "cerrada_en")
     list_filter = ("estado", "sucursal")
+    readonly_fields = ("billetes_y_monedas",)
+
+    @admin.display(description="Billetes y monedas contados")
+    def billetes_y_monedas(self, obj):
+        filas = obj.desglose()
+        if not filas:
+            return "—"
+        f = lambda n: f"{n:,}".replace(",", ".")
+        return "; ".join(f"{n} × ₡{f(v)} = ₡{f(st)}" for v, n, st in filas)
 
 
 @admin.register(MovimientoCaja)
