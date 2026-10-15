@@ -1,0 +1,2 @@
+{% comment %} Migas de la manada: Inicio (la pantalla de los botones) › Manada › donde está. Nada lleva a Administración. {% endcomment %}
+<div class="breadcrumbs"><a href="/">Inicio</a> &rsaquo; {% if cliente or pestana != 'clientes' %}<a href="{% url 'manada:clientes' %}">Manada</a> &rsaquo; {% if cliente %}{{ cliente.nombre }}{% elif pestana == 'mascotas' %}Mascotas{% elif pestana == 'recordatorios' %}Recordatorios{% elif pestana == 'promociones' %}Promociones{% else %}Posibles duplicados{% endif %}{% else %}Manada{% endif %}</div>

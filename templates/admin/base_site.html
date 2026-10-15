@@ -7,7 +7,7 @@
 <div id="site-name" style="display:flex;align-items:center;gap:12px;padding:6px 0">
   <a href="/" style="display:flex;align-items:center;gap:11px;text-decoration:none">
     <img src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetcr.com" style="height:54px;display:block">
-    <span style="font-weight:600;font-size:13px;color:#86868b;text-transform:uppercase;letter-spacing:.08em">Administración</span>
+    <span style="font-weight:600;font-size:13px;color:#86868b;text-transform:uppercase;letter-spacing:.08em">{% block seccion %}Administración{% endblock %}</span>
   </a>
 </div>
 {% endblock %}

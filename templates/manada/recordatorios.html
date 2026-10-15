@@ -1,20 +1,23 @@
 {% extends "admin/base_site.html" %}
-{% block title %}Recordatorios de comida{% endblock %}
+{% block title %}Recordatorios · Manada{% endblock %}
+{% block seccion %}Manada{% endblock %}
+{% block breadcrumbs %}{% include "manada/_migas.html" %}{% endblock %}
 {% block extrahead %}{{ block.super }}{% include "manada/_estilos.html" %}{% endblock %}
 {% block content_title %}{% endblock %}
 {% block content %}
 <div class="mn">
-  <div class="mn-title">Recordatorios de comida</div>
-  <div class="mn-sub">A quién se le acaba el alimento o la arena en los próximos días, según su ritmo de compra.
-    El botón abre WhatsApp con el mensaje listo; revisalo y mandalo desde el teléfono de la tienda.</div>
+  <div class="mn-title">Manada</div>
+  <div class="mn-sub">A quién se le acaba la comida pronto. «Avisar» abre WhatsApp con el mensaje listo.</div>
   {% include "manada/_pestanas.html" %}
   <div class="card">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-      <span class="ex" style="margin:0">Se le acaba en los próximos:</span>
-      <a class="mn-tab {% if dias == 3 %}on{% endif %}" href="?dias=3">3 días</a>
-      <a class="mn-tab {% if dias == 7 %}on{% endif %}" href="?dias=7">7 días</a>
-      <a class="mn-tab {% if dias == 14 %}on{% endif %}" href="?dias=14">14 días</a>
-      <a class="mn-tab {% if dias == 30 %}on{% endif %}" href="?dias=30">30 días</a>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+      <span class="ex" style="margin:0">Se le acaba en los próximos</span>
+      <div class="seg">
+      <a class="{% if dias == 3 %}on{% endif %}" href="?dias=3">3 días</a>
+      <a class="{% if dias == 7 %}on{% endif %}" href="?dias=7">7 días</a>
+      <a class="{% if dias == 14 %}on{% endif %}" href="?dias=14">14 días</a>
+      <a class="{% if dias == 30 %}on{% endif %}" href="?dias=30">30 días</a>
+      </div>
     </div>
     {% if filas %}
     <div class="ex">{{ filas|length }} producto{{ filas|length|pluralize }} · {{ con_permiso }} con permiso para escribirles.</div>

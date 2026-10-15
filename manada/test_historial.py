@@ -276,13 +276,31 @@ class Pantallas(BaseHistorial):
         self.assertEqual(aviso.resolucion, PosibleDuplicado.Resolucion.DISTINTOS)
         self.assertTrue(Cliente.objects.get(pk=otra.pk).activo)
 
-    def test_esta_en_administracion(self):
-        self.assertContains(self.client.get("/admin/"), reverse("manada:clientes"))
+    def test_esta_en_el_boton_manada_del_inicio_y_no_en_administracion(self):
+        # Pedido de Oscar (14/10/2026): todo lo de clientes y mascotas, en Manada.
+        self.assertContains(self.client.get("/"), reverse("manada:clientes"))
+        self.assertNotContains(self.client.get("/admin/"), reverse("manada:clientes"))
+
+    def test_mascotas_y_excel(self):
+        Mascota.objects.create(cliente=self.maria, nombre="Luna", especie="PER", raza="Labrador")
+        r = self.client.get(reverse("manada:mascotas"))
+        self.assertContains(r, "Luna")
+        self.assertContains(r, "María Rodríguez Solís")
+        r = self.client.get(reverse("manada:exportar"))
+        self.assertEqual(r.status_code, 200)
+        from io import BytesIO
+        from openpyxl import load_workbook
+        hoja = load_workbook(BytesIO(r.content)).active
+        fila = [c.value for c in hoja[2]]
+        self.assertEqual(fila[0], "María Rodríguez Solís")
+        self.assertEqual(fila[11], 2)            # compras
+        self.assertIn("Taste of the Wild", fila[14])
 
     def test_el_cajero_no_entra(self):
         cajero = User.objects.create_user("caja", password="x", is_staff=True)
         cajero.groups.add(Group.objects.get_or_create(name="Cajero")[0])
         self.client.force_login(cajero)
-        for nombre in ("manada:clientes", "manada:recordatorios", "manada:promociones", "manada:duplicados"):
+        for nombre in ("manada:clientes", "manada:mascotas", "manada:exportar", "manada:recordatorios",
+                       "manada:promociones", "manada:duplicados"):
             self.assertNotEqual(self.client.get(reverse(nombre)).status_code, 200, nombre)
         self.assertNotEqual(self.client.get(reverse("manada:ficha", args=[self.maria.pk])).status_code, 200)

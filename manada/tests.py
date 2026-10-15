@@ -470,7 +470,7 @@ class AdminManada(ConRegalia):
 
     def test_el_inicio_tiene_la_manada_y_no_cargar_excel(self):
         r = self.client.get("/")
-        self.assertContains(r, reverse("admin:manada_perfilmanada_changelist"))
+        self.assertContains(r, reverse("manada:clientes"))
         self.assertContains(r, "Recibir mercadería")
         self.assertNotContains(r, ">Cargar Excel<")
 

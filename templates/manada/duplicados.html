@@ -1,11 +1,13 @@
 {% extends "admin/base_site.html" %}
-{% block title %}Posibles duplicados{% endblock %}
+{% block title %}Posibles duplicados · Manada{% endblock %}
+{% block seccion %}Manada{% endblock %}
+{% block breadcrumbs %}{% include "manada/_migas.html" %}{% endblock %}
 {% block extrahead %}{{ block.super }}{% include "manada/_estilos.html" %}{% endblock %}
 {% block content_title %}{% endblock %}
 {% block content %}
 <div class="mn">
-  <div class="mn-title">Posibles duplicados</div>
-  <div class="mn-sub">Fichas que podrían ser la misma persona. El sistema nunca las une solo: abrí la ficha y decidí ahí.</div>
+  <div class="mn-title">Manada</div>
+  <div class="mn-sub">Fichas que podrían ser de la misma persona. Abrí una y decidí ahí: el sistema nunca las une solo.</div>
   {% include "manada/_pestanas.html" %}
   <div class="card">
     {% if avisos %}

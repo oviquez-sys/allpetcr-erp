@@ -501,9 +501,16 @@ mandarle promociones de sus marcas. Aprobó el ejemplo `ejemplo_ficha_cliente.ht
   "Se le acaba" = ritmo real (kilos si todos los productos dicen su contenido,
   si no unidades); misma `ficha_alimento` = mismo alimento aunque cambie la
   bolsa. Con una sola compra NO estima. Consumibles = raíz Alimento o Arena.
-- **Pantallas** (gerente, Admin → Herramientas → Clientes y manada):
-  `manada:clientes`, `manada:ficha`, `manada:recordatorios`,
-  `manada:promociones`, `manada:duplicados`. WhatsApp por enlace `wa.me`
+- **Pantallas** (gerente). Oscar: "todo lo que tenga que ver con clientes y
+  sus mascotas en el acceso rápido de Manada", "simple, estilo Apple". El
+  botón Manada del Inicio abre `manada:clientes`; NO hay tarjeta en Admin.
+  Control segmentado (`_pestanas.html`): Clientes · Mascotas · Recordatorios
+  · Promociones, y a la derecha "Exportar a Excel" (`manada:exportar`, con
+  compras/total/marcas) y "Regalo de bienvenida" (admin de Regalia). Los
+  duplicados salen como franja "Revisar ›" solo si hay pendientes. Migas
+  `_migas.html`: Inicio (/) › Manada, nunca a /admin/. Encabezado dice
+  "Manada" (`{% block seccion %}` en `admin/base_site.html`). En celular
+  los `.seg` van en una sola franja deslizable. WhatsApp por enlace `wa.me`
   (decisión de Oscar: a mano desde el teléfono de la tienda, sin API paga).
   Solo quien tiene `acepta_promociones` lleva botón (Ley 8968).
 - Pruebas: `manada/test_historial.py`. Las 3 pruebas de concurrencia de

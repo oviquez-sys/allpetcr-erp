@@ -1,5 +1,7 @@
 {% extends "admin/base_site.html" %}
-{% block title %}{{ cliente.nombre }} · Clientes{% endblock %}
+{% block title %}{{ cliente.nombre }} · Manada{% endblock %}
+{% block seccion %}Manada{% endblock %}
+{% block breadcrumbs %}{% include "manada/_migas.html" %}{% endblock %}
 {% block extrahead %}{{ block.super }}{% include "manada/_estilos.html" %}<style>
 .head{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
 .avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(140deg,#0B3161,#1f5a8f);color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;flex-shrink:0}
@@ -21,7 +23,7 @@
 {% block content_title %}{% endblock %}
 {% block content %}
 <div class="mn">
-  <a class="volver" href="{% url 'manada:clientes' %}">← Clientes</a>
+  <a class="volver" href="{% url 'manada:clientes' %}">‹ Manada</a>
 
   {% for d in duplicados %}
   <div class="aviso">
@@ -48,6 +50,7 @@
           · {% if cliente.identificacion %}Cédula <b>{{ cliente.identificacion }}</b>{% else %}sin cédula{% endif %}
           {% if cliente.email %}· {{ cliente.email }}{% endif %}
           {% if perfil %}<br>Se registró {{ perfil.get_origen_display|lower }}{% if perfil.fuente %} · llegó por «{{ perfil.fuente }}»{% endif %}{% endif %}
+          {% if cupon %}<br>Regalo de bienvenida: <b>{{ cupon.codigo }}</b> · {{ cupon.porcentaje|floatformat:"-2" }} % · {{ cupon.estado_display }}{% if cupon.factura %} (venta {{ cupon.factura.numero }}){% endif %}{% endif %}
         </div>
       </div>
       {% if whatsapp %}<a class="btn wa" href="{{ whatsapp }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}
@@ -117,7 +120,7 @@
         <h2>Sus mascotas</h2>
         <div class="ex">Lo que contó al registrarse.</div>
         {% for m in mascotas %}
-        <div class="masc"><span class="ic">{% if m.especie == "PER" %}🐕{% elif m.especie == "GAT" %}🐈{% else %}🐾{% endif %}</span>
+        <div class="masc">{% if m.foto %}<img src="{{ m.foto.url }}" alt="{{ m.nombre }}" style="width:56px;height:56px;border-radius:12px;object-fit:cover;flex-shrink:0">{% else %}<span class="ic">{% if m.especie == "PER" %}🐕{% elif m.especie == "GAT" %}🐈{% else %}🐾{% endif %}</span>{% endif %}
           <div><b>{{ m.nombre }}</b><br><small>{{ m.get_especie_display }}{% if m.raza %} · {{ m.raza }}{% endif %}{% if m.edad_texto %} · {{ m.edad_texto }}{% endif %}{% if m.peso_kg %} · {{ m.peso_kg|floatformat:"-1" }} kg{% endif %}</small>
             {% if m.notas %}<br><small>{{ m.notas }}</small>{% endif %}</div></div>
         {% empty %}<div class="ex" style="margin:0">No nos ha contado de sus mascotas.</div>{% endfor %}

@@ -257,10 +257,12 @@ Acceso Rápido desde Inicio:
 - "Recibir mercadería" → /compras/ — Registrar mercadería que llega de un \
 proveedor (solo gerentes). Adentro, arriba, está "Cargar desde Excel" para \
 cargar una compra grande de una sola vez (ya NO es botón del Inicio).
-- "Manada" → /admin/manada/perfilmanada/ — Los clientes que se registraron \
-con el QR de la tienda o la página /manada: correo, WhatsApp, mascotas (con \
-foto) y su cupón de bienvenida. Se exporta a Excel con la acción "Exportar \
-los seleccionados a Excel" (solo gerentes).
+- "Manada" → /manada/clientes/ — Todo lo de clientes y mascotas (solo \
+gerentes): la ficha de cada cliente con su historial de compras de la tienda y \
+del sitio, sus mascotas (con foto), su cupón, cuándo se le acaba la comida y \
+el botón de WhatsApp para avisarle. Pestañas: Clientes, Mascotas, \
+Recordatorios de comida, Promociones (listas por marca) y Posibles \
+duplicados. Arriba: "Exportar a Excel" y "Regalo de bienvenida".
 - "Admin" → /admin/ — Panel administrativo (solo gerentes). Acá están el \
 resumen del mes, el centro de reportes, los códigos de barras, precios y \
 márgenes, el arqueo de caja y todas las tablas del sistema.

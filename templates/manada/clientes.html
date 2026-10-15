@@ -1,5 +1,7 @@
 {% extends "admin/base_site.html" %}
-{% block title %}Clientes y manada{% endblock %}
+{% block title %}Manada{% endblock %}
+{% block seccion %}Manada{% endblock %}
+{% block breadcrumbs %}{% include "manada/_migas.html" %}{% endblock %}
 {% block extrahead %}{{ block.super }}{% include "manada/_estilos.html" %}<style>
 #buscar{width:100%;padding:14px 16px !important;font-size:16px !important;border-radius:14px !important;box-sizing:border-box}
 .fila{display:flex;align-items:center;gap:12px;padding:10px 8px;border-bottom:1px solid #f0f0f3;border-radius:10px;color:#1d1d1f !important}
@@ -16,16 +18,16 @@
 {% block content_title %}{% endblock %}
 {% block content %}
 <div class="mn">
-  <div class="mn-title">Clientes y manada</div>
-  <div class="mn-sub">Todos los clientes, con lo que compraron en la tienda y en el sitio. {{ miembros }} son de la manada 🐾.</div>
+  <div class="mn-title">Manada</div>
+  <div class="mn-sub">{{ filas|length }} cliente{{ filas|length|pluralize }} · {{ miembros }} en la manada 🐾</div>
   {% include "manada/_pestanas.html" %}
   <div class="card">
     <input id="buscar" placeholder="🔎 Nombre, WhatsApp, cédula o correo…" autofocus autocomplete="off">
-    <div class="filtros">
-      <button type="button" class="mn-tab on" data-f="todos">Todos</button>
-      <button type="button" class="mn-tab" data-f="manada">Solo la manada 🐾</button>
-      <button type="button" class="mn-tab" data-f="compras">Con compras</button>
-    </div>
+    <div class="filtros"><div class="seg">
+      <button type="button" class="on" data-f="todos">Todos</button>
+      <button type="button" data-f="manada">Manada 🐾</button>
+      <button type="button" data-f="compras">Con compras</button>
+    </div></div>
     <div class="cuenta" id="cuenta"></div>
     <div id="lista">
       {% for f in filas %}

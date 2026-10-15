@@ -1,0 +1,74 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Mascotas · Manada{% endblock %}
+{% block seccion %}Manada{% endblock %}
+{% block breadcrumbs %}{% include "manada/_migas.html" %}{% endblock %}
+{% block extrahead %}{{ block.super }}{% include "manada/_estilos.html" %}<style>
+#buscar{width:100%;padding:14px 16px !important;font-size:16px !important;border-radius:14px !important;box-sizing:border-box}
+.filtros{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.cuenta{font-size:12.5px;color:#6e6e73;margin:10px 4px 6px}
+.grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.mas{display:flex;gap:12px;align-items:center;border:1px solid #ececf0;border-radius:14px;padding:10px;color:#1d1d1f !important}
+.mas:hover{background:#f5f8fb}
+.mas .ft{width:64px;height:64px;border-radius:12px;background:#f2f2f5;display:flex;align-items:center;justify-content:center;font-size:28px;overflow:hidden;flex-shrink:0}
+.mas .ft img{width:100%;height:100%;object-fit:cover}
+.mas b{font-size:15px}
+.mas small{display:block;color:#6e6e73;font-size:12px;line-height:1.45}
+</style>{% endblock %}
+{% block content_title %}{% endblock %}
+{% block content %}
+<div class="mn">
+  <div class="mn-title">Manada</div>
+  <div class="mn-sub">{{ mascotas|length }} mascota{{ mascotas|length|pluralize }} · tocá una para ver a su dueño</div>
+  {% include "manada/_pestanas.html" %}
+  <div class="card">
+    <input id="buscar" placeholder="🔎 Nombre de la mascota, raza o dueño…" autocomplete="off">
+    <div class="filtros"><div class="seg">
+      <button type="button" class="on" data-f="">Todas</button>
+      {% for v, t in especies %}<button type="button" data-f="{{ v }}">{{ t }}</button>{% endfor %}
+      <button type="button" data-f="cumple" title="Cumplen años este mes">🎂 Este mes</button>
+    </div></div>
+    <div class="cuenta" id="cuenta"></div>
+    <div class="grilla" id="lista">
+      {% for m in mascotas %}
+      <a class="mas" href="{% url 'manada:ficha' m.cliente_id %}" data-e="{{ m.especie }}"
+         data-c="{% if m.fecha_nacimiento_aprox and m.fecha_nacimiento_aprox.month == mes %}1{% endif %}"
+         data-b="{{ m.nombre|lower }} {{ m.raza|lower }} {{ m.cliente.nombre|lower }}">
+        <span class="ft">{% if m.foto %}<img src="{{ m.foto.url }}" alt="{{ m.nombre }}" loading="lazy">{% elif m.especie == "PER" %}🐕{% elif m.especie == "GAT" %}🐈{% else %}🐾{% endif %}</span>
+        <span><b>{{ m.nombre }}</b>{% if m.fecha_nacimiento_aprox and m.fecha_nacimiento_aprox.month == mes %} 🎂{% endif %}
+          <small>{{ m.get_especie_display }}{% if m.raza %} · {{ m.raza }}{% endif %}{% if m.edad_texto %} · {{ m.edad_texto }}{% endif %}{% if m.peso_kg %} · {{ m.peso_kg|floatformat:"-1" }} kg{% endif %}</small>
+          <small>Dueño: {{ m.cliente.nombre }}</small></span>
+      </a>
+      {% empty %}<div class="vacio">Todavía nadie nos ha contado de sus mascotas.</div>{% endfor %}
+    </div>
+    <div class="vacio" id="sinres" style="display:none">Ninguna mascota coincide.</div>
+  </div>
+</div>
+<script>
+(function(){
+  var filtro = '', input = document.getElementById('buscar');
+  var tarjetas = Array.prototype.slice.call(document.querySelectorAll('#lista .mas'));
+  function norm(t){ return (t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+  tarjetas.forEach(function(t){ t._b = norm(t.dataset.b); });
+  function pintar(){
+    var palabras = norm(input.value.trim()).split(/\s+/).filter(Boolean), total = 0;
+    tarjetas.forEach(function(t){
+      var ok = palabras.every(function(w){ return t._b.indexOf(w) >= 0; });
+      if (filtro === 'cumple') ok = ok && t.dataset.c === '1';
+      else if (filtro) ok = ok && t.dataset.e === filtro;
+      t.style.display = ok ? '' : 'none'; if (ok) total++;
+    });
+    document.getElementById('sinres').style.display = (total || !tarjetas.length) ? 'none' : '';
+    document.getElementById('cuenta').textContent = total + ' mascota' + (total === 1 ? '' : 's');
+  }
+  input.addEventListener('input', pintar);
+  document.querySelectorAll('[data-f]').forEach(function(b){
+    b.addEventListener('click', function(){
+      filtro = b.dataset.f;
+      document.querySelectorAll('[data-f]').forEach(function(x){ x.classList.toggle('on', x === b); });
+      pintar();
+    });
+  });
+  pintar();
+})();
+</script>
+{% endblock %}

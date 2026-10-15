@@ -1,5 +1,7 @@
 {% extends "admin/base_site.html" %}
-{% block title %}Listas para promociones{% endblock %}
+{% block title %}Promociones · Manada{% endblock %}
+{% block seccion %}Manada{% endblock %}
+{% block breadcrumbs %}{% include "manada/_migas.html" %}{% endblock %}
 {% block extrahead %}{{ block.super }}{% include "manada/_estilos.html" %}<style>
 .filtro{display:grid;grid-template-columns:2fr 1fr auto;gap:10px;align-items:end}
 .filtro label{display:block;font-size:12.5px;font-weight:600;color:#6e6e73;margin-bottom:5px}
@@ -10,8 +12,8 @@
 {% block content_title %}{% endblock %}
 {% block content %}
 <div class="mn">
-  <div class="mn-title">Listas para promociones</div>
-  <div class="mn-sub">Miembros que aceptaron promociones y compraron una marca en los últimos 6 meses. Solo aparecen los que dieron permiso (Ley 8968).</div>
+  <div class="mn-title">Manada</div>
+  <div class="mn-sub">Quién compra cada marca (últimos 6 meses). Solo aparecen los que aceptaron promociones.</div>
   {% include "manada/_pestanas.html" %}
   <div class="card">
     <form method="get" class="filtro">

@@ -1,6 +1,23 @@
-<div class="mn-tabs">
-  <a class="mn-tab {% if pestana == 'clientes' %}on{% endif %}" href="{% url 'manada:clientes' %}">Clientes</a>
-  <a class="mn-tab {% if pestana == 'recordatorios' %}on{% endif %}" href="{% url 'manada:recordatorios' %}">Recordatorios de comida</a>
-  <a class="mn-tab {% if pestana == 'promociones' %}on{% endif %}" href="{% url 'manada:promociones' %}">Promociones</a>
-  <a class="mn-tab {% if pestana == 'duplicados' %}on{% endif %}" href="{% url 'manada:duplicados' %}">Posibles duplicados{% if pendientes %}<span class="n">{{ pendientes }}</span>{% endif %}</a>
+{% comment %} Navegación de la manada, estilo Apple (pedido de Oscar, 14/10/2026):
+   un solo control segmentado con lo de todos los días, y lo ocasional
+   (Excel, regalo) como enlaces de texto discretos. Los duplicados no son una
+   pestaña: aparecen como aviso solo cuando hay algo que revisar. {% endcomment %}
+<div class="mn-nav">
+  <div class="seg">
+    <a class="{% if pestana == 'clientes' %}on{% endif %}" href="{% url 'manada:clientes' %}">Clientes</a>
+    <a class="{% if pestana == 'mascotas' %}on{% endif %}" href="{% url 'manada:mascotas' %}">Mascotas</a>
+    <a class="{% if pestana == 'recordatorios' %}on{% endif %}" href="{% url 'manada:recordatorios' %}">Recordatorios</a>
+    <a class="{% if pestana == 'promociones' %}on{% endif %}" href="{% url 'manada:promociones' %}">Promociones</a>
+  </div>
+  <div class="mn-links">
+    <a href="{% url 'manada:exportar' %}">Exportar a Excel</a>
+    <a href="{% url 'admin:manada_regalia_changelist' %}" title="El regalo que recibe cada miembro nuevo">Regalo de bienvenida</a>
+  </div>
 </div>
+{% if pendientes and pestana != 'duplicados' %}
+<a class="mn-revisar" href="{% url 'manada:duplicados' %}">
+  <span class="punto"></span>
+  <span>{{ pendientes }} ficha{{ pendientes|pluralize }} podría{{ pendientes|pluralize:"n" }} ser de la misma persona</span>
+  <span class="ir">Revisar ›</span>
+</a>
+{% endif %}
