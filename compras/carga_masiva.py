@@ -69,7 +69,7 @@ COLUMNAS = [
     ("cantidad", "Cantidad", "Unidades FACTURADAS. Obligatorio."),
     ("costo_unitario", "Costo unitario", "Costo de cada unidad, sin IVA si la factura lo trae aparte. Obligatorio."),
     ("precio_venta", "Precio de venta", "Con IVA incluido. Obligatorio si es nuevo; si es existente y cambia, se actualiza."),
-    ("bonificadas", "Bonificadas", "Unidades de regalo del proveedor (el 1 del 12+1). Opcional."),
+    ("bonificadas", "Bonificadas", "Unidades de regalía del proveedor (el 1 del 12+1). Opcional."),
     ("marca", "Marca", "Opcional."),
     ("categoria", "Categoría", "Opcional. Como aparece en el ERP, ej. «Juguetes › Pelotas»."),
     ("presentacion", "Presentación", "Opcional, ej. «Talla M» o «15 kg»."),
@@ -96,7 +96,7 @@ _ALIAS.update({_plano(k): v for k, v in {
     "codigo": "codigo_barras", "código": "codigo_barras", "ean": "codigo_barras", "barras": "codigo_barras",
     "producto": "nombre", "descripcion": "nombre", "cant": "cantidad", "unidades": "cantidad",
     "costo": "costo_unitario", "precio": "precio_venta", "precio venta": "precio_venta",
-    "bonificacion": "bonificadas", "regalo": "bonificadas", "especie": "mascota",
+    "bonificacion": "bonificadas", "regalo": "bonificadas", "regalia": "bonificadas", "especie": "mascota",
     "sku": "sku", "codigo interno": "sku", "codigo (ref)": "sku", "ref": "sku",
     "descripcion publica": "descripcion", "descripcion web": "descripcion",
 }.items()})

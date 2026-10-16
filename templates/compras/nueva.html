@@ -220,7 +220,7 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
   <img class="logo" src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetcr.com">
   <b>Recibir mercadería</b>
   <span class="sp"></span>
-  <span class="version-pag" title="Si no ves este sello, la página está en caché: Ctrl+F5">v6 · 16-10-2026</span>
+  <span class="version-pag" title="Si no ves este sello, la página está en caché: Ctrl+F5">v6.1 · 16-10-2026</span>
   <a href="#" onclick="document.getElementById('ayuda').classList.add('on');return false">❓ Cómo se usa</a>
   <a href="{% url 'compras:carga_masiva' %}">Cargar desde Excel</a>
   <a class="home" href="/">Inicio</a>
@@ -308,7 +308,7 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
     <h2>Cómo recibir mercadería</h2>
     <div class="step2"><div class="n">1</div><div class="st">Escaneá o buscá cada producto que llegó y tocalo (a la derecha) para agregarlo a la lista de la izquierda. Si es un producto que nunca habías comprado, tocá "➕ Producto nuevo": ahí mismo ponés cuántas llegaron.</div></div>
     <div class="step2"><div class="n">2</div><div class="st">En la lista de la izquierda, cada producto tiene su casilla de <b>Cantidad</b> (con borde azul) y de <b>Costo c/u</b>: ajustá la cantidad y el costo con el que te lo vendió el proveedor (no el precio de venta).</div></div>
-    <div class="step2"><div class="n">+</div><div class="st">Si te dieron una <b>promoción tipo 12+1 o 100+20</b>, poné las facturadas en "Cantidad" y las regaladas en "<b>De regalo</b>". La factura se registra por lo que te cobran, el inventario sube por todo lo que llegó, y el sistema calcula solo cuánto te costó de verdad cada unidad.</div></div>
+    <div class="step2"><div class="n">+</div><div class="st">Si te dieron una <b>promoción tipo 12+1 o 100+20</b>, poné las facturadas en "Cantidad" y las que vienen de regalía en "<b>Regalía</b>". La factura se registra por lo que te cobran, el inventario sube por todo lo que llegó, y el sistema calcula solo cuánto te costó de verdad cada unidad.</div></div>
     <div class="step2"><div class="n">+</div><div class="st">Si querés <b>recalcular el precio de venta</b>, escribí en "<b>Ganancia %</b>" cuánto querés ganarle sobre el costo (110 = el precio queda en 2,1 veces el costo). El sistema lo calcula sobre el costo <i>real</i> —con la bonificación ya repartida— y lo redondea a la centena. Si lo dejás vacío, el precio no se toca.{% if tradicional %} El precio que calcula <b>ya incluye el IVA</b>, y la ganancia se mide sobre lo que te queda sin IVA.{% endif %}</div></div>
     {% if tradicional %}<div class="step2"><div class="n">+</div><div class="st">Si el proveedor te dio <b>factura electrónica</b> a nombre de AllPetCR, anotá los costos <b>sin IVA</b> y el IVA total en "<b>IVA de la factura</b>": ese IVA te lo descuenta Hacienda. Sin factura, anotá el costo con todo incluido y el IVA en 0.</div></div>{% endif %}
     <div class="step2"><div class="n">+</div><div class="st">Si la factura trae un <b>descuento</b> al pie, anotalo en "<b>Descuento de la factura</b>" (el monto antes del IVA). El sistema lo reparte entre los productos según lo que pesa cada uno: el costo de cada unidad queda con el descuento y el total coincide con lo que te cobran.</div></div>
@@ -359,8 +359,8 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
         <input id="npCantidad" type="number" min="1" step="any" value="1" class="np-grande">
       </div>
       <div class="campo2">
-        <label>De regalo (promo)</label>
-        <input id="npGratis" type="number" min="0" step="any" placeholder="0" title="Si el proveedor regaló unidades, p. ej. 12+1: aquí va el 1">
+        <label>Regalía (promo)</label>
+        <input id="npGratis" type="number" min="0" step="any" placeholder="0" title="Unidades de regalía del proveedor, p. ej. en un 12+1 aquí va el 1">
       </div>
       <div class="campo2">
         <label>Costo por unidad</label>
@@ -766,7 +766,7 @@ function pintarLineas(){
     const real = fmt(Math.round(costoReal));
     let aviso = '';
     if (bonif > 0)
-      aviso = `<div class="real">Entran <b>${recibidas}</b> a <b>${real}</b> c/u${parte > 0 ? ' (con el regalo y el descuento)' : ` · equivale a <b>${dtoPct.toFixed(1)}%</b> de descuento`}</div>`;
+      aviso = `<div class="real">Entran <b>${recibidas}</b> a <b>${real}</b> c/u${parte > 0 ? ' (con la regalía y el descuento)' : ` · equivale a <b>${dtoPct.toFixed(1)}%</b> de descuento`}</div>`;
     const conDto = (parte > 0 && bonif === 0) ? ` · con descuento cuesta <b>${real}</b>` : '';
 
     const gan = (l.gan === null || l.gan === undefined) ? null : +l.gan;
@@ -792,7 +792,7 @@ function pintarLineas(){
       </div>
       <div class="linea-campos">
         <label class="cant"><span class="lbl">Cantidad</span><input type="number" min="0.01" step="any" value="${l.cantidad}" onchange="cambiarCantidad(${id}, this.value)"></label>
-        <label class="bonif"><span class="lbl">De regalo</span><input type="number" min="0" step="any" value="${bonif}" onchange="cambiarBonif(${id}, this.value)"></label>
+        <label class="bonif"><span class="lbl">Regalía</span><input type="number" min="0" step="any" value="${bonif}" onchange="cambiarBonif(${id}, this.value)"></label>
         <label><span class="lbl">Costo c/u</span><input type="number" min="0" step="any" value="${l.costo}" onchange="cambiarCosto(${id}, this.value)"></label>
         <label class="gan"><span class="lbl">Ganancia %</span><input type="number" min="0" step="any" value="${gan === null ? '' : gan}" placeholder="${ganActual !== null ? ganActual.toFixed(0) : '—'}" onchange="cambiarGanancia(${id}, this.value)"></label>
       </div>
