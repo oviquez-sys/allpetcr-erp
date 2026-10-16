@@ -37,14 +37,17 @@ a{text-decoration:none}
   padding:5px 12px;border-radius:20px}
 .steps b{color:var(--brand)}
 
-main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(440px,38%);gap:16px;padding:12px 22px 16px;overflow:hidden}
+/* Distribución v6 (16/10/2026, pedido de Oscar): la lista de lo recibido a la
+   IZQUIERDA y en grande, que es donde se trabaja; el buscador de productos a
+   la derecha, más angosto, porque solo se usa para tocar y agregar. */
+main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,32%);gap:16px;padding:12px 22px 16px;overflow:hidden}
 .col{background:var(--card);border-radius:20px;padding:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow)}
 
-.buscarfila{display:flex;gap:10px}
-#buscar{flex:1;padding:15px 18px;border:1px solid var(--line);border-radius:14px;font-size:16px;
+.buscarfila{display:flex;gap:8px}
+#buscar{flex:1;min-width:0;padding:13px 15px;border:1px solid var(--line);border-radius:14px;font-size:16px;
   outline:none;transition:border .2s,box-shadow .2s;background:#fbfbfd}
 #buscar:focus{border-color:var(--brand2);box-shadow:0 0 0 4px rgba(46,110,126,.12);background:#fff}
-.btn-nuevo{white-space:nowrap;padding:0 20px;border:1px dashed var(--brand2);border-radius:14px;background:#fff;
+.btn-nuevo{white-space:nowrap;padding:0 14px;border:1px dashed var(--brand2);border-radius:14px;background:#fff;
   color:var(--brand2);font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
 .btn-nuevo:hover{background:#f2f7f8}
 .campo2{margin-bottom:14px}
@@ -62,7 +65,7 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax
 .select-cat{font-size:13px;padding:8px 14px;border-radius:20px;border:1px solid var(--line);background:#fff;
   color:var(--ink);cursor:pointer;outline:none;max-width:220px}
 .select-cat:focus{border-color:var(--brand2)}
-#grid{overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start;margin-top:12px;padding:0 4px 90px 0}
+#grid{overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px;align-content:start;margin-top:12px;padding:0 4px 90px 0}
 .pcard{border:1px solid var(--line);border-radius:16px;padding:10px;cursor:pointer;background:#fff;
   transition:transform .15s ease,box-shadow .15s ease,border-color .15s;display:flex;flex-direction:column}
 .pcard:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.09);border-color:transparent}
@@ -79,8 +82,6 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax
 .cart-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px}
 .col.cart h2{font-size:17px;font-weight:600}
 #cuenta{font-size:12.5px;color:var(--ink2)}
-.factura{border-top:1px solid var(--line);margin-top:10px;padding-top:10px}
-.fila-f{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ayuda-c{display:block;font-size:11px;color:var(--ink2);margin-top:4px}
 .campo{margin-bottom:10px}
 .campo label{font-size:12px;color:var(--ink2);display:block;margin-bottom:5px}
@@ -91,22 +92,30 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
   font-size:13.5px;font-weight:600;cursor:pointer;transition:all .15s}
 .fp button.on{background:var(--brand);border-color:var(--brand);color:#fff}
 
-#lineas{flex:1;min-height:120px;overflow-y:auto;margin:4px -4px 0;padding:0 4px;border-top:1px solid var(--line)}
-.linea{padding:8px 0 6px;border-radius:10px}
-.linea-top{display:flex;align-items:center;gap:8px}
-.linea .nm{flex:1;font-weight:600;font-size:13.5px;line-height:1.25}
-.linea-campos{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:5px}
+#lineas{flex:1;min-height:120px;overflow-y:auto;margin:4px -4px 0;padding:0 4px;border-top:1px solid var(--line);container-type:inline-size}
+/* Cada producto en UNA fila: qué es (con su precio debajo) · las cuatro
+   casillas con su nombre · cuánto suma. Si la lista queda angosta (pantalla
+   chica, celular), las casillas bajan a una segunda fila. */
+.linea{display:grid;grid-template-columns:minmax(0,1fr) auto 92px 28px;align-items:center;gap:6px 14px;padding:10px 2px;border-bottom:1px solid var(--line);border-radius:10px}
+.li-prod{display:flex;gap:10px;align-items:center;min-width:0}
+.li-txt{min-width:0}
+.linea .nm{display:block;font-weight:600;font-size:14px;line-height:1.25}
+.linea-campos{display:grid;grid-template-columns:repeat(4,84px);gap:6px}
 .linea-campos label{display:block}
-.linea input[type=number]{width:100%;text-align:center;padding:6px 4px;border:1px solid var(--line);border-radius:9px;font-size:14px}
+.linea input[type=number]{width:100%;text-align:center;padding:7px 4px;border:1px solid var(--line);border-radius:9px;font-size:14px}
 .linea .cant input{border-color:var(--brand2);font-weight:700}
+@container (max-width:800px){
+  .linea{grid-template-columns:minmax(0,1fr) auto 28px}
+  .linea-campos{grid-column:1/-1;grid-row:2;grid-template-columns:repeat(4,1fr)}
+}
 @keyframes recien{from{background:#E4F1F4}to{background:transparent}}
 .linea.recien{animation:recien 1.6s ease-out}
 .np-seccion{font-size:12px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.04em;margin:4px 0 8px}
 .campo2 input.np-grande{font-size:17px;font-weight:700;border-color:var(--brand2)}
 .linea .x{width:26px;height:26px;border:none;background:none;color:var(--red);font-size:18px;cursor:pointer}
-.linea .mt{width:74px;text-align:right;font-weight:700;font-size:13px}
+.linea .mt{text-align:right;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
 .linea .bonif input{background:#FFF8E8;border-color:#E8CE96!important}
-.real{font-size:11px;color:var(--ink2);padding:2px 0 0 2px}
+.real{font-size:11.5px;color:var(--ink2);padding-top:2px}
 .real b{color:var(--ink)}
 .linea .lbl{font-size:11px;color:var(--ink2);display:block;text-align:center;margin-bottom:2px}
 .fila3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
@@ -115,21 +124,27 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
 .np-aviso b{color:var(--ink)}
 .version-pag{font-size:11px;color:var(--ink2);border:1px solid var(--line);border-radius:20px;padding:3px 9px;white-space:nowrap}
 .linea .gan input{background:#EAF4EE;border-color:#A9CDBA!important}
-.precio-linea{font-size:11px;color:var(--ink2);padding:2px 0 8px 2px;border-bottom:1px solid var(--line)}
+.precio-linea{font-size:11.5px;color:var(--ink2);padding-top:2px}
 .precio-linea b{color:var(--ink)}
 .precio-linea .nuevo{color:#1E7A4B;font-weight:700}
 .chip-f.chip-m{font-weight:700}
 .empty{color:var(--ink2);padding:40px 10px;text-align:center;font-size:14px}
 .empty .big{font-size:34px;display:block;margin-bottom:8px}
-#totales{border-top:1px solid var(--line);margin-top:4px;padding-top:10px}
-.tot.g{display:flex;justify-content:space-between;font-size:22px;font-weight:700;letter-spacing:-.02em}
-.tot:not(.g){display:flex;justify-content:space-between;font-size:14px;color:var(--ink2);margin-bottom:4px}
-.btn-reg{margin-top:6px;width:100%;padding:15px;border:none;border-radius:14px;
+/* Pie de la lista: a la izquierda los datos de la factura, a la derecha los
+   totales y el botón. Con la lista ancha caben en dos filas. */
+.pie{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:22px;border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+.factura{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 12px;align-content:start}
+.resumen{display:flex;flex-direction:column;justify-content:flex-end}
+.tot.g{display:flex;justify-content:space-between;font-size:22px;font-weight:700;letter-spacing:-.02em;margin-top:4px}
+.tot:not(.g){display:flex;justify-content:space-between;font-size:14px;color:var(--ink2);margin-bottom:3px}
+.tot.dto{color:#1E7A4B}
+.btn-reg{margin-top:10px;width:100%;padding:15px;border:none;border-radius:14px;
   background:linear-gradient(135deg,#072244,#0B3161);color:#fff;font-size:15px;font-weight:600;cursor:pointer;
   transition:transform .15s,filter .2s}
 .btn-reg:hover{filter:brightness(1.1)}
 .btn-reg:active{transform:scale(.98)}
 .btn-reg:disabled{opacity:.4;cursor:not-allowed}
+@media(max-width:1300px){.pie{grid-template-columns:minmax(0,1fr) 260px}.factura{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .nota{font-size:11.5px;color:var(--ink2);margin-top:10px;line-height:1.45}
 
 #msg{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
@@ -153,13 +168,23 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
 .step2 .st{font-size:14px}
 .sheet .close{margin-top:18px;width:100%;padding:14px;border:none;border-radius:14px;background:var(--brand);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
 
-#allpet-chat-dock{right:auto!important;left:24px;width:320px!important}
 
 /* Pantallas bajas (1366x768, 1280x720): los tres pasos se esconden para darle
    ese alto a la lista; siguen en "Cómo se usa". */
 @media(max-height:820px) and (min-width:901px){
   .steps{display:none}
   main{padding-top:10px}
+  /* El pie de la factura más compacto: cada renglón que se ahorra acá es un
+     producto más a la vista en la lista. */
+  .pie{padding-top:8px}
+  .ayuda-c:not(#ivaAyuda){display:none}
+  .campo{margin-bottom:6px}
+  .campo label{margin-bottom:3px}
+  select,.txt-in{padding:8px 11px}
+  .fp button{padding:8px}
+  .tot.g{font-size:19px}
+  .btn-reg{padding:12px;margin-top:8px}
+  .linea{padding:7px 2px}
 }
 
 /* ===== MÓVIL / TABLET ANGOSTA ===== */
@@ -172,7 +197,10 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
   .version-pag{display:none}
   .col{overflow:visible}
   #grid{max-height:52vh}
+  .col.buscador{order:1}
   .col.cart{order:2}
+  .pie{grid-template-columns:minmax(0,1fr)}
+  .factura{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   #lineas{max-height:none}
   .nav{padding:10px 14px;flex-wrap:wrap}
   .steps{padding:8px 14px 0}
@@ -192,7 +220,7 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
   <img class="logo" src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetcr.com">
   <b>Recibir mercadería</b>
   <span class="sp"></span>
-  <span class="version-pag" title="Si no ves este sello, la página está en caché: Ctrl+F5">v5 · 12-10-2026</span>
+  <span class="version-pag" title="Si no ves este sello, la página está en caché: Ctrl+F5">v6 · 16-10-2026</span>
   <a href="#" onclick="document.getElementById('ayuda').classList.add('on');return false">❓ Cómo se usa</a>
   <a href="{% url 'compras:carga_masiva' %}">Cargar desde Excel</a>
   <a class="home" href="/">Inicio</a>
@@ -204,30 +232,15 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
 </div>
 
 <main>
-  <div class="col">
-    <div class="buscarfila">
-      <input id="buscar" placeholder="🔎 Escaneá el código de barras, o escribí el nombre del producto…" autofocus>
-      <button type="button" class="btn-nuevo" onclick="abrirNuevoProducto()">➕ Producto nuevo</button>
-    </div>
-    <div class="filtros-fila">
-      <div class="chips" id="chips"></div>
-      <select id="filtroCategoria" class="select-cat" onchange="pintarGrid()">
-        <option value="Todas">Todas las categorías</option>
-      </select>
-    </div>
-    <div id="grid"></div>
-  </div>
   <div class="col cart">
-    {% comment %} Distribución (12/10/2026): la lista de lo recibido arriba, con todo
-       el alto disponible, y los datos de la factura abajo junto al botón,
-       que es el paso 3. Antes los cuatro campos de la factura iban arriba y
-       dejaban espacio para línea y media de productos. {% endcomment %}
+    {% comment %} v6 (16/10/2026): la lista ocupa la parte grande de la pantalla; abajo,
+       los datos de la factura (con el descuento) y a su derecha los totales
+       y el botón. {% endcomment %}
     <div class="cart-head"><h2>Mercadería recibida</h2><span id="cuenta"></span></div>
     <div id="lineas"></div>
-    <div id="totales"></div>
 
-    <div class="factura">
-      <div class="fila-f">
+    <div class="pie">
+      <div class="factura">
         <div class="campo">
           <label for="proveedor">Proveedor</label>
           <select id="proveedor" onchange="onProveedorChange()">
@@ -241,14 +254,19 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
           <label for="factura">N.º de factura (opcional)</label>
           <input class="txt-in" id="factura" placeholder="Ej. 00123">
         </div>
-      </div>
-      <div class="fila-f">
         <div class="campo">
           <label>Forma de pago</label>
           <div class="fp">
             <button type="button" id="fpCon" class="on" onclick="setFp('CON')">Contado</button>
             <button type="button" id="fpCre" onclick="setFp('CRE')">Crédito</button>
           </div>
+        </div>
+        {% comment %} Descuento de la factura (16/10/2026): el que trae al pie, antes del
+           IVA. Se reparte en el costo de cada producto. {% endcomment %}
+        <div class="campo">
+          <label for="descuentoFactura">Descuento de la factura (₡)</label>
+          <input class="txt-in" id="descuentoFactura" type="number" min="0" step="any" placeholder="0" oninput="pintarLineas()">
+          <span class="ayuda-c">El que trae la factura, antes del IVA.</span>
         </div>
         {% if tradicional %}
         {% comment %} IVA acreditable (20/09/2026): va aparte del costo para que Hacienda lo
@@ -259,12 +277,28 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
           <label for="ivaFactura">IVA de la factura (₡)</label>
           <input class="txt-in" id="ivaFactura" type="number" min="0" step="any" placeholder="0" oninput="pintarLineas()"
                  title="Solo con factura electrónica a nombre de AllPetCR: costos sin IVA en cada línea y el IVA total aquí. Sin factura: costo con todo incluido y esto en 0.">
-          <span class="ayuda-c">Solo con factura electrónica. Sin factura, 0.</span>
+          <span class="ayuda-c" id="ivaAyuda">Solo con factura electrónica. Sin factura, 0.</span>
         </div>
         {% endif %}
       </div>
+      <div class="resumen">
+        <div id="totales"></div>
+        <button class="btn-reg" onclick="registrar()">✅ Registrar compra</button>
+      </div>
     </div>
-    <button class="btn-reg" onclick="registrar()">✅ Registrar compra</button>
+  </div>
+  <div class="col buscador">
+    <div class="buscarfila">
+      <input id="buscar" placeholder="🔎 Escaneá o escribí el nombre…" autofocus>
+      <button type="button" class="btn-nuevo" onclick="abrirNuevoProducto()">➕ Producto nuevo</button>
+    </div>
+    <div class="filtros-fila">
+      <div class="chips" id="chips"></div>
+      <select id="filtroCategoria" class="select-cat" onchange="pintarGrid()">
+        <option value="Todas">Todas las categorías</option>
+      </select>
+    </div>
+    <div id="grid"></div>
   </div>
 </main>
 <div id="msg"></div>
@@ -272,11 +306,12 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
 <div class="overlay" id="ayuda" onclick="if(event.target===this)this.classList.remove('on')">
   <div class="sheet">
     <h2>Cómo recibir mercadería</h2>
-    <div class="step2"><div class="n">1</div><div class="st">Escaneá o buscá cada producto que llegó y tocalo para agregarlo a la lista de la derecha. Si es un producto que nunca habías comprado, tocá "➕ Producto nuevo": ahí mismo ponés cuántas llegaron.</div></div>
-    <div class="step2"><div class="n">2</div><div class="st">En la lista de la derecha, cada producto tiene su casilla de <b>Cantidad</b> (con borde azul) y de <b>Costo c/u</b>: ajustá la cantidad y el costo con el que te lo vendió el proveedor (no el precio de venta).</div></div>
+    <div class="step2"><div class="n">1</div><div class="st">Escaneá o buscá cada producto que llegó y tocalo (a la derecha) para agregarlo a la lista de la izquierda. Si es un producto que nunca habías comprado, tocá "➕ Producto nuevo": ahí mismo ponés cuántas llegaron.</div></div>
+    <div class="step2"><div class="n">2</div><div class="st">En la lista de la izquierda, cada producto tiene su casilla de <b>Cantidad</b> (con borde azul) y de <b>Costo c/u</b>: ajustá la cantidad y el costo con el que te lo vendió el proveedor (no el precio de venta).</div></div>
     <div class="step2"><div class="n">+</div><div class="st">Si te dieron una <b>promoción tipo 12+1 o 100+20</b>, poné las facturadas en "Cantidad" y las regaladas en "<b>De regalo</b>". La factura se registra por lo que te cobran, el inventario sube por todo lo que llegó, y el sistema calcula solo cuánto te costó de verdad cada unidad.</div></div>
     <div class="step2"><div class="n">+</div><div class="st">Si querés <b>recalcular el precio de venta</b>, escribí en "<b>Ganancia %</b>" cuánto querés ganarle sobre el costo (110 = el precio queda en 2,1 veces el costo). El sistema lo calcula sobre el costo <i>real</i> —con la bonificación ya repartida— y lo redondea a la centena. Si lo dejás vacío, el precio no se toca.{% if tradicional %} El precio que calcula <b>ya incluye el IVA</b>, y la ganancia se mide sobre lo que te queda sin IVA.{% endif %}</div></div>
     {% if tradicional %}<div class="step2"><div class="n">+</div><div class="st">Si el proveedor te dio <b>factura electrónica</b> a nombre de AllPetCR, anotá los costos <b>sin IVA</b> y el IVA total en "<b>IVA de la factura</b>": ese IVA te lo descuenta Hacienda. Sin factura, anotá el costo con todo incluido y el IVA en 0.</div></div>{% endif %}
+    <div class="step2"><div class="n">+</div><div class="st">Si la factura trae un <b>descuento</b> al pie, anotalo en "<b>Descuento de la factura</b>" (el monto antes del IVA). El sistema lo reparte entre los productos según lo que pesa cada uno: el costo de cada unidad queda con el descuento y el total coincide con lo que te cobran.</div></div>
     <div class="step2"><div class="n">3</div><div class="st">Elegí el proveedor (o escribí uno nuevo si no está en la lista) y si es de contado o a crédito.</div></div>
     <div class="step2"><div class="n">4</div><div class="st">Tocá <b>Registrar compra</b>. El stock y la contabilidad se actualizan solos, no hay que hacer nada más.</div></div>
     <button class="close" onclick="document.getElementById('ayuda').classList.remove('on')">Entendido</button>
@@ -366,6 +401,18 @@ let carrito = {}; // id -> {cantidad, costo}
 const FACTOR_IVA = {{ factor_iva }};
 const TRADICIONAL = {{ tradicional|yesno:"true,false" }};
 function ivaFactura(){ const el = document.getElementById('ivaFactura'); return el ? (+el.value || 0) : 0; }
+function descuentoFactura(){ const n = +document.getElementById('descuentoFactura').value; return n > 0 ? n : 0; }
+// Parte del descuento de la factura que le toca a cada línea, según lo que
+// pesa en el subtotal. Es la misma regla que aplica el servidor
+// (compras.services.repartir_descuento); acá es para mostrar el costo real y
+// calcular el precio, el servidor guarda la cifra exacta en céntimos.
+function partesDescuento(){
+  const dto = descuentoFactura(), ids = Object.keys(carrito);
+  const sub = ids.reduce((a,id)=>a + carrito[id].cantidad*carrito[id].costo, 0);
+  const partes = {};
+  ids.forEach(id => partes[id] = (dto > 0 && sub > 0) ? dto * carrito[id].cantidad*carrito[id].costo / sub : 0);
+  return partes;
+}
 let formaPago = 'CON';
 
 // `fmt` lo define static/js/formato.js, cargado en el <head>.
@@ -658,7 +705,7 @@ function agregar(id){
   pintarLineas();
   resaltarLinea(id);
 }
-// La lista de la derecha crece hacia abajo y lo recién agregado puede quedar
+// La lista crece hacia abajo y lo recién agregado puede quedar
 // fuera de la vista: se lleva a la vista y parpadea, para que se vea dónde
 // quedó y dónde se cambia la cantidad.
 function resaltarLinea(id){
@@ -702,22 +749,26 @@ function cambiarGanancia(id, v){
 function redondear100(x){ return Math.round(x/100)*100; }
 function pintarLineas(){
   const ids = Object.keys(carrito);
+  const partes = partesDescuento();
   document.getElementById('lineas').innerHTML = ids.length ? ids.map(id=>{
     const p = porId[id], l = carrito[id];
     const bonif = +l.bonif || 0;
     const recibidas = (+l.cantidad || 0) + bonif;
-    // Cuando hay bonificación, el costo que importa no es el facturado: es lo
-    // pagado repartido entre todo lo que llegó. Se muestra para que quien
-    // recibe vea el número real con el que se va a poner precio.
-    const costoReal = recibidas > 0 ? (l.cantidad*l.costo)/recibidas : 0;
+    const parte = partes[id] || 0;
+    // El costo que importa no es el facturado: es lo que de verdad se pagó
+    // (con el descuento de la factura restado) repartido entre todo lo que
+    // llegó (con las de regalo). Con ese costo se pone el precio: el descuento
+    // que consiguió quien compró tiene que llegar al precio.
+    const costoReal = recibidas > 0 ? (l.cantidad*l.costo - parte)/recibidas : 0;
     const dtoPct = recibidas > 0 ? bonif/recibidas*100 : 0;
-    const aviso = bonif > 0
-      ? `<div class="real">Entran <b>${recibidas}</b> unidades a un costo real de <b>${fmt(costoReal)}</b> c/u — equivale a un <b>${dtoPct.toFixed(1)}%</b> de descuento.</div>`
-      : '';
+    // Un solo renglón de ayuda por producto (los montos van sin céntimos:
+    // es para mirar, el servidor guarda la cifra exacta).
+    const real = fmt(Math.round(costoReal));
+    let aviso = '';
+    if (bonif > 0)
+      aviso = `<div class="real">Entran <b>${recibidas}</b> a <b>${real}</b> c/u${parte > 0 ? ' (con el regalo y el descuento)' : ` · equivale a <b>${dtoPct.toFixed(1)}%</b> de descuento`}</div>`;
+    const conDto = (parte > 0 && bonif === 0) ? ` · con descuento cuesta <b>${real}</b>` : '';
 
-    // El precio se calcula sobre el costo REAL (con la bonificación repartida),
-    // no sobre el facturado: si el proveedor regaló unidades, ese descuento
-    // tiene que llegar al precio y no quedarse trabado en la bodega.
     const gan = (l.gan === null || l.gan === undefined) ? null : +l.gan;
     let precioNuevo = null, margen = 0;
     if (gan !== null && costoReal > 0){
@@ -729,44 +780,56 @@ function pintarLineas(){
     const ganActual = (p.costo_promedio > 0 && p.precio_venta > 0)
       ? ((p.precio_venta/FACTOR_IVA/p.costo_promedio - 1) * 100) : null;
     const precioInfo = precioNuevo !== null
-      ? `<div class="precio-linea">Precio de venta: <b>${fmt(p.precio_venta)}</b> → <span class="nuevo">${fmt(precioNuevo)}</span> · margen <b>${margen.toFixed(0)}%</b> sobre la venta</div>`
-      : `<div class="precio-linea">Precio actual <b>${fmt(p.precio_venta)}</b>${ganActual !== null ? ` · ganancia de hoy <b>${ganActual.toFixed(0)}%</b>` : ''} · escribí una ganancia para recalcularlo</div>`;
+      ? `<div class="precio-linea">Precio <b>${fmt(p.precio_venta)}</b> → <span class="nuevo">${fmt(precioNuevo)}</span> · margen <b>${margen.toFixed(0)}%</b>${conDto}</div>`
+      : `<div class="precio-linea">Precio actual <b>${fmt(p.precio_venta)}</b>${ganActual !== null ? ` · ganancia de hoy <b>${ganActual.toFixed(0)}%</b>` : ''}${conDto}</div>`;
 
-    // Dos filas (12/10/2026): arriba qué es y cuánto suma; abajo las cuatro
-    // casillas con su nombre completo. En una sola fila no cabían en 400 px:
-    // los rótulos eran "cant." y "gan. %" en letra de 10 px y no se veían.
+    // Una fila por producto (v6): qué es y su precio · las cuatro casillas con
+    // su nombre completo · lo que suma en la factura.
     return `<div class="linea" id="linea-${id}">
-      <div class="linea-top">
-        ${fotoHTML(p, 32, 'clickable-product-img')}
-        <span class="nm">${esc(p.nombre)}</span>
-        <span class="mt">${fmt(l.cantidad*l.costo)}</span>
-        <button class="x" onclick="quitarLinea(${id})" title="Quitar de la compra">✕</button>
+      <div class="li-prod">
+        ${fotoHTML(p, 40, 'clickable-product-img')}
+        <div class="li-txt"><span class="nm">${esc(p.nombre)}</span>${precioInfo}${aviso}</div>
       </div>
       <div class="linea-campos">
         <label class="cant"><span class="lbl">Cantidad</span><input type="number" min="0.01" step="any" value="${l.cantidad}" onchange="cambiarCantidad(${id}, this.value)"></label>
         <label class="bonif"><span class="lbl">De regalo</span><input type="number" min="0" step="any" value="${bonif}" onchange="cambiarBonif(${id}, this.value)"></label>
         <label><span class="lbl">Costo c/u</span><input type="number" min="0" step="any" value="${l.costo}" onchange="cambiarCosto(${id}, this.value)"></label>
         <label class="gan"><span class="lbl">Ganancia %</span><input type="number" min="0" step="any" value="${gan === null ? '' : gan}" placeholder="${ganActual !== null ? ganActual.toFixed(0) : '—'}" onchange="cambiarGanancia(${id}, this.value)"></label>
-      </div></div>${aviso}${precioInfo}`;
-  }).join('') : '<div class="empty"><span class="big">📦</span>Buscá o tocá un producto<br>para empezar a recibir</div>';
+      </div>
+      <span class="mt">${fmt(l.cantidad*l.costo)}</span>
+      <button class="x" onclick="quitarLinea(${id})" title="Quitar de la compra">✕</button>
+    </div>`;
+  }).join('') : '<div class="empty"><span class="big">📦</span>Buscá o tocá un producto a la derecha<br>para empezar a recibir</div>';
   const unidades = ids.reduce((a,id)=>a + (+carrito[id].cantidad || 0) + (+carrito[id].bonif || 0), 0);
   document.getElementById('cuenta').textContent = ids.length
     ? `${ids.length} producto${ids.length === 1 ? '' : 's'} · ${AllPetFormato.numeroCRC(unidades)} unidades` : '';
-  const total = ids.reduce((a,id)=>a + carrito[id].cantidad*carrito[id].costo, 0);
+  const subtotal = ids.reduce((a,id)=>a + carrito[id].cantidad*carrito[id].costo, 0);
+  const dto = descuentoFactura();
   const iva = ivaFactura();
-  // Con IVA, se muestra el total de la factura para compararlo con el papel:
-  // si no calza, casi siempre es porque los costos se anotaron con IVA.
-  document.getElementById('totales').innerHTML = iva > 0
-    ? `<div class="tot"><span>Subtotal sin IVA</span><span>${fmt(total)}</span></div>
-       <div class="tot"><span>IVA de la factura</span><span>${fmt(iva)}</span></div>
-       <div class="tot g"><span>Total de la factura</span><span>${fmt(total + iva)}</span></div>`
-    : `<div class="tot g"><span>Total</span><span>${fmt(total)}</span></div>`;
+  const neto = subtotal - dto;
+  // Se muestra el total de la factura para compararlo con el papel: si no
+  // calza, casi siempre es porque los costos se anotaron con IVA o falta el
+  // descuento.
+  let html = '';
+  if (dto > 0 || iva > 0) html += `<div class="tot"><span>Subtotal sin IVA</span><span>${fmt(subtotal)}</span></div>`;
+  if (dto > 0) html += `<div class="tot dto"><span>Descuento de la factura</span><span>−${fmt(dto)}</span></div>`;
+  if (iva > 0) html += `<div class="tot"><span>IVA de la factura</span><span>${fmt(iva)}</span></div>`;
+  html += `<div class="tot g"><span>${(dto > 0 || iva > 0) ? 'Total de la factura' : 'Total'}</span><span>${fmt(neto + iva)}</span></div>`;
+  if (dto > 0 && dto >= subtotal) html += `<div class="tot" style="color:var(--red)">El descuento no puede ser igual o mayor que el subtotal.</div>`;
+  document.getElementById('totales').innerHTML = html;
+  // Ayuda para revisar el IVA contra la factura: el 13 % se cobra sobre el
+  // subtotal ya con el descuento.
+  const ayuda = document.getElementById('ivaAyuda');
+  if (ayuda) ayuda.textContent = (TRADICIONAL && neto > 0)
+    ? `13 % de ${fmt(neto)} = ${fmt(Math.round(neto * (FACTOR_IVA - 1)))}. Sin factura, 0.`
+    : 'Solo con factura electrónica. Sin factura, 0.';
 }
 async function registrar(){
+  const partes = partesDescuento();
   const lineas = Object.entries(carrito).map(([id,l])=>{
     const bonif = +l.bonif || 0;
     const recibidas = (+l.cantidad || 0) + bonif;
-    const costoReal = recibidas > 0 ? (l.cantidad*l.costo)/recibidas : 0;
+    const costoReal = recibidas > 0 ? (l.cantidad*l.costo - (partes[id] || 0))/recibidas : 0;
     const gan = (l.gan === null || l.gan === undefined) ? null : +l.gan;
     return {
       producto_id:+id, cantidad:l.cantidad, cantidad_bonificada:bonif, costo_unitario:l.costo,
@@ -796,6 +859,7 @@ async function registrar(){
         forma_pago: formaPago,
         factura_proveedor: document.getElementById('factura').value.trim(),
         iva: ivaFactura(),
+        descuento: descuentoFactura(),
         lineas,
       })
     });
@@ -812,6 +876,8 @@ async function registrar(){
       carrito = {}; pintarLineas();
       document.getElementById('factura').value = '';
       if (document.getElementById('ivaFactura')) document.getElementById('ivaFactura').value = '';
+      document.getElementById('descuentoFactura').value = '';
+      pintarLineas();
     } else { msg("⛔ " + d.error, true); }
   } catch(e){ msg("⛔ No se pudo conectar con el servidor.", true); }
   document.querySelector('.btn-reg').disabled = false;

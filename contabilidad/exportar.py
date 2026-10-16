@@ -105,11 +105,12 @@ def excel_contador(empresa, desde, hasta) -> bytes:
     compras = (Compra.objects.filter(empresa=empresa, creado_en__range=(ini, fin))
                .select_related("proveedor").order_by("creado_en"))
     _hoja(wb, "Compras", ["Número", "Fecha", "Proveedor", "Cédula proveedor", "Factura proveedor",
-                          "Forma de pago", "Subtotal (sin IVA)", "IVA acreditable", "Total factura", "Estado"],
+                          "Forma de pago", "Descuento de la factura", "Subtotal (sin IVA, con descuento)",
+                          "IVA acreditable", "Total factura", "Estado"],
           [[c.numero, _local(c.recibida_en or c.creado_en), c.proveedor.nombre, c.proveedor.identificacion,
-            c.factura_proveedor, c.get_forma_pago_display(), _n(c.total), _n(c.iva), _n(c.total_factura),
-            c.get_estado_display()] for c in compras],
-          [14, 18, 28, 16, 18, 22, 16, 14, 14, 10])
+            c.factura_proveedor, c.get_forma_pago_display(), _n(c.descuento), _n(c.total), _n(c.iva),
+            _n(c.total_factura), c.get_estado_display()] for c in compras],
+          [14, 18, 28, 16, 18, 22, 14, 18, 14, 14, 10])
 
     diario = (LineaAsiento.objects.filter(asiento__empresa=empresa, asiento__fecha__range=(desde, hasta))
               .select_related("asiento", "cuenta").order_by("asiento__fecha", "asiento__id", "id"))

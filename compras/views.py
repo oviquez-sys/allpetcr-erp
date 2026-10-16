@@ -224,6 +224,7 @@ def registrar(request):
             factura_proveedor=datos.get("factura_proveedor", ""),
             usuario=request.user,
             iva=datos.get("iva") or 0,
+            descuento=datos.get("descuento") or 0,
         )
 
         # Los precios, al final y uno por uno. Pasan por cambiar_precio para

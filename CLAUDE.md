@@ -416,6 +416,25 @@ tapaba el botón de registrar) y la grilla tiene relleno abajo para que la
 alto ≤ 820 px los tres pasos se esconden. Probado en 1920×1080, 1366×768,
 1280×720 y 390 px de ancho (sin desborde horizontal).
 
+**Distribución v6 y descuento de factura (16/10/2026).** Pedido de Oscar: la
+lista de lo recibido a la IZQUIERDA y en grande; el buscador a la derecha,
+angosto. Cada producto va en UNA fila (nombre + precio · 4 casillas · subtotal);
+si la lista queda angosta, `@container (max-width:800px)` baja las casillas.
+Abajo: datos de la factura a la izquierda, totales y "Registrar" a la derecha.
+El chat volvió a la derecha (ahora cae sobre el buscador, no sobre la factura).
+- **Descuento de la factura**: el del pie, sobre el subtotal y ANTES del IVA
+  (caso real Belina: ₡29.260 − ₡878 = ₡28.382; IVA ₡3.690 = 13 % de eso).
+  `Compra.descuento`; `Compra.total` ya va neto; cada `LineaCompra` guarda su
+  `total` de factura y su parte (`descuento`), repartida por
+  `services.repartir_descuento` (proporcional, céntimos exactos, el sobrante a
+  la línea más grande). `costo_real_unitario` = (total − descuento) / recibidas,
+  así kardex y asiento cuadran con lo pagado.
+- El descuento SÍ llega al precio calculado con "Ganancia %" (mismo criterio
+  que la bonificación: el descuento conseguido tiene que llegar al precio).
+- Bajo el IVA se muestra "13 % de ₡neto = ₡X" para comparar con el papel.
+- Excel contable: columna "Descuento de la factura". La carga masiva desde
+  Excel todavía NO tiene descuento. Pruebas: `compras/test_descuento_factura.py`.
+
 ## Ajustes de inventario (12/10/2026)
 
 Pedido de Oscar: sacar el ajuste de Etiquetas y tener en Administración →

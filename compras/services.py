@@ -4,13 +4,13 @@ recibir_compra es la contraparte de la venta: entra mercadería al inventario
 (recalcula el costo promedio vía el servicio de inventario) y genera su
 asiento en la misma transacción:
 
-    Debe  Inventario de mercadería   total (sin IVA)
+    Debe  Inventario de mercadería   total (sin IVA, con el descuento de la factura restado)
     Debe  IVA acreditable            iva   (solo régimen tradicional, con factura)
         Haber  Bancos (contado) o CxP proveedor (crédito)   total + iva
 
 Todo o nada: si algo falla, no queda ni stock ni asiento a medias.
 """
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -27,7 +27,7 @@ from .models import Compra, LineaCompra, Proveedor
 
 @transaction.atomic
 def crear_compra(*, proveedor, sucursal, lineas, forma_pago="CON", factura_proveedor="", usuario=None,
-                 iva=0) -> Compra:
+                 iva=0, descuento=0) -> Compra:
     """Crea la compra en borrador.
 
     lineas: dicts {producto, cantidad, costo_unitario, cantidad_bonificada?}.
@@ -37,11 +37,18 @@ def crear_compra(*, proveedor, sucursal, lineas, forma_pago="CON", factura_prove
     cuadran contra el papel que él va a cobrar. Las unidades bonificadas
     (los "12+1") entran a bodega pero no suman al total, porque nadie las
     cobra.
+
+    `descuento` es el de la factura, sobre el subtotal y antes del IVA. Se
+    reparte entre las líneas según lo que pesa cada una, así el costo de cada
+    unidad que entra a bodega es el que de verdad se pagó.
     """
     if not lineas:
         raise ValidationError("La compra no tiene líneas.")
     empresa = sucursal.empresa
     iva = Decimal(str(iva or 0)).quantize(Decimal("0.01"))
+    descuento = Decimal(str(descuento or 0)).quantize(Decimal("0.01"))
+    if descuento < 0:
+        raise ValidationError("El descuento de la factura no puede ser negativo.")
     if iva < 0:
         raise ValidationError("El IVA de la factura no puede ser negativo.")
     if iva > 0 and empresa.regimen != Empresa.Regimen.TRADICIONAL:
@@ -68,8 +75,10 @@ def crear_compra(*, proveedor, sucursal, lineas, forma_pago="CON", factura_prove
     compra = Compra.objects.create(
         empresa=empresa, sucursal=sucursal, proveedor=proveedor, numero=numero,
         forma_pago=forma_pago, factura_proveedor=factura_proveedor, usuario=usuario, iva=iva,
+        descuento=descuento,
     )
     total = Decimal("0")
+    creadas = []
     for l in lineas:
         cantidad = Decimal(str(l["cantidad"]))
         costo = Decimal(str(l["costo_unitario"]))
@@ -85,14 +94,37 @@ def crear_compra(*, proveedor, sucursal, lineas, forma_pago="CON", factura_prove
         # El total sale SOLO de lo facturado. Las bonificadas entran a bodega
         # más abajo (recibir_compra), no acá.
         total_l = (cantidad * costo).quantize(Decimal("0.01"))
-        LineaCompra.objects.create(
+        creadas.append(LineaCompra.objects.create(
             compra=compra, producto=l["producto"], cantidad=cantidad,
             cantidad_bonificada=bonificada, costo_unitario=costo, total=total_l,
-        )
+        ))
         total += total_l
-    compra.total = total
+    if descuento:
+        if descuento >= total:
+            raise ValidationError("El descuento de la factura no puede ser igual o mayor que el subtotal.")
+        for linea, parte in zip(creadas, repartir_descuento(descuento, [l.total for l in creadas])):
+            if parte:
+                linea.descuento = parte
+                linea.save(update_fields=["descuento"])
+    compra.total = total - descuento
     compra.save(update_fields=["total"])
     return compra
+
+
+def repartir_descuento(descuento, montos):
+    """Reparte el descuento en proporción a cada monto, en céntimos exactos.
+
+    Lo que sobra por redondeo va a la línea más grande: así la suma de las
+    partes es SIEMPRE el descuento de la factura, y el inventario cuadra con
+    lo que se le pagó al proveedor.
+    """
+    base = sum(montos)
+    if not descuento or base <= 0:
+        return [Decimal("0")] * len(montos)
+    partes = [(descuento * m / base).quantize(Decimal("0.01"), rounding=ROUND_DOWN) for m in montos]
+    mayor = max(range(len(montos)), key=lambda i: montos[i])
+    partes[mayor] += descuento - sum(partes)
+    return partes
 
 
 @transaction.atomic

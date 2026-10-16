@@ -59,6 +59,15 @@ class Compra(models.Model):
         "IVA de la factura", max_digits=12, decimal_places=2, default=0,
         help_text="IVA que trae la factura electrónica del proveedor. 0 si no hay factura.",
     )
+    # Descuento de la factura (16/10/2026): el que el proveedor pone al pie,
+    # sobre el subtotal y ANTES del IVA (p. ej. ₡878 en una compra de Belina:
+    # ₡29.260 − ₡878 = ₡28.382, y el 13 % de eso son los ₡3.690 de IVA que
+    # traía la factura). `total` ya va con el descuento restado; las líneas
+    # guardan su precio de factura y su parte del descuento (LineaCompra.descuento).
+    descuento = models.DecimalField(
+        "descuento de la factura", max_digits=12, decimal_places=2, default=0,
+        help_text="Descuento que trae la factura sobre el subtotal, antes del IVA.",
+    )
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
     creado_en = models.DateTimeField(auto_now_add=True)
     recibida_en = models.DateTimeField(null=True, blank=True)
@@ -111,6 +120,12 @@ class LineaCompra(models.Model):
     )
     costo_unitario = models.DecimalField(max_digits=12, decimal_places=2, help_text="Costo facturado por unidad")
     total = models.DecimalField(max_digits=12, decimal_places=2, help_text="Lo que cobra la factura: cantidad × costo_unitario")
+    # Su parte del descuento de la factura, repartido según lo que pesa la
+    # línea en el subtotal. Se guarda (no se recalcula) para que la anulación,
+    # los reportes y el costo de cada unidad usen siempre el mismo número.
+    descuento = models.DecimalField(
+        "parte del descuento de la factura", max_digits=12, decimal_places=2, default=0,
+    )
 
     class Meta:
         verbose_name = "línea de compra"
@@ -153,7 +168,8 @@ class LineaCompra(models.Model):
         recibida = self.cantidad_recibida
         if recibida <= 0:
             return Decimal("0")
-        return (self.total / recibida).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        # Con el descuento de la factura ya restado: lo que de verdad se pagó.
+        return ((self.total - self.descuento) / recibida).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
     @property
     def descuento_efectivo_pct(self):
