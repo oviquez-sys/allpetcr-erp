@@ -5,7 +5,7 @@ Ya sos parte de la manada AllPetcr.com.
 Tu código: {{ cupon.codigo }}
 {{ cupon.descripcion }}.{% if cupon.vence_en %} Válido hasta el {{ cupon.vence_en|date:"d/m/Y" }}.{% endif %}
 
-Mostralo en la caja de la tienda cuando hagás tu compra. Es de un solo uso.
+Usalo en tu primera compra: mostralo en la caja de la tienda, o escribilo en «Código de La manada» al confirmar un pedido en allpetcr.com o en tu mensaje de WhatsApp. Es de un solo uso.
 {% endif %}{% if url_mascotas %}
 Tu peludo también es parte de la manada. Contanos quién es y subí su foto:
 {{ url_mascotas }}
