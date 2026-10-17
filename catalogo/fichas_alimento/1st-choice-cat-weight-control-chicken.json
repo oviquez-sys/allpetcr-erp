@@ -1,0 +1,109 @@
+{
+ "clave": "1st-choice-cat-weight-control-chicken",
+ "marca": "1st Choice",
+ "linea": "",
+ "nombre": "1st Choice Gato Control de Peso – Pollo",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "control_peso",
+  "esterilizado"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Alimento seco reducido en calorías para gato adulto con tendencia a subir de peso o esterilizado.",
+ "descripcion": "Reducida en calorías para gatos con tendencia a subir de peso y para gatos esterilizados o castrados, para ayudar a mantener una silueta ideal. Pollo fresco como primer ingrediente; incluye glucosamina y condroitina.",
+ "beneficios": [
+  {
+   "clave": "control_peso",
+   "texto": "Reducida en calorías para una silueta ideal."
+  },
+  {
+   "clave": "articulaciones",
+   "texto": "Con glucosamina y condroitina."
+  }
+ ],
+ "ingredientes": "Pollo fresco (16 %), harina de pollo (16 %), arroz, proteína de guisante, arroz integral, cebada perlada, sémola de avena, pulpa de remolacha, fibra de guisante, hidrolizado de hígado de pollo, grasa de pollo, pulpa de tomate seco, linaza entera, cloruro de potasio, carbonato de calcio, sal, extracto de levadura, extracto de achicoria, sulfato de glucosamina, sulfato de condroitina, extracto de yuca schidigera, hierbabuena seca (0,01 %), perejil seco (0,01 %), extracto de té verde (0,01 %).",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "29",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa",
+   "calificador": "",
+   "valor": "10",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "",
+   "valor": "6",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "8",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "1.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "magnesio",
+   "etiqueta": "Magnesio",
+   "calificador": "",
+   "valor": "0.1",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "",
+   "valor": "2100",
+   "unidad": "mg/kg"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/1st-choice-alimento-para-gato-control-de-peso-pollo",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de 1st Choice en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). El sitio oficial 1stchoice.ca no se pudo consultar (verificación anti-robots). Faltan kcal y guía de alimentación: tomarlas del empaque. El análisis de HESA no indica si cada valor es mínimo o máximo. Los textos descriptivos siguen la descripción oficial de 1st Choice tal como la reproducen tiendas de Costa Rica; verificar contra 1stchoice.ca cuando se pueda.",
+ "skus": [
+  "HES-PLB30"
+ ]
+}

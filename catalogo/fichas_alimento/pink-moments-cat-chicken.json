@@ -1,0 +1,76 @@
+{
+ "clave": "pink-moments-cat-chicken",
+ "marca": "Pink",
+ "linea": "Moments",
+ "nombre": "Pink Moments Golosina Cremosa para Gato – Pollo",
+ "especie": "gato",
+ "tipo": "snack",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Golosina cremosa para lamer, sabor pollo. Paquete de 4 sobres.",
+ "descripcion": "Golosina saludable, cremosa y lamible para gatos, hecha con pollo. Con taurina y vitamina E. Paquete de 4 unidades.",
+ "beneficios": [],
+ "ingredientes": "Pollo, agua, atún hidrolizado, grasa de pollo (conservada con tocoferoles mixtos), productos de huevo, linaza, hierba de trigo, extracto de té verde, taurina, suplemento de vitamina E.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "10",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "2",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "83",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "min",
+   "valor": "0.1",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/pink-moments-golosina-saludable-para-gato-pollo",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de Pink en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). Pink no tiene sitio oficial consultable. Faltan kcal y guía de alimentación: tomarlas del empaque. Se corrigieron errores de tipeo evidentes de la fuente (cloruro, niacinamida).",
+ "skus": [
+  "HES-PI02"
+ ]
+}

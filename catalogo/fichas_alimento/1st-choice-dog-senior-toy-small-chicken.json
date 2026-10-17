@@ -1,0 +1,115 @@
+{
+ "clave": "1st-choice-dog-senior-toy-small-chicken",
+ "marca": "1st Choice",
+ "linea": "",
+ "nombre": "1st Choice Senior Razas Pequeñas y Toy – Pollo",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "senior"
+ ],
+ "tamanos_raza": [
+  "pequena"
+ ],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Alimento seco para perro senior de raza pequeña y toy, con pollo.",
+ "descripcion": "Fórmula para perros mayores de razas pequeñas y miniatura, con pollo como primer ingrediente. Declara glucosamina (760 mg/kg) y condroitina (550 mg/kg), y fibra prebiótica (manano-oligosacáridos e inulina). Sin maíz, trigo ni soya.",
+ "beneficios": [
+  {
+   "clave": "articulaciones",
+   "texto": "Con glucosamina y condroitina."
+  },
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Con fibra prebiótica (MOS e inulina)."
+  }
+ ],
+ "ingredientes": "Carne de pollo (fuente de sulfato de condroitina) (22,2 %), cebada, avena, guisantes, grasa de pollo, hidrolizado de hígado, semilla de lino, pulpa de cítrico deshidratada, aceite de salmón, polvo de alfalfa, extracto de levadura (fuente de prebióticos manano-oligosacáridos) (0,2 %), carbonato de calcio, extracto de achicoria (fuente de inulina prebiótica) (0,1 %), cloruro de potasio, sal, clorhidrato de glucosamina, hexametafosfato de sodio, cúrcuma (0,0163 %), romero deshidratado (0,0163 %), clavo de olor (0,0163 %), extracto de yuca schidigera, suero de leche en polvo, extracto de pomelo (0,001 %), hierbabuena deshidratada, perejil deshidratado, extracto de té verde, jengibre deshidratado.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "25",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa",
+   "calificador": "",
+   "valor": "12",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "",
+   "valor": "4.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "8",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "0.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "sodio",
+   "etiqueta": "Sodio",
+   "calificador": "",
+   "valor": "0.15",
+   "unidad": "%"
+  },
+  {
+   "clave": "glucosamina",
+   "etiqueta": "Glucosamina",
+   "calificador": "",
+   "valor": "760",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "condroitina",
+   "etiqueta": "Condroitina",
+   "calificador": "",
+   "valor": "550",
+   "unidad": "mg/kg"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/1st-choice-alimento-para-perro-senior-razas-pequenas-y-toy-pollo",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de 1st Choice en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). El sitio oficial 1stchoice.ca no se pudo consultar (verificación anti-robots). Faltan kcal y guía de alimentación: tomarlas del empaque. El análisis de HESA no indica si cada valor es mínimo o máximo. Los textos descriptivos siguen la descripción oficial de 1st Choice tal como la reproducen tiendas de Costa Rica; verificar contra 1stchoice.ca cuando se pueda.",
+ "skus": [
+  "HES-PLB122"
+ ]
+}

@@ -1,0 +1,128 @@
+{
+ "clave": "1st-choice-dog-puppy-all-breeds-skin-coat-lamb-fish",
+ "marca": "1st Choice",
+ "linea": "",
+ "nombre": "1st Choice Piel y Pelaje Cachorro Todas las Razas – Cordero y Pescado",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "cachorro"
+ ],
+ "tamanos_raza": [
+  "todas"
+ ],
+ "necesidades": [
+  "piel_sensible"
+ ],
+ "proteina_principal": "Cordero",
+ "sabor": "Cordero y pescado",
+ "descripcion_corta": "Alimento seco para cachorro de todas las razas con piel sensible, con cordero y pescado.",
+ "descripcion": "Para cachorros de todas las razas con piel o pelaje sensible. Facilita la transición a alimento sólido después del destete; sus proteínas animales (cordero y menhaden) son fáciles de digerir y ayudan a formar un pelaje fuerte y saludable. Con DHA de aceite de salmón, omega 3 y 6, glucosamina y fibra prebiótica.",
+ "beneficios": [
+  {
+   "clave": "piel_pelaje",
+   "texto": "Ayuda a formar un pelaje fuerte y saludable."
+  },
+  {
+   "clave": "digestion",
+   "texto": "Proteínas animales fáciles de digerir."
+  },
+  {
+   "clave": "dha",
+   "texto": "Con DHA de aceite de salmón (0,13 %)."
+  }
+ ],
+ "ingredientes": "Harina de cordero (fuente de sulfato de condroitina) (13 %), harina de pescado menhaden (13 %), guisantes, cebada, avena, aceite vegetal, mijo, proteína de papa, linaza, hidrolizado de hígado, fibra de guisante, polvo de alfalfa, pulpa de cítricos seca, aceite de salmón (fuente de DHA), sal, extracto de levadura (fuente de manano-oligosacáridos prebióticos) (3000 mg/kg), fosfato monosódico, extracto de achicoria (fuente de inulina prebiótica) (1500 mg/kg), carbonato de calcio, cloruro de potasio, clorhidrato de glucosamina, hexametafosfato de sodio, cúrcuma (163 mg/kg), romero seco (163 mg/kg), clavo (163 mg/kg), extracto de yuca schidigera, extracto de toronja (10 mg/kg), menta verde seca, perejil seco, extracto de té verde, jengibre seco.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "27",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa",
+   "calificador": "",
+   "valor": "16",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "",
+   "valor": "5.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "9.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "1.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "1.05",
+   "unidad": "%"
+  },
+  {
+   "clave": "sodio",
+   "etiqueta": "Sodio",
+   "calificador": "",
+   "valor": "0.35",
+   "unidad": "%"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "",
+   "valor": "0.13",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Omega 3",
+   "calificador": "",
+   "valor": "1.25",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Omega 6",
+   "calificador": "",
+   "valor": "4.5",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/1st-choice-alimento-para-perro-cachorro-todas-las-razas-piel-y-pelaje-cordero-y-pescado",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de 1st Choice en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). El sitio oficial 1stchoice.ca no se pudo consultar (verificación anti-robots). Faltan kcal y guía de alimentación: tomarlas del empaque. El análisis de HESA no indica si cada valor es mínimo o máximo. Los textos descriptivos siguen la descripción oficial de 1st Choice tal como la reproducen tiendas de Costa Rica; verificar contra 1stchoice.ca cuando se pueda.",
+ "skus": [
+  "HES-PLB138"
+ ]
+}

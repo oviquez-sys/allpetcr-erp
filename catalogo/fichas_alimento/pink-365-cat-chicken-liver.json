@@ -1,0 +1,104 @@
+{
+ "clave": "pink-365-cat-chicken-liver",
+ "marca": "Pink",
+ "linea": "365",
+ "nombre": "Pink 365 Gato – Pollo e Hígado (paté)",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo e hígado",
+ "descripcion_corta": "Alimento húmedo en paté para gato, con pollo e hígado. Libre de granos.",
+ "descripcion": "Alimento húmedo en forma de paté para gatos, con pollo fresco e hígado de pollo. Libre de granos, con arándanos y taurina.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Con prebióticos FOS y XOS."
+  }
+ ],
+ "ingredientes": "Pollo fresco, caldo de pollo, vísceras de pollo, hígado de pollo, grasa de pollo (conservada con tocoferoles mixtos), producto de huevo, arándanos, linaza, yuca schidigera en polvo, fructo-oligosacáridos, xilo-oligosacáridos, lactoferrina, Lactobacillus acidophilus inactivado, taurina, cloruro de sodio, cloruro de potasio, cloruro de magnesio, proteinato de hierro, proteinato de cobre, proteinato de zinc, proteinato de manganeso, cloruro de colina, acetato de alfa-tocoferol, vitamina A, nitrato de tiamina (vitamina B1), vitamina B2, niacinamida, vitamina D3, piridoxina (vitamina B6), vitamina B12, D-pantotenato de calcio, ácido fólico, D-biotina.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "12",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "3.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "82",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Ceniza",
+   "calificador": "max",
+   "valor": "2.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "min",
+   "valor": "0.12",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Sal",
+   "calificador": "min",
+   "valor": "0.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Sal",
+   "calificador": "max",
+   "valor": "1",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/pink-365-alimento-enlatado-para-gato-pollo-e-higado",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de Pink en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). Pink no tiene sitio oficial consultable. Faltan kcal y guía de alimentación: tomarlas del empaque. Se corrigieron errores de tipeo evidentes de la fuente (cloruro, niacinamida).",
+ "skus": [
+  "HES-PI05"
+ ]
+}

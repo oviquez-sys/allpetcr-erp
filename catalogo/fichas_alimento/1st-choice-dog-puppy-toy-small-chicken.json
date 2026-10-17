@@ -1,0 +1,108 @@
+{
+ "clave": "1st-choice-dog-puppy-toy-small-chicken",
+ "marca": "1st Choice",
+ "linea": "",
+ "nombre": "1st Choice Cachorro Razas Pequeñas y Toy – Pollo",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "cachorro"
+ ],
+ "tamanos_raza": [
+  "pequena"
+ ],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Alimento seco para cachorro de raza pequeña y toy, con pollo.",
+ "descripcion": "Para cachorros de razas pequeñas y miniatura, con pollo como primer ingrediente (34,1 %). Declara DHA de aceite de salmón y fibra prebiótica (manano-oligosacáridos e inulina).",
+ "beneficios": [
+  {
+   "clave": "dha",
+   "texto": "Con DHA de aceite de salmón."
+  },
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Con fibra prebiótica (MOS e inulina)."
+  }
+ ],
+ "ingredientes": "Carne de pollo (34,1 %), cebada, avena, guisantes, grasa de pollo, hidrolizado de hígado, semillas de lino, pulpa de cítrico deshidratada, aceite de salmón (fuente de DHA), polvo de alfalfa, sal, extracto de levadura (fuente de prebióticos manano-oligosacáridos) (0,3 %), extracto de achicoria (fuente de inulina prebiótica) (0,15 %), carbonato de calcio, cloruro de potasio, hexametafosfato de sodio, cúrcuma (0,0163 %), romero deshidratado (0,0163 %), clavo de olor (0,0163 %), extracto de yuca schidigera, suero de leche en polvo, extracto de pomelo (0,001 %), hierbabuena deshidratada, perejil deshidratado, extracto de té verde, jengibre deshidratado.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "30",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa",
+   "calificador": "",
+   "valor": "18",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "",
+   "valor": "4",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "8.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "1.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "1.05",
+   "unidad": "%"
+  },
+  {
+   "clave": "sodio",
+   "etiqueta": "Sodio",
+   "calificador": "",
+   "valor": "0.33",
+   "unidad": "%"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "",
+   "valor": "0.03",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/1st-choice-alimento-para-perro-cachorro-razas-pequenas-y-toy-pollo",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de 1st Choice en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). El sitio oficial 1stchoice.ca no se pudo consultar (verificación anti-robots). Faltan kcal y guía de alimentación: tomarlas del empaque. El análisis de HESA no indica si cada valor es mínimo o máximo. Los textos descriptivos siguen la descripción oficial de 1st Choice tal como la reproducen tiendas de Costa Rica; verificar contra 1stchoice.ca cuando se pueda.",
+ "skus": [
+  "HES-PLB128"
+ ]
+}

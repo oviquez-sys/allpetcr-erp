@@ -1,0 +1,125 @@
+{
+ "clave": "1st-choice-dog-adult-hypoallergenic-duck",
+ "marca": "1st Choice",
+ "linea": "",
+ "nombre": "1st Choice Hipoalergénico Adulto Todas las Razas – Pato",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "todas"
+ ],
+ "necesidades": [
+  "hipoalergenico",
+  "libre_granos"
+ ],
+ "proteina_principal": "Pato",
+ "sabor": "Pato",
+ "descripcion_corta": "Alimento seco hipoalergénico y libre de granos para perro adulto, con pato.",
+ "descripcion": "Para perros adultos con alergias o intolerancias alimentarias, o que necesitan evitar los cereales. Usa pato fresco y harina de pato como proteínas, con ingredientes de fácil digestión que rara vez provocan reacciones alérgicas. Incluye un balance de fibra prebiótica para la salud intestinal y aceite de pescado como fuente de DHA.",
+ "beneficios": [
+  {
+   "clave": "digestion",
+   "texto": "Ingredientes de fácil digestión, suaves con el estómago."
+  },
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Balance de fibra prebiótica para la flora intestinal."
+  },
+  {
+   "clave": "omega",
+   "texto": "Aceite de pescado, fuente de DHA y EPA."
+  }
+ ],
+ "ingredientes": "Pato fresco (14 %), harina de pato (13 %), lentejas, guisantes, camote, almidón de guisante, fibra de guisante, polvo de alfalfa, aceite vegetal, pulpa de cítricos seca, linaza, fosfato monocálcico, aceite de pescado menhaden (fuente de DHA), extracto de levadura (0,6 %) (fuente de manano-oligosacáridos prebióticos), extracto de achicoria (0,3 %) (fuente de inulina prebiótica), sal, carbonato de calcio, extracto de yuca schidigera, suero en polvo, hierbabuena seca, perejil seco, extracto de té verde, jengibre seco, piña seca.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "22",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa",
+   "calificador": "",
+   "valor": "12",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "",
+   "valor": "6.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "7",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "1.4",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "sodio",
+   "etiqueta": "Sodio",
+   "calificador": "",
+   "valor": "0.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "",
+   "valor": "0.08",
+   "unidad": "%"
+  },
+  {
+   "clave": "epa",
+   "etiqueta": "EPA",
+   "calificador": "",
+   "valor": "0.09",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/1st-choice-alimento-para-perro-adulto-todas-las-razas-hipoalergenico-pato",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de 1st Choice en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). El sitio oficial 1stchoice.ca no se pudo consultar (verificación anti-robots). Faltan kcal y guía de alimentación: tomarlas del empaque. El análisis de HESA no indica si cada valor es mínimo o máximo. Los textos descriptivos siguen la descripción oficial de 1st Choice tal como la reproducen tiendas de Costa Rica; verificar contra 1stchoice.ca cuando se pueda.",
+ "skus": [
+  "HES-PLB97",
+  "HES-PLB96",
+  "HES-PLB95",
+  "HES-PLB94"
+ ]
+}

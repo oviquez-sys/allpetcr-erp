@@ -1,0 +1,107 @@
+{
+ "clave": "1st-choice-dog-adult-toy-small-weight-control-chicken",
+ "marca": "1st Choice",
+ "linea": "",
+ "nombre": "1st Choice Control de Peso Adulto Razas Pequeñas y Toy – Pollo",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "pequena"
+ ],
+ "necesidades": [
+  "control_peso"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Alimento seco bajo en grasa para perro adulto de raza pequeña y toy con sobrepeso.",
+ "descripcion": "Creado para perros pequeños con sobrepeso: bajo en grasa (9,5 %) y con energía ajustada para ayudar a recuperar una figura esbelta. Contiene fibra prebiótica (MOS e inulina) para la salud digestiva y aceite de pescado.",
+ "beneficios": [
+  {
+   "clave": "control_peso",
+   "texto": "Baja en grasa (9,5 %) para ayudar a bajar de peso."
+  },
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Fibra prebiótica para la flora intestinal."
+  },
+  {
+   "clave": "digestion",
+   "texto": "Fibra soluble e insoluble para una digestión saludable."
+  }
+ ],
+ "ingredientes": "Harina de pollo (25,5 %), cebada, avena, arroz integral, mijo, fibra de guisante, pulpa seca de cítricos, grasa de pollo, hidrolizado de hígado, linaza, aceite de pescado menhaden, extracto de levadura (0,65 %) (fuente de manano-oligosacáridos prebióticos), carbonato de calcio, extracto de achicoria (0,33 %) (fuente de inulina prebiótica), sal, cloruro de potasio, extracto de yuca schidigera, suero en polvo, hierbabuena seca, perejil seco, extracto de té verde, jengibre seco, piña seca.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "24.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa",
+   "calificador": "",
+   "valor": "9.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "",
+   "valor": "3",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "6",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "1.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "0.85",
+   "unidad": "%"
+  },
+  {
+   "clave": "sodio",
+   "etiqueta": "Sodio",
+   "calificador": "",
+   "valor": "0.23",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/1st-choice-alimento-para-perro-adulto-razas-pequenas-y-toy-control-de-peso-pollo",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de 1st Choice en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). El sitio oficial 1stchoice.ca no se pudo consultar (verificación anti-robots). Faltan kcal y guía de alimentación: tomarlas del empaque. El análisis de HESA no indica si cada valor es mínimo o máximo. Los textos descriptivos siguen la descripción oficial de 1st Choice tal como la reproducen tiendas de Costa Rica; verificar contra 1stchoice.ca cuando se pueda.",
+ "skus": [
+  "HES-PLB99"
+ ]
+}

@@ -1,0 +1,126 @@
+{
+ "clave": "1st-choice-dog-adult-medium-large-chicken",
+ "marca": "1st Choice",
+ "linea": "",
+ "nombre": "1st Choice Adulto Razas Medianas y Grandes – Pollo",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "mediana",
+  "grande"
+ ],
+ "necesidades": [
+  "articulaciones"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Alimento seco para perro adulto de raza mediana y grande, con pollo.",
+ "descripcion": "Fórmula completa para perros adultos de razas medianas y grandes, más propensas a problemas articulares: incluye glucosamina y condroitina. La fibra prebiótica mejora el tránsito intestinal y la consistencia de las heces, y su mezcla de antioxidantes apoya la salud general.",
+ "beneficios": [
+  {
+   "clave": "articulaciones",
+   "texto": "Glucosamina y condroitina para cartílagos y articulaciones."
+  },
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Fibra prebiótica para heces firmes y buena digestión."
+  },
+  {
+   "clave": "antioxidantes",
+   "texto": "Cúrcuma, romero, clavo y té verde."
+  },
+  {
+   "clave": "inmunidad",
+   "texto": "Antioxidantes que apoyan el sistema inmunológico."
+  }
+ ],
+ "ingredientes": "Carne de pollo (fuente de sulfato de condroitina) (21,2 %), cebada, avena, guisantes, grasa de pollo, fibra de guisantes, polvo de alfalfa, hidrolizado de hígado, semilla de lino, pulpa de cítrico deshidratada, aceite de salmón, sal, extracto de levadura (fuente de prebióticos manano-oligosacáridos) (0,2 %), extracto de achicoria (fuente de inulina prebiótica) (0,1 %), carbonato de calcio, cloruro de potasio, clorhidrato de glucosamina, hexametafosfato de sodio, cúrcuma (0,0212 %), romero deshidratado (0,0212 %), clavo de olor (0,0212 %), extracto de yuca schidigera, suero de leche en polvo, extracto de pomelo (0,0013 %), hierbabuena deshidratada, perejil deshidratado, extracto de té verde, jengibre deshidratado.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "24",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa",
+   "calificador": "",
+   "valor": "14",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "",
+   "valor": "5",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "8.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "1.05",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "0.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "sodio",
+   "etiqueta": "Sodio",
+   "calificador": "",
+   "valor": "0.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "glucosamina",
+   "etiqueta": "Glucosamina",
+   "calificador": "",
+   "valor": "550",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "condroitina",
+   "etiqueta": "Condroitina",
+   "calificador": "",
+   "valor": "330",
+   "unidad": "mg/kg"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/1st-choice-alimento-para-perro-adulto-razas-medianas-y-grandes-pollo",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de 1st Choice en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). El sitio oficial 1stchoice.ca no se pudo consultar (verificación anti-robots). Faltan kcal y guía de alimentación: tomarlas del empaque. El análisis de HESA no indica si cada valor es mínimo o máximo. Los textos descriptivos siguen la descripción oficial de 1st Choice tal como la reproducen tiendas de Costa Rica; verificar contra 1stchoice.ca cuando se pueda.",
+ "skus": [
+  "HES-PLB126"
+ ]
+}

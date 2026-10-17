@@ -1,0 +1,108 @@
+{
+ "clave": "1st-choice-cat-adult-healthy-skin-coat-salmon",
+ "marca": "1st Choice",
+ "linea": "",
+ "nombre": "1st Choice Gato Adulto Piel y Pelaje Saludables – Salmón",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "piel_sensible"
+ ],
+ "proteina_principal": "Salmón",
+ "sabor": "Salmón",
+ "descripcion_corta": "Alimento seco para gato adulto con piel o pelaje sensible, con salmón fresco.",
+ "descripcion": "Diseñado para mejorar la condición de la piel todo el año y lograr un pelaje suave y brillante, en gatos de pelo corto o largo. El salmón fresco es el primer ingrediente y, junto con el aceite de salmón y la linaza, aporta los ácidos grasos que cuidan piel y pelo.",
+ "beneficios": [
+  {
+   "clave": "piel_pelaje",
+   "texto": "Para una piel sana todo el año y un pelaje suave y brillante."
+  },
+  {
+   "clave": "omega",
+   "texto": "Pescado y aceite de salmón como fuente de ácidos grasos."
+  }
+ ],
+ "ingredientes": "Salmón fresco (18 %), harina de arenque (17 %), arroz, proteína de guisante, grasa de pollo, producto de huevo seco, pulpa de remolacha, fibra de guisante, hidrolizado de hígado de pollo, arroz integral, cebada perlada, sémola de avena, linaza entera, orujo de tomate seco, aceite de salmón, cloruro de potasio, carbonato de calcio, sal, extracto de levadura, extracto de achicoria, extracto de yuca schidigera, hierbabuena seca (0,01 %), perejil seco (0,01 %), extracto de té verde (0,01 %).",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "30",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa",
+   "calificador": "",
+   "valor": "20",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "",
+   "valor": "6",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "9",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "1.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "magnesio",
+   "etiqueta": "Magnesio",
+   "calificador": "",
+   "valor": "0.1",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "",
+   "valor": "2600",
+   "unidad": "mg/kg"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/1st-choice-alimento-para-gato-adulto-piel-y-pelaje-saludables-salmon",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de 1st Choice en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). El sitio oficial 1stchoice.ca no se pudo consultar (verificación anti-robots). Faltan kcal y guía de alimentación: tomarlas del empaque. El análisis de HESA no indica si cada valor es mínimo o máximo. Los textos descriptivos siguen la descripción oficial de 1st Choice tal como la reproducen tiendas de Costa Rica; verificar contra 1stchoice.ca cuando se pueda.",
+ "skus": [
+  "HES-PLB07"
+ ]
+}

@@ -1,0 +1,116 @@
+{
+ "clave": "1st-choice-cat-adult-indoor-vitality-chicken",
+ "marca": "1st Choice",
+ "linea": "",
+ "nombre": "1st Choice Gato Adulto Vitalidad Interior – Pollo",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Alimento seco para gato adulto que vive dentro de casa, con pollo fresco.",
+ "descripcion": "Fórmula para gatos adultos que viven dentro de casa, con pollo fresco como primer ingrediente. Declara prebióticos (manano-oligosacáridos y fructo-oligosacáridos) y taurina.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Con prebióticos MOS y FOS."
+  }
+ ],
+ "ingredientes": "Pollo fresco (17 %), harina de pollo (17 %), arroz, proteína de guisante, grasa de pollo, pulpa de remolacha, arroz integral, cebada perlada, sémola de avena, producto de huevo seco, hidrolizado de hígado de pollo, linaza entera, pulpa de tomate seco, aceite de salmón, fibra de guisante, cloruro de potasio, carbonato de calcio, sal, extracto de levadura (fuente de manano-oligosacáridos), extracto de achicoria (fuente de inulina), extracto de yuca schidigera, hierbabuena seca (0,01 %), perejil seco (0,01 %), extracto de té verde (0,01 %).",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "28",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa",
+   "calificador": "",
+   "valor": "18",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "",
+   "valor": "3",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "8",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "1.1",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "0.9",
+   "unidad": "%"
+  },
+  {
+   "clave": "magnesio",
+   "etiqueta": "Magnesio",
+   "calificador": "",
+   "valor": "0.1",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "",
+   "valor": "2100",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Manano-oligosacáridos (MOS)",
+   "calificador": "",
+   "valor": "1000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Fructo-oligosacáridos (FOS)",
+   "calificador": "",
+   "valor": "500",
+   "unidad": "mg/kg"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/1st-choice-alimento-para-gato-adulto-vitalidad-interior-pollo",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de 1st Choice en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). El sitio oficial 1stchoice.ca no se pudo consultar (verificación anti-robots). Faltan kcal y guía de alimentación: tomarlas del empaque. El análisis de HESA no indica si cada valor es mínimo o máximo. Los textos descriptivos siguen la descripción oficial de 1st Choice tal como la reproducen tiendas de Costa Rica; verificar contra 1stchoice.ca cuando se pueda.",
+ "skus": [
+  "HES-PLB14"
+ ]
+}

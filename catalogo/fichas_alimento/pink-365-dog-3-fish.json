@@ -1,0 +1,92 @@
+{
+ "clave": "pink-365-dog-3-fish",
+ "marca": "Pink",
+ "linea": "365",
+ "nombre": "Pink 365 Perro – 3 Pescados (paté)",
+ "especie": "perro",
+ "tipo": "humedo",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Atún",
+ "sabor": "Atún, salmón y bacalao",
+ "descripcion_corta": "Alimento húmedo en paté para perro, con atún, salmón y bacalao. Libre de granos.",
+ "descripcion": "Alimento húmedo en forma de paté para perros, hecho con atún, salmón y bacalao, con aceite de salmón y calabaza. Libre de granos.",
+ "beneficios": [],
+ "ingredientes": "Atún, salmón, bacalao, caldo de pescado, aceite de salmón (conservado con tocoferoles mixtos), calabaza, linaza, fructo-oligosacáridos, taurina, cloruro de sodio, cloruro de potasio, cloruro de magnesio, proteinato de hierro, proteinato de cobre, proteinato de zinc, proteinato de manganeso, cloruro de colina, acetato de alfa-tocoferol, vitamina A, nitrato de tiamina (vitamina B1), vitamina B2, niacinamida, vitamina D3, piridoxina (vitamina B6), vitamina B12, D-pantotenato de calcio, ácido fólico, D-biotina.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "9.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "4",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "1.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "86",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Ceniza",
+   "calificador": "max",
+   "valor": "3.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Sal",
+   "calificador": "min",
+   "valor": "0.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Sal",
+   "calificador": "max",
+   "valor": "1",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/pink-365-alimento-enlatado-para-perro-3-pescados",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de Pink en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). Pink no tiene sitio oficial consultable. Faltan kcal y guía de alimentación: tomarlas del empaque. Se corrigieron errores de tipeo evidentes de la fuente (cloruro, niacinamida).",
+ "skus": [
+  "HES-PI07"
+ ]
+}

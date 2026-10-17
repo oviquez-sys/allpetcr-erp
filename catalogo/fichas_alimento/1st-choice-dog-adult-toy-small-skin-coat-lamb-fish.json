@@ -1,0 +1,122 @@
+{
+ "clave": "1st-choice-dog-adult-toy-small-skin-coat-lamb-fish",
+ "marca": "1st Choice",
+ "linea": "",
+ "nombre": "1st Choice Piel y Pelaje Adulto Razas Pequeñas y Toy – Cordero y Pescado",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "pequena"
+ ],
+ "necesidades": [
+  "piel_sensible"
+ ],
+ "proteina_principal": "Cordero",
+ "sabor": "Cordero y pescado",
+ "descripcion_corta": "Alimento seco para perro adulto de raza pequeña y toy con piel o pelaje sensible, con cordero y pescado.",
+ "descripcion": "Para perros adultos de razas pequeñas y toy con piel o pelaje sensible. Contiene proteínas altamente digeribles de cordero y arenque que promueven una piel saludable y un pelaje brillante, con omega 3 (1,3 %) y omega 6 (4,5 %) y fibra prebiótica.",
+ "beneficios": [
+  {
+   "clave": "piel_pelaje",
+   "texto": "Proteínas digeribles para piel sana y pelaje brillante."
+  },
+  {
+   "clave": "omega",
+   "texto": "1,3 % de omega 3 y 4,5 % de omega 6."
+  },
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Con fibra prebiótica (MOS e inulina)."
+  }
+ ],
+ "ingredientes": "Harina de cordero (fuente de sulfato de condroitina) (13,6 %), harina de arenque (13,6 %), guisantes, cebada, avena, aceite vegetal, almidón de guisante, mijo, linaza, hidrolizado de hígado, polvo de alfalfa, pulpa de cítricos seca, aceite de salmón, sal, fibra de guisante, extracto de levadura (fuente de manano-oligosacáridos prebióticos) (2000 mg/kg), carbonato de calcio, extracto de achicoria (fuente de inulina prebiótica) (1000 mg/kg), cloruro de potasio, hexametafosfato de sodio, cúrcuma (163 mg/kg), romero seco (163 mg/kg), clavo (163 mg/kg), extracto de yuca schidigera, extracto de pomelo (10 mg/kg), menta verde seca, perejil seco, extracto de té verde, jengibre seco.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "25",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa",
+   "calificador": "",
+   "valor": "15",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "",
+   "valor": "4.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "9.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "1.35",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "0.95",
+   "unidad": "%"
+  },
+  {
+   "clave": "sodio",
+   "etiqueta": "Sodio",
+   "calificador": "",
+   "valor": "0.28",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Omega 3",
+   "calificador": "",
+   "valor": "1.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Omega 6",
+   "calificador": "",
+   "valor": "4.5",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/1st-choice-alimento-para-perro-adulto-razas-pequenas-y-toy-piel-y-pelaje-cordero-y-pescado",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de 1st Choice en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). El sitio oficial 1stchoice.ca no se pudo consultar (verificación anti-robots). Faltan kcal y guía de alimentación: tomarlas del empaque. El análisis de HESA no indica si cada valor es mínimo o máximo. Los textos descriptivos siguen la descripción oficial de 1st Choice tal como la reproducen tiendas de Costa Rica; verificar contra 1stchoice.ca cuando se pueda.",
+ "skus": [
+  "HES-PLB137",
+  "HES-PLB136"
+ ]
+}

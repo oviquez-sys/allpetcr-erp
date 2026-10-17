@@ -1,0 +1,131 @@
+{
+ "clave": "1st-choice-cat-kitten-healthy-start-chicken",
+ "marca": "1st Choice",
+ "linea": "",
+ "nombre": "1st Choice Gatito Inicio Saludable – Pollo",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "gatito"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Alimento seco para gatito, ideal para empezar con croquetas después del destete.",
+ "descripcion": "La forma de iniciar a los gatitos en el alimento seco después del destete. Rica en calcio para huesos fuertes, con ácidos grasos para el desarrollo de los órganos vitales y prebióticos para un sistema inmunológico fuerte. Pollo fresco como primer ingrediente y DHA de aceite de salmón.",
+ "beneficios": [
+  {
+   "clave": "desarrollo",
+   "texto": "Rica en calcio para formar huesos fuertes."
+  },
+  {
+   "clave": "inmunidad",
+   "texto": "Prebióticos para un sistema inmunológico fuerte."
+  },
+  {
+   "clave": "dha",
+   "texto": "Con DHA de aceite de salmón (1200 mg/kg)."
+  }
+ ],
+ "ingredientes": "Pollo fresco (17 %), harina de pollo (17 %), arroz, grasa de pollo, proteína de guisante, producto de huevo seco, harina de menhaden, arroz integral, cebada perlada, sémola de avena, hidrolizado de hígado de pollo, pulpa de remolacha, fibra de guisante, linaza entera, aceite de salmón (fuente de DHA), pulpa de tomate seco, cloruro de potasio, sal, carbonato de calcio, extracto de levadura (fuente de manano-oligosacáridos), extracto de achicoria (fuente de inulina), extracto de yuca schidigera, hierbabuena seca (0,01 %), perejil seco (0,01 %), extracto de té verde (0,01 %).",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "30",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa",
+   "calificador": "",
+   "valor": "20",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "",
+   "valor": "3",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "8",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "1.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "0.96",
+   "unidad": "%"
+  },
+  {
+   "clave": "magnesio",
+   "etiqueta": "Magnesio",
+   "calificador": "",
+   "valor": "0.1",
+   "unidad": "%"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "",
+   "valor": "1200",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "",
+   "valor": "2300",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Manano-oligosacáridos (MOS)",
+   "calificador": "",
+   "valor": "2000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Fructo-oligosacáridos (FOS)",
+   "calificador": "",
+   "valor": "1000",
+   "unidad": "mg/kg"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/1st-choice-alimento-para-gatito-inicio-saludable-pollo",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de 1st Choice en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). El sitio oficial 1stchoice.ca no se pudo consultar (verificación anti-robots). Faltan kcal y guía de alimentación: tomarlas del empaque. El análisis de HESA no indica si cada valor es mínimo o máximo. Los textos descriptivos siguen la descripción oficial de 1st Choice tal como la reproducen tiendas de Costa Rica; verificar contra 1stchoice.ca cuando se pueda.",
+ "skus": [
+  "HES-PLB21"
+ ]
+}

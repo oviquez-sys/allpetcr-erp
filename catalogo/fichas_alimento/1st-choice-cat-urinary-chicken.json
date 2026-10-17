@@ -1,0 +1,102 @@
+{
+ "clave": "1st-choice-cat-urinary-chicken",
+ "marca": "1st Choice",
+ "linea": "",
+ "nombre": "1st Choice Gato Cuidado Urinario – Pollo",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "urinaria"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo",
+ "descripcion_corta": "Alimento seco para gato adulto que ayuda a mantener sano el tracto urinario.",
+ "descripcion": "Fórmula de salud urinaria: su pH controlado y su bajo contenido de magnesio, calcio y fósforo ayudan a mantener un tracto urinario saludable. Con pollo, lentejas, arándanos y té verde.",
+ "beneficios": [
+  {
+   "clave": "urinaria",
+   "texto": "pH controlado y bajo magnesio, calcio y fósforo."
+  },
+  {
+   "clave": "antioxidantes",
+   "texto": "Arándanos, antioxidantes para el sistema inmunológico y urinario."
+  }
+ ],
+ "ingredientes": "Pollo (14 %), harina de pollo (14 %), arroz, harina de pradera, lentejas, tapioca, grasa de pollo, pulpa de remolacha seca, proteína de papa, fibra de guisante, hidrolizado de hígado, linaza, carbonato de calcio, cloruro de potasio, sal, extracto de yuca schidigera, arándano seco (0,01 %), alfalfa, piña seca, jengibre, menta verde, perejil, extracto de té verde.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína",
+   "calificador": "",
+   "valor": "30",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa",
+   "calificador": "",
+   "valor": "16",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "",
+   "valor": "3.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia inorgánica",
+   "calificador": "",
+   "valor": "6.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "",
+   "valor": "0.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "",
+   "valor": "0.7",
+   "unidad": "%"
+  },
+  {
+   "clave": "magnesio",
+   "etiqueta": "Magnesio",
+   "calificador": "",
+   "valor": "0.07",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://hesa.co.cr/es/catalogo/alimentos/1st-choice-alimento-para-gato-cuidado-urinario-pollo",
+   "tipo": "distribuidor_cr",
+   "entidad": "HESA (Herrera y Elizondo S.A.), distribuidor de 1st Choice en Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-16"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-16",
+ "notas_internas": "Fuente: ficha de HESA (ingredientes y análisis). El sitio oficial 1stchoice.ca no se pudo consultar (verificación anti-robots). Faltan kcal y guía de alimentación: tomarlas del empaque. El análisis de HESA no indica si cada valor es mínimo o máximo. Los textos descriptivos siguen la descripción oficial de 1st Choice tal como la reproducen tiendas de Costa Rica; verificar contra 1stchoice.ca cuando se pueda.",
+ "skus": [
+  "HES-PLB27",
+  "HES-PLB26"
+ ]
+}
