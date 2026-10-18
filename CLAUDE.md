@@ -375,6 +375,22 @@ propósito casi invisible y sin explicación: no "mejorarlo" poniéndole rótulo
 Lógica en `ventas.views._filas_pos(con_tope=...)`; pruebas en
 `ventas/test_tope_descuento.py` (incluye que al cajero no le llegue).
 
+## Vender (POS) con la venta en grande (17/10/2026)
+
+Pedido de Oscar: "lo mismo" que en Recibir mercadería. La venta a la
+IZQUIERDA y en grande; el catálogo a la derecha, angosto (`minmax(330px,31%)`).
+- Cada producto en UNA fila (foto+nombre+precio c/u · − n + · Regalía /
+  Descuento % / o precio ₡ / tope · monto). `@container (max-width:900px)` baja
+  los controles a un 2.º renglón (pasa en laptop 1366); `(max-width:520px)` en
+  celular pone el nombre arriba con todo el ancho.
+- Arriba: cliente y casilla dorada lado a lado. Abajo (`.pie`): a la izquierda
+  el resumen de la última venta (`#ultima`) y la nota; a la derecha total,
+  Efectivo/Tarjeta/SINPE/Mixto y Fiado. Con alto ≤ 820 px el pie se compacta.
+- Lo recién escaneado se lleva a la vista y parpadea (`resaltarLinea`).
+- El botón de la línea dice "🎁 Regalía" (antes "Regalo"); el tiquete impreso
+  sigue diciendo REGALO, que es lo que lee el cliente.
+- El chat sigue oculto y se abre con "Asistente"; ahora cae sobre el catálogo.
+
 ## Aviso de agotados (02/10/2026)
 
 Pedido de Oscar: cuando un producto que tuvo existencia queda en cero, alarma

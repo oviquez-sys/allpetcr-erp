@@ -40,7 +40,11 @@ a{text-decoration:none}
 .nav a.home{color:var(--ink2)}
 
 
-main{flex:1;display:grid;grid-template-columns:1fr 400px;gap:14px;padding:12px 20px 16px;overflow:hidden;min-height:0}
+/* Distribución v2 (17/10/2026, pedido de Oscar: "lo mismo" que en Recibir
+   mercadería). La venta a la IZQUIERDA y en grande, que es donde se trabaja
+   con el cliente enfrente; el catálogo a la derecha, más angosto, porque con
+   la pistola casi no se toca. */
+main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,31%);gap:14px;padding:12px 20px 16px;overflow:hidden;min-height:0}
 .col{background:var(--card);border-radius:18px;padding:14px;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow)}
 
 #buscar{width:100%;padding:12px 16px;border:1px solid var(--line);border-radius:12px;font-size:16px;
@@ -51,7 +55,7 @@ main{flex:1;display:grid;grid-template-columns:1fr 400px;gap:14px;padding:12px 2
   color:var(--ink2);cursor:pointer;transition:all .15s;white-space:nowrap}
 .chip-f:hover{border-color:var(--brand2);color:var(--brand)}
 .chip-f.on{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:600}
-#grid{overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:10px;align-content:start;margin-top:12px;padding:2px 4px 4px 2px}
+#grid{overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;align-content:start;margin-top:12px;padding:2px 4px 4px 2px}
 .pcard{border:1px solid rgba(0,0,0,.06);border-radius:14px;padding:8px 8px 10px;cursor:pointer;background:#fff;
   box-shadow:0 1px 2px rgba(0,0,0,.04);
   transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease;display:flex;flex-direction:column}
@@ -73,20 +77,44 @@ main{flex:1;display:grid;grid-template-columns:1fr 400px;gap:14px;padding:12px 2
 .pcard .s{font-size:12px;color:var(--ink2);white-space:nowrap}
 .pcard.agotado{opacity:.4;pointer-events:none}
 
-.col.cart h2{font-size:17px;font-weight:700;margin-bottom:10px}
+.cart-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.col.cart h2{font-size:17px;font-weight:700}
+#cuentaVenta{font-size:12.5px;color:var(--ink2)}
+/* Cliente y casilla dorada lado a lado: con la venta ancha caben en un renglón. */
+.cli-cupon{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:10px;align-items:start}
 #cliente{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;font-size:14.5px;background:#fbfbfd}
-#lineas{flex:1;overflow-y:auto;margin:0 -4px;padding:0 4px}
-.linea{display:flex;align-items:center;gap:10px;padding:10px 0 4px}
-.linea .nm{flex:1;font-weight:600;font-size:14.5px;line-height:1.3;min-width:0}
+#lineas{flex:1;overflow-y:auto;margin:0 -4px;padding:0 4px;border-top:1px solid var(--line);container-type:inline-size}
+/* Cada producto en UNA fila: foto y nombre · cantidad · descuento / regalía ·
+   monto. Si la venta queda angosta (laptop chica, celular), el descuento
+   baja a un segundo renglón, como era antes. */
+.linea{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,auto) 104px;align-items:center;gap:6px 14px;
+  padding:9px 2px;border-bottom:1px solid var(--line)}
+.li-prod{display:flex;align-items:center;gap:10px;min-width:0}
+.linea .nm{font-weight:600;font-size:14.5px;line-height:1.3;min-width:0}
+.linea .nm small{display:block;font-size:12px;color:var(--ink2);font-weight:500}
 .linea .qtn{display:flex;align-items:center;gap:6px}
 .linea .qtn button{width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;font-size:19px;
   transition:background .15s;line-height:1}
 .linea .qtn button:hover{background:var(--bg)}
 .linea .qtn b{font-size:16px;min-width:24px;text-align:center;font-variant-numeric:tabular-nums}
-.linea .mt{width:92px;text-align:right;font-weight:700}
+.linea .mt{text-align:right;font-weight:700}
 .linea .mt .now{display:block;font-size:16px;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
 .linea .mt .orig{display:block;font-size:12px;color:#8e8e93;text-decoration:line-through;font-weight:500}
-.linea-x{border-bottom:1px solid var(--line);padding-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.linea-x{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+@container (max-width:900px){
+  .linea{grid-template-columns:minmax(0,1fr) auto 104px}
+  .linea-x{grid-column:1/-1;grid-row:2;justify-content:flex-start;padding-left:56px}
+}
+/* Celular: el nombre arriba con todo el ancho; cantidad y monto debajo. */
+@container (max-width:520px){
+  .linea{grid-template-columns:auto 1fr}
+  .li-prod{grid-column:1/-1}
+  .linea .qtn{grid-row:2;padding-left:56px}
+  .linea .mt{grid-row:2;grid-column:2}
+  .linea-x{grid-row:3}
+}
+@keyframes recien{from{background:#E4F1F4}to{background:transparent}}
+.linea.recien{animation:recien 1.4s ease-out}
 .linea-x .toggle{font-size:12px;padding:4px 10px;border-radius:15px;border:1px solid var(--line);background:#fff;
   color:var(--ink2);cursor:pointer;transition:all .15s}
 .linea-x .toggle.on{background:var(--purple);border-color:var(--purple);color:#fff;font-weight:600}
@@ -98,12 +126,15 @@ main{flex:1;display:grid;grid-template-columns:1fr 400px;gap:14px;padding:12px 2
    el cliente mirando la pantalla, y tiene que pasar por un código interno.
    Solo llega para gerentes (ver ventas.views._filas_pos). */
 .ref{font-size:10px;color:#c7c7cc;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:.03em;margin-left:5px}
-.linea-x .ref{margin-left:auto}
 .linea-x .ref.pasado{color:#e3a29b}
 .tot.d{display:flex;justify-content:space-between;font-size:16px;color:var(--ink2);margin-bottom:9px}
 .empty{color:var(--ink2);padding:24px 10px;text-align:center;font-size:14px}
 .empty .big{font-size:28px;display:block;margin-bottom:6px}
-#totales{border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
+/* Pie de la venta: a la izquierda el resumen de la última venta (vuelto,
+   tiquete) y la nota; a la derecha el total y los botones de cobro. */
+.pie{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:20px;border-top:1px solid var(--line);margin-top:6px;padding-top:10px;align-items:end}
+.pie-izq{min-width:0}
+
 .tot.g{display:flex;justify-content:space-between;align-items:baseline;font-size:30px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .tot.g span:first-child{font-size:17px;font-weight:700;color:var(--ink2)}
 .pagos{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
@@ -177,7 +208,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 .dlg .rapidos button{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:14px}
 .dlg video{width:100%;border-radius:14px;background:#000;aspect-ratio:4/3;object-fit:cover}
 .dlg .err{color:var(--red);font-size:13.5px;margin-top:8px;min-height:18px}
-#ultima{display:none;margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fbfbfd;font-size:14px}
+#ultima{display:none;margin-top:0;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fbfbfd;font-size:14px}
 #ultima.on{display:block}
 #ultima .t{font-weight:700}
 #ultima .vuelto{font-size:22px;font-weight:800;color:#1c7a36;margin-top:2px}
@@ -187,17 +218,17 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 #ultima .agotado ul{margin:4px 0 0 18px;padding:0;font-weight:600}
 #ultima .bts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 #ultima .bts button,#ultima .bts a{font-size:13px;padding:7px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--brand);cursor:pointer}
-.cli-fila{display:flex;gap:8px;margin-bottom:12px}
+.cli-fila{display:flex;gap:8px;margin-bottom:10px}
 .cli-fila #cliente{margin-bottom:0;flex:1}
 .cli-fila button{padding:0 14px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--brand);font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
 /* Cupón de la manada (13/10/2026). Dorado de la marca: se distingue a simple
    vista de un descuento manual, que es del cajero y no del cliente. */
-.cupon-fila{display:flex;gap:8px;margin:-4px 0 12px}
+.cupon-fila{display:flex;gap:8px;margin:0 0 10px}
 .cupon-fila input{flex:1;min-width:0;padding:9px 12px;border:1px dashed #CC9539;border-radius:10px;font-size:14px;
   background:#fffaf0;text-transform:uppercase;letter-spacing:.04em}
 .cupon-fila input::placeholder{text-transform:none;letter-spacing:0;color:#9a7a45}
 .cupon-fila button{padding:0 14px;border-radius:10px;border:1px solid #CC9539;background:#fff;color:#7F5B25;font-size:14px;font-weight:600;cursor:pointer}
-.cupon-on{display:flex;align-items:center;gap:10px;margin:-4px 0 12px;padding:9px 12px;border-radius:10px;
+.cupon-on{display:flex;align-items:center;gap:10px;margin:0 0 10px;padding:9px 12px;border-radius:10px;
   background:#fbf3e4;border:1px solid #e7cf9f;font-size:13.5px;color:#5c4219}
 .cupon-on b{font-variant-numeric:tabular-nums}
 .cupon-on .x{margin-left:auto;border:0;background:none;color:#7F5B25;font-size:13px;cursor:pointer;text-decoration:underline}
@@ -218,7 +249,11 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
   main{grid-template-columns:1fr;overflow:visible;padding:12px 14px 16px}
   .col{overflow:visible}
   #grid{max-height:52vh}
+  .col.catalogo{order:1}
   .col.cart{order:2}
+  .cli-cupon{grid-template-columns:minmax(0,1fr)}
+  .pie{grid-template-columns:minmax(0,1fr)}
+  .pie-izq{order:2}
   #lineas{max-height:none}
   .nav{padding:10px 14px;flex-wrap:wrap}
   .nav .info{display:none}
@@ -227,6 +262,29 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
   .pcard .p{font-size:17px}
   .pagos,.pagos.cuatro{grid-template-columns:1fr 1fr}
   .pagos button .tecla{display:none}   /* en el celular no hay teclas F */
+}
+/* Pantallas bajas (laptop 1366×768 con el navegador): el pie de cobro más
+   compacto. Cada renglón que se ahorra acá es un producto más a la vista. */
+@media(max-height:820px) and (min-width:901px){
+  main{padding-top:8px;padding-bottom:10px}
+  .cart-head{margin-bottom:6px}
+  .cli-fila,.cupon-fila,.cupon-on{margin-bottom:8px}
+  #cliente{padding:8px 12px}
+  .linea{padding:6px 2px}
+  .pie{padding-top:6px;gap:16px}
+  .tot.d{font-size:13.5px;margin-bottom:2px}
+  .tot.g{font-size:25px}
+  .tot.g span:first-child{font-size:15px}
+  .pagos{margin-top:6px;gap:6px}
+  .pagos button{flex-direction:row;justify-content:center;gap:7px;padding:10px 4px}
+  .pagos button svg{width:17px;height:17px}
+  .pagos button .tecla{display:none}
+  .btn-cred{margin-top:6px;padding:8px}
+  .nota{display:none}
+}
+@media(max-width:1250px) and (min-width:901px){
+  .pie{grid-template-columns:minmax(0,1fr) 340px}
+  .pagos button .tecla{display:none}
 }
 @media(max-width:420px){
   .pagos,.pagos.cuatro{grid-template-columns:1fr 1fr}
@@ -251,47 +309,57 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 </div>
 
 <main>
-  <div class="col">
+  <div class="col cart">
+    <div class="cart-head"><h2>Venta actual</h2><span id="cuentaVenta"></span></div>
+    <div class="cli-cupon">
+      <div class="cli-fila">
+        <select id="cliente"><option value="">Cliente: Consumidor final</option></select>
+        <button type="button" id="btnCliNuevo" title="Registrar un cliente nuevo">＋ Cliente</button>
+      </div>
+      <div>
+        <div class="cupon-fila" id="cuponFila">
+          <input id="cuponCodigo" placeholder="🎟 Cupón, WhatsApp o cédula del cliente" autocomplete="off" spellcheck="false" maxlength="60" aria-label="Cupón de la manada, WhatsApp, cédula o correo del cliente">
+          <button type="button" id="btnCupon">Aplicar</button>
+          <button type="button" id="btnManada" title="Unir a la manada a un cliente que no pudo escanear el QR">🐾 Unir</button>
+        </div>
+        <div class="cupon-on" id="cuponOn" hidden></div>
+      </div>
+    </div>
+    <div id="lineas"></div>
+    <div class="pie">
+      <div class="pie-izq">
+        <div id="ultima" aria-live="polite"></div>
+        <p class="nota">La venta descuenta el inventario y registra la contabilidad sola. Para fiar, elegí primero un cliente con crédito.</p>
+      </div>
+      <div class="pie-der">
+        <div id="totales"></div>
+        <div class="pagos cuatro">
+          <button onclick="pedirEfectivo()">
+            <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5h.01M18 14.5h.01"/></svg>
+            <span>Efectivo</span><span class="tecla">F1</span></button>
+          <button onclick="cobrar('TAR')">
+            <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/></svg>
+            <span>Tarjeta</span><span class="tecla">F2</span></button>
+          <button onclick="cobrar('SIN')">
+            <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
+            <span>SINPE</span><span class="tecla">F3</span></button>
+          <button onclick="pedirMixto()">
+            <svg viewBox="0 0 24 24"><path d="M4 7h11M4 12h16M4 17h8"/><circle cx="18" cy="7" r="2"/><circle cx="14" cy="17" r="2"/></svg>
+            <span>Mixto</span><span class="tecla">F4</span></button>
+        </div>
+        <button class="btn-cred" id="btnCredito" onclick="cobrar('CRE')">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+          <span>Fiado (venta a crédito)</span></button>
+      </div>
+    </div>
+  </div>
+  <div class="col catalogo">
     <div class="busca-fila">
-      <input id="buscar" placeholder="🔎 Escaneá el código de barras, o escribí el nombre del producto…" autofocus>
+      <input id="buscar" placeholder="🔎 Escaneá o escribí el nombre…" autofocus>
       <button id="btnCamara" type="button" title="Escanear con la cámara" aria-label="Escanear con la cámara">📷</button>
     </div>
     <div class="chips" id="chips"></div>
     <div id="grid"></div>
-  </div>
-  <div class="col cart">
-    <h2>Venta actual</h2>
-    <div class="cli-fila">
-      <select id="cliente"><option value="">Cliente: Consumidor final</option></select>
-      <button type="button" id="btnCliNuevo" title="Registrar un cliente nuevo">＋ Cliente</button>
-    </div>
-    <div class="cupon-fila" id="cuponFila">
-      <input id="cuponCodigo" placeholder="🎟 Cupón, WhatsApp o cédula del cliente" autocomplete="off" spellcheck="false" maxlength="60" aria-label="Cupón de la manada, WhatsApp, cédula o correo del cliente">
-      <button type="button" id="btnCupon">Aplicar</button>
-      <button type="button" id="btnManada" title="Unir a la manada a un cliente que no pudo escanear el QR">🐾 Unir</button>
-    </div>
-    <div class="cupon-on" id="cuponOn" hidden></div>
-    <div id="lineas"></div>
-    <div id="totales"></div>
-    <div class="pagos cuatro">
-      <button onclick="pedirEfectivo()">
-        <svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5h.01M18 14.5h.01"/></svg>
-        <span>Efectivo</span><span class="tecla">F1</span></button>
-      <button onclick="cobrar('TAR')">
-        <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2.5"/><path d="M2 10h20"/></svg>
-        <span>Tarjeta</span><span class="tecla">F2</span></button>
-      <button onclick="cobrar('SIN')">
-        <svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
-        <span>SINPE</span><span class="tecla">F3</span></button>
-      <button onclick="pedirMixto()">
-        <svg viewBox="0 0 24 24"><path d="M4 7h11M4 12h16M4 17h8"/><circle cx="18" cy="7" r="2"/><circle cx="14" cy="17" r="2"/></svg>
-        <span>Mixto</span><span class="tecla">F4</span></button>
-    </div>
-    <button class="btn-cred" id="btnCredito" onclick="cobrar('CRE')">
-      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-      <span>Fiado (venta a crédito)</span></button>
-    <div id="ultima" aria-live="polite"></div>
-    <p class="nota">La venta descuenta el inventario y registra la contabilidad sola. Para fiar, elegí primero un cliente con crédito.</p>
   </div>
 </main>
 <div id="msg" role="status"></div>
@@ -363,10 +431,10 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
     <h2>Cómo cobrar una venta</h2>
     <div class="step2"><div class="n">0</div><div class="st">El cursor siempre vuelve al buscador: con la pistola no hace falta tocar el mouse.</div></div>
     <div class="step2"><div class="n">1</div><div class="st">Pasá la pistola por el código de barras del producto. Si no tiene, escribí su nombre y tocá la tarjeta.</div></div>
-    <div class="step2"><div class="n">2</div><div class="st">Repetí con cada producto. A la derecha se va armando la venta con el total.</div></div>
+    <div class="step2"><div class="n">2</div><div class="st">Repetí con cada producto. A la izquierda se va armando la venta con el total.</div></div>
     <div class="step2"><div class="n">3</div><div class="st">Tocá cómo paga: <b>Efectivo</b>, <b>Tarjeta</b> o <b>SINPE</b>. Sale el tiquete solo.</div></div>
     <div class="step2"><div class="n">4</div><div class="st">Si el cliente lleva fiado, elegí su nombre arriba y usá <b>Fiado</b>.</div></div>
-    <div class="step2"><div class="n">5</div><div class="st"><b>Descuento o regalo.</b> Debajo de cada producto podés poner un <b>descuento</b> en % (número entero), o escribir directo <b>el precio</b> al que se lo dejás (ej. ₡2.000) y el sistema calcula el descuento. También podés marcarlo como <b>🎁 Regalo</b> (sale gratis, pero igual descuenta del inventario y se registra el costo).</div></div>
+    <div class="step2"><div class="n">5</div><div class="st"><b>Descuento o regalía.</b> En la fila de cada producto podés poner un <b>descuento</b> en % (número entero), o escribir directo <b>el precio</b> al que se lo dejás (ej. ₡2.000) y el sistema calcula el descuento. También podés marcarlo como <b>🎁 Regalía</b> (sale gratis, pero igual descuenta del inventario y se registra el costo).</div></div>
     <div class="step2"><div class="n">6</div><div class="st"><b>🎟 Casilla dorada.</b> En <b>cada compra</b> preguntale al cliente su WhatsApp o su cédula y escribilo ahí + Enter: la venta queda a su nombre (así se arma su historial y los recordatorios de comida). Si tiene su regalo de bienvenida pendiente, se aplica solo. También acepta el código del cupón (empieza con AP-). Si no pudo escanear el QR, tocá <b>🐾 Unir</b>: lo registrás ahí mismo y el regalo se aplica en esta compra. El descuento se aplica a toda la venta y el cupón queda usado al cobrar: no sirve dos veces.</div></div>
     <div class="step2"><div class="n">7</div><div class="st"><b>Con el teclado es más rápido.</b> <b>F1</b> cobra en efectivo (escribí con cuánto paga y Enter; Enter solo = pagó exacto), <b>F2</b> con tarjeta, <b>F3</b> por SINPE y <b>F4</b> pago mixto. <b>Esc</b> limpia la búsqueda y devuelve el cursor al escáner.</div></div>
     <button class="close" onclick="document.getElementById('ayuda').classList.remove('on')">Entendido</button>
@@ -547,8 +615,17 @@ function agregar(id){
   item.cantidad += 1;
   carrito[id] = item;
   pintar();
+  resaltarLinea(id);
   refrescarStock(id);
   volverAlEscaner();
+}
+// La venta crece hacia abajo: lo recién escaneado se lleva a la vista y
+// parpadea, para que el cajero vea dónde quedó.
+function resaltarLinea(id){
+  const el = document.getElementById('linea-' + id);
+  if (!el) return;
+  el.scrollIntoView({block: 'nearest'});
+  el.classList.remove('recien'); void el.offsetWidth; el.classList.add('recien');
 }
 function quitar(id){
   if(--carrito[id].cantidad <= 0) delete carrito[id];
@@ -617,7 +694,7 @@ function pintar(){
     const bruto = p.precio_venta * it.cantidad;
     let mt;
     if (it.regalia){
-      mt = `<span class="orig">${fmt(bruto)}</span><span class="now regtxt">REGALO</span>`;
+      mt = `<span class="orig">${fmt(bruto)}</span><span class="now regtxt">REGALÍA</span>`;
     } else if (pctLinea(it, p) > 0){
       // Precio original tachado arriba, precio con descuento abajo
       mt = `<span class="orig">${fmt(bruto)}</span><span class="now">${fmt(totalLinea(id))}</span>`;
@@ -625,18 +702,21 @@ function pintar(){
       mt = `<span class="now">${fmt(bruto)}</span>`;
     }
     const ctrl = it.regalia
-      ? `<button class="toggle on" onclick="toggleRegalo(${id})">🎁 Regalo</button>
+      ? `<button class="toggle on" onclick="toggleRegalo(${id})">🎁 Regalía</button>
          <span class="regtxt">Sale del inventario a costo, sin cobro</span>
          <span class="descbox">Motivo <input type="text" maxlength="200" value="${esc(it.motivo_regalia||'')}" placeholder="obligatorio" onchange="setMotivoRegalia(${id}, this.value)"></span>`
-      : `<button class="toggle" onclick="toggleRegalo(${id})">🎁 Regalo</button>
+      : `<button class="toggle" onclick="toggleRegalo(${id})">🎁 Regalía</button>
          <span class="descbox">Descuento <input type="text" inputmode="numeric" maxlength="5" value="${it.precio_final != null ? '' : (it.descuento_pct||'')}" placeholder="${it.precio_final != null ? Math.round(pctNegociado(it, p)) : '0'}" onchange="setDescuentoPct(${id}, this.value)"> %</span>
          <span class="descbox">o precio ₡<input class="pf" type="text" inputmode="numeric" maxlength="9" value="${it.precio_final != null ? it.precio_final : ''}" placeholder="${Math.round(p.precio_venta)}" onchange="setPrecioFinal(${id}, this.value)"></span>
          ${ganaElCupon(it, p) || (cupon && !pctNegociado(it, p)) ? `<span class="cupontxt">🎟 ${cupon.porcentaje}% cupón</span>` : ''}
          ${refTope(p, pctLinea(it, p) > p.tope)}`;
-    return `<div class="linea">${fotoHTML(p, 46, 'clickable-product-img')}<span class="nm">${esc(p.nombre)}</span>
+    // Una fila por producto (v2, 17/10/2026): qué es · cuántas · descuento o
+    // regalía · cuánto suma.
+    return `<div class="linea" id="linea-${id}">
+      <div class="li-prod">${fotoHTML(p, 46, 'clickable-product-img')}<span class="nm">${esc(p.nombre)}<small>${fmt(p.precio_venta)} c/u</small></span></div>
       <span class="qtn"><button onclick="quitar(${id})">−</button><b>${it.cantidad}</b><button onclick="agregar(${id})">＋</button></span>
-      <span class="mt">${mt}</span></div>
-      <div class="linea-x">${ctrl}</div>`;
+      <div class="linea-x">${ctrl}</div>
+      <span class="mt">${mt}</span></div>`;
   }).join('') : '<div class="empty"><span class="big">🛒</span>Escaneá o tocá un producto<br>para empezar la venta</div>';
   const total = ids.reduce((a,id)=>a + totalLinea(id), 0);
   // Corrección 2026-08-03: esta suma leía `carrito[id].descuento`, un campo
@@ -653,6 +733,9 @@ function pintar(){
   if (desc > 0) html += `<div class="tot d"><span>Descuentos</span><span>− ${fmt(desc)}</span></div>`;
   html += `<div class="tot g"><span>Total</span><span>${fmt(total)}</span></div>`;
   document.getElementById('totales').innerHTML = html;
+  const unidades = ids.reduce((a,id)=>a + carrito[id].cantidad, 0);
+  document.getElementById('cuentaVenta').textContent = ids.length
+    ? `${ids.length} producto${ids.length === 1 ? '' : 's'} · ${unidades} unidad${unidades === 1 ? '' : 'es'}` : '';
   // pintarGrid() ya NO se llama acá: reconstruía las 150 tarjetas del catálogo
   // en cada cambio de cantidad. Ahora quien cambia el carrito actualiza solo
   // el contador del producto afectado con refrescarStock(id). El catálogo se
