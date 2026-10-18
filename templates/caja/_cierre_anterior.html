@@ -1,0 +1,17 @@
+{% if anterior %}
+{% comment %} Cómo se cerró la caja anterior (17/10/2026, pedido de Oscar). {% endcomment %}
+<div class="ant">
+  <h3>Así se cerró la caja anterior</h3>
+  <div class="cuando">{{ anterior.cerrada_en|date:"l j \d\e F, g:i a" }} · {{ anterior.cerrada_por.username|default:anterior.usuario.username }}</div>
+  <div class="fila"><span>Abrió con</span><b>₡{{ anterior.monto_apertura|crc }}</b></div>
+  {% if anterior_ventas %}<div class="fila"><span>Ventas</span><b>{{ anterior_ventas.n }} · ₡{{ anterior_ventas.total|crc }}</b></div>
+  {% if anterior_ventas.redondeo %}<div class="fila"><span>Redondeos</span><b>₡{{ anterior_ventas.redondeo|crc }}</b></div>{% endif %}{% endif %}
+  <div class="fila"><span>Efectivo que se esperaba</span><b>₡{{ anterior.monto_esperado|crc }}</b></div>
+  <div class="fila"><span>Efectivo contado al cerrar</span><b>₡{{ anterior.monto_contado|crc }}</b></div>
+  <div class="fila"><span>Diferencia</span>
+    <b class="{% if anterior.diferencia == 0 %}ok{% else %}mal{% endif %}">{% if anterior.diferencia == 0 %}Cuadró exacto{% else %}₡{{ anterior.diferencia|crc_abs }} {% if anterior.diferencia > 0 %}de más{% else %}de menos{% endif %}{% endif %}</b></div>
+  {% if anterior.tarjeta_contado is not None %}<div class="fila"><span>Datáfono</span><b class="{% if anterior.tarjeta_contado == anterior.tarjeta_esperado %}ok{% else %}mal{% endif %}">₡{{ anterior.tarjeta_contado|crc }} de ₡{{ anterior.tarjeta_esperado|crc }}</b></div>{% endif %}
+  {% if anterior.sinpe_contado is not None %}<div class="fila"><span>SINPE</span><b class="{% if anterior.sinpe_contado == anterior.sinpe_esperado %}ok{% else %}mal{% endif %}">₡{{ anterior.sinpe_contado|crc }} de ₡{{ anterior.sinpe_esperado|crc }}</b></div>{% endif %}
+  {% if anterior.desglose %}<div class="desg">Billetes y monedas: {% for v, n, st in anterior.desglose %}{{ n }} × ₡{{ v|crc }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>{% endif %}
+</div>
+{% endif %}

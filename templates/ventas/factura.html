@@ -393,7 +393,7 @@ td.tot{font-weight:600}
             <td class="n tot">{% if l.es_regalia %}₡0{% else %}₡{{ l.total|crc:0 }}{% endif %}</td>
           </tr>
           {% if l.descuento_pct > 0 %}
-          <tr class="descuento"><td colspan="3">Descuento {{ l.descuento_pct }}%</td><td class="n">− ₡{{ l.descuento_monto|crc:0 }}</td></tr>
+          <tr class="descuento"><td colspan="3">Descuento {{ l.descuento_pct }}%</td><td class="n">− ₡{{ l.descuento_negociado|crc:0 }}</td></tr>
           {% endif %}
         {% endfor %}
         </tbody>
@@ -406,8 +406,11 @@ td.tot{font-weight:600}
           <tr><td>Subtotal</td><td class="n">₡{{ f.subtotal|crc:0 }}</td></tr>
           <tr class="impuesto"><td>IVA</td><td class="n">₡{{ f.impuesto|crc:0 }}</td></tr>
           {% endif %}
-          {% if f.descuento > 0 %}
-          <tr class="descuento"><td>Descuentos</td><td class="n">− ₡{{ f.descuento|crc:0 }}</td></tr>
+          {% if f.descuento_sin_redondeo > 0 %}
+          <tr class="descuento"><td>Descuentos</td><td class="n">− ₡{{ f.descuento_sin_redondeo|crc:0 }}</td></tr>
+          {% endif %}
+          {% if f.redondeo > 0 %}
+          <tr class="descuento"><td>Redondeo</td><td class="n">− ₡{{ f.redondeo|crc:0 }}</td></tr>
           {% endif %}
         </table>
       </div>
@@ -432,8 +435,11 @@ td.tot{font-weight:600}
           <div class="fila"><span class="l">Subtotal</span><span class="v">₡{{ f.subtotal|crc:0 }}</span></div>
           <div class="fila impuesto"><span class="l">IVA</span><span class="v">₡{{ f.impuesto|crc:0 }}</span></div>
           {% endif %}
-          {% if f.descuento > 0 %}
-          <div class="fila descuento"><span class="l">Descuentos</span><span class="v">− ₡{{ f.descuento|crc:0 }}</span></div>
+          {% if f.descuento_sin_redondeo > 0 %}
+          <div class="fila descuento"><span class="l">Descuentos</span><span class="v">− ₡{{ f.descuento_sin_redondeo|crc:0 }}</span></div>
+          {% endif %}
+          {% if f.redondeo > 0 %}
+          <div class="fila descuento"><span class="l">Redondeo</span><span class="v">− ₡{{ f.redondeo|crc:0 }}</span></div>
           {% endif %}
           <hr>
           <div class="fila"><span class="l">Total</span><span class="v">₡{{ f.total|crc:0 }}</span></div>

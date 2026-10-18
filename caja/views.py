@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import redirect, render
 
 from core.roles import CAJERO, GERENTE, rol_requerido
+from core.tenancy import empresa_actual
 
 from . import services
 from .forms import AbrirCajaForm, CerrarCajaForm
@@ -25,7 +26,13 @@ def abrir(request):
             return redirect("ventas:pos")
         except ValidationError as e:
             form.add_error(None, e)
-    return render(request, "caja/abrir.html", {"form": form})
+    # Cómo se cerró la caja anterior (17/10/2026): para abrir sabiendo con
+    # qué se quedó la gaveta y si el cierre cuadró.
+    anterior = services.ultimo_cierre(empresa_actual(request))
+    return render(request, "caja/abrir.html", {
+        "form": form, "anterior": anterior,
+        "anterior_ventas": services.resumen_ventas(anterior) if anterior else None,
+    })
 
 
 @rol_requerido(CAJERO, GERENTE)
@@ -56,7 +63,11 @@ def cerrar(request):
         except ValidationError as e:
             form.add_error(None, e)
     movimientos = sesion.movimientos.all()[:50]
+    # Cómo se abrió esta caja (17/10/2026) y qué contó el cierre anterior:
+    # si la apertura no calza con lo que quedó la noche antes, se ve aquí.
+    # No muestra lo esperado de ESTA caja: el conteo sigue siendo ciego.
+    anterior = services.ultimo_cierre(empresa_actual(request), antes_de=sesion.abierta_en)
     return render(request, "caja/cerrar.html", {
-        "form": form, "sesion": sesion, "movimientos": movimientos,
+        "form": form, "sesion": sesion, "movimientos": movimientos, "anterior": anterior,
         "grupos": [("Billetes", form.billetes()), ("Monedas", form.monedas())],
     })

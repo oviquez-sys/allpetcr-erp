@@ -576,6 +576,30 @@ denominación y que el sistema vaya sumando.
   Enter pasa a la siguiente casilla (no cierra). Pruebas en
   `caja/test_conteo_billetes.py`.
 
+**Apertura y cierre a la vista (17/10/2026).** Al abrir caja se ve "Así se
+cerró la caja anterior" (`_cierre_anterior.html`: apertura, ventas, redondeos,
+esperado, contado, diferencia, datáfono/SINPE y billetes) con
+`caja.services.ultimo_cierre`. Al cerrar se ve "Así se abrió esta caja" y lo
+que contó el cierre anterior, con un aviso si no calzan (puede ser un depósito:
+el texto no acusa). Lo esperado de ESTA caja sigue oculto (conteo ciego).
+
+## Redondeo del total en el POS (17/10/2026)
+
+Caso real: ₡13.554 en efectivo, sin vuelto, se cobró ₡13.500 y el cierre quedó
+con diferencia. Ahora "Redondear el total" (bajo el total) o el atajo "Dejar en
+₡13.500" del cobro en efectivo.
+- `registrar_venta(redondeo=)`: colones enteros, se reparte entre las líneas
+  cobradas como descuento (`_aplicar_redondeo`, proporcional, sobrante a la
+  más grande; IVA recalculado; piso de costo aplica). Queda en
+  `FacturaVenta.redondeo` y `LineaVenta.redondeo` (ya incluido en `descuento`
+  y `descuento_monto`: así lo pide la FE). Tiquete y factura muestran
+  "Descuentos" sin el redondeo y un renglón "Redondeo".
+- Topes: cajero ₡500 (`REDONDEO_MAXIMO_CAJERO`), gerente ₡1.000. Para más, es
+  un descuento en el producto. Solo hacia abajo.
+- En el POS el redondeo es de cada venta (también en espera) y se quita solo si
+  la venta cambia (`redondeo.base`). Pruebas: `ventas/test_redondeo.py`,
+  `caja/test_apertura_y_cierre.py`.
+
 ## Descuento por precio final y en números enteros (13/10/2026)
 
 Pedido de Oscar: los decimales en el % eran imposibles de teclear, y quería

@@ -215,14 +215,19 @@ def bytes_tiquete(factura, ancho: int = 48, pie: str = "", logo: bytes = b"") ->
         if not linea.es_regalia and linea.descuento_pct > 0:
             partes += [_texto(_dos_columnas(
                 f"    descuento {linea.descuento_pct:g}%",
-                f"-{_monto(linea.descuento_monto)}", ancho)), SALTO]
+                f"-{_monto(linea.descuento_monto - (getattr(linea, 'redondeo', 0) or 0))}", ancho)), SALTO]
 
     partes += [_texto("-" * ancho), SALTO]
     if factura.impuesto > 0:
         partes += [_texto(_dos_columnas("Subtotal", _monto(factura.subtotal), ancho)), SALTO]
         partes += [_texto(_dos_columnas(_etiqueta_iva(factura), _monto(factura.impuesto), ancho)), SALTO]
-    if factura.descuento > 0:
-        partes += [_texto(_dos_columnas("Descuentos", f"-{_monto(factura.descuento)}", ancho)), SALTO]
+    # El redondeo del total (17/10/2026) va en su propio renglón; viene
+    # sumado dentro de `descuento`. getattr: las ventas viejas no lo tienen.
+    redondeo = getattr(factura, "redondeo", 0) or 0
+    if factura.descuento - redondeo > 0:
+        partes += [_texto(_dos_columnas("Descuentos", f"-{_monto(factura.descuento - redondeo)}", ancho)), SALTO]
+    if redondeo > 0:
+        partes += [_texto(_dos_columnas("Redondeo", f"-{_monto(redondeo)}", ancho)), SALTO]
     partes += [NEGRITA_ON, DOBLE,
                _texto(_dos_columnas("TOTAL", _monto(factura.total), ancho // 2)),
                NORMAL, NEGRITA_OFF, SALTO]

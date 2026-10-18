@@ -68,6 +68,8 @@ def pos(request):
         "clientes": clientes,
         "es_gerente": es_gerente(request.user),
         "tipos_identificacion": Cliente.TipoIdentificacion.choices,
+        "redondeo_maximo": int(services.REDONDEO_MAXIMO_GERENTE if es_gerente(request.user)
+                               else services.REDONDEO_MAXIMO_CAJERO),
     })
 
 
@@ -361,6 +363,7 @@ def vender(request):
             clave_pos=clave_pos,
             monto_recibido=datos.get("recibido"),
             cupon=(str(datos.get("cupon") or "").strip()[:30] or None),
+            redondeo=datos.get("redondeo") or 0,
         )
     except ValidationError as e:
         return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)

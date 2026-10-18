@@ -101,6 +101,12 @@ class FacturaVenta(models.Model):
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     descuento = models.DecimalField(max_digits=12, decimal_places=2, default=0,
                                     help_text="Suma de descuentos de las líneas")
+    # Redondeo del total (17/10/2026, pedido de Oscar): ₡13.554 que se cobran
+    # en ₡13.500 porque no hay vuelto. Ya está DENTRO de `descuento` (repartido
+    # en las líneas, como exige la factura electrónica); este campo dice
+    # cuánto de ese descuento fue redondeo, para mostrarlo y reportarlo aparte.
+    redondeo = models.DecimalField(max_digits=12, decimal_places=2, default=0,
+                                   help_text="Parte del descuento que fue redondeo del total")
     impuesto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
@@ -118,6 +124,11 @@ class FacturaVenta(models.Model):
     # informativos: la caja se mueve por lo cobrado, no por lo recibido.
     monto_recibido = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     vuelto = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+
+    @property
+    def descuento_sin_redondeo(self):
+        """Los descuentos de verdad (por producto o cupón), sin el redondeo."""
+        return self.descuento - self.redondeo
 
     class Meta:
         verbose_name = "factura de venta"
@@ -196,6 +207,8 @@ class LineaVenta(models.Model):
                                      help_text="Producto entregado gratis: sin ingreso, pero su costo sale a gasto")
     costo_unitario = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=12, decimal_places=2)
+    # Su parte del redondeo del total (ya incluida en descuento_monto).
+    redondeo = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     # Foto fiscal de la línea AL MOMENTO de la venta (auditoría 26/09/2026,
     # VEN-08 / FE-04). Antes solo la factura guardaba totales: si mañana cambia
     # la tarifa o el CABYS de un producto, las ventas viejas ya no se podrían
@@ -205,6 +218,11 @@ class LineaVenta(models.Model):
                                    help_text="Total de la línea sin IVA")
     impuesto = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     cabys = models.CharField(max_length=13, blank=True)
+
+    @property
+    def descuento_negociado(self):
+        """El descuento que se le dio en la línea, sin la parte del redondeo."""
+        return self.descuento_monto - self.redondeo
 
     class Meta:
         verbose_name = "línea de venta"

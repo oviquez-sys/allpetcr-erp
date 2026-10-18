@@ -26,6 +26,16 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
   color:#fff;font-size:17px;font-weight:600;cursor:pointer;transition:filter .2s,transform .15s;
   box-shadow:0 8px 22px rgba(11,49,97,.3)}
 .oc-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+/* Cómo se cerró la caja anterior (17/10/2026). */
+.ant{background:#fff;border:.5px solid rgba(0,0,0,.06);border-radius:22px;padding:22px 26px;box-shadow:var(--shadow);margin-bottom:22px}
+.ant h3{font-size:16px;font-weight:700;margin:0 0 2px;color:#1d1d1f;background:none;padding:0;text-transform:none;letter-spacing:-.01em}
+.ant .cuando{font-size:13px;color:#86868b;margin-bottom:12px}
+.ant .fila{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f2f2f5;font-size:14.5px}
+.ant .fila:last-child{border-bottom:none}
+.ant .fila span:first-child{color:#6e6e73}
+.ant .fila b{font-variant-numeric:tabular-nums}
+.ant .ok{color:#1c7a36}.ant .mal{color:#b5231a}
+.ant .desg{font-size:12.5px;color:#86868b;margin-top:8px;line-height:1.5}
 .oc-msg{max-width:520px;margin:0 auto 18px;padding:13px 18px;border-radius:14px;font-size:14.5px}
 .oc-msg.success{background:rgba(52,199,89,.12);color:#1c6b30}
 .oc-msg.info{background:rgba(11,49,97,.1);color:var(--brand)}
@@ -40,6 +50,8 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
   <div class="oc-icon"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/></svg></div>
   <div class="oc-title">Abrir caja</div>
   <div class="oc-sub">Contá el efectivo inicial del turno. Todo movimiento posterior quedará ligado a esta sesión.</div>
+
+  {% include "caja/_cierre_anterior.html" %}
 
   <div class="oc-card">
     <form method="post">

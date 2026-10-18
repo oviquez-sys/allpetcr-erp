@@ -129,3 +129,23 @@ def cerrar_caja(*, sesion, monto_contado=None, usuario=None, tarjeta_contado=Non
     sesion.cerrada_en = timezone.now()
     sesion.save()
     return sesion
+
+
+def ultimo_cierre(empresa, antes_de=None):
+    """La última caja cerrada de la empresa (17/10/2026, pedido de Oscar: al
+    abrir, ver cómo se cerró la noche anterior). `antes_de` limita a las
+    cerradas antes de esa fecha (para el cierre: la anterior a esta caja)."""
+    qs = SesionCaja.objects.filter(estado=SesionCaja.Estado.CERRADA, sucursal__empresa=empresa)
+    if antes_de is not None:
+        qs = qs.filter(cerrada_en__lte=antes_de)
+    return qs.select_related("usuario", "cerrada_por", "sucursal").order_by("-cerrada_en").first()
+
+
+def resumen_ventas(sesion):
+    """Cuántas ventas tuvo la caja, por cuánto, y cuánto se redondeó."""
+    from django.db.models import Count
+    from ventas.models import FacturaVenta
+
+    r = sesion.ventas.filter(estado=FacturaVenta.Estado.EMITIDA).aggregate(
+        n=Count("id"), total=Sum("total"), redondeo=Sum("redondeo"))
+    return {"n": r["n"] or 0, "total": r["total"] or Decimal("0"), "redondeo": r["redondeo"] or Decimal("0")}

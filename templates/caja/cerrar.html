@@ -56,6 +56,14 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
 .cc-card h3{font-size:17px;font-weight:700;margin:0 0 14px;padding:0;background:none;color:#1d1d1f;text-transform:none}
 .cc-row+.cc-row{margin-top:16px}
 @media (max-width:600px){.cc-card{padding:22px 18px}.den{grid-template-columns:1fr auto;gap:8px 12px}.den-s{grid-column:1/-1;text-align:left;font-size:13px;margin-top:-4px}}
+/* Cómo se abrió esta caja (17/10/2026). */
+.ap{background:#fff;border:.5px solid rgba(0,0,0,.06);border-radius:22px;padding:20px 26px;box-shadow:var(--shadow);margin-bottom:24px}
+.ap h3{font-size:16px;font-weight:700;margin:0 0 10px;color:#1d1d1f;background:none;padding:0;text-transform:none;letter-spacing:-.01em}
+.ap .fila{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #f2f2f5;font-size:14.5px}
+.ap .fila:last-of-type{border-bottom:none}
+.ap .fila span:first-child{color:#6e6e73}
+.ap .fila b{font-variant-numeric:tabular-nums;text-align:right}
+.ap .nota-ap{font-size:12.5px;color:#a05a00;margin-top:8px;line-height:1.45}
 .cc-movtitle{font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#6e6e73;margin:0 0 14px 4px}
 .cc-movcard{background:#fff;border:.5px solid rgba(0,0,0,.06);border-radius:20px;overflow:hidden;
   box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05)}
@@ -77,6 +85,18 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
   {% if messages %}{% for m in messages %}
     <div class="cc-msg {{ m.tags }}">{{ m }}</div>
   {% endfor %}{% endif %}
+
+  <div class="ap">
+    <h3>Así se abrió esta caja</h3>
+    <div class="fila"><span>Abrió</span><b>{{ sesion.usuario.username }} · {{ sesion.abierta_en|date:"l j \d\e F, g:i a" }}</b></div>
+    <div class="fila"><span>Efectivo con que abrió</span><b>₡{{ sesion.monto_apertura|crc }}</b></div>
+    {% if anterior %}
+    <div class="fila"><span>El cierre anterior contó</span><b>₡{{ anterior.monto_contado|crc }} <span style="font-weight:400;color:#86868b">({{ anterior.cerrada_en|date:"j/n g:i a" }})</span></b></div>
+    {% if anterior.monto_contado != sesion.monto_apertura %}
+    <div class="nota-ap">La caja abrió con un monto distinto al que quedó contado en el cierre anterior. Si se sacó plata (depósito, gastos) o se agregó, está bien; si no, conviene revisarlo.</div>
+    {% endif %}
+    {% endif %}
+  </div>
 
   <form method="post" id="cierre">
     {% csrf_token %}

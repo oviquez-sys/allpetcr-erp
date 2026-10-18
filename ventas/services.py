@@ -9,7 +9,7 @@ decide el desglose de impuestos según el régimen de la empresa:
   se desglosa subtotal e impuesto, y aquí se activará el adaptador de
   facturación electrónica v4.4.
 """
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import ROUND_DOWN, ROUND_HALF_UP, Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -40,6 +40,12 @@ DESCUENTO_MAXIMO_SIN_AUTORIZACION = Decimal("15")
 # el piso de costo que sí protege a los descuentos (SEC-001). Valor de
 # negocio, no técnico — decidir con el dueño antes de cambiarlo.
 REGALIA_MAXIMA_SIN_AUTORIZACION = Decimal("5000")
+
+# Redondeo del total (17/10/2026): para cobrar ₡13.500 en vez de ₡13.554
+# cuando no hay vuelto. Es para eso, no para dar descuentos: un descuento de
+# verdad se pone en la línea, con su tope y su rastro. Por eso tiene techo.
+REDONDEO_MAXIMO_CAJERO = Decimal("500")
+REDONDEO_MAXIMO_GERENTE = Decimal("1000")
 
 
 def _desglose_fiscal(empresa, producto, total_linea):
@@ -85,7 +91,7 @@ def _validar_pagos(pagos, total):
 def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
                     permitir_bajo_costo=False, permitir_descuento_alto=False,
                     permitir_regalia_alta=False, pagos=None, clave_pos=None,
-                    monto_recibido=None, cupon=None) -> FacturaVenta:
+                    monto_recibido=None, cupon=None, redondeo=0) -> FacturaVenta:
     """lineas: iterable de dicts {"producto_id": int, "cantidad": Decimal}.
 
     permitir_bajo_costo: por defecto NO se puede vender un producto por debajo
@@ -118,7 +124,12 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     ESTA transacción: si la venta falla, el cupón sigue disponible. El tope
     de descuento del cajero (SEC-001) no frena el porcentaje del cupón, que
     ya lo autorizó el negocio al definir la regalía; el piso de costo sí
-    sigue mandando."""
+    sigue mandando.
+
+    redondeo: colones que se rebajan del total para dejarlo redondo (₡13.554
+    → ₡13.500). Se reparte entre las líneas cobradas como descuento (así lo
+    pide la factura electrónica) y queda anotado aparte en `redondeo`. Techo:
+    REDONDEO_MAXIMO_CAJERO, o REDONDEO_MAXIMO_GERENTE si permitir_descuento_alto."""
     if clave_pos:
         ya_hecha = FacturaVenta.objects.filter(clave_pos=clave_pos).first()
         if ya_hecha is not None:
@@ -181,6 +192,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     lineas = sorted(lineas, key=lambda l: l["producto_id"])
 
     subtotal = impuesto = total = descuento_total = Decimal("0")
+    creadas = []
     for linea in lineas:
         producto = Producto.objects.get(pk=linea["producto_id"], activo=True)
         cantidad = Decimal(str(linea["cantidad"]))
@@ -278,7 +290,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             cantidad=-cantidad, referencia=numero, usuario=usuario,
             motivo=f"Regalía: {motivo_regalia}" if es_regalia else "",
         )
-        LineaVenta.objects.create(
+        creadas.append(LineaVenta.objects.create(
             factura=factura, producto=producto, cantidad=cantidad,
             precio_unitario=precio, descuento_pct=desc_pct if not es_regalia else 0,
             descuento_monto=desc_l if not es_regalia else 0, es_regalia=es_regalia,
@@ -287,8 +299,18 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             # que declarar: se deja vacía en vez de inventar un 0 %.
             tarifa_iva=(producto.tarifa_iva if empresa.regimen == Empresa.Regimen.TRADICIONAL else None),
             subtotal=sub_l, impuesto=imp_l, cabys=producto.cabys or "",
-        )
+        ))
         subtotal += sub_l; impuesto += imp_l; total += total_linea; descuento_total += desc_l
+
+    redondeo = Decimal(str(redondeo or 0))
+    if redondeo:
+        _aplicar_redondeo(empresa, creadas, redondeo, total, permitir_bajo_costo,
+                          REDONDEO_MAXIMO_GERENTE if permitir_descuento_alto else REDONDEO_MAXIMO_CAJERO)
+        subtotal = sum((l.subtotal or 0 for l in creadas), Decimal("0"))
+        impuesto = sum((l.impuesto or 0 for l in creadas), Decimal("0"))
+        total = sum((l.total for l in creadas), Decimal("0"))
+        descuento_total = sum((l.descuento_monto for l in creadas if not l.es_regalia), Decimal("0"))
+        factura.redondeo = redondeo
 
     factura.subtotal, factura.impuesto, factura.total = subtotal, impuesto, total
     factura.descuento = descuento_total
@@ -306,7 +328,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     else:
         efectivo = Decimal("0")
 
-    campos = ["subtotal", "descuento", "impuesto", "total"]
+    campos = ["subtotal", "descuento", "impuesto", "total", "redondeo"]
     if monto_recibido not in (None, "") and efectivo > 0:
         recibido = Decimal(str(monto_recibido)).quantize(Decimal("0.01"))
         if recibido < efectivo:
@@ -344,6 +366,42 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     from .contabilizar import asentar_venta
     asentar_venta(factura, usuario=usuario)
     return factura
+
+
+def _aplicar_redondeo(empresa, lineas, redondeo, total, permitir_bajo_costo, maximo):
+    """Reparte el redondeo entre las líneas cobradas, en colones enteros y en
+    proporción a lo que suma cada una (lo que sobra va a la más grande).
+    Cada línea queda con su descuento y su desglose de IVA recalculados."""
+    if redondeo != redondeo.to_integral_value() or redondeo < 0:
+        raise ValidationError("El redondeo tiene que ser un monto entero de colones.")
+    if redondeo > maximo:
+        raise ValidationError(
+            f"Un redondeo de ₡{redondeo:,.0f} es demasiado: el máximo es ₡{maximo:,.0f}. "
+            "Si es un descuento, póngalo en el producto.".replace(",", ".")
+        )
+    cobradas = [l for l in lineas if not l.es_regalia and l.total > 0]
+    if redondeo >= total or not cobradas:
+        raise ValidationError("El redondeo no puede ser igual o mayor que el total de la venta.")
+    base = sum((l.total for l in cobradas), Decimal("0"))
+    partes = [(redondeo * l.total / base).quantize(Decimal("1"), rounding=ROUND_DOWN) for l in cobradas]
+    mayor = max(range(len(cobradas)), key=lambda i: cobradas[i].total)
+    partes[mayor] += redondeo - sum(partes)
+    for linea, parte in zip(cobradas, partes):
+        if not parte:
+            continue
+        linea.redondeo = parte
+        linea.descuento_monto += parte
+        linea.total -= parte
+        linea.subtotal, linea.impuesto = _desglose_fiscal(empresa, linea.producto, linea.total)
+        # El piso de costo manda también acá: redondear no puede servir para
+        # vender bajo costo sin que un gerente lo autorice.
+        costo = linea.producto.costo_promedio
+        if not permitir_bajo_costo and costo > 0 and linea.subtotal / linea.cantidad < costo:
+            raise ValidationError(
+                f"{linea.producto.nombre}: con el redondeo queda por debajo del costo. "
+                "Un gerente debe autorizar la venta."
+            )
+        linea.save(update_fields=["redondeo", "descuento_monto", "total", "subtotal", "impuesto"])
 
 
 @transaction.atomic
