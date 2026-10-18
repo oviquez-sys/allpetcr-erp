@@ -390,6 +390,13 @@ IZQUIERDA y en grande; el catálogo a la derecha, angosto (`minmax(330px,31%)`).
 - El botón de la línea dice "🎁 Regalía" (antes "Regalo"); el tiquete impreso
   sigue diciendo REGALO, que es lo que lee el cliente.
 - El chat sigue oculto y se abre con "Asistente"; ahora cae sobre el catálogo.
+- **Ventas en espera** (pedido de Oscar: una clienta fue a buscar más cosas y
+  llegó otra a pagar). Botón "Atender a otro cliente" → la venta queda en una
+  pestaña (cliente · total · "en espera") y se abre otra. Cada venta guarda
+  carrito, cupón, cliente y su `clave` de cobro. `enEspera(id)` resta lo
+  apartado en otras ventas del stock disponible. Se guardan en `localStorage`
+  (`allpetcr.pos.ventas`, se descartan pasadas 12 h) para sobrevivir un Ctrl+F5.
+  El servidor no se enteró: una venta en espera no existe hasta cobrarse.
 
 ## Aviso de agotados (02/10/2026)
 

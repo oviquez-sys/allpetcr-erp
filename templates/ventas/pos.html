@@ -77,7 +77,23 @@ main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,31%);g
 .pcard .s{font-size:12px;color:var(--ink2);white-space:nowrap}
 .pcard.agotado{opacity:.4;pointer-events:none}
 
-.cart-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+.cart-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.cart-head .sp{flex:1}
+/* Ventas en espera (17/10/2026): pestañas como en Safari. La que se está
+   atendiendo en blanco; las otras esperan con su cliente y su total. */
+.ventas-tabs{display:flex;gap:4px;background:#e8e8ed;border-radius:11px;padding:3px;flex-wrap:wrap;min-width:0}
+.ventas-tabs .vt{display:flex;align-items:center;gap:6px;border:0;background:transparent;border-radius:9px;padding:6px 6px 6px 12px;
+  font-size:13.5px;font-weight:500;color:var(--ink);cursor:pointer;font-family:inherit;max-width:260px}
+.ventas-tabs .vt .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ventas-tabs .vt b{font-variant-numeric:tabular-nums}
+.ventas-tabs .vt.on{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+.ventas-tabs .vt .cerrar{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  color:var(--ink2);font-size:13px}
+.ventas-tabs .vt .cerrar:hover{background:rgba(0,0,0,.08);color:var(--ink)}
+.ventas-tabs .vt .espera{font-size:11px;color:#a05a00;font-weight:600}
+.btn-otra{border:1px solid var(--line);background:#fff;color:var(--brand);border-radius:10px;padding:7px 12px;font-size:13.5px;
+  font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit}
+.btn-otra:hover{background:rgba(11,49,97,.06)}
 .col.cart h2{font-size:17px;font-weight:700}
 #cuentaVenta{font-size:12.5px;color:var(--ink2)}
 /* Cliente y casilla dorada lado a lado: con la venta ancha caben en un renglón. */
@@ -310,7 +326,12 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 
 <main>
   <div class="col cart">
-    <div class="cart-head"><h2>Venta actual</h2><span id="cuentaVenta"></span></div>
+    <div class="cart-head">
+      <div id="ventasTabs"><h2>Venta actual</h2></div>
+      <span id="cuentaVenta"></span>
+      <span class="sp"></span>
+      <button type="button" class="btn-otra" id="btnOtraVenta" title="Deja esta venta guardada y empieza otra para el siguiente cliente"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>Atender a otro cliente</button>
+    </div>
     <div class="cli-cupon">
       <div class="cli-fila">
         <select id="cliente"><option value="">Cliente: Consumidor final</option></select>
@@ -436,6 +457,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
     <div class="step2"><div class="n">4</div><div class="st">Si el cliente lleva fiado, elegí su nombre arriba y usá <b>Fiado</b>.</div></div>
     <div class="step2"><div class="n">5</div><div class="st"><b>Descuento o regalía.</b> En la fila de cada producto podés poner un <b>descuento</b> en % (número entero), o escribir directo <b>el precio</b> al que se lo dejás (ej. ₡2.000) y el sistema calcula el descuento. También podés marcarlo como <b>🎁 Regalía</b> (sale gratis, pero igual descuenta del inventario y se registra el costo).</div></div>
     <div class="step2"><div class="n">6</div><div class="st"><b>🎟 Casilla dorada.</b> En <b>cada compra</b> preguntale al cliente su WhatsApp o su cédula y escribilo ahí + Enter: la venta queda a su nombre (así se arma su historial y los recordatorios de comida). Si tiene su regalo de bienvenida pendiente, se aplica solo. También acepta el código del cupón (empieza con AP-). Si no pudo escanear el QR, tocá <b>🐾 Unir</b>: lo registrás ahí mismo y el regalo se aplica en esta compra. El descuento se aplica a toda la venta y el cupón queda usado al cobrar: no sirve dos veces.</div></div>
+    <div class="step2"><div class="n">+</div><div class="st"><b>Atender a otro cliente.</b> Si un cliente se va a buscar algo más con su venta a medio armar y llega otro a pagar, tocá <b>Atender a otro cliente</b>: la primera venta queda guardada en una pestaña arriba (con su cliente y su total) y empezás una nueva. Cuando vuelva, tocá su pestaña y seguís donde quedaste. Lo que está apartado en una venta en espera no se le puede vender a otro.</div></div>
     <div class="step2"><div class="n">7</div><div class="st"><b>Con el teclado es más rápido.</b> <b>F1</b> cobra en efectivo (escribí con cuánto paga y Enter; Enter solo = pagó exacto), <b>F2</b> con tarjeta, <b>F3</b> por SINPE y <b>F4</b> pago mixto. <b>Esc</b> limpia la búsqueda y devuelve el cursor al escáner.</div></div>
     <button class="close" onclick="document.getElementById('ayuda').classList.remove('on')">Entendido</button>
   </div>
@@ -560,7 +582,7 @@ function pintarGrid(){
   pintarChips();   // el botón "Ver todo el catálogo" aparece y se va con el modo
   const vivos = filtrar().slice(0, 150);
   document.getElementById('grid').innerHTML = vivos.map(p => {
-    const disp = p.stock_actual - (carrito[p.id]?.cantidad || 0);
+    const disp = p.stock_actual - (carrito[p.id]?.cantidad || 0) - enEspera(p.id);
     const pres = p.presentacion ? `<div class="pres">${esc(p.presentacion)}</div>` : '';
     // Miniatura <img loading="lazy"> (20/09/2026). Antes era la foto GRANDE
     // como fondo CSS: las 150 tarjetas pedían ~1 MB cada una, todas a la vez.
@@ -588,7 +610,7 @@ function pintarGrid(){
 function refrescarStock(id){
   const el = document.querySelector(`[data-stock="${id}"]`);
   if(!el) return;
-  const disp = porId[id].stock_actual - (carrito[id]?.cantidad || 0);
+  const disp = porId[id].stock_actual - (carrito[id]?.cantidad || 0) - enEspera(id);
   el.textContent = `quedan ${disp}`;
   const card = el.closest('.pcard');
   if(card) card.classList.toggle('agotado', disp <= 0);
@@ -611,7 +633,12 @@ function volverAlEscaner(){ document.getElementById('buscar').focus(); }
 function agregar(id){
   const p = porId[id];
   const item = carrito[id] || {cantidad:0, descuento:0, regalia:false};
-  if (item.cantidad + 1 > p.stock_actual){ msg("⛔ No hay más stock de "+p.nombre, true); return; }
+  const apartadas = enEspera(id);
+  if (item.cantidad + 1 > p.stock_actual - apartadas){
+    msg(apartadas ? `⛔ No hay más ${p.nombre}: ${apartadas} está${apartadas === 1 ? '' : 'n'} apartada${apartadas === 1 ? '' : 's'} en otra venta en espera.`
+                  : "⛔ No hay más stock de "+p.nombre, true);
+    return;
+  }
   item.cantidad += 1;
   carrito[id] = item;
   pintar();
@@ -736,6 +763,7 @@ function pintar(){
   const unidades = ids.reduce((a,id)=>a + carrito[id].cantidad, 0);
   document.getElementById('cuentaVenta').textContent = ids.length
     ? `${ids.length} producto${ids.length === 1 ? '' : 's'} · ${unidades} unidad${unidades === 1 ? '' : 'es'}` : '';
+  if (typeof pintarPestanas === 'function'){ pintarPestanas(); guardarLocal(); }
   // pintarGrid() ya NO se llama acá: reconstruía las 150 tarjetas del catálogo
   // en cada cambio de cantidad. Ahora quien cambia el carrito actualiza solo
   // el contador del producto afectado con refrescarStock(id). El catálogo se
@@ -865,9 +893,10 @@ async function cobrar(medio, extra = {}){
       quitarCupon(false);             // el cupón ya quedó usado en esta venta
       clave = null;                   // la próxima venta lleva una clave nueva
       soloEscaneados = false;         // la venta terminó: vuelve el catálogo entero
+      document.getElementById('cliente').value = '';
+      ventas[activa] = nuevaVenta();  // las otras ventas en espera siguen ahí
       pintar();
       pintarGrid();                   // acá sí toca rearmar el catálogo: bajó el stock de varios productos
-      document.getElementById('cliente').value = '';
       mostrarUltima(d);
       if (!d.impreso){
         // La venta YA quedó registrada: si la térmica falló se abre el tiquete
@@ -1193,8 +1222,136 @@ document.addEventListener('keydown', e => {
   btn.addEventListener('click', () => mostrar(!(dock() && dock().classList.contains('abierto'))));
   document.addEventListener('click', e => { if (e.target.closest('#chat-close')) mostrar(false); });
 })();
+// --- Ventas en espera (17/10/2026) ------------------------------------------
+// Pedido de Oscar: una clienta fue a buscar más cosas con su venta a medio
+// armar, llegó otra a pagar y no había cómo cobrarle sin borrar lo de la
+// primera. Ahora "Atender a otro cliente" deja la venta guardada y abre una
+// nueva; las pestañas de arriba permiten volver a cualquiera.
+//
+// Cada venta guarda TODO lo suyo: productos, cupón, cliente y su `clave` de
+// cobro (si un cobro quedó sin respuesta, su reintento no se duplica aunque
+// en el medio se haya atendido a otra persona). El servidor no sabe nada de
+// esto: una venta en espera no existe hasta que se cobra.
+//
+// Se guardan en el navegador de esta computadora para que un Ctrl+F5 o un
+// corte de la página no borre lo que una clienta dejó apartado. Solo se
+// recuperan si tienen menos de 12 horas.
+let ventas = [nuevaVenta()];
+let activa = 0;
+const CLAVE_LOCAL = 'allpetcr.pos.ventas';
+function nuevaVenta(){
+  return {carrito:{}, cupon:null, clienteReconocido:null, clientePorCasilla:false, cliente:'', clave:null};
+}
+function ventaVacia(v){ return !Object.keys(v.carrito).length && !v.cupon && !v.clienteReconocido && !v.cliente; }
+// Unidades de un producto apartadas en las OTRAS ventas: no se pueden vender
+// dos veces, aunque el servidor igual lo frenaría al cobrar.
+function enEspera(id){
+  return ventas.reduce((a, v, i) => a + (i === activa ? 0 : (v.carrito[id]?.cantidad || 0)), 0);
+}
+function guardarActiva(){
+  Object.assign(ventas[activa], {carrito, cupon, clienteReconocido, clientePorCasilla,
+                                 cliente: document.getElementById('cliente').value, clave});
+}
+function totalDeVenta(v){
+  const antes = [carrito, cupon];
+  carrito = v.carrito; cupon = v.cupon;
+  const t = totalCarrito();
+  [carrito, cupon] = antes;
+  return t;
+}
+function nombreDeVenta(v){
+  if (v.cupon) return v.cupon.cliente.nombre;
+  if (v.clienteReconocido) return v.clienteReconocido.nombre;
+  if (v.cliente){
+    const o = [...document.getElementById('cliente').options].find(o => o.value == v.cliente);
+    if (o) return o.textContent.split(' — ')[0];
+  }
+  return '';
+}
+function guardarLocal(){
+  try {
+    guardarActiva();
+    const conAlgo = ventas.filter(v => !ventaVacia(v));
+    if (!conAlgo.length) { localStorage.removeItem(CLAVE_LOCAL); return; }
+    localStorage.setItem(CLAVE_LOCAL, JSON.stringify({cuando: Date.now(), activa, ventas}));
+  } catch(_){ /* sin almacenamiento (modo privado): las ventas igual funcionan, solo no sobreviven a recargar */ }
+}
+function recuperarLocal(){
+  try {
+    const d = JSON.parse(localStorage.getItem(CLAVE_LOCAL) || 'null');
+    if (!d || !Array.isArray(d.ventas) || Date.now() - d.cuando > 12*3600*1000) return;
+    // Solo productos que siguen en el catálogo cargado.
+    d.ventas.forEach(v => Object.keys(v.carrito || {}).forEach(id => { if (!porId[id]) delete v.carrito[id]; }));
+    const vivas = d.ventas.filter(v => v && v.carrito && !ventaVacia(v));
+    if (!vivas.length) return;
+    ventas = vivas.map(v => Object.assign(nuevaVenta(), v));
+    activa = Math.min(Math.max(0, d.activa | 0), ventas.length - 1);
+    // Los clientes de la casilla dorada pueden no estar en el selector.
+    ventas.forEach(v => { const c = v.cupon ? v.cupon.cliente : v.clienteReconocido;
+                          if (c && c.id && v.cliente) elegirCliente(c); });
+    cargarVenta(activa, false);
+    if (ventas.length > 1 || Object.keys(carrito).length)
+      msg(`Se recuperaron ${ventas.length === 1 ? 'la venta' : ventas.length + ' ventas'} que estaba${ventas.length === 1 ? '' : 'n'} abierta${ventas.length === 1 ? '' : 's'}.`);
+  } catch(_){ /* datos viejos o dañados: se empieza limpio */ }
+}
+function cargarVenta(i, enfocar = true){
+  activa = i;
+  const v = ventas[i];
+  carrito = v.carrito; cupon = v.cupon; clienteReconocido = v.clienteReconocido;
+  clientePorCasilla = v.clientePorCasilla; clave = v.clave;
+  document.getElementById('cliente').value = v.cliente || '';
+  document.getElementById('cuponCodigo').value = '';
+  soloEscaneados = false;
+  pintarCupon(); pintar(); pintarGrid();
+  if (enfocar) volverAlEscaner();
+}
+function cambiarVenta(i){
+  if (cobrando || i === activa) return;
+  guardarActiva();
+  // Una venta vacía que se deja atrás no queda como pestaña.
+  const dejar = activa;
+  if (ventaVacia(ventas[dejar])){ ventas.splice(dejar, 1); if (i > dejar) i--; }
+  cargarVenta(i);
+}
+function otraVenta(){
+  if (cobrando) return;
+  guardarActiva();
+  if (ventaVacia(ventas[activa])){ msg("Esta venta todavía está vacía: escaneá los productos del cliente que llegó."); volverAlEscaner(); return; }
+  const vacia = ventas.findIndex(v => ventaVacia(v));
+  if (vacia >= 0){ cargarVenta(vacia); return; }
+  ventas.push(nuevaVenta());
+  cargarVenta(ventas.length - 1);
+  msg("La venta anterior quedó en espera arriba. Cuando el cliente vuelva, tocá su pestaña.");
+}
+function descartarVenta(i, ev){
+  if (ev) ev.stopPropagation();
+  if (cobrando) return;
+  guardarActiva();
+  const v = ventas[i];
+  if (!ventaVacia(v) && !confirm(`¿Descartar la venta${nombreDeVenta(v) ? ' de ' + nombreDeVenta(v) : ''} por ${fmt(totalDeVenta(v))}? No se cobra nada.`)) return;
+  ventas.splice(i, 1);
+  if (!ventas.length) ventas.push(nuevaVenta());
+  cargarVenta(Math.min(i === activa ? i : (i < activa ? activa - 1 : activa), ventas.length - 1));
+}
+function pintarPestanas(){
+  const cont = document.getElementById('ventasTabs');
+  if (ventas.length < 2){ cont.innerHTML = '<h2>Venta actual</h2>'; return; }
+  cont.innerHTML = '<div class="ventas-tabs">' + ventas.map((v, i) => {
+    const nombre = nombreDeVenta(v);
+    const total = i === activa ? totalCarrito() : totalDeVenta(v);
+    const n = Object.keys(i === activa ? carrito : v.carrito).length;
+    return `<button type="button" class="vt${i === activa ? ' on' : ''}" onclick="cambiarVenta(${i})" title="${esc(nombre || 'Venta ' + (i+1))}">
+      <span class="tx">${esc(nombre || 'Venta ' + (i+1))}${n ? ` · <b>${fmt(total)}</b>` : ' · vacía'}</span>
+      ${i !== activa && n ? '<span class="espera">en espera</span>' : ''}
+      <span class="cerrar" role="button" aria-label="Descartar esta venta" onclick="descartarVenta(${i}, event)">✕</span></button>`;
+  }).join('') + '</div>';
+}
+document.getElementById('btnOtraVenta').addEventListener('click', otraVenta);
+document.getElementById('cliente').addEventListener('change', () => { pintarPestanas(); guardarLocal(); });
+
 document.getElementById('buscar').focus();
 pintarChips();
+recuperarLocal();
 pintar();
 // El catálogo se ve desde que abre la pantalla (26/09/2026): antes quedaba en
 // blanco hasta que se tocaba una categoría o se escribía algo.
