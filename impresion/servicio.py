@@ -75,8 +75,12 @@ def enviar_imagen(impresora: str, imagen, ancho_mm: float, alto_mm: float,
     windows.imprimir_imagen(impresora, imagen, ancho_mm, alto_mm, titulo=titulo)
 
 
-def imprimir_tiquete(factura):
+def imprimir_tiquete(factura, abrir_gaveta=False):
     """Saca el tiquete de la venta por la térmica de recibos.
+
+    abrir_gaveta (19/10/2026): el pulso para la gaveta va ANTES del tiquete,
+    en el mismo trabajo, así la gaveta se abre mientras sale el papel. Solo
+    la venta nueva con efectivo lo pide; una reimpresión nunca abre la gaveta.
 
     Devuelve el TrabajoImpresion si quedó en la cola del agente, o None si
     se imprimió directo. El POS usa ese trabajo para preguntar si el tiquete
@@ -91,6 +95,8 @@ def imprimir_tiquete(factura):
             settings.TIQUETE_LOGO_PUNTOS, settings.TIQUETE_PAPEL_PUNTOS
         ),
     )
+    if abrir_gaveta and getattr(settings, "GAVETA_AUTOMATICA", True):
+        datos = _tiquete.ABRIR_GAVETA + datos
     titulo = f"Tiquete {factura.numero}"
     if por_agente():
         return cola.encolar_crudo(

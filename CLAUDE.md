@@ -125,6 +125,7 @@ Tres aparatos, y solo dos necesitan código:
 | Etiquetas Xprinter XP-360B (rollo 44,5 × 31,8 mm) | `Xprinter XP-360B` | imagen dibujada con Pillow, enviada **por el driver** |
 | Recibos Caysn/Cashino 80 mm | `Caysn 80mm` | ESC/POS **crudo**, corta el papel solo |
 | Pistola lectora (USB HJ Scanner) | — | es un teclado; el POS y "Recibir mercadería" ya la aprovechan |
+| Gaveta de dinero Dynapos (cable RJ11) | — | va al puerto **DK de la Caysn**, no a la computadora; la abre el pulso `ESC p` |
 
 **Diseño de la etiqueta (09/09/2026).** De arriba abajo: logo AllPetcr.com,
 precio en grande, código de barras con su número, descripción corta. Lo eligió
@@ -144,6 +145,15 @@ que no se separen y un día el logo del recibo deje de ser el de la etiqueta. En
 el tiquete se rellena con blanco hasta el ancho del papel en vez de usar
 `ESC a 1`, porque no todos los firmwares centran las imágenes. Con
 `TIQUETE_LOGO_PUNTOS=0` el recibo vuelve a salir sin logo.
+
+**Gaveta de dinero (19/10/2026).** Pedido de Oscar: que se abra sola con las
+ventas en efectivo. Es un electroimán enchufado al puerto DK de la térmica:
+Windows no la ve, se prueba con `PROBAR_GAVETA.bat`. El POS antepone
+`tiquete.ABRIR_GAVETA` (patillas 2 y 5: no se anotó con cuál abrió) al tiquete
+de una venta NUEVA con efectivo o mixta con parte en efectivo
+(`ventas.views._entra_efectivo`); la reimpresión y la venta repetida no la
+abren. Viaja dentro del mismo trabajo del agente: no hay que rearmar el .exe.
+`GAVETA_AUTOMATICA=0` la apaga. Pruebas: `impresion/test_gaveta.py`.
 
 **No volver a intentar comandos crudos con la XP-360B.** El 05/09/2026 se le
 mandaron TSPL, ZPL y EPL: no imprimió ninguno. Por el driver imprime perfecto.
@@ -457,6 +467,15 @@ El chat volvió a la derecha (ahora cae sobre el buscador, no sobre la factura).
 - Bajo el IVA se muestra "13 % de ₡neto = ₡X" para comparar con el papel.
 - Excel contable: columna "Descuento de la factura". La carga masiva desde
   Excel todavía NO tiene descuento. Pruebas: `compras/test_descuento_factura.py`.
+
+**v6.2 "Registrar" que no parece muerto (19/10/2026).** Oscar dijo que
+"Registrar compra no hace nada" (Gosby); en producción el POST respondía 200 y
+la registré yo (OC-00000017). Causa probable: sesión vencida, página trabada o
+el aviso de 4 s que no vio. Ahora: el botón dice "⏳ Registrando…" mientras
+trabaja; los errores quedan fijos (con ✕, se cierran con un clic) y los éxitos
+se van solos; si la respuesta es el login → "se venció la sesión"; si no es
+JSON → "el servidor tuvo un problema (código N), NO se registró"; a los 45 s
+se aborta y se avisa que revise en Administración → Compras si quedó.
 
 ## Ajustes de inventario (12/10/2026)
 

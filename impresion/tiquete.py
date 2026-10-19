@@ -32,6 +32,12 @@ SALTO = b"\n"
 CORTAR = b"\x1d\x56\x42\x00"
 # Imagen de trama: GS v 0 m xL xH yL yH [datos]. m=0 es tamaño normal.
 IMAGEN_DE_TRAMA = b"\x1d\x76\x30\x00"
+# Abrir la gaveta de dinero (19/10/2026). La gaveta Dynapos va enchufada al
+# puerto DK de la térmica; `ESC p m t1 t2` le da un pulso (t1=25 → 50 ms
+# encendido, t2=250 → 500 ms de pausa). Se mandan las DOS patillas (2 y 5):
+# según la marca la gaveta escucha una u otra, y el pulso por la que no usa
+# no hace nada. En la prueba del 19/10 abrió, sin anotarse con cuál.
+ABRIR_GAVETA = b"\x1b\x70\x00\x19\xfa" + b"\x1b\x70\x01\x19\xfa"
 
 
 def bytes_logo(ancho_puntos: int = 384, ancho_papel: int = 576) -> bytes:

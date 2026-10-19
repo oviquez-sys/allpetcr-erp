@@ -533,6 +533,9 @@ PIE_TIQUETE_TRADICIONAL = os.environ.get(
 # apagable por si un día conviene ahorrar papel, pero el valor de fábrica es
 # imprimir: en caja, un clic de menos por venta se nota.
 TIQUETE_AUTOMATICO = os.environ.get("TIQUETE_AUTOMATICO", "1") != "0"
+# Gaveta de dinero (19/10/2026): enchufada a la térmica de recibos (puerto DK).
+# Se abre sola con las ventas que meten efectivo; en "0" no se abre nunca.
+GAVETA_AUTOMATICA = os.environ.get("GAVETA_AUTOMATICA", "1") != "0"
 
 # Caja compartida (auditoría 26/09/2026, CAJ-03): un solo cajón de dinero en la
 # tienda, una sola sesión de caja abierta a la vez. "0" = una caja por persona.

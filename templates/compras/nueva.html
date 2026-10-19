@@ -150,7 +150,7 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
 #msg{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
   background:rgba(29,29,31,.92);color:#fff;padding:14px 22px;border-radius:14px;font-size:14px;
   opacity:0;transition:.3s cubic-bezier(.2,.9,.3,1.2);max-width:440px;z-index:50;backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
-#msg.err{background:rgba(211,51,42,.95)}
+#msg.err{background:rgba(211,51,42,.95);cursor:pointer}
 #msg.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.32);backdrop-filter:blur(3px);display:none;
@@ -220,7 +220,7 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
   <img class="logo" src="{% static 'img/allpetcr-logo.png' %}" alt="AllPetcr.com">
   <b>Recibir mercadería</b>
   <span class="sp"></span>
-  <span class="version-pag" title="Si no ves este sello, la página está en caché: Ctrl+F5">v6.1 · 16-10-2026</span>
+  <span class="version-pag" title="Si no ves este sello, la página está en caché: Ctrl+F5">v6.2 · 19-10-2026</span>
   <a href="#" onclick="document.getElementById('ayuda').classList.add('on');return false">❓ Cómo se usa</a>
   <a href="{% url 'compras:carga_masiva' %}">Cargar desde Excel</a>
   <a class="home" href="/">Inicio</a>
@@ -427,8 +427,14 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => (
 ));
 const escUrl = s => encodeURI(String(s ?? '')).replace(/["'()\\]/g, '');
 
-const msg = (t, err) => { const m=document.getElementById('msg'); m.textContent=t;
-  m.className = err ? 'err show':'show'; clearTimeout(m._h); m._h=setTimeout(()=>m.className='',3800); };
+// Los avisos buenos se van solos; los de error se QUEDAN hasta que se tocan
+// (19/10/2026): una compra que no se registró y cuyo aviso duró 4 segundos
+// parecía un botón que "no hace nada".
+const msg = (t, err) => { const m=document.getElementById('msg');
+  m.textContent = err ? t + '  ✕' : t;
+  m.className = err ? 'err show':'show'; clearTimeout(m._h);
+  if (!err) m._h = setTimeout(()=>m.className='', 3800); };
+document.getElementById('msg').addEventListener('click', e => { e.currentTarget.className = ''; });
 
 function setFp(v){
   formaPago = v;
@@ -849,10 +855,14 @@ async function registrar(){
   } else {
     msg("Elegí un proveedor (o agregá uno nuevo).", true); return;
   }
-  document.querySelector('.btn-reg').disabled = true;
+  // Mientras viaja, el botón lo dice (19/10/2026); y si el servidor no
+  // contesta en 45 s se avisa en vez de quedar esperando para siempre.
+  const boton = document.querySelector('.btn-reg'), textoBoton = boton.innerHTML;
+  boton.disabled = true; boton.textContent = '⏳ Registrando…';
+  const espera = new AbortController(), reloj = setTimeout(() => espera.abort(), 45000);
   try {
     const r = await fetch("{% url 'compras:registrar' %}", {
-      method:'POST',
+      method:'POST', signal: espera.signal,
       headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
       body: JSON.stringify({
         proveedor_id, proveedor_nuevo,
@@ -863,6 +873,10 @@ async function registrar(){
         lineas,
       })
     });
+    if (r.redirected && /login/.test(r.url))
+      throw new Error("⛔ Se venció la sesión. Abrí el ERP en OTRA pestaña, iniciá sesión y volvé a tocar Registrar aquí. No recargues esta página: perderías la lista.");
+    if (!(r.headers.get('Content-Type') || '').includes('json'))
+      throw new Error(`⛔ El servidor tuvo un problema (código ${r.status}) y la compra NO se registró. Esperá un momento y volvé a tocar Registrar.`);
     const d = await r.json();
     if (d.ok){
       msg(`✅ Compra ${d.numero} registrada por ${fmt(d.total)}. Stock actualizado.`);
@@ -879,8 +893,14 @@ async function registrar(){
       document.getElementById('descuentoFactura').value = '';
       pintarLineas();
     } else { msg("⛔ " + d.error, true); }
-  } catch(e){ msg("⛔ No se pudo conectar con el servidor.", true); }
-  document.querySelector('.btn-reg').disabled = false;
+  } catch(e){
+    if (e.name === 'AbortError')
+      msg("⛔ El servidor no respondió. Antes de volver a intentar, revisá en Administración → Compras si la compra quedó registrada.", true);
+    else if (e.message && e.message.startsWith('⛔')) msg(e.message, true);
+    else msg("⛔ No se pudo conectar con el servidor. Revisá el internet y volvé a tocar Registrar.", true);
+  }
+  clearTimeout(reloj);
+  boton.disabled = false; boton.innerHTML = textoBoton;
 }
 document.getElementById('buscar').addEventListener('input', pintarGrid);
 document.getElementById('buscar').addEventListener('keydown', e=>{

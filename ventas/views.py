@@ -401,12 +401,23 @@ def vender(request):
     impreso, error_impresion, trabajo = False, "", None
     if settings.TIQUETE_AUTOMATICO:
         try:
-            trabajo = impresion.imprimir_tiquete(factura)
+            trabajo = impresion.imprimir_tiquete(factura, abrir_gaveta=_entra_efectivo(factura))
             impreso = True
         except ErrorDeImpresion as e:
             error_impresion = str(e)
             logger.warning("Venta %s registrada pero sin tiquete: %s", factura.numero, e)
     return _respuesta_venta(factura, impreso=impreso, error_impresion=error_impresion, trabajo=trabajo)
+
+
+def _entra_efectivo(factura):
+    """¿Esta venta mete plata a la gaveta? (19/10/2026, pedido de Oscar: que
+    se abra sola SOLO con efectivo). Efectivo, o un pago mixto con una parte
+    en efectivo. Tarjeta, SINPE y fiado no la abren."""
+    if factura.medio_pago == FacturaVenta.MedioPago.EFECTIVO:
+        return factura.total > 0
+    if factura.medio_pago == FacturaVenta.MedioPago.MIXTO:
+        return factura.pagos.filter(medio="EFE", monto__gt=0).exists()
+    return False
 
 
 def _respuesta_venta(factura, *, impreso=False, error_impresion="", trabajo=None, repetida=False):
