@@ -18,6 +18,7 @@ from core.roles import CAJERO, GERENTE, rol_requerido
 from core.tenancy import empresa_actual
 
 from . import agotados as ag
+from . import vendido as vend
 from .etiquetas import TOPE_ETIQUETAS, seleccionar_para_etiquetas, svg_barcode
 from .forms import AjusteInventarioForm, DatosProductoForm, ExistenciaRealForm
 from .models import Agotamiento
@@ -418,4 +419,64 @@ def agotados_excel(request):
     )
     nombre = f"agotados_{timezone.localdate():%Y-%m-%d}.xlsx"
     r["Content-Disposition"] = f'attachment; filename="{nombre}"'
+    return r
+
+
+def _rango_vendido(request):
+    """Desde/hasta de la pantalla "Lo vendido": atajo o fechas escritas."""
+    from datetime import datetime
+
+    atajo = request.GET.get("atajo", "")
+    rango = vend.rango_de_atajo(atajo)
+    if rango:
+        return rango[0], rango[1], atajo
+
+    def fecha(valor):
+        try:
+            return datetime.strptime(valor or "", "%Y-%m-%d").date()
+        except ValueError:
+            return None
+
+    desde, hasta = fecha(request.GET.get("desde")), fecha(request.GET.get("hasta"))
+    if desde is None and hasta is None:
+        d, h = vend.rango_de_atajo("7")
+        return d, h, "7"
+    desde, hasta = vend.normalizar(desde, hasta)
+    return desde, hasta, ""
+
+
+@rol_requerido(GERENTE)
+def vendido(request):
+    """Qué se vendió en un rango de fechas y cuánto queda (pedido de Oscar,
+    20/10/2026). Ver inventario/vendido.py."""
+    empresa = empresa_actual(request)
+    desde, hasta, atajo = _rango_vendido(request)
+    proveedor = (request.GET.get("proveedor") or "").strip()
+    solo = request.GET.get("solo") == "reponer"
+    todas = vend.filas(empresa, desde, hasta)
+    proveedores = sorted({f["proveedor"] for f in todas if f["proveedor"]})
+    filas = [f for f in todas if not proveedor or f["proveedor"] == proveedor]
+    if solo:
+        filas = [f for f in filas if f["estado"] != vend.HAY]
+    return render(request, "inventario/vendido.html", {
+        "title": "Lo vendido",
+        "filas": filas,
+        "resumen": vend.resumen(filas),
+        "desde": desde, "hasta": hasta, "atajo": atajo, "atajos": vend.ATAJOS,
+        "proveedor": proveedor, "proveedores": proveedores,
+        "solo": solo,
+        "hoy": timezone.localdate(),
+    })
+
+
+@rol_requerido(GERENTE)
+def vendido_excel(request):
+    empresa = empresa_actual(request)
+    desde, hasta, _ = _rango_vendido(request)
+    proveedor = (request.GET.get("proveedor") or "").strip()
+    r = HttpResponse(
+        vend.excel(empresa, desde, hasta, proveedor, request.GET.get("solo") == "reponer"),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    r["Content-Disposition"] = f'attachment; filename="vendido_{desde:%Y-%m-%d}_al_{hasta:%Y-%m-%d}.xlsx"'
     return r

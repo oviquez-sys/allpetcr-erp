@@ -72,6 +72,7 @@ main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,31%);g
   display:inline-block;margin-top:5px;align-self:flex-start;font-weight:600;max-width:100%;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
 .pcard .pres{font-size:12px;color:var(--ink2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard .pres .kilo{font-weight:700;color:var(--ink)}
 .pcard .fila-p{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-top:auto;padding:6px 2px 0}
 .pcard .p{font-size:18px;font-weight:800;color:var(--brand);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .pcard .s{font-size:12px;color:var(--ink2);white-space:nowrap}
@@ -592,12 +593,18 @@ function filtrar(){
     return coincideTodasLasPalabras(q, [p.nombre, p.sku, p.codigo_barras, p.presentacion, p.descripcion]);
   });
 }
+const porKilo = p => p.por_kilo ? `${fmt(p.por_kilo)} el ${p.por_kilo_unidad === 'l' ? 'litro' : 'kg'}` : '';
+
 function pintarGrid(){
   pintarChips();   // el botón "Ver todo el catálogo" aparece y se va con el modo
   const vivos = filtrar().slice(0, 150);
   document.getElementById('grid').innerHTML = vivos.map(p => {
     const disp = p.stock_actual - (carrito[p.id]?.cantidad || 0) - enEspera(p.id);
-    const pres = p.presentacion ? `<div class="pres">${esc(p.presentacion)}</div>` : '';
+    // Precio por kilo (19/10/2026): junto a la presentación, para comparar
+    // tamaños. Solo si se sabe el contenido (ver catalogo/por_kilo.py).
+    const kilo = porKilo(p);
+    const pres = (p.presentacion || kilo)
+      ? `<div class="pres">${esc(p.presentacion)}${p.presentacion && kilo ? ' · ' : ''}${kilo ? `<b class="kilo">${kilo}</b>` : ''}</div>` : '';
     // Miniatura <img loading="lazy"> (20/09/2026). Antes era la foto GRANDE
     // como fondo CSS: las 150 tarjetas pedían ~1 MB cada una, todas a la vez.
     const foto = p.miniatura
@@ -754,7 +761,7 @@ function pintar(){
     // Una fila por producto (v2, 17/10/2026): qué es · cuántas · descuento o
     // regalía · cuánto suma.
     return `<div class="linea" id="linea-${id}">
-      <div class="li-prod">${fotoHTML(p, 46, 'clickable-product-img')}<span class="nm">${esc(p.nombre)}<small>${fmt(p.precio_venta)} c/u</small></span></div>
+      <div class="li-prod">${fotoHTML(p, 46, 'clickable-product-img')}<span class="nm">${esc(p.nombre)}<small>${fmt(p.precio_venta)} c/u${porKilo(p) ? ' · ' + porKilo(p) : ''}</small></span></div>
       <span class="qtn"><button onclick="quitar(${id})">−</button><b>${it.cantidad}</b><button onclick="agregar(${id})">＋</button></span>
       <div class="linea-x">${ctrl}</div>
       <span class="mt">${mt}</span></div>`;

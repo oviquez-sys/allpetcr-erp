@@ -64,6 +64,10 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
 
   <div class="rc-sec">Inventario</div>
   <div class="rc-grid">
+    <a class="rc-card" href="{% url 'inventario:vendido' %}">
+      <div class="rc-ic i-sell"><svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg></div>
+      <div class="rc-tx"><div class="h">Lo vendido, para reponer</div><div class="d">Qué salió en las fechas que elijás y cuánto queda hoy, con el proveedor y su código. Se descarga en Excel para el pedido.</div></div>
+    </a>
     <a class="rc-card" href="{% url 'core:reporte_reposicion' %}">
       <div class="rc-ic i-scale"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div>
       <div class="rc-tx"><div class="h">Qué reponer</div><div class="d">Cuánto pedir de cada producto según lo que vende de verdad, no según un mínimo igual para todo el catálogo.</div></div>

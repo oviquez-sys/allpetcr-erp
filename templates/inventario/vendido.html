@@ -1,0 +1,118 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Lo vendido{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+/* Lo vendido, para reponer (20/10/2026). Ver inventario/vendido.py. */
+body{background-color:#f5f5f7 !important}
+.vd-wrap{max-width:1100px;margin:0 auto}
+.vd-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.vd-sub{font-size:14px;color:#6e6e73;margin-bottom:16px;line-height:1.5}
+.vd-card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:16px}
+.vd-atajos{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.vd-tab{padding:8px 14px;border-radius:980px;border:1px solid #d9d9de;background:#fff;color:#0B3161 !important;font-size:14px;text-decoration:none}
+.vd-tab.on{background:#0B3161;color:#fff !important;border-color:#0B3161}
+.vd-form{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.vd-f label{display:block;font-size:12px;color:#6e6e73;margin-bottom:4px}
+.vd-f input,.vd-f select{padding:9px 11px;border:1px solid #d9d9de;border-radius:10px;font-size:14px;background:#fbfbfd;min-height:40px}
+.vd-check{display:flex;align-items:center;gap:7px;font-size:14px;min-height:40px;cursor:pointer}
+.vd-check input{width:18px;height:18px}
+.vd-btn{display:inline-flex;align-items:center;padding:10px 16px;border:none;border-radius:12px;background:#0B3161;color:#fff !important;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;min-height:40px;box-sizing:border-box}
+.vd-btn.sec{background:#fff;color:#0B3161 !important;border:1px solid #0B3161}
+.vd-acciones{margin-left:auto;display:flex;gap:8px}
+.vd-res{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.vd-kpi{background:#fff;border-radius:14px;padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04);min-width:120px}
+.vd-kpi b{display:block;font-size:22px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.vd-kpi span{font-size:12.5px;color:#6e6e73}
+.vd-kpi.rojo b{color:#b5231a}.vd-kpi.ambar b{color:#a35c00}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;color:#6e6e73;padding:8px 10px;border-bottom:1px solid #eee;white-space:nowrap}
+td{padding:10px;border-bottom:1px solid #f4f4f6;vertical-align:middle}
+th.n,td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.n b{font-size:16px}
+.prod{display:flex;gap:10px;align-items:center}
+.prod small{color:#6e6e73}
+.cod{font-weight:700;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;padding:3px 10px;border-radius:980px;font-size:12px;font-weight:600;white-space:nowrap}
+.tag.agotado{background:#fff0ee;color:#b5231a}
+.tag.pocas{background:#fff6e5;color:#a35c00}
+.tag.hay{background:#efeff1;color:#3a3a3c}
+.vacio{padding:30px;text-align:center;color:#6e6e73}
+.solo-movil{display:none}
+@media(max-width:800px){.tabla-scroll{overflow-x:auto}.vd-acciones{margin-left:0}}
+@media(max-width:600px){.c-prov,.c-cod,.c-foto,.c-hoy{display:none}.tag{white-space:normal;text-align:center;padding:3px 7px}.solo-movil{display:block}td,th{padding:9px 6px}}
+@media print{.vd-card.filtros,.vd-acciones,#header,.breadcrumbs,#footer{display:none !important}.vd-card{box-shadow:none;padding:0}}
+</style>{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="vd-wrap">
+  <div class="vd-title">Lo vendido</div>
+  <div class="vd-sub">Todo lo que salió en las fechas que elijás y cuánto queda hoy, con el proveedor y su código para pedirlo.
+    Primero lo agotado, después lo que quedó con pocas unidades.</div>
+
+  <div class="vd-card filtros">
+    <div class="vd-atajos">
+      {% for clave, etiqueta in atajos %}
+        <a class="vd-tab {% if clave == atajo %}on{% endif %}" href="?atajo={{ clave }}{% if proveedor %}&proveedor={{ proveedor|urlencode }}{% endif %}{% if solo %}&solo=reponer{% endif %}">{{ etiqueta }}</a>
+      {% endfor %}
+    </div>
+    <form method="get" class="vd-form">
+      <div class="vd-f"><label for="desde">Desde</label><input type="date" id="desde" name="desde" value="{{ desde|date:'Y-m-d' }}" max="{{ hoy|date:'Y-m-d' }}"></div>
+      <div class="vd-f"><label for="hasta">Hasta</label><input type="date" id="hasta" name="hasta" value="{{ hasta|date:'Y-m-d' }}" max="{{ hoy|date:'Y-m-d' }}"></div>
+      <div class="vd-f"><label for="proveedor">Proveedor</label>
+        <select id="proveedor" name="proveedor">
+          <option value="">Todos</option>
+          {% for p in proveedores %}<option value="{{ p }}" {% if p == proveedor %}selected{% endif %}>{{ p }}</option>{% endfor %}
+        </select></div>
+      <label class="vd-check"><input type="checkbox" name="solo" value="reponer" {% if solo %}checked{% endif %}> Solo agotados y con pocas</label>
+      <button class="vd-btn" type="submit">Ver</button>
+      <div class="vd-acciones">
+        <a class="vd-btn sec" href="{% url 'inventario:vendido_excel' %}?desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}{% if proveedor %}&proveedor={{ proveedor|urlencode }}{% endif %}{% if solo %}&solo=reponer{% endif %}">⬇ Excel para el pedido</a>
+        <button class="vd-btn sec" type="button" onclick="window.print()">Imprimir</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="vd-res">
+    <div class="vd-kpi"><b>{{ resumen.productos }}</b><span>productos vendidos</span></div>
+    <div class="vd-kpi"><b>{{ resumen.unidades|floatformat:"-2" }}</b><span>unidades</span></div>
+    <div class="vd-kpi rojo"><b>{{ resumen.agotados }}</b><span>agotados</span></div>
+    <div class="vd-kpi ambar"><b>{{ resumen.pocas }}</b><span>quedan pocas</span></div>
+  </div>
+
+  <div class="vd-card">
+    <div style="font-size:13px;color:#6e6e73;margin-bottom:8px">Del {{ desde|date:"d/m/Y" }} al {{ hasta|date:"d/m/Y" }}{% if proveedor %} · {{ proveedor }}{% endif %}</div>
+    {% if filas %}
+    <div class="tabla-scroll">
+    <table>
+      <thead><tr>
+        <th class="c-cod">Código proveedor</th><th>Producto</th><th class="c-prov">Proveedor</th>
+        <th class="n">Vendidas</th><th class="n">Quedan<span class="c-hoy"> hoy</span></th><th>Estado</th>
+      </tr></thead>
+      <tbody>
+      {% for f in filas %}
+        <tr>
+          <td class="cod c-cod">{{ f.codigo_proveedor|default:"—" }}</td>
+          <td><div class="prod"><span class="c-foto">{% foto_producto f.producto 40 "clickable-product-img" %}</span>
+            <div>{{ f.producto.nombre }}<br>
+              <small>{% if f.producto.codigo_barras %}Barras {{ f.producto.codigo_barras }}{% else %}SKU {{ f.producto.sku }}{% endif %}{% if f.producto.marca %} · {{ f.producto.marca }}{% endif %}</small>
+              <small class="solo-movil">{% if f.codigo_proveedor %}Cód. {{ f.codigo_proveedor }} · {% endif %}{{ f.proveedor }}</small>
+            </div></div></td>
+          <td class="c-prov">{{ f.proveedor|default:"—" }}</td>
+          <td class="n"><b>{{ f.vendidas|floatformat:"-2" }}</b></td>
+          <td class="n">{{ f.quedan|floatformat:"-2" }}</td>
+          <td><span class="tag {{ f.estado }}">{{ f.estado_texto }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+      <div class="vacio">{% if solo %}En esas fechas no se agotó ni quedó con pocas nada de lo vendido.{% else %}No hubo ventas en esas fechas.{% endif %}</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

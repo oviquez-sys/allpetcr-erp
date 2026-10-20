@@ -21,6 +21,7 @@ from django.views.decorators.http import require_POST
 from caja.services import sesion_abierta_de
 from catalogo.consultas import productos_visibles
 from catalogo.models import Producto
+from catalogo.por_kilo import aplica, precio_por_kilo
 from core.imagenes import completar_foto
 from core.pdf import html_a_pdf, logo_data_uri
 from core.roles import CAJERO, GERENTE, es_gerente, rol_requerido
@@ -89,9 +90,17 @@ def _filas_pos(queryset, con_tope=False):
         queryset.select_related("categoria")
         .values("id", "sku", "nombre", "codigo_barras", "precio_venta",
                 "stock_actual", "presentacion", "categoria__nombre", "imagen", "mascota",
-                "descripcion", "actualizado_en")
+                "descripcion", "actualizado_en", "peso_valor", "peso_unidad",
+                "categoria__padre__nombre", "ficha_alimento_id")
     )
     for p in filas:  # JSON-serializable + normalizar nombres de campos
+        # Precio por kilo (19/10/2026, ver catalogo/por_kilo.py): solo
+        # alimento, snacks y arena.
+        peso_valor, peso_unidad = p.pop("peso_valor"), p.pop("peso_unidad")
+        kilo = None
+        if aplica(p["categoria__nombre"], p.pop("categoria__padre__nombre"), p.pop("ficha_alimento_id")):
+            kilo = precio_por_kilo(p["precio_venta"], peso_valor, peso_unidad, p.get("presentacion"))
+        p["por_kilo"], p["por_kilo_unidad"] = kilo if kilo else (None, "")
         p["precio_venta"] = float(p["precio_venta"])
         p["stock_actual"] = float(p["stock_actual"])
         p["categoria"] = p.pop("categoria__nombre") or "Sin categoría"

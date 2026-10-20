@@ -13,5 +13,7 @@ urlpatterns = [
     path("etiquetas/marcar-lote/", views.marcar_etiquetas_lote, name="marcar_etiquetas_lote"),
     path("agotados/", views.agotados, name="agotados"),
     path("agotados/excel/", views.agotados_excel, name="agotados_excel"),
+    path("vendido/", views.vendido, name="vendido"),
+    path("vendido/excel/", views.vendido_excel, name="vendido_excel"),
     path("codigos/", views.codigos_barras, name="codigos"),
 ]

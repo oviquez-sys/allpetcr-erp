@@ -431,7 +431,8 @@ const escUrl = s => encodeURI(String(s ?? '')).replace(/["'()\\]/g, '');
 // (19/10/2026): una compra que no se registró y cuyo aviso duró 4 segundos
 // parecía un botón que "no hace nada".
 const msg = (t, err) => { const m=document.getElementById('msg');
-  m.textContent = err ? t + '  ✕' : t;
+  if (err) t += '  ✕';
+  m.textContent=t;
   m.className = err ? 'err show':'show'; clearTimeout(m._h);
   if (!err) m._h = setTimeout(()=>m.className='', 3800); };
 document.getElementById('msg').addEventListener('click', e => { e.currentTarget.className = ''; });

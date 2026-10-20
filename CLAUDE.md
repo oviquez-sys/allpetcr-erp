@@ -426,6 +426,38 @@ pedir. La decisión es del negocio.
   (`agotados` en la respuesta de la venta). El cajero no ve costos.
 - La migración 0007 creó los avisos de lo que ya estaba agotado.
 
+## Precio por kilo en el POS (19/10/2026)
+
+"Experimento" de Oscar: al consultar un alimento, ver cuánto sale el kilo.
+La tarjeta del catálogo dice "15 kg · ₡3.993 el kg" y la línea de la venta
+"₡59.900 c/u · ₡3.993 el kg". Lógica en `catalogo/por_kilo.py`:
+- Contenido: `peso_valor`/`peso_unidad`; si faltan, la presentación SOLO si es
+  un peso limpio ("15 kg", "500 g"; misma regla que `cargar_fichas_alimento`).
+  Nunca desde el nombre. En producción (19/10) los 185 alimentos secos y
+  húmedos tenían presentación limpia; 22 de 26 snacks también.
+- Solo raíces Alimento, Snacks y premios, Arena y sanitarios (o con ficha de
+  alimento): un jarabe de 30 ml "a ₡300.000 el litro" solo confunde.
+- Precio con IVA, colones enteros; l/ml → "el litro". Pruebas:
+  `catalogo/test_por_kilo.py`.
+
+## Lo vendido, para reponer (20/10/2026)
+
+Pedido de Oscar: "encuentro que se agotó y que quedan pocas, pero no sé qué se
+vendió para reponer… con un rango de fechas". Pantalla `inventario:vendido`
+(gerente; tarjeta primera de Inventario en el Centro de reportes) y Excel
+`inventario:vendido_excel` (con columna "A pedir" vacía), ambos de
+`inventario/vendido.filas`.
+- Rango: atajos Hoy · Ayer · 7 · 15 días · Este mes, o fechas a mano
+  (`normalizar`: en orden, sin futuro, máx. 366 días). Por defecto 7 días.
+- Facturas EMITIDAS; regalías cuentan; lo devuelto de esas ventas se resta.
+- Estado: Agotado (0) · Quedan pocas (≤ `stock_minimo`) · Hay. Orden: estado,
+  luego más vendido. Filtro por proveedor (de la ÚLTIMA compra recibida,
+  `agotados._ultima_compra`) y "Solo agotados y con pocas".
+- Código del proveedor con `agotados.codigo_proveedor`. Pruebas:
+  `inventario/test_vendido.py`.
+- De paso: `msg()` de Recibir mercadería vuelve a escribir `m.textContent=t`
+  (la v6.2 lo había cambiado y rompía `core.test_seguridad_cabeceras`).
+
 ## Recibir mercadería más clara (12/10/2026)
 
 Oscar creó un producto nuevo desde "Recibir mercadería" y no encontró dónde
