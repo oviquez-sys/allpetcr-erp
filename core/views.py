@@ -382,6 +382,12 @@ no declara.
 - Si "opciones" viene vacío, decí claramente que ninguna ficha de lo que hay \
 en existencia declara esa necesidad. Podés mencionar "otros_productos" (por \
 ejemplo una pasta de malta) aclarando que salió por su nombre o descripción.
+- Si "alimentos_sin_ficha" trae productos, decí al final cuántos alimentos \
+de esa especie no pudiste evaluar porque no tienen ficha técnica (y nombrá \
+algunos). Lo mismo si buscar_producto devuelve un alimento con \
+"tiene_ficha_de_alimento": false: aclarar que no tiene ficha técnica todavía. \
+La lista completa está en Reportes → "Alimentos sin ficha técnica" \
+(/precios/sin-ficha/).
 - Si la ficha está "Parcial", decilo. Ante síntomas de enfermedad (vómitos \
 seguidos, sangre, no come, cálculos), recomendá que lo vea un veterinario.
 - Para varias opciones: lista corta con marca y nombre, por qué sirve, \

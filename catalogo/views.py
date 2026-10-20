@@ -211,3 +211,17 @@ def completar_confirmar(request):
     tocados = completar.aplicar(empresa_actual(request), cambios)
     messages.success(request, f"Listo: se actualizaron {tocados} producto(s) desde el Excel.")
     return redirect("catalogo:completar")
+
+
+@rol_requerido(GERENTE)
+def alimentos_sin_ficha(request):
+    """Alimentos y snacks sin ficha técnica, y fichas incompletas (pedido de
+    Oscar, 20/10/2026: que no vuelva a quedar oculto). Ver catalogo/recomendar.py."""
+    from .recomendar import alimentos_sin_ficha as sin_ficha, fichas_incompletas
+
+    empresa = empresa_actual(request)
+    return render(request, "catalogo/sin_ficha.html", {
+        "title": "Alimentos sin ficha técnica",
+        "sin_ficha": sin_ficha(empresa),
+        "incompletas": fichas_incompletas(empresa),
+    })

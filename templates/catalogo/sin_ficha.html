@@ -1,0 +1,71 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Alimentos sin ficha técnica{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+/* Alimentos sin ficha (20/10/2026). Ver catalogo/recomendar.py. */
+body{background-color:#f5f5f7 !important}
+.sf-wrap{max-width:1000px;margin:0 auto}
+.sf-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.sf-sub{font-size:14px;color:#6e6e73;margin-bottom:16px;line-height:1.55;max-width:760px}
+.sf-card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:18px}
+.sf-h{font-size:17px;font-weight:700;margin-bottom:4px}
+.sf-h small{font-weight:600;color:#6e6e73;font-size:14px}
+.sf-ayuda{font-size:13.5px;color:#6e6e73;margin-bottom:12px;line-height:1.5}
+.sf-ok{padding:14px 16px;border-radius:12px;background:#eefaf1;color:#1c6b30;font-size:14.5px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;color:#6e6e73;padding:8px 10px;border-bottom:1px solid #eee}
+td{padding:9px 10px;border-bottom:1px solid #f4f4f6;vertical-align:top}
+td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td small{color:#6e6e73}
+.tag{display:inline-block;padding:2px 9px;border-radius:980px;font-size:12px;font-weight:600;background:#fff6e5;color:#a35c00}
+@media(max-width:700px){.tabla-scroll{overflow-x:auto}}
+</style>{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="sf-wrap">
+  <div class="sf-title">Alimentos sin ficha técnica</div>
+  <div class="sf-sub">La ficha técnica es la información oficial del fabricante (ingredientes, análisis, para qué sirve).
+    Sin ella el alimento se vende igual, pero el asistente no lo puede recomendar por necesidad.
+    Cuando aparezca algo aquí, pedile a Claude: <b>«completá las fichas pendientes»</b>, y después corré
+    <b>CARGAR_FICHAS_ALIMENTO.bat</b>.</div>
+
+  <div class="sf-card">
+    <div class="sf-h">Sin ficha <small>· {{ sin_ficha|length }}</small></div>
+    {% if sin_ficha %}
+    <div class="sf-ayuda">Si el fabricante no publica la información en internet, hace falta una foto de la parte de atrás de la bolsa
+      (ingredientes y análisis garantizado).</div>
+    <div class="tabla-scroll"><table>
+      <thead><tr><th>Producto</th><th>Categoría</th><th class="n">Existencia</th></tr></thead>
+      <tbody>
+      {% for p in sin_ficha %}
+        <tr><td>{{ p.nombre }}<br><small>SKU {{ p.sku }}{% if p.codigo_barras %} · Barras {{ p.codigo_barras }}{% endif %}</small></td>
+          <td>{{ p.categoria.nombre|default:"—" }}</td><td class="n">{{ p.stock_actual|floatformat:"-2" }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}
+      <div class="sf-ok">Todos los alimentos y snacks activos tienen ficha técnica.</div>
+    {% endif %}
+  </div>
+
+  <div class="sf-card">
+    <div class="sf-h">Con ficha incompleta <small>· {{ incompletas|length }}</small></div>
+    <div class="sf-ayuda">Tienen ficha, pero al fabricante le faltó publicar algo (casi siempre ingredientes o análisis).
+      El asistente las usa y avisa que están incompletas.</div>
+    {% if incompletas %}
+    <div class="tabla-scroll"><table>
+      <thead><tr><th>Fórmula</th><th>Estado</th><th>Qué falta</th></tr></thead>
+      <tbody>
+      {% for f in incompletas %}
+        <tr><td>{{ f.marca }} · {{ f.nombre }}</td><td><span class="tag">{{ f.get_estado_display }}</span></td>
+          <td><small>{{ f.notas_internas|truncatechars:180|default:"—" }}</small></td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

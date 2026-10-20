@@ -237,6 +237,7 @@ def buscar(empresa, *, especie="", necesidad="", etapa="", tamano_raza="", tipo=
             if len(otros) >= 6:
                 break
 
+    sin_ficha = alimentos_sin_ficha(empresa, especie=especie, solo_en_existencia=bool(solo_en_existencia))
     return {
         "interpretacion": {
             "especie": alimentos.ESPECIES.get(especie, "cualquiera"),
@@ -252,6 +253,51 @@ def buscar(empresa, *, especie="", necesidad="", etapa="", tamano_raza="", tipo=
         "otros_productos": otros,
         # Para que el chat muestre la foto de cada producto mencionado.
         "productos": [pr for r in resultados for pr in r["presentaciones"]][:12] + otros[:4],
+        # Lo que no se pudo evaluar: hay que decirlo, no esconderlo.
+        "alimentos_sin_ficha": {
+            "cantidad": len(sin_ficha),
+            "ejemplos": [{"nombre": p.nombre, "sku": p.sku} for p in sin_ficha[:15]],
+        },
         "regla": ("Solo vale lo que el fabricante declara en la ficha. Si 'opciones' está vacío, "
                   "ninguna ficha de lo que hay en existencia declara esa necesidad: decilo así."),
     }
+
+
+RAICES_CON_FICHA = {"Alimento", "Snacks y premios"}
+
+
+def alimentos_sin_ficha(empresa, especie="", solo_en_existencia=False):
+    """Alimentos y snacks activos que todavía no tienen ficha técnica.
+
+    Es la lista que evita que el problema quede escondido (20/10/2026): un
+    alimento sin ficha se vende igual, pero el asistente no puede
+    recomendarlo por necesidad. Se llena sola al registrar uno nuevo en
+    Recibir mercadería y se vacía al correr CARGAR_FICHAS_ALIMENTO.bat.
+    """
+    from django.db.models import Q
+
+    from .models import Producto
+
+    qs = (
+        Producto.objects.filter(empresa=empresa, activo=True, ficha_alimento__isnull=True)
+        .filter(Q(categoria__nombre__in=RAICES_CON_FICHA) | Q(categoria__padre__nombre__in=RAICES_CON_FICHA))
+        .select_related("categoria")
+        .order_by("nombre")
+    )
+    if solo_en_existencia:
+        qs = qs.filter(stock_actual__gt=0)
+    if especie:
+        clave = _clave_de(especie, {"perro": ["perr", "dog", "can"], "gato": ["gat", "cat", "felin"]})
+        if clave:
+            qs = qs.filter(Q(mascota__icontains=clave) | Q(mascota=""))
+    return list(qs)
+
+
+def fichas_incompletas(empresa):
+    """Fichas en estado Parcial o Requiere revisión de productos activos."""
+    from .models import FichaAlimento
+
+    return list(
+        FichaAlimento.objects.filter(productos__empresa=empresa, productos__activo=True)
+        .exclude(estado="verificado").distinct().order_by("marca", "nombre")
+    )

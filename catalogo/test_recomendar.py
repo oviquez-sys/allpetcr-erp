@@ -81,3 +81,40 @@ class RecomendarAlimentoTests(TestCase):
         self.assertEqual(r["productos_vendidos"], 0)
         r = ejecutar_herramienta("buscar_alimento", {"especie": "gato", "necesidad": "bolas de pelo"}, usuario=cajero)
         self.assertIn("opciones", r)
+
+
+class AlimentosSinFichaTests(TestCase):
+    def setUp(self):
+        self.empresa = Empresa.objects.create(nombre="AllPet Test", regimen="RTS")
+        raiz = Categoria.objects.create(nombre="Alimento")
+        self.seco = Categoria.objects.create(nombre="Alimento seco", padre=raiz)
+        self.otra = Categoria.objects.create(nombre="Juguetes")
+        self.ficha = FichaAlimento.objects.create(clave="f", marca="M", nombre="F", especie="gato", tipo="seco", estado="parcial",
+                                                  notas_internas="Falta el análisis.")
+
+    def _p(self, sku, cat, ficha=None, **kw):
+        return Producto.objects.create(empresa=self.empresa, sku=sku, nombre=sku, categoria=cat, ficha_alimento=ficha,
+                                       precio_venta=Decimal("1000"), stock_actual=Decimal("3"), **kw)
+
+    def test_lista_solo_alimentos_activos_sin_ficha(self):
+        from .recomendar import alimentos_sin_ficha, fichas_incompletas
+        self._p("SIN", self.seco, mascota="Gato")
+        self._p("CON", self.seco, self.ficha)
+        self._p("JUG", self.otra)
+        self._p("INACTIVO", self.seco, activo=False)
+        self._p("PERRO", self.seco, mascota="Perro")
+        self.assertEqual([p.sku for p in alimentos_sin_ficha(self.empresa)], ["PERRO", "SIN"])
+        self.assertEqual([p.sku for p in alimentos_sin_ficha(self.empresa, especie="gato")], ["SIN"])
+        self.assertEqual([f.clave for f in fichas_incompletas(self.empresa)], ["f"])
+        r = buscar(self.empresa, especie="gato", necesidad="castrado")
+        self.assertEqual(r["alimentos_sin_ficha"]["cantidad"], 1)
+
+    def test_pantalla(self):
+        self._p("SIN", self.seco)
+        self._p("CON", self.seco, self.ficha)
+        gerente = User.objects.create_superuser("g", "g@x.com", "x")
+        self.client.force_login(gerente)
+        from django.urls import reverse
+        r = self.client.get(reverse("catalogo:sin_ficha"))
+        self.assertContains(r, "SKU SIN")
+        self.assertContains(r, "Falta el análisis.")

@@ -1,0 +1,43 @@
+{
+ "clave": "loving-pets-yummy-bones-singles-bacon",
+ "marca": "Loving Pets",
+ "linea": "Yummy Bones",
+ "nombre": "Yummy Bones Singles Bacon Flavor",
+ "especie": "perro",
+ "tipo": "snack",
+ "etapas": [],
+ "tamanos_raza": [
+  "mediana",
+  "grande"
+ ],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "",
+ "sabor": "Tocino",
+ "descripcion_corta": "Premio Loving Pets Yummy Bones para perros, hueso relleno sabor tocino.",
+ "descripcion": "Hueso con sabor a pollo y un irresistible centro de tocino. Viene envuelto individualmente y es libre de granos. El fabricante lo indica para perros medianos a grandes (de 20 lb en adelante). Hecho en Estados Unidos. Es un premio: complementa la dieta diaria, no la reemplaza.",
+ "beneficios": [],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://lovingpetsproducts.com/2-8-oz-single-wrapped-yummy-bone-peanut-butter-flavor-filled-bone/",
+   "tipo": "fabricante",
+   "entidad": "Loving Pets",
+   "region": "EE. UU.",
+   "verificado_en": "2026-10-20"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-20",
+ "notas_internas": "Texto del sabor tomado de la propia página: 'Bacon Flavor Yummy Bones: This chicken-flavored bone has an irresistible bacon center.' Falta la lista de ingredientes: el fabricante no la publica. Las URL propias de los sabores Bacon y Chicken redirigen (canonical) al listado único 'Yummy Bones Singles (4 Flavors)' (Peanut Butter, Chicken, Bacon, Mint; SKU fabricante 5067, UPC 842982050679 del listado, no atribuible a este sabor). Ese listado publica un análisis sin indicar sabor (proteína mín. 8.0 %, grasa mín. 2.0 %, fibra máx. 5.0 %, humedad máx. 22.0 %; 2,445 kcal/kg; 196 kcal/premio), pero todo el texto que lo rodea es del sabor mantequilla de maní, así que NO se cargó en esta ficha para no usar datos de otra fórmula. Confirmar con el empaque; si coinciden, se puede cargar. Lo que sí se cargó viene del listado completo: 'Product Claims: Grain Free', 'Made in the USA', 'Individually Wrapped Bones' y tallas Medium (20-35 lbs) a XX-Large (100+ lbs), 'meant for medium to large dogs'. El peso 2.8 oz (79 g) solo aparece en la URL del fabricante. No se cargó el beneficio de salud oral: el texto lo dice de los huesos de mantequilla de maní. ",
+ "skus": [
+  "BEL-55066"
+ ]
+}

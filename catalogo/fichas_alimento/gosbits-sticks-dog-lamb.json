@@ -81,8 +81,9 @@
  ],
  "estado": "verificado",
  "verificado_en": "2026-09-26",
- "notas_internas": "",
+ "notas_internas": "NP261019200935440918: la barrita suelta (\"unidad\") de la bolsa de 300 g; misma fórmula (gosbi.com, 20/10/2026).",
  "skus": [
-  "GOS-71010"
+  "GOS-71010",
+  "NP261019200935440918"
  ]
 }

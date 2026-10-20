@@ -88,6 +88,10 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
       <div class="rc-ic i-price"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/><path d="M9.5 9.5l5 5"/></svg></div>
       <div class="rc-tx"><div class="h">Precios y márgenes</div><div class="d">Precio, costo promedio y margen de cada producto, con su historial de cambios.</div></div>
     </a>
+    <a class="rc-card" href="{% url 'catalogo:sin_ficha' %}">
+      <div class="rc-ic i-price"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg></div>
+      <div class="rc-tx"><div class="h">Alimentos sin ficha técnica</div><div class="d">Los alimentos y snacks que el asistente todavía no puede recomendar, y las fichas a las que les falta información.</div></div>
+    </a>
     <a class="rc-card" href="{% url 'catalogo:completar' %}">
       <div class="rc-ic i-box"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
       <div class="rc-tx"><div class="h">Completar catálogo</div><div class="d">Productos sin mascota, categoría o descripción: lo que les falta para verse en la web. Se llena aquí o por Excel.</div></div>

@@ -481,6 +481,27 @@ chat estaba conectado (Haiku 4.5, sin errores desde julio, números = Inicio).
   Recibir mercadería v6.2, Lo vendido y Agotados, reglas de recomendación.
   `max_tokens` 1024 → 1500. Pruebas: `catalogo/test_recomendar.py`.
 
+## Fichas al 100 % y lista "Alimentos sin ficha técnica" (20/10/2026)
+
+- Oscar corrió CARGAR_FICHAS_ALIMENTO.bat: producción pasó a 139 fichas y
+  186 productos vinculados (First Choice y Pink). Ojo: los 1st Choice se
+  llaman "First Choice" en el ERP.
+- Nuevas: 3 Gosbi Exclusive Grain Free (Adult Toy Duck, Adult Mini Fish with
+  Lamb, Puppy Medium Fish with Lamb; verificadas contra gosbi.com en el
+  navegador) y 6 Loving Pets (parciales: el fabricante no publica
+  ingredientes). Los Sticks "unidad" se sumaron a las fichas existentes.
+- Sin fuente oficial en línea (NO se cargaron fichas vacías; esperan la foto
+  de la etiqueta): Balance Castrado, LR Weight Control, Weight Control 14.97,
+  Skin & Coat; Red Oak High Performance (Corey Nutrition); Dukan/Dukat
+  húmedos 85 g; NutriSource Soft & Tender Lamb y PureVita Kangaroo
+  (descontinuados en el sitio); BEL-80052 (no existe ese sabor en el sitio).
+  belinanutricion.com solo carga con navegador; gosbi.com ya no muestra EAN.
+- `catalogo:sin_ficha` (/precios/sin-ficha/, gerente, tarjeta en Reportes →
+  Inventario): alimentos y snacks activos sin ficha + fichas no verificadas
+  con lo que falta. `recomendar.alimentos_sin_ficha` / `fichas_incompletas`.
+  `buscar_alimento` devuelve `alimentos_sin_ficha` y el asistente lo dice.
+- En el PC las fichas JSON están en CRLF: conservarlo al copiar.
+
 ## Recibir mercadería más clara (12/10/2026)
 
 Oscar creó un producto nuevo desde "Recibir mercadería" y no encontró dónde

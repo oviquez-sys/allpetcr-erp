@@ -1,0 +1,42 @@
+{
+ "clave": "loving-pets-soft-jerky-bacon-cheese",
+ "marca": "Loving Pets",
+ "linea": "Soft Jerky",
+ "nombre": "Soft Jerky Dog Treats Bacon & Cheese",
+ "especie": "perro",
+ "tipo": "snack",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [
+  "todas"
+ ],
+ "necesidades": [],
+ "proteina_principal": "",
+ "sabor": "Tocino y queso",
+ "descripcion_corta": "Premio de jerky suave Loving Pets para perros, sabor tocino y queso.",
+ "descripcion": "Premio de jerky suave, en forma de hueso o de palito. Según el fabricante, es apto para perros de cualquier edad o tamaño, naturalmente libre de trigo y maíz, y cocido a punto. Es un premio: complementa la dieta diaria, no la reemplaza.",
+ "beneficios": [],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://lovingpetsproducts.com/chicken-peanut-butter-bone-shaped-soft-jerky/",
+   "tipo": "fabricante",
+   "entidad": "Loving Pets",
+   "region": "EE. UU.",
+   "verificado_en": "2026-10-20"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-20",
+ "notas_internas": "Identificado como el sabor 'Bacon & Cheese' del listado Soft Jerky (el distribuidor lo llama 'Bacon-Cheese JerkyS'). Faltan ingredientes, análisis garantizado y kcal: el fabricante no los publica en su sitio. La página es un listado único 'Loving Pets Soft Jerky Dog Treats (3 Flavors, 2 Shapes)' (sabores Peanut Butter; Bacon & Cheese; Chicken & Cheese; formas Bone y Stick) sin peso neto por variante. Publica un solo UPC para todo el listado (842982083035, SKU fabricante 8303), que no se puede atribuir a este sabor; no se cargó en upc_oficiales. Los códigos Belina 58301/58305 caen en la misma serie 830x del fabricante, lo que respalda la identificación. No se pudo confirmar la forma (hueso o palito) ni el peso de 170 g con el fabricante: confirmar con el empaque. No se cargaron beneficios: el texto de salud oral del fabricante es hipotético ('the potential to improve oral health') y se refiere al jerky sabor pollo. La viñeta de la línea 'Made with real, USA-sourced chicken' no se incluyó en la descripción porque la página no confirma que este sabor lleve pollo.",
+ "skus": [
+  "BEL-58305"
+ ]
+}

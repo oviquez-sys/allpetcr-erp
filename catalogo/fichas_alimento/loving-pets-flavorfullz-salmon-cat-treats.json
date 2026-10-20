@@ -1,0 +1,40 @@
+{
+ "clave": "loving-pets-flavorfullz-salmon-cat-treats",
+ "marca": "Loving Pets",
+ "linea": "Flavorfullz",
+ "nombre": "Flavorfullz Cat Treats Salmon",
+ "especie": "gato",
+ "tipo": "snack",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "",
+ "sabor": "Salmón",
+ "descripcion_corta": "Premio relleno Loving Pets para gatos, sabor salmón.",
+ "descripcion": "Premio relleno para gatos de todas las edades, razas y tamaños: crujiente por fuera y suave por dentro. Cada pieza tiene solo dos calorías. No contiene colores ni sabores artificiales, trigo ni maíz. Hecho en Estados Unidos. Es un premio: complementa la dieta diaria, no la reemplaza.",
+ "beneficios": [],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [],
+ "kcal_kg": null,
+ "kcal_unidad": 2.0,
+ "unidad_kcal": "premio",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://lovingpetsproducts.com/flavorfullz-cat-treats/",
+   "tipo": "fabricante",
+   "entidad": "Loving Pets",
+   "region": "EE. UU.",
+   "verificado_en": "2026-10-20"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-20",
+ "notas_internas": "Identificado como el sabor 'Salmon' del listado Flavorfullz Cat Treats de 3 oz (85 g). Faltan ingredientes completos y análisis garantizado: el fabricante no los publica. La página (listado único 'Flavorfullz Cat Treats (3 oz, 4 Flavors)': Chicken, Salmon, Tuna, Chicken & Catnip) solo dice, para todos los sabores: 'chicken meal, potato starch, rice, cooked bone marrow, tapioca, natural flavors and other ingredients depending on the type' (lista incompleta, no se cargó en ingredientes). Las kcal por premio salen de 'Each piece has just two calories'. La página publica un solo UPC para todo el listado (842982052345, SKU fabricante 5234), que no corresponde a este sabor; no se cargó en upc_oficiales. El código Belina coincide con un UPC 842982 + este número con dígito verificador válido, lo que respalda la identificación, pero el fabricante no publica qué sabor es cada código: confirmar con el empaque. Para completar: tomar ingredientes, análisis y UPC del empaque.",
+ "skus": [
+  "BEL-52352"
+ ]
+}
