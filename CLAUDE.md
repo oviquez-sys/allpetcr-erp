@@ -458,6 +458,29 @@ vendió para reponer… con un rango de fechas". Pantalla `inventario:vendido`
 - De paso: `msg()` de Recibir mercadería vuelve a escribir `m.textContent=t`
   (la v6.2 lo había cambiado y rompía `core.test_seguridad_cabeceras`).
 
+## Asistente: alimentos por ficha técnica y pantallas nuevas (20/10/2026)
+
+Oscar quiere preguntarle a la barra "¿qué alimento le sirve a un gato con
+bolas de pelo?" y que responda con la ficha técnica. Revisión previa: el
+chat estaba conectado (Haiku 4.5, sin errores desde julio, números = Inicio).
+- Herramienta `buscar_alimento` (todos los roles, sin costos) →
+  `catalogo/recomendar.buscar`: traduce la necesidad a claves del vocabulario
+  (`SINONIMOS`, comparación al inicio de palabra), filtra por especie, etapa,
+  tamaño y tipo, y solo devuelve fichas con un motivo DECLARADO
+  (`coincide_por`: necesidad, beneficio, texto oficial, proteína principal o
+  lugar en la lista de ingredientes). Presentaciones en existencia con precio
+  por kilo. Productos sin ficha (pasta de malta) van aparte, por nombre o
+  descripción (`PALABRAS_SOLO_PRODUCTOS`).
+- Hallazgo (20/10): ninguna ficha de gato declara "Control de bolas de pelo";
+  la respuesta honesta es esa + Tabergat Malta. Producción tenía 120 fichas
+  (repo 139: las 14 de 1st Choice no están cargadas y no hay productos 1st
+  Choice) y 161 productos vinculados.
+- Herramienta `lo_vendido` (gerente/contador) = `inventario/vendido.filas`.
+- `SYSTEM_PROMPT_CHAT`: identidad ("sos parte de AllPet"), POS v2 (ventas en
+  espera, redondeo, regalía, gaveta, precio por kilo), caja por billetes,
+  Recibir mercadería v6.2, Lo vendido y Agotados, reglas de recomendación.
+  `max_tokens` 1024 → 1500. Pruebas: `catalogo/test_recomendar.py`.
+
 ## Recibir mercadería más clara (12/10/2026)
 
 Oscar creó un producto nuevo desde "Recibir mercadería" y no encontró dónde

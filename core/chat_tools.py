@@ -33,6 +33,9 @@ HERRAMIENTAS_FINANCIERAS = {
     "productos_menor_margen",
     "valor_inventario",
     "productos_mas_vendidos",
+    # Lo vendido trae proveedores y existencias para armar pedidos: es
+    # trabajo de gerencia (la pantalla también es solo de gerente).
+    "lo_vendido",
 }
 
 # Definición de herramientas en formato Anthropic tool-use. La descripción es
@@ -57,6 +60,53 @@ TOOLS_SCHEMA = [
                 "limite": {"type": "integer", "description": "Máximo de productos, hasta 12. Por defecto 6."},
             },
             "required": ["texto"],
+        },
+    },
+    {
+        "name": "buscar_alimento",
+        "description": (
+            "Recomienda alimentos (y snacks o productos como pasta de malta) para una "
+            "necesidad o condición de la mascota, usando la FICHA TÉCNICA oficial de "
+            "cada fórmula: necesidades y beneficios que declara el fabricante, "
+            "descripción, ingredientes, análisis garantizado y calorías. Devuelve las "
+            "presentaciones que hay en existencia con precio y precio por kilo. Usar "
+            "SIEMPRE que pregunten '¿qué alimento le sirve a un gato con bolas de "
+            "pelo?', '¿qué tenemos para perro con piel sensible?', 'algo para gato "
+            "castrado', 'alimento para cachorro de raza grande', '¿cuál tiene "
+            "salmón?' o comparen alimentos. Cada opción trae `coincide_por` (por qué "
+            "salió): basá la respuesta SOLO en eso y en los datos de la ficha."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "especie": {"type": "string", "description": "perro o gato. Vacío si no lo dijeron."},
+                "necesidad": {"type": "string", "description": "La condición o necesidad en palabras de la persona: 'bolas de pelo', 'piel sensible', 'castrado', 'sobrepeso', 'digestión delicada', 'urinario'."},
+                "etapa": {"type": "string", "description": "cachorro, gatito, adulto o senior, si lo dijeron."},
+                "tamano_raza": {"type": "string", "description": "pequeña, mediana o grande, si lo dijeron."},
+                "tipo": {"type": "string", "description": "seco, húmedo o snack, si lo pidieron."},
+                "texto": {"type": "string", "description": "Un ingrediente o palabra a buscar en la ficha: 'salmón', 'cordero', 'glucosamina'."},
+                "solo_en_existencia": {"type": "boolean", "description": "Por defecto true: solo lo que hay para vender hoy."},
+                "limite": {"type": "integer", "description": "Máximo de fórmulas, hasta 12. Por defecto 6."},
+            },
+        },
+    },
+    {
+        "name": "lo_vendido",
+        "description": (
+            "Lo que se vendió en un rango de fechas y cuánto queda hoy de cada "
+            "producto, con su proveedor (última compra) y estado: Agotado, Quedan "
+            "pocas o Hay. Usar para '¿qué se vendió esta semana?', '¿qué tengo que "
+            "reponer?', '¿qué le pido a Belina?'. Es lo mismo que la pantalla "
+            "'Lo vendido, para reponer' (/inventario/vendido/)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "desde": {"type": "string", "description": "Fecha AAAA-MM-DD. Si no la dicen, últimos 7 días."},
+                "hasta": {"type": "string", "description": "Fecha AAAA-MM-DD. Por defecto hoy."},
+                "proveedor": {"type": "string", "description": "Nombre del proveedor para filtrar (opcional)."},
+                "solo_reponer": {"type": "boolean", "description": "true = solo agotados y con pocas."},
+            },
         },
     },
     {
@@ -227,8 +277,61 @@ def ejecutar_herramienta(nombre, entrada, usuario=None):
                         "existencia": _num(p.stock_actual),
                         "categoria": p.categoria.nombre if p.categoria else "",
                         "mascota": p.mascota,
+                        "presentacion": p.presentacion,
+                        "tiene_ficha_de_alimento": bool(p.ficha_alimento_id),
                     }
                     for p in qs
+                ],
+            }
+
+        if nombre == "buscar_alimento":
+            from catalogo.recomendar import buscar
+
+            existencia = entrada.get("solo_en_existencia")
+            return buscar(
+                empresa,
+                especie=str(entrada.get("especie") or "")[:20],
+                necesidad=str(entrada.get("necesidad") or "")[:120],
+                etapa=str(entrada.get("etapa") or "")[:20],
+                tamano_raza=str(entrada.get("tamano_raza") or "")[:20],
+                tipo=str(entrada.get("tipo") or "")[:20],
+                texto=str(entrada.get("texto") or "")[:60],
+                solo_en_existencia=True if existencia is None else bool(existencia),
+                limite=entrada.get("limite") or 6,
+            )
+
+        if nombre == "lo_vendido":
+            from datetime import datetime
+
+            from inventario import vendido
+
+            def fecha(valor):
+                try:
+                    return datetime.strptime(str(valor or ""), "%Y-%m-%d").date()
+                except ValueError:
+                    return None
+
+            desde, hasta = vendido.normalizar(fecha(entrada.get("desde")), fecha(entrada.get("hasta")))
+            proveedor = str(entrada.get("proveedor") or "").strip()
+            filas = vendido.filas(empresa, desde, hasta)
+            if proveedor:
+                filas = [f for f in filas if proveedor.lower() in f["proveedor"].lower()]
+            if entrada.get("solo_reponer"):
+                filas = [f for f in filas if f["estado"] != vendido.HAY]
+            r = vendido.resumen(filas)
+            return {
+                "desde": desde.isoformat(), "hasta": hasta.isoformat(),
+                "productos_vendidos": r["productos"], "unidades": _num(r["unidades"]),
+                "agotados": r["agotados"], "quedan_pocas": r["pocas"],
+                "pantalla": "/inventario/vendido/",
+                "productos": [
+                    {
+                        "nombre": f["producto"].nombre, "sku": f["producto"].sku,
+                        "vendidas": _num(f["vendidas"]), "quedan": _num(f["quedan"]),
+                        "estado": f["estado_texto"], "proveedor": f["proveedor"],
+                        "codigo_proveedor": f["codigo_proveedor"],
+                    }
+                    for f in filas[:40]
                 ],
             }
 
