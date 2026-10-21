@@ -129,7 +129,11 @@ def nueva(request):
                 "categoria__orden", "mascota", "precio_venta", "imagen",
                 "descripcion", "actualizado_en")
     )
+    # Palabras de búsqueda (20/10/2026, catalogo/palabras_clave.py).
+    from catalogo.palabras_clave import etiquetas_por_id
+    etq = etiquetas_por_id(Producto.objects.filter(activo=True, empresa=empresa))
     for p in productos:
+        p["etiquetas"] = etq.get(p["id"], "")
         p["costo_promedio"] = float(p["costo_promedio"])
         p["precio_venta"] = float(p["precio_venta"])
         p["stock_actual"] = float(p["stock_actual"])

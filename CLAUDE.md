@@ -502,6 +502,28 @@ chat estaba conectado (Haiku 4.5, sin errores desde julio, números = Inicio).
   `buscar_alimento` devuelve `alimentos_sin_ficha` y el asistente lo dice.
 - En el PC las fichas JSON están en CRLF: conservarlo al copiar.
 
+## Buscador "inteligente" en ERP y sitio (20/10/2026)
+
+Pedido de Oscar: "comida perro cachorro" tiene que mostrar todos los
+alimentos de cachorro (ninguno dice "comida"; la mitad dice "Puppy").
+- UNA sola lista de sinónimos: `catalogo/palabras_clave.py` (`GRUPOS`,
+  `IMPLICA`, `VACIAS`). `etiquetas(producto)` arma las palabras de búsqueda
+  desde categoría (y madre), mascota, nombre/presentación (equivalencias
+  español-inglés y abreviaturas: Ad, Hum, RP, GF, Gr Fr, tallas S/M/L) y la
+  ficha técnica (especie, etapa —"todas" vale para cualquiera—, tamaño, tipo,
+  necesidades, proteína). Un gato no recibe "puppy" ni un perro "kitten".
+- Regla de búsqueda igual en todos lados: sin tildes, sin palabras vacías,
+  plural simple, cada palabra al INICIO de una palabra del producto o de sus
+  etiquetas ("pato" no trae "zapatos"; "salmón" no trae atún, "pescado" sí).
+  Python: `coincide` / `filtrar` (Precios y chat `buscar_producto`). JS:
+  `static/js/buscador.js` (POS, Recibir mercadería, Etiquetas; las vistas
+  mandan `etiquetas` en el JSON con `etiquetas_por_id`, ~0,2 s por 600).
+- API: `ProductoListaSerializer.etiquetas` (queryset con categoria__padre y
+  ficha_alimento). allpetcr-web: `lib/busqueda.coincideProducto` las usa;
+  la tolerancia a errores ("coyar") solo contra el nombre y con la misma
+  primera letra (antes "pato" traía "gato").
+- Pruebas: `catalogo/test_palabras_clave.py`; web `lib/busqueda.test.ts`.
+
 ## Recibir mercadería más clara (12/10/2026)
 
 Oscar creó un producto nuevo desde "Recibir mercadería" y no encontró dónde

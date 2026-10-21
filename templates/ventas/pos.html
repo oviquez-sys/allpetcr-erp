@@ -590,7 +590,7 @@ function filtrar(){
     if (catActiva !== "Todas" && !coincideEspecie(p, catActiva)) return false;
     // Búsqueda por palabras sueltas, no por frase exacta (28/09/2026): ver
     // static/js/buscador.js.
-    return coincideTodasLasPalabras(q, [p.nombre, p.sku, p.codigo_barras, p.presentacion, p.descripcion]);
+    return coincideTodasLasPalabras(q, [p.nombre, p.sku, p.codigo_barras, p.presentacion, p.descripcion, p.etiquetas]);
   });
 }
 const porKilo = p => p.por_kilo ? `${fmt(p.por_kilo)} el ${p.por_kilo_unidad === 'l' ? 'litro' : 'kg'}` : '';

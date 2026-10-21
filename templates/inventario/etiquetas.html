@@ -201,7 +201,7 @@ function filtrar(){
     // Búsqueda por palabras sueltas, no por frase exacta (28/09/2026): ver
     // static/js/buscador.js. "balance 10kg" encuentra "Balance Adulto Raza
     // Pequeña 10kg" aunque esas dos palabras no vengan juntas en ese orden.
-    return coincideTodasLasPalabras(q, [p.nombre, p.sku, p.codigo_barras, p.marca, p.presentacion, p.descripcion]);
+    return coincideTodasLasPalabras(q, [p.nombre, p.sku, p.codigo_barras, p.marca, p.presentacion, p.descripcion, p.etiquetas]);
   });
 }
 

@@ -21,6 +21,7 @@ from django.views.decorators.http import require_POST
 from caja.services import sesion_abierta_de
 from catalogo.consultas import productos_visibles
 from catalogo.models import Producto
+from catalogo.palabras_clave import etiquetas_por_id
 from catalogo.por_kilo import aplica, precio_por_kilo
 from core.imagenes import completar_foto
 from core.pdf import html_a_pdf, logo_data_uri
@@ -93,7 +94,11 @@ def _filas_pos(queryset, con_tope=False):
                 "descripcion", "actualizado_en", "peso_valor", "peso_unidad",
                 "categoria__padre__nombre", "ficha_alimento_id")
     )
+    # Palabras de búsqueda (20/10/2026, catalogo/palabras_clave.py): con
+    # ellas "comida perro cachorro" encuentra los "Puppy".
+    etq = etiquetas_por_id(queryset)
     for p in filas:  # JSON-serializable + normalizar nombres de campos
+        p["etiquetas"] = etq.get(p["id"], "")
         # Precio por kilo (19/10/2026, ver catalogo/por_kilo.py): solo
         # alimento, snacks y arena.
         peso_valor, peso_unidad = p.pop("peso_valor"), p.pop("peso_unidad")

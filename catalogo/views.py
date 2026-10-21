@@ -7,7 +7,6 @@ from django.contrib import messages
 from django.core import signing
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
-from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
@@ -16,7 +15,6 @@ from core.roles import GERENTE, rol_requerido
 from core.tenancy import documento_de_empresa, empresa_actual
 
 from . import completar
-from .busqueda import formas_de_palabra
 from .consultas import pidio_agotados, productos_visibles
 from .models import Categoria, Producto
 from .services import cambiar_precio
@@ -54,16 +52,13 @@ def precios(request):
         # nombre + marca, ver catalogo/busqueda.py). Sin esto, escribir
         # "10kg" pegado —lo más natural al escribir rápido— no encontraba
         # ningún alimento, aunque el producto sí existiera.
-        filtro = Q()
-        for palabra in q.split()[:6]:
-            condicion_de_la_palabra = Q()
-            for forma in formas_de_palabra(palabra):
-                condicion_de_la_palabra |= (
-                    Q(nombre__icontains=forma) | Q(sku__icontains=forma)
-                    | Q(codigo_barras__icontains=forma) | Q(descripcion__icontains=forma)
-                )
-            filtro &= condicion_de_la_palabra
-        productos = productos.filter(filtro)
+        #
+        # Desde el 20/10/2026 la búsqueda entiende sinónimos ("comida perro
+        # cachorro" encuentra los "Puppy"): catalogo/palabras_clave.filtrar,
+        # la misma regla del POS, Recibir mercadería, Etiquetas y el chat.
+        from .palabras_clave import filtrar
+        ids = [p.pk for p in filtrar(productos, q)]
+        productos = productos.filter(pk__in=ids)
     # empresa e impuesto se traen juntos: el margen de cada fila los necesita
     # (precio sin IVA según régimen y tarifa) y si no, son 2 consultas por fila.
     productos = list(productos.select_related("empresa", "impuesto").order_by("nombre")[:60])

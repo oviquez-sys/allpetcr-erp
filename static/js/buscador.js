@@ -22,17 +22,48 @@
  * comparación (al texto del producto y a lo que se escribió), así "10kg" y
  * "10 kg" se comparan como si fueran lo mismo, sin importar cuál de los dos
  * lo escribió con espacio.
+ *
+ * TERCER CAMBIO (20/10/2026, pedido de Oscar: un buscador "inteligente"):
+ * "comida perro cachorro" no encontraba nada, porque ningún alimento dice
+ * "comida" y la mitad dice "Puppy". Ahora cada producto viaja con
+ * `etiquetas`: las palabras que la gente usaría para encontrarlo, en
+ * español e inglés, armadas en el servidor (catalogo/palabras_clave.py, la
+ * ÚNICA lista de sinónimos). Acá además:
+ * - se ignoran tildes y mayúsculas ("pequeño" = "pequeno"),
+ * - se ignoran palabras vacías ("comida PARA perro"),
+ * - "cachorros" también busca "cachorro",
+ * - cada palabra se busca al INICIO de una palabra del producto, para que
+ *   "res" no encuentre "fresko" ni "pato" encuentre "zapatos".
+ * Misma regla que catalogo/palabras_clave.coincide (chat y Precios).
  */
 var UNIDADES_DE_PESO = ["kg", "g", "lb", "oz", "ml", "l"];
 var ESPACIO_ENTRE_NUMERO_Y_UNIDAD = new RegExp("(\\d)\\s+(" + UNIDADES_DE_PESO.join("|") + ")\\b", "gi");
+var PALABRAS_VACIAS = ["para", "de", "del", "con", "el", "la", "los", "las", "y", "en", "un", "una",
+  "unos", "unas", "mi", "su", "al", "que", "por", "o", "a"];
 
 function normalizarPeso(texto) {
   return (texto || "").replace(ESPACIO_ENTRE_NUMERO_Y_UNIDAD, "$1$2");
 }
 
+function textoPlano(texto) {
+  var t = String(texto || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return normalizarPeso(t.replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim());
+}
+
+function variantes(palabra) {
+  var v = [palabra];
+  if (palabra.length > 4 && /es$/.test(palabra) && !/ses$/.test(palabra)) v.push(palabra.slice(0, -2));
+  if (palabra.length > 3 && /s$/.test(palabra)) v.push(palabra.slice(0, -1));
+  return v;
+}
+
 function coincideTodasLasPalabras(texto, campos) {
-  const palabras = normalizarPeso(texto).toLowerCase().trim().split(/\s+/).filter(Boolean);
+  var palabras = textoPlano(texto).split(" ").filter(function (w) {
+    return w && PALABRAS_VACIAS.indexOf(w) === -1;
+  });
   if (!palabras.length) return true;
-  const valores = campos.map((c) => normalizarPeso(c || "").toLowerCase());
-  return palabras.every((palabra) => valores.some((v) => v.includes(palabra)));
+  var todo = " " + textoPlano(campos.join(" "));
+  return palabras.every(function (palabra) {
+    return variantes(palabra).some(function (v) { return todo.indexOf(" " + v) !== -1; });
+  });
 }

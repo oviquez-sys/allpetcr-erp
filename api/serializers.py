@@ -41,6 +41,10 @@ class ProductoListaSerializer(serializers.ModelSerializer):
 
     disponible = serializers.SerializerMethodField()
     imagen = serializers.SerializerMethodField()
+    # Palabras de búsqueda (20/10/2026, catalogo/palabras_clave.py): el
+    # buscador del sitio las suma al nombre, así "comida perro cachorro"
+    # encuentra los "Puppy". Mismas palabras que usa el ERP.
+    etiquetas = serializers.SerializerMethodField()
     # DRF serializa DecimalField como STRING por defecto (para no perder
     # precisión). El sitio espera un number (mismo contrato que ya tenía
     # exportar_catalogo_web.py, que hacía float(p.precio_venta)) — los
@@ -69,7 +73,12 @@ class ProductoListaSerializer(serializers.ModelSerializer):
             # automático por categoría. Ver la nota larga junto al campo en
             # catalogo/models.py y la lógica en allpetcr-web/lib/vitrina.ts.
             "destacado_home", "orden_home",
+            "etiquetas",
         ]
+
+    def get_etiquetas(self, obj):
+        from catalogo.palabras_clave import etiquetas
+        return etiquetas(obj)
 
     def get_disponible(self, obj):
         # Booleano, NUNCA la cantidad exacta — mismo criterio que el puente

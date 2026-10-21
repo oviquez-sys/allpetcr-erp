@@ -74,7 +74,10 @@ class CatalogoProductosView(generics.ListAPIView):
 
     def get_queryset(self):
         empresa = empresa_actual(self.request)
-        qs = Producto.objects.filter(activo=True, empresa=empresa).exclude(precio_venta=0).select_related("categoria")
+        # categoria__padre y ficha_alimento: los usan las palabras de búsqueda
+        # (`etiquetas`) sin una consulta extra por producto.
+        qs = (Producto.objects.filter(activo=True, empresa=empresa).exclude(precio_venta=0)
+              .select_related("categoria__padre", "ficha_alimento"))
 
         parametros = self.request.query_params
         if categoria := parametros.get("categoria"):

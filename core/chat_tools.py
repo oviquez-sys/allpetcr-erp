@@ -237,37 +237,21 @@ def ejecutar_herramienta(nombre, entrada, usuario=None):
             }
 
         if nombre == "buscar_producto":
-            from django.db.models import Q
-
-            from catalogo.busqueda import formas_de_palabra
             from catalogo.models import Producto
 
             texto = str(entrada.get("texto") or "").strip()[:80]
             limite = max(1, min(int(entrada.get("limite", 6) or 6), 12))
             if not texto:
                 return {"productos": []}
-            filtro = Q(sku__iexact=texto) | Q(codigo_barras=texto)
-            # Cada palabra puede caer en el nombre O en la descripción
-            # (20/09/2026, pedido de Oscar): "tazón comida azul" suele tener
-            # "tazón" y "comida" en el nombre corto y "azul" solo en la
-            # descripción. Exigir la frase completa en un único campo no
-            # encontraba nada.
-            #
-            # Cada palabra se prueba en todas sus formas (28/09/2026): "10kg"
-            # también tiene que encontrar "10 kg" con espacio, que es como
-            # queda el nombre al cargar una compra (ver catalogo/busqueda.py).
-            palabras = Q()
-            for palabra in texto.split()[:6]:
-                condicion_de_la_palabra = Q()
-                for forma in formas_de_palabra(palabra):
-                    condicion_de_la_palabra |= Q(nombre__icontains=forma) | Q(descripcion__icontains=forma)
-                palabras &= condicion_de_la_palabra
-            qs = (
-                Producto.objects.filter(empresa=empresa, activo=True)
-                .filter(filtro | palabras)
-                .select_related("categoria")
-                .order_by("-stock_actual", "nombre")[:limite]
-            )
+            # Misma regla que todos los buscadores del ERP desde el 20/10/2026
+            # (catalogo/palabras_clave.py): cada palabra en cualquier campo o
+            # en las palabras de búsqueda del producto (sinónimos, español e
+            # inglés, etapa y mascota de la ficha). "comida perro cachorro"
+            # encuentra los "Puppy". Los que tienen existencia van primero.
+            from catalogo.palabras_clave import filtrar
+            encontrados = filtrar(Producto.objects.filter(empresa=empresa, activo=True), texto)
+            encontrados.sort(key=lambda p: (-(p.stock_actual or 0), p.nombre))
+            qs = encontrados[:limite]
             return {
                 "productos": [
                     {

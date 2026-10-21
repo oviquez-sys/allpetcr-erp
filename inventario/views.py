@@ -219,7 +219,11 @@ def etiquetas(request):
                 "descripcion", "actualizado_en", "etiqueta_impresa_en")
         .order_by("nombre")
     )
+    # Palabras de búsqueda (20/10/2026, catalogo/palabras_clave.py).
+    from catalogo.palabras_clave import etiquetas_por_id
+    etq = etiquetas_por_id(productos_visibles(empresa, incluir_agotados=True))
     for p in productos:  # JSON-serializable + nombres de campo para el navegador
+        p["etiquetas"] = etq.get(p["id"], "")
         p["precio_venta"] = float(p["precio_venta"])
         p["stock_actual"] = float(p["stock_actual"])
         p["categoria"] = p.pop("categoria__nombre") or "Sin categoría"
