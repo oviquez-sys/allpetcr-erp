@@ -46,7 +46,7 @@ class Registro(ConRegalia):
         self.assertEqual(r.cliente.email, "ana@gmail.com")
         self.assertEqual(r.cliente.telefono, "88881234")
         self.assertEqual(r.cupon.porcentaje, Decimal("10"))
-        self.assertTrue(r.cupon.codigo.startswith("AP-"))
+        self.assertRegex(r.cupon.codigo, r"^ALP-\d+$")
         self.assertTrue(r.perfil.acepta_promociones)
         self.assertEqual(r.perfil.fuente, "qr-tienda")
         self.assertTrue(r.perfil.token_mascotas)
@@ -145,7 +145,7 @@ class UnirEnCaja(ConRegalia):
     def test_une_y_devuelve_el_cupon(self):
         r = self.post()
         self.assertEqual(r.status_code, 200, r.content)
-        self.assertTrue(r.json()["cupon"].startswith("AP-"))
+        self.assertRegex(r.json()["cupon"], r"^ALP-\d+$")
         self.assertEqual(PerfilManada.objects.get().origen, PerfilManada.Origen.CAJA)
 
     def test_sin_aceptar_no_guarda_nada(self):
@@ -163,12 +163,19 @@ class Codigos(ConRegalia):
         self.assertEqual(normalizar_codigo("ap7k3p9q"), "AP-7K3P9Q")
         self.assertEqual(normalizar_codigo("7k3p9q"), "AP-7K3P9Q")
         self.assertEqual(normalizar_codigo("APX2K9"), "AP-APX2K9")   # 6 caracteres: AP es parte del código
+        # Códigos simples (23/10/2026)
+        self.assertEqual(normalizar_codigo(" alp 22 "), "ALP-22")
+        self.assertEqual(normalizar_codigo("ALP022"), "ALP-22")
+        self.assertEqual(normalizar_codigo("22"), "ALP-22")
         self.assertEqual(normalizar_codigo(""), "")
 
-    def test_el_codigo_no_tiene_caracteres_ambiguos(self):
-        for i in range(30):
-            c = self.registrar(email=f"x{i}@gmail.com").cupon.codigo
-            self.assertFalse(set(c[3:]) & set("01OIL"), c)
+    def test_el_codigo_es_alp_y_un_numero(self):
+        # Desde el 23/10/2026 ya no son letras al azar (donde se evitaban
+        # 0/O y 1/I/L): es ALP- y un número que se dicta fácil.
+        codigos = [self.registrar(email=f"x{i}@gmail.com").cupon.codigo for i in range(5)]
+        for c in codigos:
+            self.assertRegex(c, r"^ALP-[1-9]\d*$")
+        self.assertEqual(len(set(codigos)), 5)
 
 
 class CuponEnCaja(ConRegalia):
@@ -367,7 +374,7 @@ class APIManada(ConRegalia):
     def test_verificado_por_google_devuelve_el_codigo(self):
         r = self.post(verificado=True, google_sub="g-1")
         self.assertEqual(r.status_code, 201)
-        self.assertTrue(r.data["cupon"]["codigo"].startswith("AP-"))
+        self.assertRegex(r.data["cupon"]["codigo"], r"^ALP-\d+$")
         self.assertEqual(r.data["cupon"]["porcentaje"], "10")
         self.assertTrue(r.data["token_mascotas"])
         self.assertEqual(len(mail.outbox), 1)
@@ -394,7 +401,7 @@ class APIManada(ConRegalia):
         r = self.api.post(reverse("api:manada_registro"),
                           {"nombre": "Doña Rosa", "telefono": "8888-1234"}, format="json")
         self.assertEqual(r.status_code, 201, r.data)
-        self.assertTrue(r.data["cupon"]["codigo"].startswith("AP-"))
+        self.assertRegex(r.data["cupon"]["codigo"], r"^ALP-\d+$")
         self.assertFalse(r.data["correo_enviado"])
         self.assertEqual(Cliente.objects.get(nombre="Doña Rosa").telefono, "88881234")
 
@@ -479,3 +486,25 @@ class AdminManada(ConRegalia):
         for nombre in ["manada_regalia", "manada_perfilmanada", "manada_cupon", "manada_mascota"]:
             r = self.client.get(reverse(f"admin:{nombre}_changelist"))
             self.assertEqual(r.status_code, 200, nombre)
+
+
+class CodigoSimple(ConRegalia):
+    """ALP-22, ALP-23… (pedido de Oscar, 23/10/2026)."""
+
+    def test_numeros_seguidos_y_el_cupon_se_encuentra_con_solo_el_numero(self):
+        from manada.services import cupon_para_venta
+        a = self.registrar(email="a@gmail.com").cupon
+        b = self.registrar(email="b@gmail.com").cupon
+        n = int(a.codigo.split("-")[1])
+        self.assertEqual(b.codigo, f"ALP-{n + 1}")
+        self.assertEqual(cupon_para_venta(self.empresa, str(n + 1)).pk, b.pk)
+        self.assertEqual(cupon_para_venta(self.empresa, f"alp {n}").pk, a.pk)
+
+    def test_los_codigos_viejos_siguen_valiendo(self):
+        from manada.services import cupon_para_venta
+        viejo = self.registrar(email="v@gmail.com").cupon
+        Cupon.objects.filter(pk=viejo.pk).update(codigo="AP-7K3P9Q")
+        self.assertEqual(cupon_para_venta(self.empresa, "ap7k3p9q").pk, viejo.pk)
+        # el contador sigue después de los cupones que ya había
+        nuevo = self.registrar(email="n@gmail.com").cupon
+        self.assertEqual(nuevo.codigo, "ALP-2")

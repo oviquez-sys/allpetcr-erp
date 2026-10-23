@@ -30,7 +30,8 @@ logger = logging.getLogger(__name__)
 # celular con brillo bajo: ni O/0, ni I/1/L. El cajero lo teclea mirando la
 # pantalla del cliente; un código ambiguo es un cliente esperando en caja.
 _ALFABETO = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
-PREFIJO_CUPON = "AP-"
+PREFIJO_CUPON = "AP-"        # códigos viejos (hasta el 23/10/2026): AP-7K3P9Q
+PREFIJO_SIMPLE = "ALP-"      # desde el 23/10/2026: ALP-22, ALP-23…
 MAX_MASCOTAS = 5
 # El sitio ya la achica en el celular antes de mandarla (~150 KB); esto es el
 # techo para lo que llegue sin achicar.
@@ -71,18 +72,44 @@ def _foto_limpia(dato, nombre_mascota):
     return ContentFile(salida.getvalue(), name=f"{uuid.uuid4().hex}.jpg")
 
 
-def _nuevo_codigo() -> str:
-    while True:
-        codigo = PREFIJO_CUPON + "".join(secrets.choice(_ALFABETO) for _ in range(6))
-        if not Cupon.objects.filter(codigo=codigo).exists():
-            return codigo
+def _nuevo_codigo(empresa) -> str:
+    """ALP-22, ALP-23… (pedido de Oscar, 23/10/2026: "mucho más fácil").
+
+    Decisión de negocio, informada: un número seguido se puede adivinar
+    (alguien podría escribir el de otra persona y usar su 10 % de
+    bienvenida). Oscar eligió la versión simple sin verificación; el riesgo
+    queda acotado a un cupón de un solo uso por código.
+
+    El número sale de un contador con bloqueo de fila (`Consecutivo`, el
+    mismo mecanismo de las facturas): dos registros a la vez nunca reciben el
+    mismo. Empieza después de los cupones que ya existían, así el número
+    sigue más o menos la cantidad de miembros."""
+    from ventas.models import Consecutivo
+
+    with transaction.atomic():
+        fila, _ = Consecutivo.objects.select_for_update().get_or_create(
+            empresa=empresa, tipo="ALP",
+            defaults={"siguiente": Cupon.objects.filter(empresa=empresa).count() + 1},
+        )
+        while True:
+            codigo = f"{PREFIJO_SIMPLE}{fila.siguiente}"
+            fila.siguiente += 1
+            if not Cupon.objects.filter(codigo=codigo).exists():
+                break
+        fila.save(update_fields=["siguiente"])
+    return codigo
 
 
 def normalizar_codigo(texto: str) -> str:
-    """Lo que el cajero teclee ("ap 7k3p9q", "AP7K3P9Q", "7k3p9q") termina
-    en la forma guardada: AP-7K3P9Q. El cajero no tiene que acordarse del
-    guion ni de las mayúsculas."""
+    """Lo que el cajero teclee termina en la forma guardada, sin acordarse del
+    guion ni de las mayúsculas:
+    - nuevos: "alp 22", "ALP22", "alp-022", "22" → ALP-22
+    - viejos: "ap 7k3p9q", "AP7K3P9Q", "7k3p9q" → AP-7K3P9Q"""
     limpio = "".join(c for c in (texto or "").upper() if c.isalnum())
+    if limpio.startswith("ALP") and limpio[3:].isdigit():
+        return f"{PREFIJO_SIMPLE}{int(limpio[3:])}"
+    if limpio.isdigit() and len(limpio) <= 6:
+        return f"{PREFIJO_SIMPLE}{int(limpio)}"
     # Con prefijo son 8 caracteres; sin él, 6. Se mira el largo y no solo si
     # empieza con "AP", porque un código como AP-APX2K9 también existe.
     if len(limpio) == 8 and limpio.startswith("AP"):
@@ -234,7 +261,7 @@ def registrar_miembro(*, empresa, email="", nombre="", telefono="", google_sub="
             try:
                 with transaction.atomic():
                     cupon = Cupon.objects.create(
-                        empresa=empresa, codigo=_nuevo_codigo(), cliente=cliente, regalia=regalia,
+                        empresa=empresa, codigo=_nuevo_codigo(empresa), cliente=cliente, regalia=regalia,
                         porcentaje=regalia.porcentaje, descripcion=regalia.texto_cliente, vence_en=vence,
                     )
                 cupon_nuevo = True

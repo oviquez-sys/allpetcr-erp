@@ -1,0 +1,167 @@
+{
+ "clave": "balance-adult-seafood",
+ "marca": "Balance",
+ "linea": "",
+ "nombre": "Balance Adulto Seafood – Receta de Mar",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "todas"
+ ],
+ "necesidades": [],
+ "proteina_principal": "",
+ "sabor": "Pescado",
+ "descripcion_corta": "Alimento seco Balance para perros adultos de todas las razas, sabor pescado.",
+ "descripcion": "Alimento balanceado extrusado para perros adultos, sabor pescado, de Belina (Costa Rica). Según el empaque: ideal para perros con sensibilidad alimentaria; más de 75 % de las proteínas son de origen animal; con más de 12 vitaminas; sistema Bio Balance con probióticos, prebióticos y postbióticos. Con Yucca schidigera, que según el fabricante reduce los olores y facilita la recolección de heces.",
+ "beneficios": [
+  {
+   "clave": "piel_pelaje",
+   "texto": "EPA y DHA para una piel y pelaje radiantes. Zinc y selenio: reducen un 54 % la caída de pelo (dato del fabricante)."
+  },
+  {
+   "clave": "corazon",
+   "texto": "EPA y DHA que benefician la salud cerebral y cardiovascular."
+  },
+  {
+   "clave": "inmunidad",
+   "texto": "Minerales orgánicos (Fe, Cu, Se, Zn, Mg) que mejoran la respuesta inmune y la salud de la piel."
+  },
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Con probióticos, prebióticos y postbióticos."
+  },
+  {
+   "clave": "antioxidantes",
+   "texto": "Minerales y antioxidantes naturales."
+  }
+ ],
+ "ingredientes": "",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "humedad",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "12.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "proteina",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "26.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Extracto etéreo",
+   "calificador": "min",
+   "valor": "12.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "5.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Energía digestible",
+   "calificador": "min",
+   "valor": "3450",
+   "unidad": "kcal/kg"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "1.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "",
+   "calificador": "max",
+   "valor": "2.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "",
+   "calificador": "min",
+   "valor": "0.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Sal (NaCl)",
+   "calificador": "min",
+   "valor": "0.6",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Sal (NaCl)",
+   "calificador": "max",
+   "valor": "1.0",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {
+  "titulo": "Tabla de consumo del fabricante (adulto)",
+  "columnas": [
+   "Peso del perro (kg)",
+   "Gramos por día"
+  ],
+  "filas": [
+   [
+    "0–2",
+    "30–70"
+   ],
+   [
+    "5–10",
+    "71–110"
+   ],
+   [
+    "14–19",
+    "111–150"
+   ],
+   [
+    "22–27",
+    "151–250"
+   ],
+   [
+    "29–35",
+    "251–315"
+   ],
+   [
+    "37–50",
+    "316–370"
+   ]
+  ],
+  "nota": "Una taza equivale a 150 g. Mantené siempre agua fresca disponible."
+ },
+ "fuentes": [
+  {
+   "url": "",
+   "tipo": "empaque",
+   "entidad": "Bolsa de 2 kg fotografiada en tienda (Belina Nutrición Animal / Industrial Belina Montes de Oro, Costa Rica)",
+   "region": "Costa Rica",
+   "verificado_en": "2026-10-23"
+  }
+ ],
+ "estado": "parcial",
+ "verificado_en": "2026-10-23",
+ "notas_internas": "Datos tomados de la foto del reverso y del frente de la bolsa (23/10/2026). Falta la lista de ingredientes (está en el costado de la bolsa). El empaque declara energía DIGESTIBLE, no metabolizable: por eso va como nutriente y no en kcal/kg. Los saltos de peso de la tabla (2–5, 10–14, etc.) son así en el empaque.",
+ "skus": [
+  "BEL-53787"
+ ]
+}

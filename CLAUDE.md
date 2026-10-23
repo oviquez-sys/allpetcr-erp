@@ -524,6 +524,17 @@ alimentos de cachorro (ninguno dice "comida"; la mitad dice "Puppy").
   primera letra (antes "pato" traía "gato").
 - Pruebas: `catalogo/test_palabras_clave.py`; web `lib/busqueda.test.ts`.
 
+## Código de La manada simple: ALP-22 (23/10/2026)
+
+Pedido de Oscar: códigos fáciles de dictar. `manada.services._nuevo_codigo`
+da ALP-<n> con un `Consecutivo` (tipo "ALP", bloqueo de fila; arranca
+después de los cupones que ya existían). `normalizar_codigo` acepta
+"alp 22", "ALP022" y "22" → ALP-22; los viejos AP-XXXXXX siguen valiendo.
+Decisión de negocio informada: Oscar eligió SIN verificación aunque un
+número seguido se puede adivinar (el riesgo es un 10 % de un solo uso por
+código). Si aparece abuso, la opción preparada era mostrar en la caja los
+últimos 4 dígitos del WhatsApp del dueño para confirmarlo.
+
 ## Recibir mercadería más clara (12/10/2026)
 
 Oscar creó un producto nuevo desde "Recibir mercadería" y no encontró dónde

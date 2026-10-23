@@ -46,8 +46,9 @@
  ],
  "estado": "parcial",
  "verificado_en": "2026-09-26",
- "notas_internas": "Belina no publica ingredientes ni análisis garantizado: faltan (tomarlos del empaque o de la ficha técnica). El fabricante (discovernutrisource.com) ya no publica esta fórmula; la fuente es el distribuidor oficial en Costa Rica. El empaque dice 'Outback Trails'. No se marcó 'libre de granos': Belina solo dice 'sin legumbres ni papas' y la línea Element Series tiene recetas con y sin granos.",
+ "notas_internas": "Belina no publica ingredientes ni análisis garantizado: faltan (tomarlos del empaque o de la ficha técnica). El fabricante (discovernutrisource.com) ya no publica esta fórmula; la fuente es el distribuidor oficial en Costa Rica. El empaque dice 'Outback Trails'. No se marcó 'libre de granos': Belina solo dice 'sin legumbres ni papas' y la línea Element Series tiene recetas con y sin granos. BEL-30002 = misma fórmula en 4 lb (factura Belina 22/10/2026, «EleSerKangaroo&WildBoa»).",
  "skus": [
-  "BEL-30001"
+  "BEL-30001",
+  "BEL-30002"
  ]
 }
