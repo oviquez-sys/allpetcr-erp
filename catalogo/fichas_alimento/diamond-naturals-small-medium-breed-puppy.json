@@ -1,0 +1,227 @@
+{
+ "clave": "diamond-naturals-small-medium-breed-puppy",
+ "marca": "Diamond Naturals",
+ "linea": "",
+ "nombre": "Diamond Naturals Small & Medium Breed Puppy Chicken & Rice Formula",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "cachorro"
+ ],
+ "tamanos_raza": [
+  "pequena",
+  "mediana"
+ ],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo y arroz",
+ "descripcion_corta": "Pollo y arroz para cachorros de raza pequeña y mediana, con DHA, superalimentos y probióticos.",
+ "descripcion": "El fabricante la formula para cachorros de raza pequeña y mediana y para perras lactantes; cumple AAFCO para todas las etapas de vida, excepto el crecimiento de razas grandes (70 lb o más de adulto). Pollo libre de jaula como primer ingrediente.",
+ "beneficios": [
+  {
+   "clave": "dha",
+   "texto": "DHA de aceite de salmón para el desarrollo del cerebro y la visión."
+  },
+  {
+   "clave": "desarrollo",
+   "texto": "Balance de grasa, proteína y nutrientes para un crecimiento adecuado."
+  },
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Probióticos K9 Strain (80 millones de UFC por libra) y raíz de achicoria."
+  },
+  {
+   "clave": "antioxidantes",
+   "texto": "Superalimentos como kale, chía, ayote y arándanos."
+  }
+ ],
+ "ingredientes": "Pollo, harina de pollo, arroz blanco, grasa de pollo (conservada con tocoferoles mixtos), cebada perlada partida, huevo deshidratado, levadura seca, pulpa de remolacha deshidratada, harina de pescado, pasto miscanthus molido, saborizante natural, linaza, aceite de salmón (fuente de DHA), sal, cloruro de potasio, cloruro de colina, raíz de achicoria deshidratada, kale, semilla de chía, ayote, arándanos, naranjas, quinoa, alga kelp deshidratada, coco, espinaca, zanahorias, papaya, extracto de Yucca schidigera, producto de fermentación deshidratado de Lactobacillus plantarum, producto de fermentación deshidratado de Bacillus subtilis, producto de fermentación deshidratado de Lactobacillus acidophilus, producto de fermentación deshidratado de Enterococcus faecium, producto de fermentación deshidratado de Bifidobacterium animalis, suplemento de vitamina E, betacaroteno, proteinato de hierro, proteinato de zinc, proteinato de cobre, sulfato ferroso, sulfato de zinc, sulfato de manganeso, sulfato de cobre, yoduro de potasio, mononitrato de tiamina, proteinato de manganeso, suplemento de vitamina A, biotina, niacina, pantotenato de calcio, selenito de sodio, clorhidrato de piridoxina, suplemento de vitamina B12, riboflavina, suplemento de vitamina D3, ácido fólico. Contiene microorganismos vivos (viables) de origen natural.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "32.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "22.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "3.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "10.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "min",
+   "valor": "0.05",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "min",
+   "valor": "1.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "min",
+   "valor": "1.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "Zinc",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "selenio",
+   "etiqueta": "Selenio",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "vitamina_a",
+   "etiqueta": "Vitamina A",
+   "calificador": "min",
+   "valor": "10000",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "vitamina_e",
+   "etiqueta": "Vitamina E",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Ácidos grasos omega 6*",
+   "calificador": "min",
+   "valor": "3.4",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Ácidos grasos omega 3*",
+   "calificador": "min",
+   "valor": "0.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (L. plantarum, B. subtilis, L. acidophilus, E. faecium, B. animalis)*",
+   "calificador": "min",
+   "valor": "80000000",
+   "unidad": "UFC/lb"
+  }
+ ],
+ "kcal_kg": 3995,
+ "kcal_unidad": 453,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Tazas medidoras estándar por día (taza de 8 oz, unos 237 ml)",
+  "columnas": [
+   "Peso actual",
+   "2–4 meses",
+   "4–8 meses",
+   "8–12 meses",
+   "Adulto"
+  ],
+  "filas": [
+   [
+    "3 lb (1,4 kg)",
+    "⅔",
+    "½",
+    "⅓",
+    "⅓"
+   ],
+   [
+    "5 lb (2,3 kg)",
+    "¾",
+    "¾",
+    "½",
+    "½"
+   ],
+   [
+    "10 lb (4,5 kg)",
+    "1½",
+    "1¼",
+    "1",
+    "¾"
+   ],
+   [
+    "20 lb (9,1 kg)",
+    "2½",
+    "2¼",
+    "1⅔",
+    "1⅓"
+   ],
+   [
+    "30 lb (13,6 kg)",
+    "3¼",
+    "2¾",
+    "2¼",
+    "1¾"
+   ],
+   [
+    "40 lb (18,1 kg)",
+    "4¼",
+    "3⅓",
+    "2¾",
+    "2¼"
+   ],
+   [
+    "60 lb (27,2 kg)",
+    "–",
+    "–",
+    "3⅔",
+    "3"
+   ]
+  ],
+  "nota": "Perras gestantes o lactantes: alimentación a libre demanda. Es un punto de partida: ajuste la cantidad para mantener la condición corporal ideal y consulte a su veterinario. Mantenga siempre agua fresca disponible. *No reconocido como nutriente esencial en los perfiles AAFCO para perros."
+ },
+ "fuentes": [
+  {
+   "url": "https://www.diamondpet.com/dog/diamond-naturals/small-medium-breed-puppy-chicken-rice/",
+   "tipo": "fabricante",
+   "entidad": "Diamond Pet Foods",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-22",
+   "declaracion_aafco": "Diamond Naturals Small & Medium Breed Puppy Chicken & Rice Formula is formulated to meet the nutritional levels established by the AAFCO Dog Food Nutrient Profiles for All Life Stages except for growth of large size dogs (70 lb. or more as an adult).",
+   "tamanos_sitio": [
+    "6oz",
+    "6lb",
+    "18lbs",
+    "40lb"
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial del sitio del fabricante en EE. UU., en el mismo orden. Pesos de la guía en kg calculados (1 lb = 0,4536 kg). La bolsa que vende Yanyunis puede tener otro tamaño que las del sitio; el fabricante advierte que el empaque manda si hay diferencias.",
+ "skus": [
+  "DIA-10081"
+ ]
+}

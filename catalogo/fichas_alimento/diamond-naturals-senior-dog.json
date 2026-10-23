@@ -2,7 +2,7 @@
  "clave": "diamond-naturals-senior-dog",
  "marca": "Diamond Naturals",
  "linea": "",
- "nombre": "Diamond Naturals Senior Dog Chicken, Egg & Oatmeal",
+ "nombre": "Diamond Naturals Senior Dog Chicken, Egg & Oatmeal Formula",
  "especie": "perro",
  "tipo": "seco",
  "etapas": [
@@ -12,69 +12,205 @@
  "necesidades": [],
  "proteina_principal": "Pollo",
  "sabor": "Pollo, huevo y avena",
- "descripcion_corta": "Fórmula para perros mayores con pollo, huevo y avena.",
- "descripcion": "Receta pensada para las necesidades de los perros que envejecen.",
+ "descripcion_corta": "Pollo, huevo y avena para perros mayores, con glucosamina y condroitina.",
+ "descripcion": "Niveles de proteína y grasa pensados para perros que envejecen, con fibra y probióticos para la digestión. Pollo libre de jaula como primer ingrediente.",
  "beneficios": [
   {
    "clave": "articulaciones",
-   "texto": "Con glucosamina."
+   "texto": "Glucosamina y condroitina para las articulaciones y el cartílago."
+  },
+  {
+   "clave": "digestion",
+   "texto": "Probióticos K9 Strain y fibra para una digestión fácil."
+  },
+  {
+   "clave": "antioxidantes",
+   "texto": "Superalimentos, selenio y vitamina E."
   }
  ],
- "ingredientes": "",
+ "ingredientes": "Pollo, harina de pollo, arroz integral, cebada perlada partida, arroz blanco, huevo deshidratado, avena, salvado de arroz, pulpa de remolacha deshidratada, grasa de pollo (conservada con tocoferoles mixtos), saborizante natural, linaza, cloruro de potasio, DL-metionina, cloruro de colina, taurina, clorhidrato de glucosamina, raíz de achicoria deshidratada, L-carnitina, kale, semilla de chía, ayote, arándanos, naranjas, quinoa, alga kelp deshidratada, coco, espinaca, zanahorias, papaya, extracto de Yucca schidigera, producto de fermentación deshidratado de Lactobacillus plantarum, producto de fermentación deshidratado de Bacillus subtilis, producto de fermentación deshidratado de Lactobacillus acidophilus, producto de fermentación deshidratado de Enterococcus faecium, producto de fermentación deshidratado de Bifidobacterium animalis, suplemento de vitamina E, betacaroteno, sulfato de condroitina, proteinato de hierro, proteinato de zinc, proteinato de cobre, sulfato ferroso, sulfato de zinc, sulfato de manganeso, sulfato de cobre, yoduro de potasio, mononitrato de tiamina, proteinato de manganeso, suplemento de vitamina A, biotina, niacina, pantotenato de calcio, selenito de sodio, clorhidrato de piridoxina, suplemento de vitamina B12, riboflavina, suplemento de vitamina D3, ácido fólico. Contiene microorganismos vivos (viables) de origen natural.",
  "aditivos": "",
  "analisis": [
   {
    "clave": "proteina",
    "etiqueta": "Proteína cruda",
    "calificador": "min",
-   "valor": "25",
+   "valor": "25.0",
    "unidad": "%"
   },
   {
    "clave": "grasa",
    "etiqueta": "Grasa cruda",
    "calificador": "min",
-   "valor": "11",
+   "valor": "11.0",
    "unidad": "%"
   },
   {
    "clave": "fibra",
    "etiqueta": "Fibra cruda",
    "calificador": "max",
-   "valor": "3",
+   "valor": "3.0",
    "unidad": "%"
   },
   {
    "clave": "humedad",
    "etiqueta": "Humedad",
    "calificador": "max",
-   "valor": "10",
+   "valor": "10.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "min",
+   "valor": "1.1",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "min",
+   "valor": "0.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "Zinc",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "selenio",
+   "etiqueta": "Selenio",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "vitamina_a",
+   "etiqueta": "Vitamina A",
+   "calificador": "min",
+   "valor": "10000",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "vitamina_e",
+   "etiqueta": "Vitamina E",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina*",
+   "calificador": "min",
+   "valor": "0.12",
    "unidad": "%"
   },
   {
    "clave": "l_carnitina",
-   "etiqueta": "L-carnitina",
+   "etiqueta": "L-carnitina*",
    "calificador": "min",
    "valor": "500",
    "unidad": "mg/kg"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Ácidos grasos omega 6*",
+   "calificador": "min",
+   "valor": "2.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Ácidos grasos omega 3*",
+   "calificador": "min",
+   "valor": "0.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "glucosamina",
+   "etiqueta": "Glucosamina*",
+   "calificador": "min",
+   "valor": "650",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "condroitina",
+   "etiqueta": "Sulfato de condroitina*",
+   "calificador": "min",
+   "valor": "240",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (L. plantarum, B. subtilis, L. acidophilus, E. faecium, B. animalis)*",
+   "calificador": "min",
+   "valor": "80000000",
+   "unidad": "UFC/lb"
   }
  ],
- "kcal_kg": null,
- "kcal_unidad": null,
- "unidad_kcal": "",
- "guia_alimentacion": {},
+ "kcal_kg": 3400,
+ "kcal_unidad": 347,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Tazas medidoras estándar por día (taza de 8 oz, unos 237 ml)",
+  "columnas": [
+   "Peso actual",
+   "Adulto"
+  ],
+  "filas": [
+   [
+    "10 lb (4,5 kg)",
+    "1"
+   ],
+   [
+    "20 lb (9,1 kg)",
+    "1⅔"
+   ],
+   [
+    "30 lb (13,6 kg)",
+    "2¼"
+   ],
+   [
+    "40 lb (18,1 kg)",
+    "2¾"
+   ],
+   [
+    "60 lb (27,2 kg)",
+    "3¾"
+   ],
+   [
+    "80 lb (36,3 kg)",
+    "4¾"
+   ],
+   [
+    "100 lb (45,4 kg)",
+    "5⅔"
+   ]
+  ],
+  "nota": "Perros adultos de más de 100 lb (45 kg): agregar aprox. ⅓ de taza por cada 10 lb (4,5 kg) adicionales. Es un punto de partida: ajuste la cantidad para mantener la condición corporal ideal y consulte a su veterinario. Mantenga siempre agua fresca disponible. *No reconocido como nutriente esencial en los perfiles AAFCO para perros."
+ },
  "fuentes": [
   {
    "url": "https://www.diamondpet.com/dog/diamond-naturals/senior-dog-chicken-egg-oatmeal/",
    "tipo": "fabricante",
    "entidad": "Diamond Pet Foods",
    "region": "Estados Unidos",
-   "verificado_en": "2026-10-12"
+   "verificado_en": "2026-10-22",
+   "declaracion_aafco": "Diamond Naturals Senior Dog Chicken, Egg & Oatmeal Formula is formulated to meet the nutritional levels established by the AAFCO Dog Food Nutrient Profiles for maintenance.",
+   "tamanos_sitio": [
+    "6oz",
+    "6lb",
+    "18lbs",
+    "35lb"
+   ]
   }
  ],
- "estado": "parcial",
- "verificado_en": "2026-10-12",
- "notas_internas": "Datos del sitio oficial de Estados Unidos; confirmar contra el empaque que vende Yanyunis en Costa Rica. Ingredientes completos pendientes.",
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial del sitio del fabricante en EE. UU., en el mismo orden. Pesos de la guía en kg calculados (1 lb = 0,4536 kg). La bolsa que vende Yanyunis puede tener otro tamaño que las del sitio; el fabricante advierte que el empaque manda si hay diferencias.",
  "skus": [
   "DIA-10066"
  ]

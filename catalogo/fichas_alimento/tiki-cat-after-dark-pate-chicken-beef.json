@@ -1,0 +1,86 @@
+{
+ "clave": "tiki-cat-after-dark-pate-chicken-beef",
+ "marca": "Tiki Cat",
+ "linea": "After Dark",
+ "nombre": "After Dark Pâté Chicken & Beef Recipe in Chicken Broth",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo y res",
+ "descripcion_corta": "Paté de pollo y res con hígado, molleja y corazón de pollo, en caldo. Alto en humedad.",
+ "descripcion": "Paté de pollo y res finamente picados, con trozos de hígado, molleja y corazón de pollo, en un caldo con mucha humedad que ayuda a complementar la poca sed natural de los gatos. Textura suave para gatos exigentes. Ingredientes 100 % no transgénicos.",
+ "beneficios": [
+  {
+   "clave": "alta_proteina",
+   "texto": "Proteína de pollo y res reales."
+  },
+  {
+   "clave": "hidratacion",
+   "texto": "Caldo con alta humedad."
+  },
+  {
+   "clave": "sabor",
+   "texto": "Textura suave para gatos exigentes."
+  }
+ ],
+ "ingredientes": "Caldo de pollo, pollo, res, hígado de pollo, molleja de pollo, corazón de pollo, aceite de girasol, huevo deshidratado, fosfato tricálcico, cloruro de potasio, goma xantana, agar-agar, cloruro de colina, sal, sulfato de magnesio, taurina, mononitrato de tiamina, suplemento de vitamina E, sulfato ferroso, niacina, óxido de zinc, suplemento de vitamina A, biotina, suplemento de vitamina B12, óxido manganoso, pantotenato de calcio, quelato de cobre y aminoácidos, riboflavina, clorhidrato de piridoxina, ácido fólico, yoduro de potasio, suplemento de vitamina D3.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "11",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "2",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "2",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "83",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 987,
+ "kcal_unidad": 79,
+ "unidad_kcal": "lata 2.8 oz (80 g)",
+ "guia_alimentacion": {
+  "titulo": "Guía de alimentación",
+  "columnas": [],
+  "filas": [],
+  "nota": "Gatos adultos: unas 2 latas por día por cada 7 lb (3,2 kg) de peso. Gatitos: ofrecer varias veces al día, hasta el doble de esa cantidad. Gatas gestantes o lactantes pueden necesitar de dos a cuatro veces lo normal. La cantidad varía según la edad, la actividad, la raza, el tamaño y el ambiente; ajústela para mantener el peso adecuado."
+ },
+ "fuentes": [
+  {
+   "url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/pate-chicken-beef-recipe-in-broth/",
+   "tipo": "fabricante",
+   "entidad": "Tiki Pets",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-22",
+   "presentaciones_sitio": "Available in: 2.8 oz. can | 5.5 oz. can"
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial de tikipets.com, en el mismo orden. El fabricante no indica a qué tamaño de lata (2.8 u 5.5 oz) se refiere la guía; se dejó tal cual.",
+ "skus": [
+  "TIKI-11032"
+ ]
+}

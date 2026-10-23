@@ -1,0 +1,130 @@
+{
+ "clave": "tiki-cat-baby-mousse-shreds-chicken-salmon-liver",
+ "marca": "Tiki Cat",
+ "linea": "Baby",
+ "nombre": "Baby Mousse & Shreds Chicken, Salmon & Chicken Liver Recipe",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [
+  "gatito"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo, salmón e hígado de pollo",
+ "descripcion_corta": "Capas de mousse y trocitos de pollo para gatitos, con DHA y prebióticos. Caja de 3 latas.",
+ "descripcion": "Capas delicadas de mousse con trocitos de pollo para ayudar a los gatitos en la transición de la leche materna. Alta en proteína y grasa para el crecimiento temprano, con taurina, calcio y fósforo balanceados.",
+ "beneficios": [
+  {
+   "clave": "desarrollo",
+   "texto": "Proteína y grasa para el crecimiento temprano; taurina, calcio y fósforo balanceados."
+  },
+  {
+   "clave": "dha",
+   "texto": "DHA y ácidos grasos esenciales para el desarrollo del cerebro."
+  },
+  {
+   "clave": "digestion",
+   "texto": "Prebióticos que ayudan suavemente a la digestión."
+  }
+ ],
+ "ingredientes": "Pollo, caldo de pollo, salmón, hígado de pollo, aceite de semilla de girasol, huevo deshidratado, fosfato tricálcico, inulina, cloruro de potasio, goma xantana, taurina, aceite de salmón, cloruro de colina, sal, sulfato de magnesio, mononitrato de tiamina (vitamina B1), suplemento de vitamina E, sulfato ferroso, niacina (vitamina B3), óxido de zinc, suplemento de vitamina A, biotina, suplemento de vitamina B12, selenito de sodio, óxido manganoso, pantotenato de calcio, suplemento de riboflavina (vitamina B2), clorhidrato de piridoxina (vitamina B6), ácido fólico, yoduro de potasio, suplemento de vitamina D3.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "15",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "5",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "78",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "EPA + DHA",
+   "calificador": "min",
+   "valor": "0.13",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "min",
+   "valor": "0.33",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "min",
+   "valor": "0.29",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "min",
+   "valor": "0.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Ácidos grasos omega 3*",
+   "calificador": "min",
+   "valor": "0.18",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Ácidos grasos omega 6*",
+   "calificador": "min",
+   "valor": "2.3",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 1215,
+ "kcal_unidad": 67,
+ "unidad_kcal": "lata 1.9 oz (54 g)",
+ "guia_alimentacion": {
+  "titulo": "Guía de alimentación",
+  "columnas": [],
+  "filas": [],
+  "nota": "Gatitos: aproximadamente 1¾ latas por día por cada libra (0,45 kg) de peso. Gatos adultos: unas 2½ latas por día por cada 7 lb (3,2 kg). Gatas gestantes o lactantes pueden necesitar de dos a cuatro veces lo normal. *No reconocido como nutriente esencial en los perfiles AAFCO para gatos."
+ },
+ "fuentes": [
+  {
+   "url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/kitten/kitten-chicken-salmon-chicken-liver/",
+   "tipo": "fabricante",
+   "entidad": "Tiki Pets",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-22",
+   "presentaciones_sitio": "Available in: 1.9 oz. can - 3 ct. box"
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial de tikipets.com, en el mismo orden. El producto es una caja de 3 latas de 1.9 oz; las kcal son por lata.",
+ "skus": [
+  "TIKI-48077"
+ ]
+}

@@ -1,0 +1,130 @@
+{
+ "clave": "tiki-cat-baby-chicken-egg",
+ "marca": "Tiki Cat",
+ "linea": "Baby",
+ "nombre": "Baby Whole Foods Chicken & Egg Recipe",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [
+  "gatito"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo y huevo",
+ "descripcion_corta": "Pollo y huevo para gatitos, alto en calorías, con DHA y prebióticos.",
+ "descripcion": "Pollo real como primer ingrediente y huevo de fácil digestión, en una fórmula suave. Alta en calorías y grasa para el crecimiento temprano.",
+ "beneficios": [
+  {
+   "clave": "desarrollo",
+   "texto": "Calorías y grasa para el crecimiento temprano."
+  },
+  {
+   "clave": "dha",
+   "texto": "DHA para el desarrollo del cerebro."
+  },
+  {
+   "clave": "digestion",
+   "texto": "Prebióticos que ayudan suavemente a la digestión."
+  }
+ ],
+ "ingredientes": "Pollo, caldo de pollo, aceite de semilla de girasol, hígado de pollo, huevo, fosfato dicálcico, lactato de calcio, cloruro de potasio, inulina, taurina, aceite de salmón, cloruro de colina, sal, sulfato de magnesio, sulfato ferroso, mononitrato de tiamina (vitamina B1), suplemento de vitamina E, selenito de sodio, niacina (vitamina B3), óxido de zinc, suplemento de vitamina A, biotina, suplemento de vitamina B12, quelato de cobre y aminoácidos, óxido manganoso, pantotenato de calcio, suplemento de riboflavina (vitamina B2), clorhidrato de piridoxina (vitamina B6), ácido fólico, yoduro de potasio, suplemento de vitamina D3.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "15",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "6",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "2",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "76",
+   "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "EPA + DHA",
+   "calificador": "min",
+   "valor": "0.015",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "min",
+   "valor": "0.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "min",
+   "valor": "0.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Ácidos grasos omega 3*",
+   "calificador": "min",
+   "valor": "0.05",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Ácidos grasos omega 6*",
+   "calificador": "min",
+   "valor": "4.3",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 1175,
+ "kcal_unidad": 80,
+ "unidad_kcal": "lata 2.4 oz (68 g)",
+ "guia_alimentacion": {
+  "titulo": "Guía de alimentación",
+  "columnas": [],
+  "filas": [],
+  "nota": "Gatitos: aproximadamente 1½ latas por día por cada libra (0,45 kg) de peso. Gatos adultos: unas 2 latas por día por cada 7 lb (3,2 kg). Gatas gestantes o lactantes pueden necesitar de dos a cuatro veces lo normal. *No reconocido como nutriente esencial en los perfiles AAFCO para gatos."
+ },
+ "fuentes": [
+  {
+   "url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/kitten/kitten-chicken-egg/",
+   "tipo": "fabricante",
+   "entidad": "Tiki Pets",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-22",
+   "presentaciones_sitio": "Available in: 2.4 oz. can"
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial de tikipets.com, en el mismo orden.",
+ "skus": [
+  "TIKI-48079"
+ ]
+}

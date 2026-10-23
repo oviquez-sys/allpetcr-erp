@@ -2,7 +2,7 @@
  "clave": "diamond-naturals-skin-coat-salmon",
  "marca": "Diamond Naturals",
  "linea": "",
- "nombre": "Diamond Naturals Skin & Coat All Life Stages Salmon & Potato",
+ "nombre": "Diamond Naturals Skin & Coat All Life Stages Dog Salmon & Potato Formula",
  "especie": "perro",
  "tipo": "seco",
  "etapas": [
@@ -12,33 +12,41 @@
  "necesidades": [],
  "proteina_principal": "Salmón",
  "sabor": "Salmón y papa",
- "descripcion_corta": "Salmón y papa para la piel y el pelaje, en todas las etapas.",
- "descripcion": "Receta diseñada para ayudar a mantener la piel sana y el pelaje.",
+ "descripcion_corta": "Salmón y papa para la piel y el pelaje, para perros de todas las etapas de vida.",
+ "descripcion": "Salmón como primer ingrediente, fuente de omega 3, selenio y proteína. Cumple AAFCO para todas las etapas de vida, incluido el crecimiento de razas grandes.",
  "beneficios": [
   {
    "clave": "piel_pelaje",
-   "texto": "Diseñada para la piel y el pelaje."
+   "texto": "Ayuda a mantener la piel y el pelaje sanos en todas las etapas."
   },
   {
-   "clave": "dha",
-   "texto": "Con DHA."
+   "clave": "omega",
+   "texto": "Omega de salmón, chía, coco y linaza."
+  },
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Probióticos K9 Strain (80 millones de UFC por libra) y raíz de achicoria."
+  },
+  {
+   "clave": "antioxidantes",
+   "texto": "Superalimentos y frutas como arándanos, naranjas, espinaca y zanahoria."
   }
  ],
- "ingredientes": "",
+ "ingredientes": "Salmón, harina de pescado, papas, lentejas, arvejas, harina de arveja, aceite de canola (conservado con tocoferoles mixtos), levadura seca, pulpa de tomate deshidratada, saborizante natural, linaza, aceite de salmón, fosfato dicálcico, sal, cloruro de potasio, DL-metionina, cloruro de colina, taurina, raíz de achicoria deshidratada, L-carnitina, kale, semilla de chía, ayote, arándanos, naranjas, quinoa, alga kelp deshidratada, coco, espinaca, zanahorias, papaya, producto de fermentación deshidratado de Lactobacillus plantarum, producto de fermentación deshidratado de Bacillus subtilis, producto de fermentación deshidratado de Lactobacillus acidophilus, producto de fermentación deshidratado de Enterococcus faecium, producto de fermentación deshidratado de Bifidobacterium animalis, suplemento de vitamina E, proteinato de hierro, proteinato de zinc, proteinato de cobre, sulfato ferroso, sulfato de zinc, sulfato de manganeso, sulfato de cobre, yoduro de potasio, mononitrato de tiamina, proteinato de manganeso, suplemento de vitamina A, biotina, niacina, pantotenato de calcio, selenito de sodio, clorhidrato de piridoxina, suplemento de vitamina B12, riboflavina, suplemento de vitamina D3, ácido fólico. Contiene microorganismos vivos (viables) de origen natural.",
  "aditivos": "",
  "analisis": [
   {
    "clave": "proteina",
    "etiqueta": "Proteína cruda",
    "calificador": "min",
-   "valor": "25",
+   "valor": "25.0",
    "unidad": "%"
   },
   {
    "clave": "grasa",
    "etiqueta": "Grasa cruda",
    "calificador": "min",
-   "valor": "14",
+   "valor": "14.0",
    "unidad": "%"
   },
   {
@@ -52,7 +60,7 @@
    "clave": "humedad",
    "etiqueta": "Humedad",
    "calificador": "max",
-   "valor": "10",
+   "valor": "10.0",
    "unidad": "%"
   },
   {
@@ -61,25 +69,170 @@
    "calificador": "min",
    "valor": "0.05",
    "unidad": "%"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "Zinc",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "selenio",
+   "etiqueta": "Selenio",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "vitamina_a",
+   "etiqueta": "Vitamina A",
+   "calificador": "min",
+   "valor": "10000",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "vitamina_e",
+   "etiqueta": "Vitamina E",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina*",
+   "calificador": "min",
+   "valor": "0.12",
+   "unidad": "%"
+  },
+  {
+   "clave": "l_carnitina",
+   "etiqueta": "L-carnitina*",
+   "calificador": "min",
+   "valor": "100",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Ácidos grasos omega 6*",
+   "calificador": "min",
+   "valor": "2.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Ácidos grasos omega 3*",
+   "calificador": "min",
+   "valor": "0.4",
+   "unidad": "%"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (L. plantarum, B. subtilis, L. acidophilus, E. faecium, B. animalis)*",
+   "calificador": "min",
+   "valor": "80000000",
+   "unidad": "UFC/lb"
   }
  ],
- "kcal_kg": null,
- "kcal_unidad": null,
- "unidad_kcal": "",
- "guia_alimentacion": {},
+ "kcal_kg": 3600,
+ "kcal_unidad": 408,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Tazas medidoras estándar por día (taza de 8 oz, unos 237 ml)",
+  "columnas": [
+   "Peso actual",
+   "2–4 meses",
+   "4–8 meses",
+   "8–12 meses",
+   "Adulto"
+  ],
+  "filas": [
+   [
+    "3 lb (1,4 kg)",
+    "⅔",
+    "½",
+    "½",
+    "⅓"
+   ],
+   [
+    "5 lb (2,3 kg)",
+    "1",
+    "¾",
+    "⅔",
+    "½"
+   ],
+   [
+    "10 lb (4,5 kg)",
+    "1⅔",
+    "1⅓",
+    "1¼",
+    "¾"
+   ],
+   [
+    "20 lb (9,1 kg)",
+    "2⅔",
+    "2¼",
+    "1¾",
+    "1½"
+   ],
+   [
+    "30 lb (13,6 kg)",
+    "3⅔",
+    "3¼",
+    "2½",
+    "2"
+   ],
+   [
+    "40 lb (18,1 kg)",
+    "4½",
+    "3¾",
+    "3¼",
+    "2⅓"
+   ],
+   [
+    "60 lb (27,2 kg)",
+    "–",
+    "5¼",
+    "4¼",
+    "3¼"
+   ],
+   [
+    "80 lb (36,3 kg)",
+    "–",
+    "6⅓",
+    "5¼",
+    "4¼"
+   ],
+   [
+    "100 lb (45,4 kg)",
+    "–",
+    "–",
+    "6",
+    "4¾"
+   ]
+  ],
+  "nota": "Perros adultos de más de 100 lb (45 kg): agregar aprox. ⅓ de taza por cada 10 lb (4,5 kg) adicionales. Perras gestantes o lactantes: alimentación a libre demanda. Es un punto de partida: ajuste la cantidad para mantener la condición corporal ideal y consulte a su veterinario. Mantenga siempre agua fresca disponible. *No reconocido como nutriente esencial en los perfiles AAFCO para perros."
+ },
  "fuentes": [
   {
    "url": "https://www.diamondpet.com/dog/diamond-naturals/skin-coat-all-life-stages-dog-salmon-potato-formula/",
    "tipo": "fabricante",
    "entidad": "Diamond Pet Foods",
    "region": "Estados Unidos",
-   "verificado_en": "2026-10-12"
+   "verificado_en": "2026-10-22",
+   "declaracion_aafco": "Diamond Naturals Skin & Coat All Life Stages Dog Salmon & Potato Formula is formulated to meet the nutritional levels established by the AAFCO Dog Food Nutrient Profiles for All Life Stages including growth of large size dogs (70 lb. or more as an adult).",
+   "tamanos_sitio": [
+    "6oz",
+    "15lb",
+    "30lb"
+   ]
   }
  ],
- "estado": "parcial",
- "verificado_en": "2026-10-12",
- "notas_internas": "Datos del sitio oficial de Estados Unidos; confirmar contra el empaque que vende Yanyunis en Costa Rica. Ingredientes completos pendientes.",
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial del sitio del fabricante en EE. UU., en el mismo orden. Pesos de la guía en kg calculados (1 lb = 0,4536 kg). La bolsa que vende Yanyunis puede tener otro tamaño que las del sitio; el fabricante advierte que el empaque manda si hay diferencias.",
  "skus": [
-  "DIA-10089"
+  "DIA-10089",
+  "DIA-10087"
  ]
 }

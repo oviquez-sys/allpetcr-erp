@@ -1,0 +1,88 @@
+{
+ "clave": "tiki-cat-after-dark-chicken-quail-egg",
+ "marca": "Tiki Cat",
+ "linea": "After Dark",
+ "nombre": "After Dark Whole Foods Chicken & Quail Egg Recipe in Broth",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo y huevo de codorniz",
+ "descripcion_corta": "Pollo desmenuzado con huevo de codorniz entero, hígado, molleja y corazón, en caldo. Sin granos ni papa.",
+ "descripcion": "Pollo desmenuzado, vísceras (hígado, molleja y corazón) y un huevo de codorniz entero en caldo. Sin granos ni papa, con ingredientes no transgénicos.",
+ "beneficios": [
+  {
+   "clave": "alta_proteina",
+   "texto": "Pollo real con vísceras nutritivas."
+  },
+  {
+   "clave": "hidratacion",
+   "texto": "Servido en caldo."
+  },
+  {
+   "clave": "sabor",
+   "texto": "Huevo de codorniz entero."
+  }
+ ],
+ "ingredientes": "Pollo, caldo de pollo, huevo de codorniz, hígado de pollo, molleja de pollo, corazón de pollo, fosfato tricálcico, cloruro de potasio, cloruro de colina, sulfato de magnesio, sal, taurina, sulfato ferroso, mononitrato de tiamina (vitamina B1), suplemento de vitamina E, aceite de atún, niacina (vitamina B3), óxido de zinc, suplemento de vitamina A, biotina, suplemento de vitamina B12, quelato de cobre y aminoácidos, óxido manganoso, pantotenato de calcio, suplemento de riboflavina (vitamina B2), selenito de sodio, clorhidrato de piridoxina (vitamina B6), ácido fólico, yoduro de potasio, suplemento de vitamina D3.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "12",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "2.4",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "0.7",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "82",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": null,
+ "kcal_unidad": 66,
+ "unidad_kcal": "lata 2.8 oz (80 g)",
+ "guia_alimentacion": {
+  "titulo": "Guía de alimentación",
+  "columnas": [],
+  "filas": [],
+  "nota": "Tres latas de 2.8 oz por día, o 1½ latas de 5.5 oz, para un gato adulto de 7 lb (3,2 kg). Gatitos: ofrecer varias veces al día, hasta el doble de esa cantidad. Gatas gestantes o lactantes pueden necesitar de dos a cuatro veces lo normal. Servir a temperatura ambiente, refrigerar después de abrir y cambiar la comida húmeda al menos dos veces al día. Mantenga siempre agua fresca disponible."
+ },
+ "fuentes": [
+  {
+   "url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/shredded-cat/after-dark/chicken-quail/",
+   "tipo": "fabricante",
+   "entidad": "Tiki Pets",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-22",
+   "presentaciones_sitio": "Available in: 2.8 oz. can | 5.5 oz. can | 12 can Multi Pack | 24 can Multi Pack"
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial de tikipets.com, en el mismo orden. El sitio no publica kcal/kg de esta receta, solo kcal por lata.",
+ "skus": [
+  "TIKI-11237"
+ ]
+}

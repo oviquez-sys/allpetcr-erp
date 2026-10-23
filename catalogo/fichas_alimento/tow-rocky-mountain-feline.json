@@ -1,8 +1,8 @@
 {
  "clave": "tow-rocky-mountain-feline",
  "marca": "Taste of the Wild",
- "linea": "",
- "nombre": "Taste of the Wild Rocky Mountain Feline",
+ "linea": "Grain Free",
+ "nombre": "Rocky Mountain Feline Recipe with Roasted Venison & Smoke-Flavored Salmon",
  "especie": "gato",
  "tipo": "seco",
  "etapas": [
@@ -12,10 +12,10 @@
  "necesidades": [
   "libre_granos"
  ],
- "proteina_principal": "Venado asado",
+ "proteina_principal": "Pollo",
  "sabor": "Venado asado y salmón ahumado",
- "descripcion_corta": "Receta sin granos con 42 % de proteína para gatos de todas las edades.",
- "descripcion": "Venado asado y salmón ahumado, con legumbres, vegetales y frutas, para la proteína que necesita un cuerpo delgado y sano.",
+ "descripcion_corta": "Receta sin granos con 42 % de proteína, con venado asado y salmón ahumado, para gatos de todas las edades.",
+ "descripcion": "El 42 % de la receta es proteína de harina de pollo, venado asado, salmón ahumado, harina de pescado y vegetales. Lleva probióticos propios de la marca para gatos y taurina.",
  "beneficios": [
   {
    "clave": "alta_proteina",
@@ -23,62 +23,207 @@
   },
   {
    "clave": "prebioticos_probioticos",
-   "texto": "Con probióticos específicos para la especie."
+   "texto": "Probióticos Viables para gatos (80 millones de cultivos vivos por libra)."
+  },
+  {
+   "clave": "corazon",
+   "texto": "Taurina para un corazón y una visión sanos."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Mezcla de omega 6 y omega 3 para piel sana y pelaje brillante."
   },
   {
    "clave": "antioxidantes",
-   "texto": "Antioxidantes de vegetales, legumbres y frutas."
+   "texto": "Arvejas, camote, tomate, arándanos y frambuesas; zinc, selenio y vitamina E."
   }
  ],
- "ingredientes": "",
+ "ingredientes": "Harina de pollo, arvejas, camote, grasa de pollo (conservada con tocoferoles mixtos), proteína de arveja, proteína de papa, venado asado, salmón con sabor ahumado, saborizante natural, harina de pescado, DL-metionina, cloruro de potasio, taurina, cloruro de colina, raíz de achicoria deshidratada, tomates, arándanos, frambuesas, extracto de Yucca schidigera, producto de fermentación deshidratado de Lactobacillus plantarum, producto de fermentación deshidratado de Bacillus subtilis, producto de fermentación deshidratado de Lactobacillus acidophilus, producto de fermentación deshidratado de Enterococcus faecium, producto de fermentación deshidratado de Bifidobacterium animalis, proteinato de zinc, suplemento de vitamina E, niacina, proteinato de manganeso, proteinato de cobre, sulfato de zinc, sulfato de manganeso, sulfato de cobre, mononitrato de tiamina, suplemento de vitamina A, biotina, yoduro de potasio, pantotenato de calcio, riboflavina, clorhidrato de piridoxina, suplemento de vitamina B12, selenito de sodio, suplemento de vitamina D3, ácido fólico. Contiene microorganismos vivos (viables) de origen natural.",
  "aditivos": "",
  "analisis": [
   {
    "clave": "proteina",
    "etiqueta": "Proteína cruda",
    "calificador": "min",
-   "valor": "42",
+   "valor": "42.0",
    "unidad": "%"
   },
   {
    "clave": "grasa",
    "etiqueta": "Grasa cruda",
    "calificador": "min",
-   "valor": "18",
+   "valor": "18.0",
    "unidad": "%"
   },
   {
    "clave": "fibra",
    "etiqueta": "Fibra cruda",
    "calificador": "max",
-   "valor": "3",
+   "valor": "3.0",
    "unidad": "%"
   },
   {
    "clave": "humedad",
    "etiqueta": "Humedad",
    "calificador": "max",
-   "valor": "10",
+   "valor": "10.0",
    "unidad": "%"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "Zinc",
+   "calificador": "min",
+   "valor": "120",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "selenio",
+   "etiqueta": "Selenio",
+   "calificador": "min",
+   "valor": "0.3",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "vitamina_e",
+   "etiqueta": "Vitamina E",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "min",
+   "valor": "0.15",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Ácidos grasos omega 6*",
+   "calificador": "min",
+   "valor": "2.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Ácidos grasos omega 3*",
+   "calificador": "min",
+   "valor": "0.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (L. plantarum, B. subtilis, L. acidophilus, E. faecium, B. animalis)*",
+   "calificador": "min",
+   "valor": "80000000",
+   "unidad": "UFC/lb"
   }
  ],
- "kcal_kg": null,
- "kcal_unidad": null,
- "unidad_kcal": "",
- "guia_alimentacion": {},
+ "kcal_kg": 3745,
+ "kcal_unidad": 425,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Tazas medidoras estándar por día (taza de 8 oz, unos 237 ml)",
+  "columnas": [
+   "Peso actual",
+   "Gatito hasta 4 meses",
+   "Gatito 4–8 meses",
+   "Gatito 8–12 meses",
+   "Gato adulto"
+  ],
+  "filas": [
+   [
+    "1 lb (0,5 kg)",
+    "¼",
+    "–",
+    "–",
+    "–"
+   ],
+   [
+    "3 lb (1,4 kg)",
+    "–",
+    "–",
+    "–",
+    "¼"
+   ],
+   [
+    "4 lb (1,8 kg)",
+    "⅔",
+    "½",
+    "–",
+    "–"
+   ],
+   [
+    "5 lb (2,3 kg)",
+    "–",
+    "–",
+    "–",
+    "⅓"
+   ],
+   [
+    "6 lb (2,7 kg)",
+    "¾",
+    "⅔",
+    "½",
+    "–"
+   ],
+   [
+    "9 lb (4,1 kg)",
+    "1¼",
+    "1",
+    "¾",
+    "–"
+   ],
+   [
+    "10 lb (4,5 kg)",
+    "–",
+    "–",
+    "–",
+    "⅔"
+   ],
+   [
+    "12 lb (5,4 kg)",
+    "–",
+    "1¼",
+    "1",
+    "–"
+   ],
+   [
+    "15 lb (6,8 kg)",
+    "–",
+    "–",
+    "–",
+    "¾"
+   ],
+   [
+    "20 lb (9,1 kg)",
+    "–",
+    "–",
+    "–",
+    "1"
+   ]
+  ],
+  "nota": "Gatas gestantes o lactantes: alimentación a libre demanda. Es un punto de partida: ajuste la cantidad para mantener la condición corporal ideal del gato y consulte a su veterinario. Mantenga siempre agua fresca disponible. *No reconocido como nutriente esencial en los perfiles AAFCO para gatos."
+ },
  "fuentes": [
   {
-   "url": "https://www.tasteofthewildpetfood.com/cat/grain-free/rocky-mountain-with-roasted-venison-smoke-flavored-salmon",
+   "url": "https://www.tasteofthewildpetfood.com/cat/grain-free/rocky-mountain-with-roasted-venison-smoke-flavored-salmon/",
    "tipo": "fabricante",
    "entidad": "Taste of the Wild (Diamond Pet Foods)",
    "region": "Estados Unidos",
-   "verificado_en": "2026-10-12"
+   "verificado_en": "2026-10-22",
+   "declaracion_aafco": "Taste of the Wild Rocky Mountain Feline Recipe is formulated to meet the nutritional levels established by the AAFCO Cat Food Nutrient Profiles for All Life Stages.",
+   "tamanos_sitio": [
+    "14 lb.",
+    "5 lb."
+   ]
   }
  ],
- "estado": "parcial",
- "verificado_en": "2026-10-12",
- "notas_internas": "Datos del sitio oficial de Estados Unidos (bolsa de 5 lb). La bolsa que vende Yanyunis en Costa Rica es de 2 kg; confirmar el análisis contra el empaque. Ingredientes completos pendientes (el sitio solo muestra los destacados).",
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial del sitio del fabricante en EE. UU., en el mismo orden. Pesos de la guía en kg calculados (1 lb = 0,4536 kg). La bolsa que vende Yanyunis puede tener otro tamaño que las del sitio; el fabricante advierte que el empaque manda si hay diferencias.",
  "skus": [
-  "TOW-2591"
+  "TOW-2591",
+  "TOW-9764"
  ]
 }

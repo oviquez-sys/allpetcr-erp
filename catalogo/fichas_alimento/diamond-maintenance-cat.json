@@ -2,7 +2,7 @@
  "clave": "diamond-maintenance-cat",
  "marca": "Diamond",
  "linea": "",
- "nombre": "Diamond Maintenance Cat",
+ "nombre": "Diamond Maintenance Cat Formula",
  "especie": "gato",
  "tipo": "seco",
  "etapas": [
@@ -10,59 +10,185 @@
  ],
  "tamanos_raza": [],
  "necesidades": [],
- "proteina_principal": "Pollo",
- "sabor": "",
- "descripcion_corta": "Fórmula de mantenimiento para gatos adultos.",
- "descripcion": "La nutrición que tu gato adulto necesita para su salud y bienestar general.",
- "beneficios": [],
- "ingredientes": "",
+ "proteina_principal": "Pollo (harina de subproductos)",
+ "sabor": "Pollo",
+ "descripcion_corta": "Fórmula de mantenimiento con 30 % de proteína y 15 % de grasa, para gatos adultos moderadamente activos.",
+ "descripcion": "Nutrición diaria completa y balanceada para gatos adultos con actividad moderada. Lleva probióticos Viables para gatos y ácidos grasos omega de la grasa de pollo.",
+ "beneficios": [
+  {
+   "clave": "piel_pelaje",
+   "texto": "Ácidos grasos omega de la grasa de pollo para piel y pelaje."
+  },
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Probióticos Viables (80 millones de UFC por libra)."
+  },
+  {
+   "clave": "energia",
+   "texto": "30 % de proteína y 15 % de grasa para mantener una buena condición corporal."
+  }
+ ],
+ "ingredientes": "Harina de subproductos de pollo, maíz integral molido, harina de trigo, grasa de pollo (conservada con tocoferoles mixtos), levadura seca, saborizante natural, pulpa de remolacha deshidratada, bisulfato de sodio, cloruro de potasio, sal, DL-metionina, taurina, cloruro de colina, producto de fermentación deshidratado de Lactobacillus plantarum, producto de fermentación deshidratado de Bacillus subtilis, producto de fermentación deshidratado de Lactobacillus acidophilus, producto de fermentación deshidratado de Enterococcus faecium, producto de fermentación deshidratado de Bifidobacterium animalis, proteinato de zinc, suplemento de vitamina E, niacina, proteinato de manganeso, proteinato de cobre, sulfato de zinc, sulfato de manganeso, sulfato de cobre, mononitrato de tiamina, suplemento de vitamina A, biotina, yoduro de potasio, pantotenato de calcio, riboflavina, clorhidrato de piridoxina, suplemento de vitamina B12, selenito de sodio, suplemento de vitamina D3, ácido fólico. Contiene microorganismos vivos (viables) de origen natural.",
  "aditivos": "",
  "analisis": [
   {
    "clave": "proteina",
    "etiqueta": "Proteína cruda",
    "calificador": "min",
-   "valor": "30",
+   "valor": "30.0",
    "unidad": "%"
   },
   {
    "clave": "grasa",
    "etiqueta": "Grasa cruda",
    "calificador": "min",
-   "valor": "15",
+   "valor": "15.0",
    "unidad": "%"
   },
   {
    "clave": "fibra",
    "etiqueta": "Fibra cruda",
    "calificador": "max",
-   "valor": "3",
+   "valor": "3.0",
    "unidad": "%"
   },
   {
    "clave": "humedad",
    "etiqueta": "Humedad",
    "calificador": "max",
-   "valor": "10",
+   "valor": "10.0",
    "unidad": "%"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Metionina",
+   "calificador": "min",
+   "valor": "0.7",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "min",
+   "valor": "1.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "min",
+   "valor": "1.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "Zinc",
+   "calificador": "min",
+   "valor": "180",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "selenio",
+   "etiqueta": "Selenio",
+   "calificador": "min",
+   "valor": "0.5",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "vitamina_a",
+   "etiqueta": "Vitamina A",
+   "calificador": "min",
+   "valor": "10000",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "vitamina_e",
+   "etiqueta": "Vitamina E",
+   "calificador": "min",
+   "valor": "200",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "min",
+   "valor": "0.1",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Ácidos grasos omega 6*",
+   "calificador": "min",
+   "valor": "2.4",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Ácidos grasos omega 3*",
+   "calificador": "min",
+   "valor": "0.4",
+   "unidad": "%"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (L. plantarum, B. subtilis, L. acidophilus, E. faecium, B. animalis)*",
+   "calificador": "min",
+   "valor": "80000000",
+   "unidad": "UFC/lb"
   }
  ],
- "kcal_kg": null,
- "kcal_unidad": null,
- "unidad_kcal": "",
- "guia_alimentacion": {},
+ "kcal_kg": 3630,
+ "kcal_unidad": 410,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Tazas medidoras estándar por día (taza de 8 oz, unos 237 ml)",
+  "columnas": [
+   "Peso actual",
+   "Gato adulto"
+  ],
+  "filas": [
+   [
+    "3 lb (1,4 kg)",
+    "¼"
+   ],
+   [
+    "5 lb (2,3 kg)",
+    "⅓"
+   ],
+   [
+    "10 lb (4,5 kg)",
+    "⅔"
+   ],
+   [
+    "15 lb (6,8 kg)",
+    "¾"
+   ],
+   [
+    "20 lb (9,1 kg)",
+    "1"
+   ]
+  ],
+  "nota": "Es un punto de partida: ajuste la cantidad para mantener la condición corporal ideal del gato y consulte a su veterinario. Mantenga siempre agua fresca disponible. *No reconocido como nutriente esencial en los perfiles AAFCO para gatos."
+ },
  "fuentes": [
   {
    "url": "https://www.diamondpet.com/cat/diamond/maintenance/",
    "tipo": "fabricante",
    "entidad": "Diamond Pet Foods",
    "region": "Estados Unidos",
-   "verificado_en": "2026-10-12"
+   "verificado_en": "2026-10-22",
+   "declaracion_aafco": "Diamond Maintenance Cat is formulated to meet the nutritional levels established by the AAFCO Cat Food Nutrient Profiles for maintenance.",
+   "tamanos_sitio": [
+    "6oz",
+    "6lb",
+    "20lb",
+    "40lb"
+   ]
   }
  ],
- "estado": "parcial",
- "verificado_en": "2026-10-12",
- "notas_internas": "Datos del sitio oficial de Estados Unidos; confirmar contra el empaque que vende Yanyunis en Costa Rica. Ingredientes completos pendientes.",
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial del sitio del fabricante en EE. UU., en el mismo orden. Pesos de la guía en kg calculados (1 lb = 0,4536 kg). La bolsa que vende Yanyunis puede tener otro tamaño que las del sitio; el fabricante advierte que el empaque manda si hay diferencias.",
  "skus": [
   "DIA-445"
  ]

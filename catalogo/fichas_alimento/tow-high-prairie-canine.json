@@ -1,8 +1,8 @@
 {
  "clave": "tow-high-prairie-canine",
  "marca": "Taste of the Wild",
- "linea": "",
- "nombre": "Taste of the Wild High Prairie Canine",
+ "linea": "Grain Free",
+ "nombre": "High Prairie Canine Recipe with Roasted Bison & Roasted Venison",
  "especie": "perro",
  "tipo": "seco",
  "etapas": [
@@ -12,69 +12,178 @@
  "necesidades": [
   "libre_granos"
  ],
- "proteina_principal": "Bisonte asado",
+ "proteina_principal": "Búfalo de agua",
  "sabor": "Bisonte y venado asados",
- "descripcion_corta": "Receta sin granos con bisonte y venado para perros adultos.",
- "descripcion": "Bisonte y venado asados con 32 % de proteína para mantener la energía de un perro activo; vegetales, legumbres y frutas aportan antioxidantes.",
+ "descripcion_corta": "Receta sin granos con 32 % de proteína, con bisonte y venado asados, para perros adultos.",
+ "descripcion": "Búfalo de agua como primer ingrediente, con bisonte y venado asados. Es una receta de mantenimiento para perros adultos, con probióticos propios de la marca y vegetales, legumbres y frutas.",
  "beneficios": [
   {
    "clave": "alta_proteina",
    "texto": "32 % de proteína."
   },
   {
+   "clave": "prebioticos_probioticos",
+   "texto": "Probióticos K9 Strain (80 millones de cultivos vivos por libra) y raíz de achicoria como prebiótico."
+  },
+  {
+   "clave": "piel_pelaje",
+   "texto": "Mezcla de omega 6 y omega 3 para piel sana y pelaje brillante."
+  },
+  {
    "clave": "antioxidantes",
-   "texto": "Antioxidantes de vegetales, legumbres y frutas."
+   "texto": "Camote, arvejas, tomate, arándanos y frambuesas; zinc, selenio y vitamina E para el sistema inmunológico."
   }
  ],
- "ingredientes": "",
+ "ingredientes": "Búfalo de agua, harina de cordero, harina de pollo, camote, arvejas, harina de arveja, grasa de pollo (conservada con tocoferoles mixtos), huevo deshidratado, bisonte asado, venado asado, res, saborizante natural, pulpa de tomate deshidratada, harina de pescado, sal, cloruro de colina, taurina, raíz de achicoria deshidratada, tomates, arándanos, frambuesas, extracto de Yucca schidigera, producto de fermentación deshidratado de Lactobacillus plantarum, producto de fermentación deshidratado de Bacillus subtilis, producto de fermentación deshidratado de Lactobacillus acidophilus, producto de fermentación deshidratado de Enterococcus faecium, producto de fermentación deshidratado de Bifidobacterium animalis, suplemento de vitamina E, proteinato de hierro, proteinato de zinc, proteinato de cobre, sulfato ferroso, sulfato de zinc, sulfato de manganeso, sulfato de cobre, yoduro de potasio, mononitrato de tiamina, proteinato de manganeso, suplemento de vitamina A, biotina, niacina, pantotenato de calcio, selenito de sodio, clorhidrato de piridoxina, suplemento de vitamina B12, riboflavina, suplemento de vitamina D3, ácido fólico. Contiene microorganismos vivos (viables) de origen natural.",
  "aditivos": "",
  "analisis": [
   {
    "clave": "proteina",
    "etiqueta": "Proteína cruda",
    "calificador": "min",
-   "valor": "32",
+   "valor": "32.0",
    "unidad": "%"
   },
   {
    "clave": "grasa",
    "etiqueta": "Grasa cruda",
    "calificador": "min",
-   "valor": "18",
+   "valor": "18.0",
    "unidad": "%"
   },
   {
    "clave": "fibra",
    "etiqueta": "Fibra cruda",
    "calificador": "max",
-   "valor": "4",
+   "valor": "4.0",
    "unidad": "%"
   },
   {
    "clave": "humedad",
    "etiqueta": "Humedad",
    "calificador": "max",
-   "valor": "10",
+   "valor": "10.0",
    "unidad": "%"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "Zinc",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "selenio",
+   "etiqueta": "Selenio",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "vitamina_e",
+   "etiqueta": "Vitamina E",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina*",
+   "calificador": "min",
+   "valor": "0.12",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Ácidos grasos omega 6*",
+   "calificador": "min",
+   "valor": "2.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Ácidos grasos omega 3*",
+   "calificador": "min",
+   "valor": "0.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (L. plantarum, B. subtilis, L. acidophilus, E. faecium, B. animalis)*",
+   "calificador": "min",
+   "valor": "80000000",
+   "unidad": "UFC/lb"
   }
  ],
- "kcal_kg": null,
- "kcal_unidad": null,
- "unidad_kcal": "",
- "guia_alimentacion": {},
+ "kcal_kg": 3719,
+ "kcal_unidad": 422,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Tazas medidoras estándar por día (taza de 8 oz, unos 237 ml)",
+  "columnas": [
+   "Peso actual",
+   "Adulto"
+  ],
+  "filas": [
+   [
+    "3 lb (1,4 kg)",
+    "⅓"
+   ],
+   [
+    "5 lb (2,3 kg)",
+    "½"
+   ],
+   [
+    "10 lb (4,5 kg)",
+    "¾"
+   ],
+   [
+    "20 lb (9,1 kg)",
+    "1⅓"
+   ],
+   [
+    "30 lb (13,6 kg)",
+    "2"
+   ],
+   [
+    "40 lb (18,1 kg)",
+    "2⅓"
+   ],
+   [
+    "60 lb (27,2 kg)",
+    "3¼"
+   ],
+   [
+    "80 lb (36,3 kg)",
+    "4"
+   ],
+   [
+    "100 lb (45,4 kg)",
+    "4⅔"
+   ]
+  ],
+  "nota": "Perros adultos de más de 100 lb (45 kg): agregar aprox. ⅓ de taza por cada 10 lb (4,5 kg) adicionales. Es un punto de partida: ajuste la cantidad para mantener la condición corporal ideal y consulte a su veterinario. Mantenga siempre agua fresca disponible. *No reconocido como nutriente esencial en los perfiles AAFCO para perros."
+ },
  "fuentes": [
   {
-   "url": "https://www.tasteofthewildpetfood.com/dog/grain-free/high-prairie-with-roasted-bison-roasted-venison",
+   "url": "https://www.tasteofthewildpetfood.com/dog/grain-free/high-prairie-with-roasted-bison-roasted-venison/",
    "tipo": "fabricante",
    "entidad": "Taste of the Wild (Diamond Pet Foods)",
    "region": "Estados Unidos",
-   "verificado_en": "2026-10-12"
+   "verificado_en": "2026-10-22",
+   "declaracion_aafco": "Taste of the Wild High Prairie Canine Recipe is formulated to meet the nutritional levels established by the AAFCO Dog Food Nutrient Profiles for maintenance.",
+   "tamanos_sitio": [
+    "28 lb.",
+    "14 lb.",
+    "5 lb."
+   ]
   }
  ],
- "estado": "parcial",
- "verificado_en": "2026-10-12",
- "notas_internas": "Datos del sitio oficial de Estados Unidos (bolsa de 5 lb). La bolsa que vende Yanyunis en Costa Rica es de 2 kg; confirmar el análisis contra el empaque. Ingredientes completos pendientes (el sitio solo muestra los destacados).",
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial del sitio del fabricante en EE. UU., en el mismo orden. Pesos de la guía en kg calculados (1 lb = 0,4536 kg). La bolsa que vende Yanyunis puede tener otro tamaño que las del sitio; el fabricante advierte que el empaque manda si hay diferencias.",
  "skus": [
-  "TOW-2568"
+  "TOW-2568",
+  "TOW-9751"
  ]
 }

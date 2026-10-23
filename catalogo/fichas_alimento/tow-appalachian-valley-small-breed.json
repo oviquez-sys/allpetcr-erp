@@ -1,11 +1,13 @@
 {
  "clave": "tow-appalachian-valley-small-breed",
  "marca": "Taste of the Wild",
- "linea": "",
- "nombre": "Taste of the Wild Appalachian Valley Small Breed",
+ "linea": "Grain Free",
+ "nombre": "Appalachian Valley Small Breed Canine Recipe with Venison & Garbanzo Beans",
  "especie": "perro",
  "tipo": "seco",
- "etapas": [],
+ "etapas": [
+  "adulto"
+ ],
  "tamanos_raza": [
   "pequena"
  ],
@@ -14,66 +16,162 @@
  ],
  "proteina_principal": "Venado",
  "sabor": "Venado y garbanzos",
- "descripcion_corta": "Receta sin granos con venado y croqueta pequeña para perros de raza pequeña.",
- "descripcion": "Venado muy digerible y croqueta pequeña, suave con la pancita y los dientes; con cordero, huevo, pato y pescado.",
+ "descripcion_corta": "Receta sin granos para perros adultos de raza pequeña, con venado y croqueta pequeña.",
+ "descripcion": "Venado como primer ingrediente, con cordero, huevo, pato y pescado, en una croqueta pequeña pensada para razas pequeñas activas. Los garbanzos y la raíz de achicoria aportan fibra para la digestión.",
  "beneficios": [
   {
-   "clave": "prebioticos_probioticos",
-   "texto": "Probióticos y fibra prebiótica para la digestión."
+   "clave": "energia",
+   "texto": "Rica en proteína y grasa para perros pequeños activos."
   },
   {
-   "clave": "energia",
-   "texto": "Rico en proteína y grasa para perros pequeños activos."
+   "clave": "digestion",
+   "texto": "Fibra de garbanzos y raíz de achicoria como prebiótico."
+  },
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Probióticos K9 Strain (80 millones de cultivos vivos por libra)."
+  },
+  {
+   "clave": "antioxidantes",
+   "texto": "Arvejas, lentejas, tomate, arándanos y frambuesas; zinc, selenio y vitamina E para el sistema inmunológico."
   }
  ],
- "ingredientes": "",
+ "ingredientes": "Venado, harina de cordero, garbanzos, arvejas, lentejas, proteína de arveja, aceite de canola (conservado con tocoferoles mixtos), huevo deshidratado, harina de pato, harina de arveja, pulpa de tomate deshidratada, saborizante natural, harina de pescado, sal, cloruro de colina, taurina, raíz de achicoria deshidratada, tomates, arándanos, frambuesas, extracto de Yucca schidigera, producto de fermentación deshidratado de Lactobacillus plantarum, producto de fermentación deshidratado de Bacillus subtilis, producto de fermentación deshidratado de Lactobacillus acidophilus, producto de fermentación deshidratado de Enterococcus faecium, producto de fermentación deshidratado de Bifidobacterium animalis, suplemento de vitamina E, proteinato de hierro, proteinato de zinc, proteinato de cobre, sulfato ferroso, sulfato de zinc, sulfato de manganeso, sulfato de cobre, yoduro de potasio, mononitrato de tiamina, proteinato de manganeso, suplemento de vitamina A, biotina, niacina, pantotenato de calcio, selenito de sodio, clorhidrato de piridoxina, suplemento de vitamina B12, riboflavina, suplemento de vitamina D3, ácido fólico. Contiene microorganismos vivos (viables) de origen natural.",
  "aditivos": "",
  "analisis": [
   {
    "clave": "proteina",
    "etiqueta": "Proteína cruda",
    "calificador": "min",
-   "valor": "32",
+   "valor": "32.0",
    "unidad": "%"
   },
   {
    "clave": "grasa",
    "etiqueta": "Grasa cruda",
    "calificador": "min",
-   "valor": "18",
+   "valor": "18.0",
    "unidad": "%"
   },
   {
    "clave": "fibra",
    "etiqueta": "Fibra cruda",
    "calificador": "max",
-   "valor": "4",
+   "valor": "4.0",
    "unidad": "%"
   },
   {
    "clave": "humedad",
    "etiqueta": "Humedad",
    "calificador": "max",
-   "valor": "10",
+   "valor": "10.0",
    "unidad": "%"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "Zinc",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "selenio",
+   "etiqueta": "Selenio",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "vitamina_e",
+   "etiqueta": "Vitamina E",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina*",
+   "calificador": "min",
+   "valor": "0.12",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Ácidos grasos omega 6*",
+   "calificador": "min",
+   "valor": "2.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Ácidos grasos omega 3*",
+   "calificador": "min",
+   "valor": "0.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (L. plantarum, B. subtilis, L. acidophilus, E. faecium, B. animalis)*",
+   "calificador": "min",
+   "valor": "80000000",
+   "unidad": "UFC/lb"
   }
  ],
- "kcal_kg": null,
- "kcal_unidad": null,
- "unidad_kcal": "",
- "guia_alimentacion": {},
+ "kcal_kg": 3719,
+ "kcal_unidad": 422,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Tazas medidoras estándar por día (taza de 8 oz, unos 237 ml)",
+  "columnas": [
+   "Peso actual",
+   "Adulto"
+  ],
+  "filas": [
+   [
+    "3 lb (1,4 kg)",
+    "⅓"
+   ],
+   [
+    "5 lb (2,3 kg)",
+    "½"
+   ],
+   [
+    "10 lb (4,5 kg)",
+    "¾"
+   ],
+   [
+    "20 lb (9,1 kg)",
+    "1⅓"
+   ],
+   [
+    "30 lb (13,6 kg)",
+    "2"
+   ],
+   [
+    "40 lb (18,1 kg)",
+    "2⅓"
+   ]
+  ],
+  "nota": "Es un punto de partida: ajuste la cantidad para mantener la condición corporal ideal y consulte a su veterinario. Mantenga siempre agua fresca disponible. *No reconocido como nutriente esencial en los perfiles AAFCO para perros."
+ },
  "fuentes": [
   {
-   "url": "https://www.tasteofthewildpetfood.com/dog/grain-free/appalachian-valley-small-breed-with-venison-garbanzo-beans",
+   "url": "https://www.tasteofthewildpetfood.com/dog/grain-free/appalachian-valley-small-breed-with-venison-garbanzo-beans/",
    "tipo": "fabricante",
    "entidad": "Taste of the Wild (Diamond Pet Foods)",
    "region": "Estados Unidos",
-   "verificado_en": "2026-10-12"
+   "verificado_en": "2026-10-22",
+   "declaracion_aafco": "Taste of the Wild Appalachian Valley Small Breed Canine Recipe is formulated to meet the nutritional levels established by the AAFCO Dog Food Nutrient Profiles for maintenance.",
+   "tamanos_sitio": [
+    "28 lb.",
+    "14 lb.",
+    "5 lb."
+   ]
   }
  ],
- "estado": "parcial",
- "verificado_en": "2026-10-12",
- "notas_internas": "Datos del sitio oficial de Estados Unidos (bolsa de 5 lb). La bolsa que vende Yanyunis en Costa Rica es de 2 kg; confirmar el análisis contra el empaque. Ingredientes completos pendientes (el sitio solo muestra los destacados).",
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial del sitio del fabricante en EE. UU., en el mismo orden. Pesos de la guía en kg calculados (1 lb = 0,4536 kg). La bolsa que vende Yanyunis puede tener otro tamaño que las del sitio; el fabricante advierte que el empaque manda si hay diferencias.",
  "skus": [
   "TOW-9054"
  ]

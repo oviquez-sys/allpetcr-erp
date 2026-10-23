@@ -1,0 +1,137 @@
+{
+ "clave": "tiki-cat-silver-mousse-shreds-chicken-duck",
+ "marca": "Tiki Cat",
+ "linea": "Silver",
+ "nombre": "Silver Mousse & Shreds with Chicken, Duck & Duck Liver Recipe",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [
+  "senior"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo, pato e hígado de pato",
+ "descripcion_corta": "Mousse y trocitos de pollo y pato para gatos mayores. Bajo en fósforo.",
+ "descripcion": "Capas suaves de mousse y trocitos de ave, fáciles de comer para dientes y encías delicados. Alta en proteína para mantener el peso y la masa muscular, baja en fósforo, con omegas, aceite de coco y aceite de atún.",
+ "beneficios": [
+  {
+   "clave": "masa_muscular",
+   "texto": "Alta proteína para mantener peso y masa muscular."
+  },
+  {
+   "clave": "articulaciones",
+   "texto": "Omegas, coco y aceite de atún para las articulaciones."
+  },
+  {
+   "clave": "inmunidad",
+   "texto": "Omegas y vitaminas para el sistema inmunológico."
+  }
+ ],
+ "ingredientes": "Pollo, caldo de pollo, pato, hígado de pato, ayote, huevo deshidratado, aceite de coco, fosfato tricálcico, cloruro de potasio, goma xantana, taurina, cloruro de colina, sal, sulfato de magnesio, cúrcuma, aceite de atún, extracto de té verde, mononitrato de tiamina (vitamina B1), suplemento de vitamina E, sulfato ferroso, niacina (vitamina B3), óxido de zinc, suplemento de vitamina A, biotina, suplemento de vitamina B12, óxido manganoso, pantotenato de calcio, suplemento de riboflavina (vitamina B2), quelato de cobre y aminoácidos, selenito de sodio, clorhidrato de piridoxina (vitamina B6), ácido fólico, yoduro de potasio, suplemento de vitamina D3.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "12",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "5",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "80",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "min",
+   "valor": "0.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "min",
+   "valor": "0.26",
+   "unidad": "%"
+  },
+  {
+   "clave": "vitamina_a",
+   "etiqueta": "Vitamina A",
+   "calificador": "min",
+   "valor": "4700",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "vitamina_e",
+   "etiqueta": "Vitamina E",
+   "calificador": "min",
+   "valor": "85",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "min",
+   "valor": "0.2",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Ácidos grasos omega 3*",
+   "calificador": "min",
+   "valor": "0.06",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Ácidos grasos omega 6*",
+   "calificador": "min",
+   "valor": "1.0",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 1081,
+ "kcal_unidad": 73,
+ "unidad_kcal": "lata 2.4 oz (68 g)",
+ "guia_alimentacion": {
+  "titulo": "Guía de alimentación",
+  "columnas": [],
+  "filas": [],
+  "nota": "Gatos adultos: aproximadamente 2¼ latas por día por cada 7 lb (3,2 kg) de peso. *No reconocido como nutriente esencial en los perfiles AAFCO para gatos."
+ },
+ "fuentes": [
+  {
+   "url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/senior-cat/chicken-duck-duck-liver/",
+   "tipo": "fabricante",
+   "entidad": "Tiki Pets",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-22",
+   "presentaciones_sitio": "Available in: 2.4 oz. can"
+  }
+ ],
+ "estado": "revisar",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial de tikipets.com, en el mismo orden. REVISAR: el código 48110 de la factura no aparece en tikipets.com. Esta ficha es de la lata Silver Chicken, Duck & Duck Liver (código oficial 48080), la más parecida. Confirmar con la lata física antes de dar la ficha por buena.",
+ "skus": [
+  "TIKI-48110"
+ ]
+}

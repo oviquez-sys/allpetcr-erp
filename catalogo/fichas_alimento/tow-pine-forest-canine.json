@@ -1,0 +1,225 @@
+{
+ "clave": "tow-pine-forest-canine",
+ "marca": "Taste of the Wild",
+ "linea": "Grain Free",
+ "nombre": "Pine Forest Canine Recipe with Venison & Legumes",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "todas"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Venado",
+ "sabor": "Venado y legumbres",
+ "descripcion_corta": "Receta sin granos con venado como primer ingrediente y legumbres, para perros de todas las etapas de vida.",
+ "descripcion": "Venado como primer ingrediente, con garbanzos, arvejas y lentejas como fuente de proteína, fibra y carbohidratos. Lleva probióticos propios de la marca, raíz de achicoria y DHA de aceite de salmón.",
+ "beneficios": [
+  {
+   "clave": "prebioticos_probioticos",
+   "texto": "Probióticos K9 Strain (80 millones de cultivos vivos por libra) y raíz de achicoria como prebiótico."
+  },
+  {
+   "clave": "dha",
+   "texto": "DHA de aceite de salmón para el desarrollo del cerebro y la visión en cachorros."
+  },
+  {
+   "clave": "digestion",
+   "texto": "Legumbres que aportan fibra y proteína."
+  },
+  {
+   "clave": "antioxidantes",
+   "texto": "Arvejas, lentejas, tomate, arándanos y frambuesas; zinc, selenio y vitamina E para el sistema inmunológico."
+  }
+ ],
+ "ingredientes": "Venado, harina de cordero, garbanzos, arvejas, lentejas, harina de arveja, levadura seca, huevo deshidratado, aceite de canola (conservado con tocoferoles mixtos), pulpa de tomate deshidratada, saborizante natural, harina de pescado, aceite de salmón (fuente de DHA), sal, DL-metionina, cloruro de colina, taurina, raíz de achicoria deshidratada, tomates, arándanos, frambuesas, extracto de Yucca schidigera, producto de fermentación deshidratado de Lactobacillus plantarum, producto de fermentación deshidratado de Bacillus subtilis, producto de fermentación deshidratado de Lactobacillus acidophilus, producto de fermentación deshidratado de Enterococcus faecium, producto de fermentación deshidratado de Bifidobacterium animalis, suplemento de vitamina E, proteinato de hierro, proteinato de zinc, proteinato de cobre, sulfato ferroso, sulfato de zinc, sulfato de manganeso, sulfato de cobre, yoduro de potasio, mononitrato de tiamina, proteinato de manganeso, suplemento de vitamina A, biotina, niacina, pantotenato de calcio, selenito de sodio, clorhidrato de piridoxina, suplemento de vitamina B12, riboflavina, suplemento de vitamina D3, ácido fólico. Contiene microorganismos vivos (viables) de origen natural.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "28.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "15.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "4.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "10.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "min",
+   "valor": "0.05",
+   "unidad": "%"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "Zinc",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "selenio",
+   "etiqueta": "Selenio",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "vitamina_e",
+   "etiqueta": "Vitamina E",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina*",
+   "calificador": "min",
+   "valor": "0.12",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Ácidos grasos omega 6*",
+   "calificador": "min",
+   "valor": "2.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Ácidos grasos omega 3*",
+   "calificador": "min",
+   "valor": "0.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (L. plantarum, B. subtilis, L. acidophilus, E. faecium, B. animalis)*",
+   "calificador": "min",
+   "valor": "80000000",
+   "unidad": "UFC/lb"
+  }
+ ],
+ "kcal_kg": 3600,
+ "kcal_unidad": 408,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Tazas medidoras estándar por día (taza de 8 oz, unos 237 ml)",
+  "columnas": [
+   "Peso actual",
+   "2–4 meses",
+   "4–8 meses",
+   "8–12 meses",
+   "Adulto"
+  ],
+  "filas": [
+   [
+    "3 lb (1,4 kg)",
+    "⅔",
+    "½",
+    "½",
+    "⅓"
+   ],
+   [
+    "5 lb (2,3 kg)",
+    "1",
+    "¾",
+    "⅔",
+    "½"
+   ],
+   [
+    "10 lb (4,5 kg)",
+    "1⅔",
+    "1⅓",
+    "1¼",
+    "¾"
+   ],
+   [
+    "20 lb (9,1 kg)",
+    "2⅔",
+    "2¼",
+    "1¾",
+    "1½"
+   ],
+   [
+    "30 lb (13,6 kg)",
+    "3⅔",
+    "3¼",
+    "2½",
+    "2"
+   ],
+   [
+    "40 lb (18,1 kg)",
+    "4½",
+    "3¾",
+    "3¼",
+    "2⅓"
+   ],
+   [
+    "60 lb (27,2 kg)",
+    "–",
+    "5¼",
+    "4¼",
+    "3¼"
+   ],
+   [
+    "80 lb (36,3 kg)",
+    "–",
+    "6⅓",
+    "5¼",
+    "4¼"
+   ],
+   [
+    "100 lb (45,4 kg)",
+    "–",
+    "–",
+    "6",
+    "4¾"
+   ]
+  ],
+  "nota": "Perros adultos de más de 100 lb (45 kg): agregar aprox. ⅓ de taza por cada 10 lb (4,5 kg) adicionales. Perras gestantes o lactantes: alimentación a libre demanda. Es un punto de partida: ajuste la cantidad para mantener la condición corporal ideal y consulte a su veterinario. Mantenga siempre agua fresca disponible. *No reconocido como nutriente esencial en los perfiles AAFCO para perros."
+ },
+ "fuentes": [
+  {
+   "url": "https://www.tasteofthewildpetfood.com/dog/grain-free/pine-forest-with-venison-legumes/",
+   "tipo": "fabricante",
+   "entidad": "Taste of the Wild (Diamond Pet Foods)",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-22",
+   "declaracion_aafco": "Taste of the Wild Pine Forest Canine Recipe is formulated to meet the nutritional levels established by the AAFCO Dog Food Nutrient Profiles for All Life Stages including growth of large size dogs (70 lb. or more as an adult).",
+   "tamanos_sitio": [
+    "28 lb.",
+    "14 lb.",
+    "5 lb."
+   ]
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial del sitio del fabricante en EE. UU., en el mismo orden. Pesos de la guía en kg calculados (1 lb = 0,4536 kg). La bolsa que vende Yanyunis puede tener otro tamaño que las del sitio; el fabricante advierte que el empaque manda si hay diferencias.",
+ "skus": [
+  "TOW-9058"
+ ]
+}

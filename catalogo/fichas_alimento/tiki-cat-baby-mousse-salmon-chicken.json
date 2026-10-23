@@ -1,0 +1,97 @@
+{
+ "clave": "tiki-cat-baby-mousse-salmon-chicken",
+ "marca": "Tiki Cat",
+ "linea": "Baby",
+ "nombre": "Baby Mousse Salmon & Chicken",
+ "especie": "gato",
+ "tipo": "humedo",
+ "etapas": [
+  "gatito"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Salmón",
+ "sabor": "Salmón y pollo",
+ "descripcion_corta": "Mousse suave de salmón y pollo para gatitos, con DHA. Sin granos.",
+ "descripcion": "Mousse de textura muy suave con salmón, pollo e hígado, pensada para gatitos. El DHA apoya el desarrollo de los ojos y el cerebro, y una mezcla de fibras suaves ayuda en la transición al alimento sólido.",
+ "beneficios": [
+  {
+   "clave": "desarrollo",
+   "texto": "Proteína de calidad para el crecimiento muscular."
+  },
+  {
+   "clave": "dha",
+   "texto": "DHA para el desarrollo de ojos y cerebro."
+  },
+  {
+   "clave": "digestion",
+   "texto": "Fibras suaves para la transición al alimento sólido."
+  }
+ ],
+ "ingredientes": "Caldo de salmón, salmón, pollo, hígado de pollo, huevo deshidratado, aceite de semilla de girasol, fosfato tricálcico, aceite de atún, goma xantana, inulina, cloruro de potasio, sal, cloruro de colina, sulfato de magnesio, taurina, mononitrato de tiamina (vitamina B1), sulfato ferroso, suplemento de vitamina E, niacina (vitamina B3), óxido de zinc, suplemento de vitamina A, biotina, suplemento de vitamina B12, quelato de cobre y aminoácidos, óxido manganoso, pantotenato de calcio, suplemento de riboflavina (vitamina B2), selenito de sodio, clorhidrato de piridoxina (vitamina B6), complejo de bisulfito sódico de menadiona (fuente de vitamina K), ácido fólico, yoduro de potasio, suplemento de vitamina D3.",
+ "aditivos": "",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína cruda",
+   "calificador": "min",
+   "valor": "11",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa cruda",
+   "calificador": "min",
+   "valor": "5",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Fibra cruda",
+   "calificador": "max",
+   "valor": "2",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "80",
+   "unidad": "%"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "min",
+   "valor": "0.1",
+   "unidad": "%"
+  }
+ ],
+ "kcal_kg": 999,
+ "kcal_unidad": 68,
+ "unidad_kcal": "pouch 2.4 oz (68 g)",
+ "guia_alimentacion": {
+  "titulo": "Guía de alimentación",
+  "columnas": [],
+  "filas": [],
+  "nota": "Gatitos: aproximadamente ½ pouch por día por cada libra (0,45 kg) de peso. Gatos adultos: unos 2 pouches por día por cada 7 lb (3,2 kg). Gatas gestantes o lactantes pueden necesitar de dos a cuatro veces lo normal."
+ },
+ "fuentes": [
+  {
+   "url": "https://tikipets.com/product/tiki-cat/tiki-cat-wet-food/mousse-shreds/kitten/kitten-with-salmon-chicken-inbroth/",
+   "tipo": "fabricante",
+   "entidad": "Tiki Pets",
+   "region": "Estados Unidos",
+   "verificado_en": "2026-10-22",
+   "presentaciones_sitio": "Available in: 2.4 oz"
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial de tikipets.com, en el mismo orden. Presentación pouch (bolsa), no lata.",
+ "skus": [
+  "TIKI-48019"
+ ]
+}

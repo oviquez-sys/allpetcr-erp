@@ -1,8 +1,8 @@
 {
  "clave": "tow-lowland-creek-feline",
  "marca": "Taste of the Wild",
- "linea": "",
- "nombre": "Taste of the Wild Lowland Creek Feline",
+ "linea": "Grain Free",
+ "nombre": "Lowland Creek Feline Recipe with Roasted Quail & Roasted Duck",
  "especie": "gato",
  "tipo": "seco",
  "etapas": [
@@ -14,70 +14,217 @@
  ],
  "proteina_principal": "Pato",
  "sabor": "Codorniz y pato asados",
- "descripcion_corta": "Receta sin granos con codorniz y pato para gatos de todas las edades.",
- "descripcion": "Codorniz y pato de libre pastoreo, proteínas muy digeribles, para el gato que prefiere el ave.",
+ "descripcion_corta": "Receta sin granos con pato, codorniz y pato asados, para gatos de todas las edades.",
+ "descripcion": "Pato como primer ingrediente, con codorniz y pato asados de aves libres de jaula. Lleva probióticos propios de la marca para gatos, taurina y antioxidantes de vegetales, legumbres y frutas.",
  "beneficios": [
   {
+   "clave": "alta_proteina",
+   "texto": "Proteína de aves de alta digestibilidad."
+  },
+  {
    "clave": "prebioticos_probioticos",
-   "texto": "Probióticos específicos para la digestión y las defensas."
+   "texto": "Probióticos Viables para gatos (80 millones de cultivos vivos por libra)."
   },
   {
    "clave": "corazon",
-   "texto": "Taurina para el corazón y la vista."
+   "texto": "Taurina para un corazón y una visión sanos."
   },
   {
-   "clave": "antioxidantes",
-   "texto": "Antioxidantes de vegetales, legumbres y frutas."
+   "clave": "piel_pelaje",
+   "texto": "Mezcla de omega 6 y omega 3 para piel sana y pelaje brillante."
   }
  ],
- "ingredientes": "",
+ "ingredientes": "Pato, harina de pato, harina de pavo, harina de pollo, camote, lentejas, arvejas, grasa de pollo (conservada con tocoferoles mixtos), codorniz asada, pato asado, saborizante natural, aceite de salmón (fuente de DHA), DL-metionina, sal, cloruro de potasio, cloruro de colina, taurina, arándanos, frambuesas, tomates, raíz de achicoria deshidratada, producto de fermentación deshidratado de Lactobacillus plantarum, producto de fermentación deshidratado de Bacillus subtilis, producto de fermentación deshidratado de Lactobacillus acidophilus, producto de fermentación deshidratado de Enterococcus faecium, producto de fermentación deshidratado de Bifidobacterium animalis, proteinato de zinc, suplemento de vitamina E, niacina, proteinato de manganeso, proteinato de cobre, sulfato de zinc, sulfato de manganeso, sulfato de cobre, mononitrato de tiamina, suplemento de vitamina A, biotina, yoduro de potasio, pantotenato de calcio, riboflavina, clorhidrato de piridoxina, suplemento de vitamina B12, selenito de sodio, suplemento de vitamina D3, ácido fólico. Contiene microorganismos vivos (viables) de origen natural.",
  "aditivos": "",
  "analisis": [
   {
    "clave": "proteina",
    "etiqueta": "Proteína cruda",
    "calificador": "min",
-   "valor": "36",
+   "valor": "36.0",
    "unidad": "%"
   },
   {
    "clave": "grasa",
    "etiqueta": "Grasa cruda",
    "calificador": "min",
-   "valor": "16",
+   "valor": "16.0",
    "unidad": "%"
   },
   {
    "clave": "fibra",
    "etiqueta": "Fibra cruda",
    "calificador": "max",
-   "valor": "3",
+   "valor": "3.0",
    "unidad": "%"
   },
   {
    "clave": "humedad",
    "etiqueta": "Humedad",
    "calificador": "max",
-   "valor": "10",
+   "valor": "10.0",
    "unidad": "%"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "min",
+   "valor": "0.05",
+   "unidad": "%"
+  },
+  {
+   "clave": "zinc",
+   "etiqueta": "Zinc",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "selenio",
+   "etiqueta": "Selenio",
+   "calificador": "min",
+   "valor": "0.35",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "vitamina_e",
+   "etiqueta": "Vitamina E",
+   "calificador": "min",
+   "valor": "150",
+   "unidad": "UI/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "min",
+   "valor": "0.15",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Ácidos grasos omega 6*",
+   "calificador": "min",
+   "valor": "3.0",
+   "unidad": "%"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Ácidos grasos omega 3*",
+   "calificador": "min",
+   "valor": "0.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "microorganismos",
+   "etiqueta": "Microorganismos totales (L. plantarum, B. subtilis, L. acidophilus, E. faecium, B. animalis)*",
+   "calificador": "min",
+   "valor": "80000000",
+   "unidad": "UFC/lb"
   }
  ],
- "kcal_kg": null,
- "kcal_unidad": null,
- "unidad_kcal": "",
- "guia_alimentacion": {},
+ "kcal_kg": 3558,
+ "kcal_unidad": 403,
+ "unidad_kcal": "taza",
+ "guia_alimentacion": {
+  "titulo": "Tazas medidoras estándar por día (taza de 8 oz, unos 237 ml)",
+  "columnas": [
+   "Peso actual",
+   "Gatito hasta 4 meses",
+   "Gatito 4–8 meses",
+   "Gatito 8–12 meses",
+   "Gato adulto"
+  ],
+  "filas": [
+   [
+    "1 lb (0,5 kg)",
+    "¼",
+    "¼",
+    "¼",
+    "–"
+   ],
+   [
+    "3 lb (1,4 kg)",
+    "–",
+    "–",
+    "–",
+    "¼"
+   ],
+   [
+    "4 lb (1,8 kg)",
+    "⅔",
+    "½",
+    "½",
+    "–"
+   ],
+   [
+    "5 lb (2,3 kg)",
+    "–",
+    "–",
+    "–",
+    "⅓"
+   ],
+   [
+    "6 lb (2,7 kg)",
+    "1",
+    "¾",
+    "⅔",
+    "–"
+   ],
+   [
+    "9 lb (4,1 kg)",
+    "1¼",
+    "1",
+    "¾",
+    "–"
+   ],
+   [
+    "10 lb (4,5 kg)",
+    "–",
+    "–",
+    "–",
+    "⅔"
+   ],
+   [
+    "12 lb (5,4 kg)",
+    "1½",
+    "1¼",
+    "1",
+    "–"
+   ],
+   [
+    "15 lb (6,8 kg)",
+    "–",
+    "–",
+    "–",
+    "¾"
+   ],
+   [
+    "20 lb (9,1 kg)",
+    "–",
+    "–",
+    "–",
+    "1"
+   ]
+  ],
+  "nota": "Gatas gestantes o lactantes: alimentación a libre demanda. Es un punto de partida: ajuste la cantidad para mantener la condición corporal ideal del gato y consulte a su veterinario. Mantenga siempre agua fresca disponible. *No reconocido como nutriente esencial en los perfiles AAFCO para gatos."
+ },
  "fuentes": [
   {
-   "url": "https://www.tasteofthewildpetfood.com/cat/grain-free/lowland-creek-with-roasted-quail-roasted-duck",
+   "url": "https://www.tasteofthewildpetfood.com/cat/grain-free/lowland-creek-with-roasted-quail-roasted-duck/",
    "tipo": "fabricante",
    "entidad": "Taste of the Wild (Diamond Pet Foods)",
    "region": "Estados Unidos",
-   "verificado_en": "2026-10-12"
+   "verificado_en": "2026-10-22",
+   "declaracion_aafco": "Taste of the Wild Lowland Creek Feline Recipe is formulated to meet the nutritional levels established by the AAFCO Cat Food Nutrient Profiles for All Life Stages.",
+   "tamanos_sitio": [
+    "14 lb.",
+    "5 lb."
+   ]
   }
  ],
- "estado": "parcial",
- "verificado_en": "2026-10-12",
- "notas_internas": "Datos del sitio oficial de Estados Unidos (bolsa de 5 lb). La bolsa que vende Yanyunis en Costa Rica es de 2 kg; confirmar el análisis contra el empaque. Ingredientes completos pendientes (el sitio solo muestra los destacados).",
+ "estado": "verificado",
+ "verificado_en": "2026-10-22",
+ "notas_internas": "Traducción al español de la lista oficial del sitio del fabricante en EE. UU., en el mismo orden. Pesos de la guía en kg calculados (1 lb = 0,4536 kg). La bolsa que vende Yanyunis puede tener otro tamaño que las del sitio; el fabricante advierte que el empaque manda si hay diferencias.",
  "skus": [
   "TOW-9767"
  ]
