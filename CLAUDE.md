@@ -535,6 +535,22 @@ número seguido se puede adivinar (el riesgo es un 10 % de un solo uso por
 código). Si aparece abuso, la opción preparada era mostrar en la caja los
 últimos 4 dígitos del WhatsApp del dueño para confirmarlo.
 
+## Fechas de vencimiento (24/10/2026)
+
+Pedido de Oscar: escanear un alimento y anotar su fecha de vencimiento.
+- Modelo `inventario.LoteVencimiento` (producto, fecha, cantidad, quién),
+  migración 0008. La misma fecha para el mismo producto suma, no duplica.
+- Pantalla `inventario:vencimientos` (cajero y gerente; tarjetas en
+  Administración → Herramientas y en Reportes): escáner + Enter (código de
+  barras/SKU exacto, o búsqueda inteligente), fecha "15/08/2027" o "08/2027"
+  (= último día del mes; `interpretar_fecha`), unidades (por defecto las que
+  faltan anotar). Tras guardar, el foco vuelve al escáner (`ok=1`).
+- Las ventas NO tocan los lotes: `vencimientos.repartir` reparte la
+  existencia actual desde la fecha más lejana hacia atrás (se supone que se
+  vende primero lo que vence primero); lo que sobra queda "sin fecha".
+- Pestañas: vencidos + 30 días, 60, 90, todos, y "Sin fecha" (Alimento y
+  Snacks con existencia sin anotar). Pruebas: `inventario/test_vencimientos.py`.
+
 ## Recibir mercadería más clara (12/10/2026)
 
 Oscar creó un producto nuevo desde "Recibir mercadería" y no encontró dónde

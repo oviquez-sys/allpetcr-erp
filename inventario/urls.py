@@ -15,5 +15,6 @@ urlpatterns = [
     path("agotados/excel/", views.agotados_excel, name="agotados_excel"),
     path("vendido/", views.vendido, name="vendido"),
     path("vendido/excel/", views.vendido_excel, name="vendido_excel"),
+    path("vencimientos/", views.vencimientos, name="vencimientos"),
     path("codigos/", views.codigos_barras, name="codigos"),
 ]

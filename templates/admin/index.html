@@ -256,6 +256,10 @@ body.dashboard #content-main{display:block}
       <div class="ti i-aju"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M9 12h6M12 9v6"/></svg></div>
       <div><div class="th">Ajustes de inventario</div><div class="td">Corregir cuántas hay de un producto, cambiar sus datos, su precio o su foto.</div></div>
     </a>
+    <a class="ax-tool" href="{% url 'inventario:vencimientos' %}">
+      <div class="ti i-aju"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2.5"/><path d="M16 2v4M8 2v4M3 10h18M12 14v3l2 1"/></svg></div>
+      <div><div class="th">Fechas de vencimiento</div><div class="td">Escanear un alimento y anotar cuándo vence; ver lo vencido y lo que vence pronto.</div></div>
+    </a>
     <a class="ax-tool" href="/inventario/etiquetas/">
       <div class="ti i-cod"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></div>
       <div><div class="th">Códigos de barras</div><div class="td">Generar e imprimir etiquetas de producto para el escáner del mostrador.</div></div>

@@ -159,3 +159,35 @@ class Agotamiento(models.Model):
 
     def __str__(self):
         return f"{self.producto.sku} agotado el {self.fecha:%d/%m/%Y}"
+
+
+class LoteVencimiento(models.Model):
+    """Fecha de vencimiento de unidades de un producto (pedido de Oscar,
+    24/10/2026: escanear el alimento y anotar cuándo vence).
+
+    Un mismo código de barras trae bolsas de distintos lotes, cada uno con su
+    fecha; por eso se anota fecha + cuántas unidades la tienen, no una fecha
+    por producto.
+
+    Las ventas NO tocan esta tabla. Lo que queda de cada lote se calcula al
+    vuelo con la existencia actual (inventario/vencimientos.py), suponiendo
+    que se vende primero lo que vence primero: así no hay que cambiar el POS
+    ni las compras, y la lista nunca dice que hay más de lo que hay.
+    """
+
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name="lotes_vencimiento")
+    fecha_vencimiento = models.DateField()
+    cantidad = models.DecimalField(max_digits=12, decimal_places=2)
+    nota = models.CharField(max_length=120, blank=True)
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                   related_name="+")
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "fecha de vencimiento"
+        verbose_name_plural = "fechas de vencimiento"
+        ordering = ["fecha_vencimiento", "id"]
+        indexes = [models.Index(fields=["producto", "fecha_vencimiento"], name="lote_prod_fecha_idx")]
+
+    def __str__(self):
+        return f"{self.producto.sku} · {self.cantidad:g} vence {self.fecha_vencimiento:%d/%m/%Y}"

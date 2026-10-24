@@ -314,6 +314,13 @@ sus datos (nombre, código de barras, marca, categoría, descripción, precio, \
 activo) y cambiar su foto.
 - Etiquetas/códigos de barra (/inventario/etiquetas/) — generar e imprimir \
 etiquetas para los productos.
+- Fechas de vencimiento (/inventario/vencimientos/, en Administración → \
+Herramientas y en Reportes; cajeros y gerentes) — escanear el producto, \
+escribir la fecha del empaque (15/08/2027, o 08/2027 si solo trae mes y año) \
+y cuántas unidades la tienen. Pestañas: vencidos y próximos 30, 60, 90 días, \
+todos, y "Sin fecha" (alimentos con existencia a los que les falta anotarla). \
+Lo que queda de cada fecha se calcula suponiendo que se vende primero lo que \
+vence primero.
 
 Compras — "Recibir mercadería" (/compras/, solo gerentes):
 - Registrar una compra nueva (mercadería que entra) — esto sube el stock y \

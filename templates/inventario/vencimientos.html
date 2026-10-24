@@ -1,0 +1,161 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Fechas de vencimiento{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+/* Fechas de vencimiento (24/10/2026). Ver inventario/vencimientos.py. */
+body{background-color:#f5f5f7 !important}
+.vc-wrap{max-width:1000px;margin:0 auto;padding-bottom:60px}
+.vc-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.vc-sub{font-size:14px;color:#6e6e73;margin-bottom:16px;line-height:1.5;max-width:760px}
+.vc-card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:16px}
+#codigo{width:100%;box-sizing:border-box;padding:15px 18px;font-size:17px;border-radius:14px;border:1.5px solid #0B3161;background:#fbfbfd}
+.aviso{padding:12px 16px;border-radius:12px;margin-bottom:14px;font-size:14.5px}
+.aviso.mal{background:#fff0ee;color:#8a1f16}.aviso.bien{background:#eefaf1;color:#1c6b30}
+.prod{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+.prod .nm b{display:block;font-size:18px;letter-spacing:-.01em}
+.prod .nm small{color:#6e6e73;font-size:13px}
+.hay{margin-left:auto;text-align:right;font-size:13px;color:#6e6e73;white-space:nowrap}
+.hay b{display:block;font-size:24px;color:#1d1d1f;font-variant-numeric:tabular-nums}
+.form{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;padding:14px;background:#f5f8fb;border-radius:14px;margin:6px 0 14px}
+.form label{display:block;font-size:12px;color:#6e6e73;margin-bottom:4px}
+.form input{padding:11px 12px;font-size:16px;border:1px solid #d9d9de;border-radius:10px;background:#fff;box-sizing:border-box}
+#fecha{width:190px}#cantidad{width:110px}
+.prev{font-size:13px;color:#0B3161;margin-top:4px;min-height:17px}
+.btn{padding:12px 18px;border:none;border-radius:12px;background:#0B3161;color:#fff !important;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.sec{background:#fff;color:#0B3161 !important;border:1px solid #0B3161}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.tab{padding:8px 14px;border-radius:980px;border:1px solid #d9d9de;background:#fff;color:#0B3161 !important;font-size:14px;text-decoration:none}
+.tab.on{background:#0B3161;color:#fff !important;border-color:#0B3161}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;color:#6e6e73;padding:8px 10px;border-bottom:1px solid #eee;white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid #f4f4f6;vertical-align:middle}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td small{color:#6e6e73}
+.tag{display:inline-block;padding:3px 10px;border-radius:980px;font-size:12px;font-weight:600;white-space:nowrap}
+.tag.vencido{background:#fff0ee;color:#b5231a}.tag.pronto{background:#fff6e5;color:#a35c00}
+.tag.atento{background:#eef4fb;color:#0B3161}.tag.ok{background:#eefaf1;color:#1c6b30}
+.vendido{color:#aeaeb2}
+.borrar{background:none;border:none;color:#b5231a;cursor:pointer;font-size:13px}
+.opcion{display:flex;gap:10px;align-items:center;padding:9px 6px;border-bottom:1px solid #f0f0f3;color:#1d1d1f !important;text-decoration:none}
+.opcion:hover{background:#f5f8fb}
+.vacio{padding:24px;text-align:center;color:#6e6e73}
+@media(max-width:640px){.hay b{font-size:20px}#fecha,#cantidad{width:100%}.form>div{flex:1 1 140px}.tabla-scroll{overflow-x:auto}}
+</style>{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="vc-wrap">
+  <div class="vc-title">Fechas de vencimiento</div>
+  <div class="vc-sub">Escaneá el producto, escribí la fecha que trae el empaque y cuántas unidades la tienen.
+    Si la bolsa solo dice mes y año, escribí por ejemplo <b>08/2027</b>.</div>
+
+  <div class="vc-card">
+    <form method="get">
+      <input type="hidden" name="ver" value="{{ vista }}">
+      <input id="codigo" name="codigo" value="" placeholder="🔎 Escaneá el código de barras (o escribí el nombre) y Enter"
+             autocomplete="off" {% if not producto or recien_guardado %}autofocus{% endif %}>
+    </form>
+
+    {% if opciones %}
+      <div style="margin-top:10px;font-size:13px;color:#6e6e73">¿Cuál de estos?</div>
+      {% for p in opciones %}
+        <a class="opcion" href="?ver={{ vista }}&p={{ p.pk }}">{% foto_producto p 36 %}<span>{{ p.nombre }}<br><small>{{ p.presentacion }} · hay {{ p.stock_actual|floatformat:"-2" }}</small></span></a>
+      {% endfor %}
+    {% endif %}
+
+    {% if producto %}
+      <div style="margin-top:16px"></div>
+      <div class="prod">
+        {% foto_producto producto 56 %}
+        <div class="nm"><b>{{ producto.nombre }}</b>
+          <small>{% if producto.codigo_barras %}Barras {{ producto.codigo_barras }} · {% endif %}{{ producto.categoria.nombre|default:"" }}</small></div>
+        <div class="hay">hay<b>{{ producto.stock_actual|floatformat:"-2" }}</b></div>
+      </div>
+
+      <form method="post" class="form" id="form-fecha">
+        {% csrf_token %}
+        <input type="hidden" name="producto" value="{{ producto.pk }}">
+        <div><label for="fecha">Vence el</label>
+          <input id="fecha" name="fecha" value="{{ fecha_previa }}" placeholder="15/08/2027 o 08/2027" autocomplete="off" required {% if not recien_guardado %}autofocus{% endif %} inputmode="numeric">
+          <div class="prev" id="prev"></div></div>
+        <div><label for="cantidad">Unidades</label>
+          <input id="cantidad" name="cantidad" value="{% if ficha.sin_fecha > 0 %}{{ ficha.sin_fecha|floatformat:'-2' }}{% else %}1{% endif %}" inputmode="decimal" required></div>
+        <div><button class="btn" type="submit">Guardar</button></div>
+      </form>
+
+      {% if ficha.lotes %}
+      <div class="tabla-scroll"><table>
+        <thead><tr><th>Vence</th><th>Estado</th><th class="n">Anotadas</th><th class="n">Quedan</th><th></th></tr></thead>
+        <tbody>
+        {% for f in ficha.lotes %}
+          <tr class="{% if f.quedan <= 0 %}vendido{% endif %}">
+            <td><b>{{ f.lote.fecha_vencimiento|date:"d/m/Y" }}</b><br><small>{% if f.dias < 0 %}hace {{ f.dias|stringformat:"d"|slice:"1:" }} días{% else %}en {{ f.dias }} días{% endif %}</small></td>
+            <td>{% if f.quedan > 0 %}<span class="tag {{ f.estado.0 }}">{{ f.estado.1 }}</span>{% else %}Ya se vendieron{% endif %}</td>
+            <td class="n">{{ f.lote.cantidad|floatformat:"-2" }}</td>
+            <td class="n"><b>{{ f.quedan|floatformat:"-2" }}</b></td>
+            <td class="n"><form method="post" onsubmit="return confirm('¿Borrar esta fecha?')">{% csrf_token %}<input type="hidden" name="accion" value="borrar"><input type="hidden" name="lote" value="{{ f.lote.pk }}"><button class="borrar">Borrar</button></form></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table></div>
+      {% endif %}
+      {% if ficha.sin_fecha > 0 %}<div style="font-size:13.5px;color:#a35c00;margin-top:10px">Faltan <b>{{ ficha.sin_fecha|floatformat:"-2" }}</b> unidades sin fecha anotada.</div>{% endif %}
+    {% endif %}
+  </div>
+
+  <div class="vc-card">
+    <div class="tabs">
+      {% for clave, etiqueta in vistas.items %}<a class="tab {% if clave == vista %}on{% endif %}" href="?ver={{ clave }}{% if producto %}&p={{ producto.pk }}{% endif %}">{{ etiqueta }}</a>{% endfor %}
+    </div>
+    {% if vista == "sin" %}
+      {% if lista %}
+      <div style="font-size:13px;color:#6e6e73;margin-bottom:8px">Alimentos y snacks con existencia a los que les faltan fechas: {{ lista|length }}. Tocá uno para anotarla.</div>
+      <div class="tabla-scroll"><table>
+        <thead><tr><th>Producto</th><th class="n">Hay</th><th class="n">Sin fecha</th></tr></thead>
+        <tbody>{% for f in lista %}
+          <tr><td><a href="?ver=sin&p={{ f.producto.pk }}">{{ f.producto.nombre }}</a></td>
+            <td class="n">{{ f.producto.stock_actual|floatformat:"-2" }}</td><td class="n"><b>{{ f.faltan|floatformat:"-2" }}</b></td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="vacio">Todos los alimentos con existencia tienen su fecha anotada.</div>{% endif %}
+    {% else %}
+      {% if lista %}
+      <div class="tabla-scroll"><table>
+        <thead><tr><th>Producto</th><th>Vence</th><th>Estado</th><th class="n">Quedan</th></tr></thead>
+        <tbody>{% for f in lista %}
+          <tr><td><a href="?ver={{ vista }}&p={{ f.producto.pk }}">{{ f.producto.nombre }}</a></td>
+            <td>{{ f.lote.fecha_vencimiento|date:"d/m/Y" }}<br><small>{% if f.dias < 0 %}vencido{% elif f.dias == 0 %}hoy{% else %}en {{ f.dias }} días{% endif %}</small></td>
+            <td><span class="tag {{ f.estado.0 }}">{{ f.estado.1 }}</span></td>
+            <td class="n"><b>{{ f.quedan|floatformat:"-2" }}</b></td></tr>
+        {% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="vacio">{% if vista == "todos" %}Todavía no hay fechas anotadas.{% else %}Nada vence en ese plazo.{% endif %}</div>{% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<script>
+// Muestra cómo se entendió la fecha mientras se escribe (la regla real está
+// en el servidor, inventario/vencimientos.interpretar_fecha).
+(function () {
+  const f = document.getElementById('fecha'), prev = document.getElementById('prev');
+  if (!f) return;
+  const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','setiembre','octubre','noviembre','diciembre'];
+  function leer(t) {
+    const p = (t || '').split(/[^0-9]+/).filter(Boolean);
+    const anio = v => { v = +v; return v < 100 ? v + 2000 : v; };
+    let d, m, a;
+    if (p.length === 3 && p[0].length === 4) { a = +p[0]; m = +p[1]; d = +p[2]; }
+    else if (p.length === 3) { d = +p[0]; m = +p[1]; a = anio(p[2]); }
+    else if (p.length === 2) { m = +p[0]; a = anio(p[1]); d = new Date(a, m, 0).getDate(); }
+    else return '';
+    if (m < 1 || m > 12 || d < 1 || d > 31) return '';
+    return 'Vence el ' + d + ' de ' + meses[m - 1] + ' de ' + a;
+  }
+  const pintar = () => { prev.textContent = leer(f.value); };
+  f.addEventListener('input', pintar); pintar();
+})();
+</script>
+{% endblock %}

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -484,3 +485,68 @@ def vendido_excel(request):
     )
     r["Content-Disposition"] = f'attachment; filename="vendido_{desde:%Y-%m-%d}_al_{hasta:%Y-%m-%d}.xlsx"'
     return r
+
+
+@rol_requerido(CAJERO, GERENTE)
+@require_http_methods(["GET", "POST"])
+def vencimientos(request):
+    """Escanear un producto y anotar su fecha de vencimiento (pedido de Oscar,
+    24/10/2026). Ver inventario/vencimientos.py: cuánto queda de cada lote se
+    calcula con la existencia, suponiendo que sale primero lo que vence primero.
+    Cajero y gerente: no muestra costos."""
+    from . import vencimientos as venc
+    from .models import LoteVencimiento
+
+    empresa = empresa_actual(request)
+    vista = request.GET.get("ver", "30")
+    if vista not in venc.VISTAS:
+        vista = "30"
+
+    if request.method == "POST":
+        accion = request.POST.get("accion")
+        if accion == "borrar":
+            lote = get_object_or_404(LoteVencimiento, pk=request.POST.get("lote"), producto__empresa=empresa)
+            pid = lote.producto_id
+            lote.delete()
+            messages.success(request, "Se borró esa fecha.")
+            return redirect(f"{request.path}?ver={vista}&p={pid}")
+        producto = get_object_or_404(Producto, pk=request.POST.get("producto"), empresa=empresa)
+        try:
+            lote, fecha = venc.registrar(producto, request.POST.get("fecha"), request.POST.get("cantidad"),
+                                         usuario=request.user, nota=request.POST.get("nota", ""))
+        except ValidationError as e:
+            messages.error(request, " ".join(e.messages))
+            return redirect(f"{request.path}?ver={vista}&p={producto.pk}&fecha={request.POST.get('fecha', '')}")
+        messages.success(request, f"Listo: {request.POST.get('cantidad')} de «{producto.nombre}» vencen el {fecha:%d/%m/%Y}. "
+                                  "Escaneá el siguiente.")
+        # ok=1: vuelve con el foco en el escáner, listo para el siguiente.
+        return redirect(f"{request.path}?ver={vista}&p={producto.pk}&ok=1")
+
+    # Escaneo: código de barras o SKU exacto; si no, por nombre.
+    producto, opciones = None, []
+    codigo = (request.GET.get("codigo") or "").strip()
+    if codigo:
+        exactos = list(Producto.objects.filter(empresa=empresa).filter(Q(codigo_barras=codigo) | Q(sku__iexact=codigo))[:2])
+        if len(exactos) == 1:
+            return redirect(f"{request.path}?ver={vista}&p={exactos[0].pk}")
+        from catalogo.palabras_clave import filtrar
+        opciones = filtrar(Producto.objects.filter(empresa=empresa, activo=True), codigo, limite=12)
+        if len(opciones) == 1:
+            return redirect(f"{request.path}?ver={vista}&p={opciones[0].pk}")
+        if not opciones:
+            messages.error(request, f"No encontré ningún producto con «{codigo}».")
+    if request.GET.get("p", "").isdigit():
+        producto = Producto.objects.filter(empresa=empresa, pk=request.GET["p"]).select_related("categoria").first()
+
+    ficha = venc.ficha_producto(producto) if producto else None
+    if vista == "sin":
+        lista = venc.sin_fecha(empresa)
+    else:
+        lista = venc.proximos(empresa, None if vista == "todos" else int(vista))
+    return render(request, "inventario/vencimientos.html", {
+        "title": "Fechas de vencimiento",
+        "producto": producto, "ficha": ficha, "opciones": opciones, "codigo": codigo,
+        "fecha_previa": request.GET.get("fecha", ""),
+        "recien_guardado": request.GET.get("ok") == "1",
+        "vista": vista, "vistas": venc.VISTAS, "lista": lista,
+    })
