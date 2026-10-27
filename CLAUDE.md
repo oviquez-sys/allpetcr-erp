@@ -591,7 +591,7 @@ El chat volvió a la derecha (ahora cae sobre el buscador, no sobre la factura).
   que la bonificación: el descuento conseguido tiene que llegar al precio).
 - Bajo el IVA se muestra "13 % de ₡neto = ₡X" para comparar con el papel.
 - Excel contable: columna "Descuento de la factura". La carga masiva desde
-  Excel todavía NO tiene descuento. Pruebas: `compras/test_descuento_factura.py`.
+  Excel también lo tiene desde el 27/10/2026. Pruebas: `compras/test_descuento_factura.py`.
 
 **v6.2 "Registrar" que no parece muerto (19/10/2026).** Oscar dijo que
 "Registrar compra no hace nada" (Gosby); en producción el POST respondía 200 y
@@ -601,6 +601,47 @@ trabaja; los errores quedan fijos (con ✕, se cierran con un clic) y los éxito
 se van solos; si la respuesta es el login → "se venció la sesión"; si no es
 JSON → "el servidor tuvo un problema (código N), NO se registró"; a los 45 s
 se aborta y se avisa que revise en Administración → Compras si quedó.
+
+## Cargar productos: factura → paquete .zip → una sola pantalla (27/10/2026)
+
+Pedido de Oscar: "te subo la factura y vos te encargás de todo". Hay un chat
+de Claude dedicado SOLO a esto. El flujo:
+1. Oscar pasa la factura (PDF; el XML de Hacienda si lo tiene).
+2. Claude arma UN .zip: la hoja de `compras:carga_masiva` (SKU con prefijo del
+   proveedor, nombre de venta, cantidad, costo sin IVA, precio, regalías, marca,
+   categoría, presentación, mascota, descripción, CABYS) + una foto por
+   producto llamada `<SKU>.webp`.
+3. Oscar lo sube en Compras → Cargar desde Excel con proveedor, factura,
+   descuento e IVA del pie, revisa lo amarillo y confirma.
+
+**Política de precios (decisión de Oscar, 27/10/2026):**
+- Igualar el **precio REGULAR más bajo** (no ofertas) de la competencia entre
+  las tiendas que lo tienen en existencia, verificado en línea el día de la
+  factura. Base de dónde buscar: `Competencia_AllPetCR.xlsx` (9 tiendas,
+  3-4/09/2026, en `Compras iniciales provedores/Catalogo competencia/`).
+- Si no está ahí: El Delfín, La Vete, Hiper Mascotas, Tobipets, PetWorld.
+- Si el más bajo deja menos del mínimo (15 % alimento y snacks, 30 % lo
+  demás; sin IVA, con costo real): se pone el precio del mínimo y se le AVISA
+  a Oscar para que lo revise.
+- Si nadie lo vende: tabla de márgenes por categoría de
+  `data/PRECIOS_AllPetCR.xlsx` (hoja Reglas), y se le avisa igual.
+- Al final, precio bonito con IVA (`catalogo/precios_bonitos.py`).
+
+**Lo que hace la pantalla** (`compras/carga_masiva.py`, docstring completo):
+- `.zip` con el Excel + fotos por SKU o código de barras; foto sin fila =
+  error; producto que ya tiene foto no se cambia (aviso). Las fotos esperan en
+  `cargas_pendientes/<fecha>-<azar>/` (solo imágenes públicas; el Excel con
+  costos viaja firmado) y se borran al confirmar; las abandonadas se limpian
+  a las 2 h.
+- Descuento de la factura (antes del IVA) → `crear_compra(descuento=)`.
+- Columna CABYS (13 dígitos; no pisa uno puesto).
+- Margen por fila con el costo real (descuento y regalías repartidos) sobre el
+  precio sin IVA; bajo el mínimo → fila amarilla con el precio que daría el
+  mínimo. NO bloquea. Mínimos: `CARGA_MARGEN_MINIMO_ALIMENTO` / `_OTROS`.
+- Pruebas: `compras/test_carga_paquete.py`.
+
+Sigue aparte (pendiente de mejorar): fichas técnicas de alimento (JSON en
+git + `CARGAR_FICHAS_ALIMENTO.bat`).
 
 ## Ajustes de inventario (12/10/2026)
 

@@ -583,6 +583,12 @@ IMPRESION_AGENTE_TOKEN = os.environ.get("IMPRESION_AGENTE_TOKEN", "")
 # mediodía escupiría los tiquetes de toda la mañana de golpe.
 IMPRESION_VIGENCIA_MINUTOS = int(os.environ.get("IMPRESION_VIGENCIA_MINUTOS", "15"))
 
+# Carga masiva (27/10/2026): margen mínimo (%, sin IVA) bajo el cual la vista
+# previa pinta la fila en amarillo. Política de Oscar: igualar el precio
+# regular más bajo de la competencia, pero revisar lo que deje menos de esto.
+CARGA_MARGEN_MINIMO_ALIMENTO = os.environ.get("CARGA_MARGEN_MINIMO_ALIMENTO", "15")
+CARGA_MARGEN_MINIMO_OTROS = os.environ.get("CARGA_MARGEN_MINIMO_OTROS", "30")
+
 # Cuántos días se guardan los trabajos ya terminados. Cada uno pesa cientos de
 # kilobytes (la imagen de la etiqueta); sin límite engordan todos los respaldos.
 IMPRESION_CONSERVAR_DIAS = int(os.environ.get("IMPRESION_CONSERVAR_DIAS", "7"))

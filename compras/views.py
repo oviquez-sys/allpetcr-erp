@@ -14,7 +14,7 @@ from django.views.decorators.http import require_POST
 
 from catalogo.models import TARIFA_GENERAL_IVA, Categoria, Producto
 from catalogo.services import cambiar_precio
-from core.imagenes import completar_foto, datos_foto, guardar_imagen_producto
+from core.imagenes import completar_foto, datos_foto, guardar_imagen_producto, url_imagen_producto
 from core.models import Empresa, Sucursal
 from core.roles import GERENTE, rol_requerido
 from core.tenancy import documento_de_empresa, empresa_actual
@@ -398,7 +398,8 @@ def carga_masiva(request):
     empresa = empresa_actual(request)
     proveedores = Proveedor.objects.filter(activo=True, empresa=empresa).order_by("nombre")
     ctx = {"proveedores": proveedores, "tradicional": empresa.regimen == Empresa.Regimen.TRADICIONAL,
-           "columnas": cm.COLUMNAS}
+           "columnas": cm.COLUMNAS, "margen_alimento": f"{cm.MARGEN_MINIMO_ALIMENTO:g}",
+           "margen_otros": f"{cm.MARGEN_MINIMO_OTROS:g}"}
     if request.method != "POST":
         return render(request, "compras/carga_masiva.html", ctx)
 
@@ -408,6 +409,7 @@ def carga_masiva(request):
         "factura_proveedor": (request.POST.get("factura_proveedor") or "").strip(),
         "forma_pago": request.POST.get("forma_pago") if request.POST.get("forma_pago") in ("CON", "CRE") else "CON",
         "iva": (request.POST.get("iva") or "0").strip() or "0",
+        "descuento": (request.POST.get("descuento") or "0").strip() or "0",
     }
     ctx["encabezado"] = encabezado
     # El IVA se escribe como se lee en la factura: «39.534,28». Antes se
@@ -422,6 +424,12 @@ def carga_masiva(request):
                                 "Escríbalo como sale en la factura, por ejemplo 39.534,28.")
         return render(request, "compras/carga_masiva.html", ctx)
     encabezado["iva"] = str(iva)
+    descuento = cm._numero(encabezado["descuento"])
+    if descuento is None or descuento < 0:
+        messages.error(request, f"El descuento de la factura «{encabezado['descuento']}» no es un monto válido. "
+                                "Escríbalo como sale en la factura, por ejemplo 878,50.")
+        return render(request, "compras/carga_masiva.html", ctx)
+    encabezado["descuento"] = str(descuento)
     archivo = request.FILES.get("archivo")
     if archivo is None:
         messages.error(request, "Elija el archivo de Excel o CSV.")
@@ -429,15 +437,27 @@ def carga_masiva(request):
     if not (encabezado["proveedor_id"] or encabezado["proveedor_nuevo"]):
         messages.error(request, "Elija el proveedor o escriba uno nuevo.")
         return render(request, "compras/carga_masiva.html", ctx)
-    if archivo.size > 5 * 1024 * 1024:
-        messages.error(request, "El archivo pesa más de 5 MB. Divídalo en partes.")
+    # El .zip lleva las fotos (≈ 100 KB cada una en WebP): más espacio.
+    tope_mb = 60 if cm.es_zip(archivo) else 5
+    if archivo.size > tope_mb * 1024 * 1024:
+        messages.error(request, f"El archivo pesa más de {tope_mb} MB. Divídalo en partes.")
         return render(request, "compras/carga_masiva.html", ctx)
 
-    revision = cm.revisar(empresa, archivo)
+    paquete = cm.abrir_paquete(archivo)
+    if paquete.hoja is None or paquete.errores:
+        revision = cm.Revision(errores_generales=paquete.errores or ["No se pudo leer el archivo."])
+    else:
+        revision = cm.revisar(empresa, paquete.hoja, fotos=paquete.fotos, descuento=descuento)
+        revision.errores_generales[:0] = paquete.errores
     ctx["revision"] = revision
     if revision.valida:
+        # Recién con todo en orden se suben las fotos a la espera: una vista
+        # previa con errores no deja archivos sueltos en el bucket.
+        cm.guardar_fotos_pendientes(revision, paquete)
         ctx["firma"] = signing.dumps({"filas": cm.a_datos(revision), "encabezado": encabezado},
                                      salt=_SAL_CARGA, compress=True)
+    for f in revision.filas:
+        f.foto_url = url_imagen_producto(f.foto) if f.foto else ""
     return render(request, "compras/carga_masiva.html", ctx)
 
 
@@ -469,9 +489,12 @@ def carga_masiva_confirmar(request):
             empresa=empresa, filas=datos["filas"], proveedor=proveedor, sucursal=sucursal,
             forma_pago=enc["forma_pago"], factura_proveedor=enc["factura_proveedor"],
             iva=cm._numero(enc["iva"]), usuario=request.user,
+            descuento=cm._numero(enc.get("descuento", "0")) or 0,
         )
     except (ValidationError, Proveedor.DoesNotExist, InvalidOperation, TypeError) as e:
         mensaje = " ".join(e.messages) if isinstance(e, ValidationError) else "Datos inválidos."
         messages.error(request, f"No se cargó nada: {mensaje}")
+        cm.borrar_pendientes(datos["filas"])
         return redirect("compras:carga_masiva")
+    cm.borrar_pendientes(datos["filas"])
     return render(request, "compras/carga_masiva_listo.html", {"compra": compra, "lineas": compra.lineas.select_related("producto")})

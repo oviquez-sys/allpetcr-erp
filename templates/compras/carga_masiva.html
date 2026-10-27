@@ -22,6 +22,11 @@ th{text-align:left;font-size:12px;color:#6e6e73;padding:8px 10px;border-bottom:1
 td{padding:8px 10px;border-bottom:1px solid #f4f4f6;vertical-align:top}
 td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 tr.mal td{background:#fff5f4}
+tr.ojo td{background:#fffbea}
+.ojo-txt{color:#8a5a00;font-size:12.5px}
+.foto{width:44px;height:44px;object-fit:contain;border-radius:8px;background:#f5f5f7;display:block}
+.sinfoto{width:44px;height:44px;border-radius:8px;background:#f5f5f7;display:flex;align-items:center;justify-content:center;color:#aeaeb2;font-size:11px}
+.aviso.ojo{background:#fff7e0;color:#7a4f00}
 .tag{display:inline-block;padding:2px 8px;border-radius:980px;font-size:11.5px;font-weight:600}
 .tag.nuevo{background:rgba(11,49,97,.1);color:#0B3161}
 .tag.exis{background:rgba(52,199,89,.14);color:#1c6b30}
@@ -48,27 +53,32 @@ tr.mal td{background:#fff5f4}
       {% if revision.errores_generales %}
         {% for e in revision.errores_generales %}<div class="aviso mal">{{ e }}</div>{% endfor %}
       {% elif revision.valida %}
-        <div class="aviso bien">Todo en orden: {{ revision.filas|length }} fila(s), {{ revision.nuevos }} producto(s) nuevo(s),
-          total de la factura (sin IVA) ₡{{ revision.total|crc:0 }}{% if tradicional %}, IVA ₡{{ encabezado.iva|crc:2 }}{% endif %}. Revise y confirme.</div>
+        <div class="aviso bien">Todo en orden: {{ revision.filas|length }} fila(s), {{ revision.nuevos }} producto(s) nuevo(s){% if revision.fotos %}, {{ revision.fotos }} foto(s){% endif %},
+          total de la factura (sin IVA) ₡{{ revision.total|crc:0 }}{% if revision.descuento %} − descuento ₡{{ revision.descuento|crc:2 }} = ₡{{ revision.neto|crc:2 }}{% endif %}{% if tradicional %}, IVA ₡{{ encabezado.iva|crc:2 }}{% endif %}. Compárelo con el papel, revise y confirme.</div>
+        {% if revision.con_avisos %}<div class="aviso ojo">⚠ {{ revision.con_avisos|length }} fila(s) en amarillo para revisar (margen bajo el mínimo o foto que no se usa). No impiden cargar: si está de acuerdo, confirme; si no, corrija el precio en el archivo y vuelva a subirlo.</div>{% endif %}
       {% else %}
         <div class="aviso mal">Hay {{ revision.con_errores|length }} fila(s) con errores (en rojo). Corrija el archivo y vuelva a subirlo: no se carga nada a medias.</div>
       {% endif %}
       {% if revision.filas %}
       <div class="tabla-scroll">
       <table>
-        <thead><tr><th>Fila</th><th></th><th>Producto</th><th class="n">Cant.</th><th class="n">Bonif.</th><th class="n">Costo</th><th class="n">Precio</th><th>Categoría / mascota</th></tr></thead>
+        <thead><tr><th>Fila</th><th>Foto</th><th></th><th>Producto</th><th class="n">Cant.</th><th class="n">Bonif.</th><th class="n">Costo</th><th class="n">Precio</th><th class="n">Margen</th><th>Categoría / mascota</th></tr></thead>
         <tbody>
         {% for f in revision.filas %}
-          <tr class="{% if f.errores %}mal{% endif %}">
+          <tr class="{% if f.errores %}mal{% elif f.avisos %}ojo{% endif %}">
             <td>{{ f.numero }}</td>
+            <td>{% if f.foto_url %}<img class="foto" src="{{ f.foto_url }}" alt="Foto nueva de {{ f.nombre }}" loading="lazy">{% elif f.foto_se_pone %}<div class="sinfoto">📷 sí</div>{% else %}<div class="sinfoto">—</div>{% endif %}</td>
             <td>{% if f.nuevo %}<span class="tag nuevo">Nuevo</span>{% else %}<span class="tag exis">Existe</span>{% endif %}</td>
             <td>{{ f.nombre|default:"—" }}{% if f.sku or f.codigo_barras %}<br><small>{% if f.sku %}Código {{ f.sku }}{% endif %}{% if f.sku and f.codigo_barras %} · {% endif %}{{ f.codigo_barras }}</small>{% endif %}
               {% if f.descripcion %}<br><small title="{{ f.descripcion }}">📝 {{ f.descripcion|truncatechars:70 }}</small>{% endif %}
-              {% for e in f.errores %}<div class="err">⛔ {{ e }}</div>{% endfor %}</td>
+              {% if f.cabys %}<br><small>CABYS {{ f.cabys }}</small>{% endif %}
+              {% for e in f.errores %}<div class="err">⛔ {{ e }}</div>{% endfor %}
+              {% for a in f.avisos %}<div class="ojo-txt">⚠ {{ a }}</div>{% endfor %}</td>
             <td class="n">{{ f.cantidad|floatformat:"-2" }}</td>
             <td class="n">{{ f.bonificadas|floatformat:"-2" }}</td>
             <td class="n">₡{{ f.costo_unitario|crc:0 }}</td>
             <td class="n">{% if f.cambia_precio %}<s>₡{{ f.precio_actual|crc:0 }}</s><br><b>₡{{ f.precio_venta|crc:0 }}</b>{% elif f.precio_venta %}₡{{ f.precio_venta|crc:0 }}{% elif f.precio_actual %}₡{{ f.precio_actual|crc:0 }}{% endif %}</td>
+            <td class="n">{% if f.margen %}{{ f.margen|floatformat:1 }} %{% else %}—{% endif %}</td>
             <td>{{ f.categoria_txt }}{% if f.mascota %}<br><small>{{ f.mascota }}</small>{% endif %}</td>
           </tr>
         {% endfor %}
@@ -100,8 +110,9 @@ tr.mal td{background:#fff5f4}
       <div><label for="factura_proveedor">N.º de factura del proveedor</label><input id="factura_proveedor" name="factura_proveedor" value="{{ encabezado.factura_proveedor|default:'' }}"></div>
       <div><label for="forma_pago">Forma de pago</label>
         <select id="forma_pago" name="forma_pago"><option value="CON">Contado</option><option value="CRE" {% if encabezado.forma_pago == "CRE" %}selected{% endif %}>Crédito del proveedor</option></select></div>
+      <div><label for="descuento">Descuento de la factura (₡)</label><input id="descuento" name="descuento" inputmode="decimal" value="{{ encabezado.descuento|default:'0' }}"></div>
       {% if tradicional %}<div><label for="iva">IVA de la factura (₡)</label><input id="iva" name="iva" inputmode="decimal" value="{{ encabezado.iva|default:'0' }}"></div>{% endif %}
-      <div><label for="archivo">Archivo (.xlsx o .csv)</label><input id="archivo" type="file" name="archivo" accept=".xlsx,.csv" required></div>
+      <div><label for="archivo">Archivo (.xlsx, .csv, o .zip con fotos)</label><input id="archivo" type="file" name="archivo" accept=".xlsx,.csv,.zip" required></div>
     </div>
     <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
       <button class="cm-btn">Revisar archivo</button>
@@ -114,6 +125,8 @@ tr.mal td{background:#fff5f4}
     <ul class="cols">{% for c, etiqueta, ayuda in columnas %}<li><b>{{ etiqueta }}:</b> {{ ayuda }}</li>{% endfor %}</ul>
     <p class="cm-sub" style="margin-top:10px">Un producto se reconoce por el código de barras; si no trae, por el nombre exacto. Si no existe, se crea.
       Los datos de un producto existente (marca, categoría…) solo se completan si estaban vacíos: nunca se borran.</p>
+    <p class="cm-sub"><b>Con fotos:</b> suba un .zip con el Excel y las fotos. Cada foto se llama como el código (SKU) o el código de barras de su fila, por ejemplo <code>TOW-2573.webp</code>. A un producto que ya tiene foto no se le cambia.
+      <b>Margen mínimo:</b> {{ margen_alimento }} % en alimento y snacks, {{ margen_otros }} % en lo demás; la fila que quede debajo sale en amarillo.</p>
   </div>
 </div>
 {% endblock %}
