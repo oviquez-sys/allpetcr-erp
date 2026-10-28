@@ -90,6 +90,11 @@ ARBOL = [
     (120, "Rascadores y muebles", []),
     (130, "Transporte", []),
     (140, "Acuario", []),
+    # 28/10/2026, pedido de Oscar: adornos para la casa con figuras de perros
+    # y gatos (compra TEMU) y decoración. No son productos PARA la mascota:
+    # llevan mascota "Otros" y el sitio los muestra en su propia sección
+    # ("Adornos", ver allpetcr-web/lib/navegacion.ts::RAICES_SIN_ESPECIE).
+    (150, "Adornos y decoración", []),
 ]
 # Se salta el 100 a propósito: es el `orden` por defecto del modelo, o sea
 # "nadie la ordenó todavía". Usarlo acá haría imposible distinguir las dos cosas.

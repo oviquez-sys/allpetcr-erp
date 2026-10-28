@@ -840,7 +840,8 @@ class ArbolDeCategorias(TestCase):
         for esperada in ("Alimento", "Snacks y premios", "Juguetes", "Paseo",
                          "Ropa y accesorios", "Comederos y bebederos", "Descanso",
                          "Higiene y aseo", "Salud y cuidado", "Arena y sanitarios",
-                         "Rascadores y muebles", "Transporte", "Acuario"):
+                         "Rascadores y muebles", "Transporte", "Acuario",
+                         "Adornos y decoración"):
             self.assertIn(esperada, raices)
 
     def test_no_recrea_las_categorias_viejas_del_excel(self):
