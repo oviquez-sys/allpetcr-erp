@@ -326,7 +326,7 @@ def historial(request):
     fecha_txt = request.GET.get("fecha")
     facturas = (
         FacturaVenta.objects.filter(empresa=empresa)
-        .select_related("cliente", "usuario")
+        .select_related("cliente", "usuario", "sesion_caja")
         .annotate(n_devoluciones=Count("devoluciones"))
         .order_by("-id")
     )
@@ -348,6 +348,7 @@ def historial(request):
     return render(request, "ventas/historial.html", {
         "pagina": pagina, "q": q, "fecha": fecha, "hoy": hoy,
         "es_gerente": es_gerente(request.user),
+        "medios_cambiables": ("EFE", "TAR", "SIN"),
     })
 
 
@@ -449,6 +450,8 @@ def _respuesta_venta(factura, *, impreso=False, error_impresion="", trabajo=None
         "tiquete_url": reverse("ventas:tiquete", args=[factura.pk]),
         "reimprimir_url": reverse("impresion:tiquete", args=[factura.pk]),
         "enviar_url": reverse("ventas:factura_enviar", args=[factura.pk]),
+        "cambiar_medio_url": reverse("ventas:cambiar_medio", args=[factura.pk])
+        if factura.medio_pago in ("EFE", "TAR", "SIN") else "",
         "impreso": impreso,
         # Por la cola del agente: lo único seguro es que quedó encolado. El POS
         # pregunta a `trabajo_url` si salió de verdad (TIQ-02).
@@ -471,6 +474,37 @@ def _agotados_en_la_venta(factura):
         linea.producto.nombre
         for linea in factura.lineas.select_related("producto")
         if linea.producto.stock_actual == 0
+    })
+
+
+@rol_requerido(CAJERO, GERENTE)
+def cambiar_medio(request, factura_id):
+    """Corregir el medio de pago de una venta de la caja abierta (02/11/2026,
+    pedido de Oscar): "la cliente iba a pagar con tarjeta y al final hizo un
+    SINPE". Las reglas están en ventas/medio_pago.py."""
+    from .medio_pago import CAMBIABLES, cambiar_medio_pago, se_puede_cambiar
+
+    factura = documento_de_empresa(FacturaVenta.objects.select_related("sesion_caja", "cliente"), request,
+                                   pk=factura_id)
+    volver = (request.POST.get("volver") or request.GET.get("volver") or "").strip()
+    if not (volver.startswith("/") and not volver.startswith("//")):
+        volver = reverse("ventas:historial")
+    error = ""
+    if request.method == "POST":
+        try:
+            cambio = cambiar_medio_pago(factura=factura, nuevo=request.POST.get("nuevo", ""), usuario=request.user,
+                                        motivo=request.POST.get("motivo", ""))
+        except ValidationError as e:
+            error = " ".join(e.messages)
+        else:
+            messages.success(request, f"La venta {factura.numero} quedó como {cambio.get_nuevo_display()}. "
+                                      "Si querés, reimprimí el tiquete.")
+            return redirect(volver)
+    nombres = dict(FacturaVenta.MedioPago.choices)
+    return render(request, "ventas/cambiar_medio.html", {
+        "factura": factura, "porque_no": se_puede_cambiar(factura), "error": error, "volver": volver,
+        "opciones": [(m, nombres[m]) for m in CAMBIABLES if m != factura.medio_pago],
+        "elegido": request.POST.get("nuevo", ""), "motivo": request.POST.get("motivo", ""),
     })
 
 

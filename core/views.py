@@ -362,7 +362,23 @@ Caja:
 - Abrir caja al iniciar el turno (con un monto de apertura). La pantalla \
 muestra cómo se cerró la caja anterior.
 - Cerrar caja al finalizar: el efectivo se cuenta por billete y moneda (cuántos \
-de ₡20.000, ₡10.000… hasta ₡10) y el sistema suma. Muestra cómo se abrió.
+de ₡20.000, ₡10.000… hasta ₡10) y el sistema suma. Muestra cómo se abrió. \
+También se anota el total del datáfono y el SINPE recibido (obligatorios; 0 si no \
+hubo). Si algún medio no calza, el sistema muestra cuál y de cuánto y pide el \
+motivo y qué pasó (p. ej. la clienta iba a pagar con tarjeta y pagó por SINPE); \
+se puede volver a contar y el primer conteo queda guardado. Al cerrar se avisa \
+por correo a los socios si hubo diferencia y se imprime el resumen del cierre en \
+la impresora de tiquetes (se reimprime desde Abrir caja).
+- Sacar efectivo (/caja/retiro/, solo gerente; enlace "Sacar efectivo" en el POS): \
+para dejar la gaveta con poco efectivo. Se cuentan los billetes que se sacan, se \
+imprime un comprobante para el sobre y se abre la gaveta; el cierre ya lo descuenta. \
+Queda "por depositar" hasta que en esa misma pantalla se anota el depósito con el \
+número de comprobante del banco.
+- ¿Pagó con otro medio? Si una venta se registró como efectivo, tarjeta o SINPE y se \
+cobró con otro de esos, se corrige con "Cambiar medio" en el Historial de ventas o \
+"¿Pagó con otro medio?" en el POS (solo mientras la caja siga abierta; no fiado ni \
+mixto). Al cerrar, si falta en un medio lo que sobra en otro, el cierre ofrece \
+corregir la venta con un clic.
 
 Roles del sistema:
 - Cajero: puede vender, abrir/cerrar caja, generar etiquetas.

@@ -39,7 +39,19 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
 .oc-msg{max-width:520px;margin:0 auto 18px;padding:13px 18px;border-radius:14px;font-size:14.5px}
 .oc-msg.success{background:rgba(52,199,89,.12);color:#1c6b30}
 .oc-msg.info{background:rgba(11,49,97,.1);color:var(--brand)}
+.oc-msg.warning{background:rgba(255,159,10,.14);color:#8a4b00}
+.oc-msg.error{background:rgba(255,59,48,.1);color:#b5231a}
+/* Diferencias del cierre anterior y reimprimir el resumen (02/11/2026). */
+.ant .dif{font-size:13px;color:#424245;background:#fff8ec;border-radius:10px;padding:8px 12px;margin-top:8px;line-height:1.45}
+.ant .dif b{color:#8a4b00}
+.ant form{margin-top:12px}
+.ant .reimp{border:0;background:#f2f2f5;color:#0b3161;font-weight:600;font-size:14px;padding:9px 16px;border-radius:980px;cursor:pointer;font-family:inherit}
+.ant .reimp:hover{background:#e8e8ed}
 </style>{% endblock %}
+
+{% comment %} Los mensajes los muestra la propia tarjeta; sin esto salían dos veces
+(arriba a todo lo ancho y en la tarjeta), 02/11/2026. {% endcomment %}
+{% block messages %}{% endblock %}
 
 {% block content %}
 <div class="oc-wrap">

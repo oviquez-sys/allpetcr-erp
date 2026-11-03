@@ -31,20 +31,30 @@ class CierrePorConteo(Base):
         self.client.force_login(self.oscar)
         r = self.client.post(reverse("caja:cerrar"), {
             "den_5000": "1", "den_1000": "4", "den_500": "1", "den_100": "4", "den_25": "",
+            "tarjeta_contado": "0", "sinpe_contado": "0",
             "monto_contado": "999999",          # lo que mande el navegador no cuenta
+        })
+        # Abrió con ₡10.000 y se contaron ₡9.900: no calza, pide explicación
+        # (02/11/2026) antes de cerrar.
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, "Faltan ₡100")
+        r = self.client.post(reverse("caja:cerrar"), {
+            "paso": "justificar", "firma": r.context["firma"],
+            "motivo_EFE": "VUE", "explicacion_EFE": "Di ₡100 de más de vuelto.",
         })
         self.assertEqual(r.status_code, 302)
         s = SesionCaja.objects.get()
         self.assertEqual(s.estado, SesionCaja.Estado.CERRADA)
         self.assertEqual(s.monto_contado, Decimal("9900"))
-        self.assertEqual(s.diferencia, Decimal("-100"))      # abrió con ₡10.000
+        self.assertEqual(s.diferencia, Decimal("-100"))
         self.assertEqual(s.conteo_efectivo, {"5000": 1, "1000": 4, "500": 1, "100": 4})
         self.assertEqual(s.desglose()[0], (5000, 1, 5000))
 
     def test_todo_vacio_es_cero(self):
         self.client.force_login(self.oscar)
-        self.client.post(reverse("caja:cerrar"), {})
-        self.assertEqual(SesionCaja.objects.get().monto_contado, Decimal("0"))
+        r = self.client.post(reverse("caja:cerrar"), {"tarjeta_contado": "0", "sinpe_contado": "0"})
+        self.assertContains(r, "Faltan ₡10.000")              # abrió con ₡10.000 y no se contó nada
+        self.assertEqual(SesionCaja.objects.get().estado, SesionCaja.Estado.ABIERTA)
 
     def test_no_acepta_negativos_ni_denominaciones_que_no_existen(self):
         self.client.force_login(self.oscar)

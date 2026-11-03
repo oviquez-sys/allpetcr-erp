@@ -45,6 +45,10 @@ class Asiento(models.Model):
         COBRO = "COB", "Cobro (abono CxC)"
         ANULACION = "ANU", "Anulación"
         MANUAL = "MAN", "Manual"
+        # 02/11/2026: el efectivo que se sacó de la caja llega al banco, y una
+        # venta que se cobró con otro medio pasa de Caja a Bancos o al revés.
+        DEPOSITO = "DEP", "Depósito de efectivo"
+        CORRECCION = "COR", "Corrección de medio de pago"
 
     empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, related_name="asientos")
     numero = models.CharField(max_length=20, unique=True)

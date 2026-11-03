@@ -31,6 +31,8 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
 .cc-msg{padding:13px 18px;border-radius:14px;font-size:14.5px;margin-bottom:18px}
 .cc-msg.success{background:rgba(52,199,89,.12);color:#1c6b30}
 .cc-msg.info{background:rgba(11,49,97,.1);color:var(--brand)}
+.cc-msg.warning{background:rgba(255,159,10,.14);color:#8a4b00}
+.cc-msg.error{background:rgba(255,59,48,.1);color:#b5231a}
 /* Conteo por billete y moneda (14/10/2026): se anota cuántos hay de cada uno
    y el total se va sumando solo. */
 .cc-head{position:sticky;top:0;z-index:2;background:#fff;display:flex;align-items:baseline;justify-content:space-between;
@@ -75,6 +77,10 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
 .cc-movcard tbody tr:hover{background:#f9fafb}
 </style>{% endblock %}
 
+{% comment %} Los mensajes los muestra la propia tarjeta; sin esto salían dos veces
+(arriba a todo lo ancho y en la tarjeta), 02/11/2026. {% endcomment %}
+{% block messages %}{% endblock %}
+
 {% block content %}
 <div class="cc-wrap">
   <div class="cc-icon"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9.5h.01M18 14.5h.01"/></svg></div>
@@ -100,6 +106,11 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
 
   <form method="post" id="cierre">
     {% csrf_token %}
+    <input type="hidden" name="paso" value="contar">
+    {% if previos_firmado %}<input type="hidden" name="previos" value="{{ previos_firmado }}">
+    <div class="cc-msg warning">Estás volviendo a contar. Está bien si te equivocaste; el conteo anterior
+      {% with u=previos|last %}(efectivo ₡{{ u.efectivo|crc }}, datáfono ₡{{ u.tarjeta|crc }}, SINPE ₡{{ u.sinpe|crc }}){% endwith %}
+      queda guardado en el cierre.</div>{% endif %}
     {% if form.non_field_errors %}<div class="cc-errors">{{ form.non_field_errors }}</div>{% endif %}
 
     <div class="cc-card">
@@ -124,6 +135,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
 
     <div class="cc-card">
       <h3>Datáfono y SINPE</h3>
+      <div class="cc-help" style="margin:-8px 0 14px">Los dos son obligatorios: si no hubo, poné 0.</div>
       {% for campo in form %}{% if campo.name == "tarjeta_contado" or campo.name == "sinpe_contado" %}
       <div class="cc-row">
         <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>

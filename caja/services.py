@@ -68,20 +68,88 @@ def monto_esperado(sesion) -> Decimal:
     return total if total is not None else Decimal("0")
 
 
-def esperado_por_medio(sesion) -> dict:
-    """Lo vendido en la sesión por tarjeta y por SINPE (pagos mixtos
-    repartidos). Es lo que el cierre del datáfono y el estado de SINPE
-    tendrían que mostrar (CAJ-02)."""
-    from ventas.models import FacturaVenta
+def esperado_por_medio(sesion, hasta=None) -> dict:
+    """Lo que tendría que haber entrado por tarjeta y por SINPE durante la
+    sesión: lo vendido (pagos mixtos repartidos) más los abonos de fiado
+    cobrados por esos medios. Es lo que el cierre del datáfono y el estado de
+    SINPE tendrían que mostrar (CAJ-02).
+
+    Los abonos (02/11/2026): un cliente que paga su fiado por SINPE mete plata
+    en el SINPE de la tienda sin que haya una venta ese día. Sin sumarlos, el
+    arqueo marcaba un sobrante que no era tal. El abono no guarda la caja, así
+    que se toman los de la empresa cobrados mientras esta caja estuvo abierta
+    (hay UNA caja compartida por tienda, CAJ-03).
+
+    Lo que NO entra: el reembolso por datáfono de una devolución. Se hace
+    aparte en el datáfono y no siempre cae el mismo día; si pasa, se explica
+    en la diferencia."""
+    from ventas.models import Abono, FacturaVenta
     from ventas.pagos import por_medio
 
     medios = por_medio(sesion.ventas.filter(estado=FacturaVenta.Estado.EMITIDA))
-    return {m: (medios.get(m, {}).get("t") or Decimal("0")) for m in ("TAR", "SIN")}
+    resultado = {m: (medios.get(m, {}).get("t") or Decimal("0")) for m in ("TAR", "SIN")}
+    abonos = (Abono.objects.filter(documento__factura__empresa_id=sesion.sucursal.empresa_id,
+                                   medio__in=["TAR", "SIN"], fecha__gte=sesion.abierta_en,
+                                   fecha__lte=hasta or sesion.cerrada_en or timezone.now())
+              .order_by().values("medio").annotate(t=Sum("monto")))
+    for fila in abonos:
+        resultado[fila["medio"]] += fila["t"] or Decimal("0")
+    return resultado
+
+
+# Cuánto puede no calzar un medio sin pedir explicación. Cero por defecto:
+# "todo debe calzar" (Oscar, 02/11/2026). Para los céntimos del vuelto está
+# el redondeo del POS, que deja el total en un monto que se puede pagar.
+def tolerancia() -> Decimal:
+    return Decimal(str(getattr(settings, "CIERRE_TOLERANCIA", 0) or 0))
+
+
+NOMBRES_MEDIO = {"EFE": "Efectivo", "TAR": "Tarjeta", "SIN": "SINPE Móvil"}
+
+
+def calcular_arqueo(sesion, *, efectivo, tarjeta=None, sinpe=None) -> list:
+    """Lo esperado contra lo contado, medio por medio, SIN guardar nada.
+
+    Se usa antes de cerrar para mostrarle a quien cierra qué no calzó y
+    pedirle la explicación. Un medio con lo contado vacío (None) no se
+    revisó y no aparece. Cada fila: medio, nombre, esperado, contado,
+    diferencia (contado − esperado) y si `calza` dentro de la tolerancia."""
+    esperado = esperado_por_medio(sesion)
+    filas = [("EFE", monto_esperado(sesion), efectivo), ("TAR", esperado["TAR"], tarjeta),
+             ("SIN", esperado["SIN"], sinpe)]
+    margen = tolerancia()
+    resultado = []
+    for medio, esp, contado in filas:
+        if contado in (None, ""):
+            continue
+        contado = Decimal(contado)
+        dif = contado - esp
+        resultado.append({"medio": medio, "nombre": NOMBRES_MEDIO[medio], "esperado": esp,
+                          "contado": contado, "diferencia": dif, "calza": abs(dif) <= margen})
+    return resultado
+
+
+def sugerir_cruce(filas) -> dict:
+    """Si exactamente dos medios no calzan y se compensan (a uno le falta lo
+    que al otro le sobra), casi seguro es una venta cobrada por otro medio:
+    "iba a pagar con tarjeta y al final hizo un SINPE". Devuelve
+    {medio: texto sugerido} para prellenar la explicación; {} si no aplica.
+
+    Es solo una sugerencia: quien cierra la confirma o la cambia."""
+    malas = [f for f in filas if not f["calza"]]
+    if len(malas) != 2 or malas[0]["diferencia"] + malas[1]["diferencia"] != 0:
+        return {}
+    falta = next(f for f in malas if f["diferencia"] < 0)
+    sobra = next(f for f in malas if f["diferencia"] > 0)
+    monto = f"₡{abs(falta['diferencia']):,.0f}".replace(",", ".")
+    texto = (f"Una venta de {monto} se registró como {falta['nombre']} "
+             f"pero se cobró por {sobra['nombre']}.")
+    return {falta["medio"]: texto, sobra["medio"]: texto}
 
 
 @transaction.atomic
 def cerrar_caja(*, sesion, monto_contado=None, usuario=None, tarjeta_contado=None, sinpe_contado=None,
-                conteo=None) -> SesionCaja:
+                conteo=None, justificaciones=None, conteos_previos=None) -> SesionCaja:
     """Arqueo: se registra lo contado físicamente y se calcula la diferencia
     contra lo esperado. La sesión queda inmutable.
 
@@ -90,7 +158,15 @@ def cerrar_caja(*, sesion, monto_contado=None, usuario=None, tarjeta_contado=Non
     revisó, que no es lo mismo que cero.
 
     conteo: {"20000": 2, "500": 6, ...}. Si viene, el efectivo contado es su
-    suma y queda guardado el desglose."""
+    suma y queda guardado el desglose.
+
+    justificaciones (02/11/2026): {medio: (motivo, explicación)}. Si viene
+    (la pantalla de cierre siempre la manda), TODO medio que no calce tiene
+    que traer su explicación o el cierre no se hace. Lo que no calzó queda
+    en `DiferenciaCaja`, se haya explicado o no, y se avisa por correo.
+
+    conteos_previos: los conteos que se hicieron antes del definitivo (quien
+    cierra vio la diferencia y volvió a contar). Se guardan tal cual."""
     sesion = SesionCaja.objects.select_for_update().get(pk=sesion.pk)
     if sesion.estado != SesionCaja.Estado.ABIERTA:
         raise ValidationError("La sesión ya está cerrada.")
@@ -127,7 +203,36 @@ def cerrar_caja(*, sesion, monto_contado=None, usuario=None, tarjeta_contado=Non
     sesion.diferencia = monto_contado - sesion.monto_esperado
     sesion.estado = SesionCaja.Estado.CERRADA
     sesion.cerrada_en = timezone.now()
+    if conteos_previos:
+        sesion.conteos_previos = list(conteos_previos)
+
+    # Qué no calzó, medio por medio (02/11/2026).
+    from .models import DiferenciaCaja
+    margen = tolerancia()
+    malas = [(m, esp, cont) for m, esp, cont in (
+        ("EFE", sesion.monto_esperado, sesion.monto_contado),
+        ("TAR", sesion.tarjeta_esperado, sesion.tarjeta_contado),
+        ("SIN", sesion.sinpe_esperado, sesion.sinpe_contado),
+    ) if cont is not None and abs(cont - esp) > margen]
+    justificaciones = None if justificaciones is None else dict(justificaciones)
+    filas = []
+    for medio, esp, cont in malas:
+        motivo, explicacion = (justificaciones or {}).get(medio) or ("", "")
+        motivo, explicacion = (motivo or "").strip(), (explicacion or "").strip()
+        if justificaciones is not None and not (motivo and explicacion):
+            raise ValidationError(f"{NOMBRES_MEDIO[medio]} no calza: falta explicar la diferencia.")
+        if motivo and motivo not in DiferenciaCaja.Motivo.values:
+            raise ValidationError("Ese motivo no existe.")
+        filas.append(DiferenciaCaja(sesion=sesion, medio=medio, esperado=esp, contado=cont,
+                                    diferencia=cont - esp, motivo=motivo, explicacion=explicacion[:300]))
     sesion.save()
+    DiferenciaCaja.objects.bulk_create(filas)
+    if filas:
+        # El correo sale DESPUÉS de confirmar el cierre: si la base revierte,
+        # no se avisa de un cierre que no existe; si el correo falla, el
+        # cierre igual queda hecho (ver avisos.py).
+        from .avisos import avisar_diferencia
+        transaction.on_commit(lambda: avisar_diferencia(sesion.pk))
     return sesion
 
 

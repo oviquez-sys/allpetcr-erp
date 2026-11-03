@@ -12,6 +12,13 @@
     <b class="{% if anterior.diferencia == 0 %}ok{% else %}mal{% endif %}">{% if anterior.diferencia == 0 %}Cuadró exacto{% else %}₡{{ anterior.diferencia|crc_abs }} {% if anterior.diferencia > 0 %}de más{% else %}de menos{% endif %}{% endif %}</b></div>
   {% if anterior.tarjeta_contado is not None %}<div class="fila"><span>Datáfono</span><b class="{% if anterior.tarjeta_contado == anterior.tarjeta_esperado %}ok{% else %}mal{% endif %}">₡{{ anterior.tarjeta_contado|crc }} de ₡{{ anterior.tarjeta_esperado|crc }}</b></div>{% endif %}
   {% if anterior.sinpe_contado is not None %}<div class="fila"><span>SINPE</span><b class="{% if anterior.sinpe_contado == anterior.sinpe_esperado %}ok{% else %}mal{% endif %}">₡{{ anterior.sinpe_contado|crc }} de ₡{{ anterior.sinpe_esperado|crc }}</b></div>{% endif %}
+  {% for d in anterior.diferencias.all %}
+  <div class="dif"><b>{{ d.get_medio_display }}: {% if d.diferencia < 0 %}faltaron{% else %}sobraron{% endif %} ₡{{ d.diferencia|crc_abs }}.</b>
+    {{ d.get_motivo_display|default:"Sin explicar" }}{% if d.explicacion %} — «{{ d.explicacion }}»{% endif %}</div>
+  {% endfor %}
   {% if anterior.desglose %}<div class="desg">Billetes y monedas: {% for v, n, st in anterior.desglose %}{{ n }} × ₡{{ v|crc }}{% if not forloop.last %} · {% endif %}{% endfor %}</div>{% endif %}
+  <form method="post" action="{% url 'caja:imprimir_cierre' anterior.pk %}">{% csrf_token %}
+    <button type="submit" class="reimp">🖨 Imprimir el resumen de este cierre</button>
+  </form>
 </div>
 {% endif %}

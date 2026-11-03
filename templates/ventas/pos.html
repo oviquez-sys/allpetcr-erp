@@ -328,6 +328,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
   <button type="button" class="nb" onclick="document.getElementById('ayuda').classList.add('on')" title="Cómo cobrar">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.3 2.4c-.5.2-.8.6-.8 1.1v.5M12 17h.01"/></svg>Ayuda</button>
   <a href="{% url 'ventas:historial' %}">Historial de ventas</a>
+  {% if es_gerente %}<a href="{% url 'caja:retiro' %}" title="Sacar efectivo de la gaveta para depositar">Sacar efectivo</a>{% endif %}
   <a href="{% url 'caja:cerrar' %}">Cerrar caja</a>
   <a class="home" href="/">Inicio</a>
 </div>
@@ -1012,7 +1013,13 @@ function mostrarUltima(d){
   const b1 = document.createElement('button'); b1.type='button'; b1.textContent = '🖨️ Reimprimir'; b1.addEventListener('click', reimprimir);
   const b2 = document.createElement('button'); b2.type='button'; b2.textContent = '✉️ Enviar por correo'; b2.addEventListener('click', enviarCorreo);
   const a = document.createElement('a'); a.href = d.tiquete_url; a.target = '_blank'; a.textContent = 'Ver tiquete';
-  bts.append(b1, b2, a); u.appendChild(bts);
+  bts.append(b1, b2, a);
+  // ¿Pagó con otro medio? (02/11/2026): se corrige en el momento y el cierre calza.
+  if (d.cambiar_medio_url){
+    const m = document.createElement('a'); m.href = d.cambiar_medio_url + '?volver=' + encodeURIComponent(location.pathname);
+    m.textContent = '💳 ¿Pagó con otro medio?'; bts.append(m);
+  }
+  u.appendChild(bts);
   u.classList.add('on');
   if (d.trabajo_url) vigilarTiquete(d.trabajo_url, d.numero);
 }

@@ -106,6 +106,46 @@ def imprimir_tiquete(factura, abrir_gaveta=False):
     return None
 
 
+def imprimir_cierre(sesion):
+    """Saca por la térmica de recibos el resumen del cierre de caja
+    (02/11/2026). Mismo camino que el tiquete de venta; nunca abre la gaveta.
+    Devuelve el TrabajoImpresion si quedó en la cola del agente, o None si se
+    imprimió directo."""
+    from django.utils import timezone
+
+    from caja.resumen import resumen_cierre
+
+    from . import cierre as _cierre
+
+    datos = _cierre.bytes_cierre(
+        resumen_cierre(sesion), ancho=settings.ANCHO_TIQUETE,
+        logo=_tiquete.bytes_logo(settings.TIQUETE_LOGO_PUNTOS, settings.TIQUETE_PAPEL_PUNTOS),
+        impreso_en=timezone.now(),
+    )
+    titulo = f"Cierre de caja #{sesion.pk}"
+    if por_agente():
+        return cola.encolar_crudo(settings.IMPRESORA_RECIBOS, datos, titulo, TrabajoImpresion.CIERRE)
+    windows.enviar_crudo(settings.IMPRESORA_RECIBOS, datos, titulo=titulo)
+    return None
+
+
+def imprimir_retiro(retiro):
+    """Comprobante del efectivo que se sacó para depositar; abre la gaveta
+    (02/11/2026). Mismo camino que el tiquete de venta."""
+    from . import cierre as _cierre
+
+    datos = _cierre.bytes_retiro(
+        retiro, ancho=settings.ANCHO_TIQUETE,
+        logo=_tiquete.bytes_logo(settings.TIQUETE_LOGO_PUNTOS, settings.TIQUETE_PAPEL_PUNTOS),
+        abrir_gaveta=getattr(settings, "GAVETA_AUTOMATICA", True),
+    )
+    titulo = f"Retiro de caja {retiro.referencia}"
+    if por_agente():
+        return cola.encolar_crudo(settings.IMPRESORA_RECIBOS, datos, titulo, TrabajoImpresion.CIERRE)
+    windows.enviar_crudo(settings.IMPRESORA_RECIBOS, datos, titulo=titulo)
+    return None
+
+
 def imprimir_etiqueta(producto, copias: int = 1) -> int:
     """Imprime `copias` etiquetas de un producto. Devuelve cuántas salieron.
 

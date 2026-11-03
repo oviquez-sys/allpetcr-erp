@@ -67,6 +67,9 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
               <a href="{% url 'ventas:tiquete' f.id %}" target="_blank">Ver tiquete</a>
               <button type="button" data-reimprimir="{% url 'impresion:tiquete' f.id %}">Reimprimir</button>
               <button type="button" data-enviar="{% url 'ventas:factura_enviar' f.id %}" data-correo="{{ f.cliente.email|default:'' }}">Correo</button>
+              {% if f.estado == "EMI" and f.sesion_caja.estado == "ABI" and f.medio_pago in medios_cambiables %}
+                <a href="{% url 'ventas:cambiar_medio' f.id %}?volver={{ request.get_full_path|urlencode }}">Cambiar medio</a>
+              {% endif %}
               {% if es_gerente and f.estado != "ANU" %}
                 <a href="{% url 'ventas:devolver' f.id %}">Devolver</a>
                 {% if not f.n_devoluciones %}

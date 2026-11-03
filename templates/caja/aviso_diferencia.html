@@ -1,0 +1,35 @@
+{% load formato %}<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:560px;color:#1d1d1f">
+  <h2 style="margin:0 0 4px;font-size:20px">El cierre de caja #{{ sesion.pk }} no calzó</h2>
+  <p style="margin:0 0 16px;color:#6e6e73;font-size:14px">
+    Abrió {{ sesion.usuario.username }} ({{ sesion.abierta_en|date:"d/m g:i a" }}) ·
+    cerró {{ sesion.cerrada_por.username|default:"—" }} ({{ sesion.cerrada_en|date:"d/m g:i a" }})
+  </p>
+  <table style="width:100%;border-collapse:collapse;font-size:14px">
+    <tr style="text-align:left;color:#86868b;font-size:12px">
+      <th style="padding:6px 8px">Medio</th><th style="padding:6px 8px;text-align:right">Esperado</th>
+      <th style="padding:6px 8px;text-align:right">Contado</th><th style="padding:6px 8px;text-align:right">Diferencia</th>
+    </tr>
+    {% for d in diferencias %}
+    <tr style="border-top:1px solid #eee">
+      <td style="padding:8px"><b>{{ d.get_medio_display }}</b></td>
+      <td style="padding:8px;text-align:right">₡{{ d.esperado|crc }}</td>
+      <td style="padding:8px;text-align:right">₡{{ d.contado|crc }}</td>
+      <td style="padding:8px;text-align:right;color:{% if d.diferencia < 0 %}#b5231a{% else %}#a05a00{% endif %}"><b>{% if d.diferencia < 0 %}Faltan{% else %}Sobran{% endif %} ₡{{ d.diferencia|crc_abs }}</b></td>
+    </tr>
+    <tr><td colspan="4" style="padding:0 8px 10px;color:#424245;font-size:13px">
+      <b>{{ d.get_motivo_display|default:"Sin explicar" }}</b>{% if d.explicacion %} — {{ d.explicacion }}{% endif %}
+    </td></tr>
+    {% endfor %}
+  </table>
+  {% if diferencias|length > 1 %}<p style="font-size:14px">Sumando los medios:
+    <b>{% if neto == 0 %}se compensan (₡0){% elif neto < 0 %}faltan ₡{{ neto|crc_abs }}{% else %}sobran ₡{{ neto|crc_abs }}{% endif %}</b></p>{% endif %}
+  {% if sesion.conteos_previos %}<p style="font-size:13px;color:#a05a00">Antes del conteo definitivo se contó {{ sesion.conteos_previos|length }} vez/veces:
+    {% for c in sesion.conteos_previos %}efectivo ₡{{ c.efectivo|crc }}{% if c.tarjeta is not None %} · datáfono ₡{{ c.tarjeta|crc }}{% endif %}{% if c.sinpe is not None %} · SINPE ₡{{ c.sinpe|crc }}{% endif %}{% if not forloop.last %}; {% endif %}{% endfor %}</p>{% endif %}
+  <p style="font-size:14px;margin-top:18px"><b>Ventas:</b> {{ ventas_n }} por ₡{{ ventas_total|crc }}<br>
+    {% for nombre, n, t in ventas_por_medio %}{{ nombre }} ₡{{ t|crc }}{% if not forloop.last %} · {% endif %}{% endfor %}
+    {% if anuladas_n %}<br>Anuladas: {{ anuladas_n }} por ₡{{ anuladas_total|crc }}{% endif %}
+    {% for c in cambios_medio %}<br>Cobrada con otro medio: {{ c.factura.numero }} {{ c.get_anterior_display }} → {{ c.get_nuevo_display }} ₡{{ c.monto|crc }} ({{ c.motivo }}){% endfor %}
+    {% for r in retiros %}<br>Retiro para depositar {{ r.referencia }}: ₡{{ r.monto|crc }} ({{ r.usuario.username|default:"—" }}){% endfor %}</p>
+  {% if apertura_vs_anterior %}<p style="font-size:13px;color:#6e6e73">La caja abrió con ₡{{ sesion.monto_apertura|crc }} y el cierre anterior había contado ₡{{ anterior.monto_contado|crc }}. Puede ser un depósito.</p>{% endif %}
+  <p><a href="{{ admin_url }}" style="color:#0b3161">Ver el cierre en el ERP</a></p>
+</div>

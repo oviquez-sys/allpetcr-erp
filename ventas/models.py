@@ -260,6 +260,33 @@ class DocumentoCxC(models.Model):
         return f"CxC {self.factura.numero} — {self.cliente.nombre}: ₡{self.saldo}/{self.monto_original}"
 
 
+class CambioMedioPago(models.Model):
+    """Una venta que se registró con un medio de pago y se cobró con otro
+    (02/11/2026, pedido de Oscar): "la cliente iba a pagar con tarjeta y al
+    final hizo un SINPE". Corregirlo en el momento deja bien los reportes por
+    medio y el cierre calza solo, en vez de explicarlo al cerrar.
+
+    La factura cambia su `medio_pago`; esta fila deja el rastro de qué era,
+    qué quedó, quién y por qué. Solo mientras la caja de esa venta sigue
+    abierta (ver ventas/medio_pago.py)."""
+
+    factura = models.ForeignKey(FacturaVenta, on_delete=models.PROTECT, related_name="cambios_medio")
+    anterior = models.CharField(max_length=3, choices=FacturaVenta.MedioPago.choices)
+    nuevo = models.CharField(max_length=3, choices=FacturaVenta.MedioPago.choices)
+    monto = models.DecimalField(max_digits=12, decimal_places=2)
+    motivo = models.CharField(max_length=200)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "cambio de medio de pago"
+        verbose_name_plural = "cambios de medio de pago"
+        ordering = ["-fecha", "-id"]
+
+    def __str__(self):
+        return f"{self.factura.numero}: {self.get_anterior_display()} → {self.get_nuevo_display()}"
+
+
 class DevolucionVenta(models.Model):
     """Devolución PARCIAL de una venta: a diferencia de anular_factura (que
     revierte TODO el documento y lo marca ANULADA), una devolución no cambia

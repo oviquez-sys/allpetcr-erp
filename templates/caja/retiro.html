@@ -1,0 +1,144 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Sacar efectivo para depositar{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.rt-wrap{max-width:640px;margin:0 auto}
+.rt-title{font-size:26px;font-weight:700;letter-spacing:-.02em;text-align:center;margin:8px 0 6px}
+.rt-sub{font-size:15px;color:#6e6e73;text-align:center;max-width:480px;margin:0 auto 24px;line-height:1.5}
+.rt-card{background:#fff;border:.5px solid rgba(0,0,0,.06);border-radius:22px;padding:24px 28px;box-shadow:var(--shadow);margin-bottom:22px}
+.rt-card h3{font-size:17px;font-weight:700;margin:0 0 12px;padding:0;background:none;color:#1d1d1f;text-transform:none}
+.rt-msg{padding:13px 18px;border-radius:14px;font-size:14.5px;margin-bottom:16px}
+.rt-msg.success{background:rgba(52,199,89,.12);color:#1c6b30}
+.rt-msg.info{background:rgba(11,49,97,.1);color:#0b3161}
+.rt-msg.error{background:rgba(255,59,48,.1);color:#b5231a}
+.rt-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #f0f0f2;padding-bottom:12px;margin-bottom:4px}
+.rt-total{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.rt-grupo{font-size:12.5px;font-weight:600;color:#86868b;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 4px}
+.den{display:grid;grid-template-columns:1fr 96px 110px;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid #f4f4f6}
+.den-v{font-size:16.5px;font-weight:600}
+.den input{width:100%;box-sizing:border-box;padding:9px 10px;border:1px solid #e0e0e6;border-radius:10px;font-size:16px;text-align:center;font-family:inherit;background:#fbfbfd}
+.den-s{text-align:right;color:#86868b;font-variant-numeric:tabular-nums}
+.rt-row{margin-top:16px}
+.rt-row label{display:block;font-size:13px;font-weight:600;color:#6e6e73;margin-bottom:6px}
+.rt-row input[type=text],.rt-row input[type=date]{width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid #e0e0e6;border-radius:12px;font-size:15.5px;font-family:inherit;background:#fbfbfd}
+.rt-err{background:rgba(255,59,48,.1);color:#b5231a;border-radius:12px;padding:10px 14px;font-size:14px;margin-bottom:12px}
+.rt-btn{margin-top:20px;padding:15px 26px;border:none;border-radius:980px;background:linear-gradient(135deg,#14498f,#072244);color:#fff;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 8px 22px rgba(11,49,97,.3)}
+.rt-lista{width:100%;border-collapse:collapse;font-size:14.5px}
+.rt-lista td{padding:10px 6px;border-top:1px solid #f0f0f2;vertical-align:top}
+.rt-lista td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.rt-lista small{color:#86868b}
+.rt-vacio{color:#86868b;font-size:14px}
+.rt-dos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rt-volver{display:inline-block;margin-top:4px;color:#86868b;font-size:14px}
+@media (max-width:600px){.rt-card{padding:20px 16px}.den{grid-template-columns:1fr 80px}.den-s{display:none}.rt-dos{grid-template-columns:1fr}}
+</style>{% endblock %}
+
+{% comment %} Los mensajes van dentro de la página, no arriba a todo lo ancho. {% endcomment %}
+{% block messages %}{% endblock %}
+
+{% block content %}
+<div class="rt-wrap">
+  <div class="rt-title">Sacar efectivo para depositar</div>
+  <div class="rt-sub">Para dejar la gaveta con poco efectivo. Contá lo que sacás: se imprime un comprobante para el sobre,
+    se abre la gaveta y el cierre de hoy ya lo descuenta.</div>
+
+  {% for m in messages %}<div class="rt-msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+
+  {% if sesion %}
+  <form method="post" id="retiro">{% csrf_token %}
+    <input type="hidden" name="accion" value="retirar">
+    <div class="rt-card">
+      <div class="rt-head"><h3 style="margin:0">Lo que sacás · caja #{{ sesion.pk }}</h3><span class="rt-total" id="total">₡0</span></div>
+      {% if form.non_field_errors %}<div class="rt-err">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+      {% for grupo, campos in grupos %}
+      <div class="rt-grupo">{{ grupo }}</div>
+      {% for valor, campo in campos %}
+      <div class="den">
+        <label class="den-v" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+        {{ campo }}
+        <div class="den-s" data-sub>₡0</div>
+      </div>
+      {% endfor %}{% endfor %}
+      <div class="rt-row"><label for="{{ form.nota.id_for_label }}">{{ form.nota.label }}</label>{{ form.nota }}</div>
+      <button type="submit" class="rt-btn" id="btnSacar">Sacar e imprimir comprobante</button>
+    </div>
+  </form>
+  {% else %}
+  <div class="rt-card"><p class="rt-vacio" style="margin:0">No hay una caja abierta: para sacar efectivo primero se abre la caja.</p></div>
+  {% endif %}
+
+  <div class="rt-card">
+    <h3>Por depositar</h3>
+    {% if pendientes %}
+    <form method="post">{% csrf_token %}
+      <input type="hidden" name="accion" value="depositar">
+      <table class="rt-lista">
+        {% for r in pendientes %}
+        <tr>
+          <td style="width:28px"><input type="checkbox" name="retiro" value="{{ r.pk }}" id="r{{ r.pk }}" checked></td>
+          <td><label for="r{{ r.pk }}"><b>{{ r.referencia }}</b> · {{ r.creado_en|date:"j/n g:i a" }} · {{ r.usuario.username|default:"—" }}</label>
+            {% if r.desglose %}<br><small>{% for v, n, st in r.desglose %}{{ n }} × ₡{{ v|crc }}{% if not forloop.last %} · {% endif %}{% endfor %}</small>{% endif %}
+            {% if r.nota %}<br><small>{{ r.nota }}</small>{% endif %}</td>
+          <td class="n">₡{{ r.monto|crc }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+      <div class="rt-dos" style="margin-top:14px">
+        <div class="rt-row" style="margin:0"><label for="fecha">Fecha del depósito</label><input type="date" name="fecha" id="fecha" value="{{ hoy|date:'Y-m-d' }}" max="{{ hoy|date:'Y-m-d' }}"></div>
+        <div class="rt-row" style="margin:0"><label for="comprobante">N.° de comprobante del BN</label><input type="text" name="comprobante" id="comprobante" maxlength="60" required></div>
+      </div>
+      <button type="submit" class="rt-btn">Anotar el depósito de lo marcado</button>
+    </form>
+    {% else %}
+    <p class="rt-vacio" style="margin:0">No hay efectivo pendiente de depositar.</p>
+    {% endif %}
+  </div>
+
+  {% if depositados %}
+  <div class="rt-card">
+    <h3>Últimos depósitos</h3>
+    <table class="rt-lista">
+      {% for r in depositados %}
+      <tr><td><b>{{ r.referencia }}</b> · sacado {{ r.creado_en|date:"j/n" }} · depositado {{ r.depositado_en|date:"j/n/Y" }}<br>
+        <small>Comprobante {{ r.comprobante }} · {{ r.depositado_por.username|default:"—" }}</small></td>
+        <td class="n">₡{{ r.monto|crc }}</td></tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+  <a class="rt-volver" href="{% url 'ventas:pos' %}">← Volver a vender</a>
+</div>
+<script src="{% static 'js/formato.js' %}"></script>
+<script>
+(function () {
+  var form = document.getElementById("retiro");
+  if (!form) return;
+  var campos = Array.prototype.slice.call(form.querySelectorAll("input[data-valor]"));
+  var crc = function (n) { return "₡" + AllPetFormato.numeroCRC(n, 0); };
+  function sumar() {
+    var total = 0;
+    campos.forEach(function (i) {
+      var n = parseInt(i.value, 10); n = isNaN(n) || n < 0 ? 0 : n;
+      var sub = n * parseInt(i.dataset.valor, 10);
+      i.closest(".den").querySelector("[data-sub]").textContent = crc(sub);
+      total += sub;
+    });
+    document.getElementById("total").textContent = crc(total);
+    document.getElementById("btnSacar").textContent = total ? "Sacar " + crc(total) + " e imprimir comprobante" : "Sacar e imprimir comprobante";
+    return total;
+  }
+  campos.forEach(function (i, k) {
+    i.addEventListener("input", sumar);
+    i.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); var s = campos[k + 1]; if (s) s.focus(); } });
+  });
+  form.addEventListener("submit", function (e) {
+    var t = sumar();
+    if (!confirm("¿Sacar " + crc(t) + " de la gaveta para depositar?")) e.preventDefault();
+  });
+  sumar();
+})();
+</script>
+{% endblock %}

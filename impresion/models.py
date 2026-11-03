@@ -44,10 +44,12 @@ class TrabajoImpresion(models.Model):
     TIQUETE = "tiquete"
     ETIQUETA = "etiqueta"
     PRUEBA = "prueba"
+    CIERRE = "cierre"
     TIPOS = [
         (TIQUETE, "Tiquete de venta"),
         (ETIQUETA, "Etiqueta de producto"),
         (PRUEBA, "Impresión de prueba"),
+        (CIERRE, "Resumen de cierre de caja"),
     ]
 
     # `crudo` = los bytes van tal cual a la impresora (ESC/POS de la térmica).

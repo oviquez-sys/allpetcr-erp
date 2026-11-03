@@ -768,6 +768,62 @@ esperado, contado, diferencia, datáfono/SINPE y billetes) con
 que contó el cierre anterior, con un aviso si no calzan (puede ser un depósito:
 el texto no acusa). Lo esperado de ESTA caja sigue oculto (conteo ciego).
 
+## Cierre que compara todo, pide explicación, avisa e imprime (02/11/2026)
+
+Pedido de Oscar: al cerrar, comparar con lo que se abrió y con lo vendido;
+todo debe calzar y, si no, avisar en qué medio y de cuánto, permitir
+justificarlo ("iba a pagar con tarjeta y al final hizo un SINPE") e imprimir
+en la térmica un resumen del día.
+- Datáfono y SINPE ahora son OBLIGATORIOS en el cierre (0 si no hubo).
+- Cierre en dos pasos (`caja.views.cerrar`): conteo ciego → si todo calza
+  (`CIERRE_TOLERANCIA`, por defecto 0) cierra ya. Si no, pantalla
+  `cerrar_diferencias.html` con esperado/contado/diferencia por medio y, por
+  cada medio malo, motivo (`DiferenciaCaja.Motivo`) + qué pasó. Si dos medios
+  se compensan, `services.sugerir_cruce` deja escrito el cruce para confirmar.
+  "Volver a contar" se puede, pero el conteo anterior queda en
+  `SesionCaja.conteos_previos`. Entre pasos el conteo viaja FIRMADO
+  (`django.core.signing`, 3 h) y no se guarda nada; si entra una venta entre
+  medio, las diferencias se recalculan y se vuelven a mostrar.
+- `cerrar_caja(justificaciones=...)`: con el parámetro, ningún medio malo
+  cierra sin explicación. Siempre crea `DiferenciaCaja` (una por medio malo).
+- Lo esperado de tarjeta/SINPE ahora suma los abonos de fiado cobrados por
+  esos medios mientras la caja estuvo abierta (antes daba sobrante falso).
+  No suma reembolsos de devoluciones por datáfono (se explican si pasan).
+- Aviso: `caja/avisos.py`, por correo en `on_commit`, a
+  `CIERRE_AVISO_DESTINATARIOS` → `REPORTE_DIARIO_DESTINATARIOS` → superusuarios
+  con correo. Si falla, el cierre queda igual y se anota en
+  `SesionCaja.aviso_diferencia`.
+- Tiquete: `impresion/cierre.py` (arma) + `servicio.imprimir_cierre` (tipo
+  `cierre` en la cola; el agente no cambia, no hay que rearmar el .exe). Los
+  números salen de `caja/resumen.resumen_cierre`, el MISMO que usa el correo.
+  Sale solo al cerrar (`CIERRE_TIQUETE_AUTOMATICO`) y se reimprime desde
+  "Así se cerró la caja anterior" en Abrir caja.
+- Pruebas: `caja/test_cierre_justificado.py`.
+
+**Retiros para depositar y cambio de medio de pago (02/11/2026).** Oscar:
+"a la caja le vamos a estar sacando para mantener menos de unos 50-60 mil;
+hoy le saqué 50.000 en billetes de 20 y 10 que se depositarán al BN otro día".
+- `caja.RetiroCaja` + `caja/retiros.py`. Pantalla `caja:retiro` (solo
+  GERENTE; enlace "Sacar efectivo" en el POS): se cuentan los billetes que se
+  sacan → MovimientoCaja tipo RET negativo (el cierre ya lo descuenta) +
+  comprobante impreso que ABRE la gaveta (`impresion/cierre.bytes_retiro`).
+  Queda "por depositar"; en la misma pantalla se marca depositado con fecha y
+  comprobante → asiento DEP Bancos contra Caja general. El retiro no lleva
+  asiento (sigue siendo Caja). No se puede sacar más de lo esperado.
+- **Sin FK a MovimientoCaja** (tabla de solo agregar en PostgreSQL, ver
+  `endurecer_documentos`): se enlazan por la referencia `RET-<id>`.
+- Al cerrar con faltante de efectivo, el GERENTE ve "¿Sacaste efectivo para
+  depositar?" y lo registra ahí (el cajero no: taparía faltantes).
+- `ventas.CambioMedioPago` + `ventas/medio_pago.py`: EFE/TAR/SIN entre sí,
+  solo con la caja de la venta abierta, sin devoluciones ni comprobante
+  electrónico, con motivo. Con efectivo de por medio: MovimientoCaja COR y
+  asiento COR Caja↔Bancos; TAR↔SIN sin asiento (las dos son Bancos). Pantalla
+  `ventas:cambiar_medio` (cajero y gerente) desde el Historial y desde
+  "¿Pagó con otro medio?" en la última venta del POS. En el cierre, si dos
+  medios se compensan, se listan las ventas de ese monto con "Pasarla a …".
+- Resumen/tiquete/correo del cierre muestran retiros y cambios de medio.
+- Pruebas: `caja/test_retiros_y_medio.py`.
+
 ## Redondeo del total en el POS (17/10/2026)
 
 Caso real: ₡13.554 en efectivo, sin vuelto, se cobró ₡13.500 y el cierre quedó

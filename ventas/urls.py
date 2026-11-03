@@ -16,6 +16,7 @@ urlpatterns = [
     path("factura/<int:factura_id>/", views.factura, name="factura"),
     path("factura/<int:factura_id>/enviar/", views.factura_enviar, name="factura_enviar"),
     path("<int:factura_id>/anular/", views.anular, name="anular"),
+    path("<int:factura_id>/medio-de-pago/", views.cambiar_medio, name="cambiar_medio"),
     path("<int:factura_id>/devolver/", views.devolver, name="devolver"),
     path("cliente/<int:cliente_id>/estado-cuenta/", views.estado_cuenta, name="estado_cuenta"),
     path("cliente/<int:cliente_id>/historial-compras/", views.historial_compras, name="historial_compras"),

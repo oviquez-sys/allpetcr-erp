@@ -496,6 +496,21 @@ REPORTE_DIARIO_DESTINATARIOS = [
 ]
 
 
+# --- Cierre de caja que no calza (02/11/2026, pedido de Oscar) ---
+# Cuánto puede no calzar un medio (efectivo, tarjeta, SINPE) sin pedir
+# explicación. 0 = todo tiene que calzar exacto.
+CIERRE_TOLERANCIA = os.environ.get("CIERRE_TOLERANCIA", "0")
+# A quién se le avisa por correo. Vacío = los de REPORTE_DIARIO_DESTINATARIOS
+# y, si tampoco hay, los superusuarios con correo (ver caja/avisos.py).
+CIERRE_AVISO_DESTINATARIOS = [
+    d.strip() for d in os.environ.get("CIERRE_AVISO_DESTINATARIOS", "").split(",") if d.strip()
+]
+# El resumen del cierre sale solo por la térmica al cerrar. 0 = solo a mano.
+CIERRE_TIQUETE_AUTOMATICO = os.environ.get("CIERRE_TIQUETE_AUTOMATICO", "1") == "1"
+# Dirección del ERP, para los enlaces de los correos.
+ERP_URL = os.environ.get("ERP_URL", "https://allpetcr-erp-lt92t.ondigitalocean.app")
+
+
 # --- Impresoras de la tienda (05/09/2026) ---
 # El ERP corre en la misma máquina donde están enchufadas las impresoras, así
 # que imprime el servidor y el cajero no pasa por el diálogo del navegador en

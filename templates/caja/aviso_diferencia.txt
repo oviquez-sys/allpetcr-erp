@@ -1,0 +1,26 @@
+{% load formato %}{% autoescape off %}El cierre de caja #{{ sesion.pk }} no calzó.
+
+Abrió: {{ sesion.usuario.username }} · {{ sesion.abierta_en|date:"d/m/Y g:i a" }}
+Cerró: {{ sesion.cerrada_por.username|default:"—" }} · {{ sesion.cerrada_en|date:"d/m/Y g:i a" }}
+
+QUÉ NO CALZÓ
+{% for d in diferencias %}- {{ d.get_medio_display }}: se esperaba ₡{{ d.esperado|crc }}, se contó ₡{{ d.contado|crc }} → {% if d.diferencia < 0 %}faltan{% else %}sobran{% endif %} ₡{{ d.diferencia|crc_abs }}
+  Motivo: {{ d.get_motivo_display|default:"sin explicar" }}
+  Explicación: {{ d.explicacion|default:"—" }}
+{% endfor %}{% if diferencias|length > 1 %}
+En total, sumando los medios: {% if neto == 0 %}se compensan (₡0){% elif neto < 0 %}faltan ₡{{ neto|crc_abs }}{% else %}sobran ₡{{ neto|crc_abs }}{% endif %}
+{% endif %}{% if sesion.conteos_previos %}
+Antes del conteo definitivo se contó {{ sesion.conteos_previos|length }} vez/veces:
+{% for c in sesion.conteos_previos %}- efectivo ₡{{ c.efectivo|crc }}{% if c.tarjeta is not None %} · datáfono ₡{{ c.tarjeta|crc }}{% endif %}{% if c.sinpe is not None %} · SINPE ₡{{ c.sinpe|crc }}{% endif %}
+{% endfor %}{% endif %}
+VENTAS DE LA CAJA
+{{ ventas_n }} venta{{ ventas_n|pluralize }} por ₡{{ ventas_total|crc }}
+{% for nombre, n, t in ventas_por_medio %}- {{ nombre }}: ₡{{ t|crc }} ({{ n }})
+{% endfor %}{% if anuladas_n %}Anuladas: {{ anuladas_n }} por ₡{{ anuladas_total|crc }}
+{% endif %}{% for c in cambios_medio %}Cobrada con otro medio: {{ c.factura.numero }} {{ c.get_anterior_display }} → {{ c.get_nuevo_display }} ₡{{ c.monto|crc }} ({{ c.motivo }})
+{% endfor %}{% for r in retiros %}Retiro para depositar {{ r.referencia }}: ₡{{ r.monto|crc }} ({{ r.usuario.username|default:"—" }}, {{ r.get_estado_display|lower }})
+{% endfor %}{% if apertura_vs_anterior %}
+Ojo: la caja abrió con ₡{{ sesion.monto_apertura|crc }} y el cierre anterior había contado ₡{{ anterior.monto_contado|crc }} (diferencia ₡{{ apertura_vs_anterior|crc }}). Puede ser un depósito.
+{% endif %}
+Ver el cierre: {{ admin_url }}
+{% endautoescape %}

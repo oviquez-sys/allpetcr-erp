@@ -1,0 +1,133 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}El cierre no calza{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.cd-wrap{max-width:640px;margin:0 auto}
+.cd-icon{width:64px;height:64px;border-radius:20px;background:linear-gradient(140deg,#ff9f0a,#e0590a);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;box-shadow:0 8px 22px rgba(255,159,10,.3);color:#fff;font-size:32px;font-weight:700}
+.cd-title{font-size:26px;font-weight:700;letter-spacing:-.02em;text-align:center;margin-bottom:6px}
+.cd-sub{font-size:15px;color:#6e6e73;text-align:center;max-width:480px;margin:0 auto 24px;line-height:1.5}
+.cd-card{background:#fff;border:.5px solid rgba(0,0,0,.06);border-radius:22px;padding:24px 28px;box-shadow:var(--shadow);margin-bottom:20px}
+.cd-card h3{font-size:17px;font-weight:700;margin:0 0 12px;padding:0;background:none;color:#1d1d1f;text-transform:none}
+.cd-tabla{width:100%;border-collapse:collapse;font-size:15px}
+.cd-tabla th{text-align:right;font-size:12px;color:#86868b;font-weight:600;padding:6px 8px;text-transform:uppercase;letter-spacing:.03em}
+.cd-tabla th:first-child{text-align:left}
+.cd-tabla td{padding:11px 8px;border-top:1px solid #f0f0f2;text-align:right;font-variant-numeric:tabular-nums}
+.cd-tabla td:first-child{text-align:left;font-weight:600}
+.ok{color:#1c7a36;font-weight:600}.mal{color:#b5231a;font-weight:700}.sobra{color:#a05a00;font-weight:700}
+.cd-medio{border-top:1px solid #f0f0f2;padding-top:18px;margin-top:18px}
+.cd-medio:first-of-type{border-top:0;margin-top:0;padding-top:0}
+.cd-medio h4{font-size:16px;margin:0 0 10px;color:#1d1d1f;background:none;padding:0;text-transform:none}
+.cd-medio label{display:block;font-size:13px;font-weight:600;color:#6e6e73;margin:10px 0 6px}
+.cd-medio select,.cd-medio textarea{width:100%;padding:12px 14px;border:1px solid #e0e0e6;border-radius:12px;font-size:15.5px;font-family:inherit;background:#fbfbfd;box-sizing:border-box}
+.cd-medio select:focus,.cd-medio textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px rgba(11,49,97,.12);background:#fff}
+.cd-err{color:#b5231a;font-size:13px;margin-top:4px}
+.cd-cruce{background:rgba(11,49,97,.07);color:#0b3161;border-radius:14px;padding:12px 16px;font-size:14px;margin-bottom:16px;line-height:1.45}
+.cd-aviso{background:rgba(255,159,10,.14);color:#8a4b00;border-radius:14px;padding:12px 16px;font-size:14px;margin-bottom:16px}
+.cd-acciones{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:22px}
+.cd-btn{padding:15px 26px;border:none;border-radius:980px;background:linear-gradient(135deg,#14498f,#072244);color:#fff;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 8px 22px rgba(11,49,97,.3)}
+.cd-btn2{padding:14px 22px;border:1px solid #d2d2d7;border-radius:980px;background:#fff;color:#0b3161;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+.cd-nota{font-size:12.5px;color:#86868b;margin-top:10px;line-height:1.45}
+.cd-arreglo{background:#fff;border:1.5px solid rgba(11,49,97,.18);border-radius:22px;padding:22px 26px;margin-bottom:20px;box-shadow:var(--shadow)}
+.cd-arreglo h3{font-size:17px;font-weight:700;margin:0 0 6px;padding:0;background:none;color:#0b3161;text-transform:none}
+.cd-arreglo p{font-size:14px;color:#424245;margin:0 0 12px;line-height:1.45}
+.cd-venta{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid #f0f0f2;font-size:14.5px}
+.cd-venta form{margin:0}
+.cd-mini{padding:10px 16px;border:none;border-radius:980px;background:#0b3161;color:#fff;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.cd-ret{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.cd-ret input{padding:10px 12px;border:1px solid #e0e0e6;border-radius:12px;font-size:15px;font-family:inherit;width:150px}
+.cd-ret input[name=nota]{flex:1;min-width:180px}
+@media (max-width:600px){.cd-card{padding:20px 16px}.cd-tabla{font-size:13.5px}}
+</style>{% endblock %}
+
+{% block content %}
+<div class="cd-wrap">
+  <div class="cd-icon">!</div>
+  <div class="cd-title">El cierre de la caja #{{ sesion.pk }} no calza</div>
+  <div class="cd-sub">Revisá qué medio no cuadró. Si fue un error de conteo, volvé a contar. Si pasó algo
+    (por ejemplo, la clienta iba a pagar con tarjeta y al final hizo un SINPE), explicalo y cerrá.</div>
+
+  {% if aviso %}<div class="cd-aviso">{{ aviso }}</div>{% endif %}
+
+  <div class="cd-card">
+    <h3>Lo que se esperaba y lo que se contó</h3>
+    <table class="cd-tabla">
+      <tr><th>Medio</th><th>Esperado</th><th>Contado</th><th>Diferencia</th></tr>
+      {% for f in filas %}
+      <tr>
+        <td>{{ f.nombre }}</td>
+        <td>₡{{ f.esperado|crc }}</td>
+        <td>₡{{ f.contado|crc }}</td>
+        <td>{% if f.calza %}<span class="ok">Calza</span>{% elif f.diferencia < 0 %}<span class="mal">Faltan ₡{{ f.diferencia|crc_abs }}</span>{% else %}<span class="sobra">Sobran ₡{{ f.diferencia|crc_abs }}</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  {% if cruce %}
+  <div class="cd-arreglo">
+    <h3>¿Fue una venta cobrada por otro medio?</h3>
+    {% if cruce.ventas %}
+    <p>Estas ventas se registraron como <b>{{ cruce.falta.nombre }}</b> por ₡{{ cruce.falta.diferencia|crc_abs }}.
+      Si una de ellas se cobró por <b>{{ cruce.sobra.nombre }}</b>, corregila y el cierre calza solo.</p>
+    {% for v in cruce.ventas %}
+    <div class="cd-venta">
+      <span><b>{{ v.numero }}</b> · {{ v.creado_en|date:"g:i a" }}{% if v.cliente %} · {{ v.cliente.nombre }}{% endif %} · ₡{{ v.total|crc }}</span>
+      <form method="post">{% csrf_token %}
+        <input type="hidden" name="firma" value="{{ firma }}"><input type="hidden" name="paso" value="corregir">
+        <input type="hidden" name="factura" value="{{ v.pk }}"><input type="hidden" name="nuevo" value="{{ cruce.sobra.medio }}">
+        <button type="submit" class="cd-mini">Pasarla a {{ cruce.sobra.nombre }}</button>
+      </form>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p>No hay ninguna venta de ₡{{ cruce.falta.diferencia|crc_abs }} registrada como {{ cruce.falta.nombre }} en esta caja:
+      puede ser la suma de varias. Explicalo abajo.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if faltante_efectivo %}
+  <div class="cd-arreglo">
+    <h3>¿Sacaste efectivo para depositar?</h3>
+    <p>Si sacaste plata de la gaveta para el banco y no lo anotaste, registralo aquí como retiro: queda por depositar
+      y el efectivo calza.</p>
+    <form method="post" class="cd-ret">{% csrf_token %}
+      <input type="hidden" name="firma" value="{{ firma }}"><input type="hidden" name="paso" value="retiro">
+      <label>₡ <input type="number" name="monto" min="1" step="1" value="{{ faltante_efectivo|floatformat:0 }}" required></label>
+      <input type="text" name="nota" maxlength="200" placeholder="Nota (ej.: billetes de 20 y 10 mil para el BN)">
+      <button type="submit" class="cd-mini">Registrar el retiro</button>
+    </form>
+  </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="firma" value="{{ firma }}">
+    <div class="cd-card">
+      <h3>¿Qué pasó?</h3>
+      {% if hay_cruce %}<div class="cd-cruce">Lo que falta en un medio es lo mismo que sobra en el otro: parece una venta
+        cobrada por otro medio. Ya lo dejamos escrito; confirmalo o cambialo.</div>{% endif %}
+      {% for f in filas %}{% if not f.calza %}
+      <div class="cd-medio">
+        <h4>{{ f.nombre }}: {% if f.diferencia < 0 %}faltan{% else %}sobran{% endif %} ₡{{ f.diferencia|crc_abs }}</h4>
+        <label for="{{ f.campos.0.id_for_label }}">Motivo</label>
+        {{ f.campos.0 }}
+        {% if f.campos.0.errors %}<div class="cd-err">{{ f.campos.0.errors|join:", " }}</div>{% endif %}
+        <label for="{{ f.campos.1.id_for_label }}">Qué pasó</label>
+        {{ f.campos.1 }}
+        {% if f.campos.1.errors %}<div class="cd-err">{{ f.campos.1.errors|join:", " }}</div>{% endif %}
+      </div>
+      {% endif %}{% endfor %}
+      <div class="cd-acciones">
+        <button type="submit" name="paso" value="justificar" class="cd-btn">Cerrar la caja con esta explicación</button>
+        <button type="submit" name="paso" value="recontar" class="cd-btn2" formnovalidate>Volver a contar</button>
+      </div>
+      <div class="cd-nota">Al cerrar se les avisa por correo a los socios con el detalle y se imprime el resumen.
+        Si volvés a contar, este conteo queda guardado en el cierre.</div>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -5,7 +5,7 @@ from django.utils.html import format_html
 
 from core.admin_fotos import columna_foto
 
-from .models import Abono, Cliente, DevolucionVenta, DocumentoCxC, FacturaVenta, LineaVenta
+from .models import Abono, CambioMedioPago, Cliente, DevolucionVenta, DocumentoCxC, FacturaVenta, LineaVenta
 from .services import anular_factura
 
 
@@ -120,6 +120,24 @@ class DocumentoCxCAdmin(admin.ModelAdmin):
     inlines = [AbonoInline]
 
     def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(CambioMedioPago)
+class CambioMedioPagoAdmin(admin.ModelAdmin):
+    """Ventas cobradas con otro medio (02/11/2026). Solo se miran: se hacen
+    desde el Historial de ventas o el POS, con sus reglas."""
+    list_display = ("fecha", "factura", "anterior", "nuevo", "monto", "usuario", "motivo")
+    list_filter = ("anterior", "nuevo")
+    search_fields = ("factura__numero", "motivo")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
         return False
 
     def has_delete_permission(self, request, obj=None):
