@@ -14,4 +14,5 @@ urlpatterns = [
     path("sin-ficha/", views.alimentos_sin_ficha, name="sin_ficha"),
     path("promociones/", views_promociones.lista, name="promociones"),
     path("promociones/<int:pk>/", views_promociones.detalle, name="promocion"),
+    path("promociones/<int:pk>/lista/", views_promociones.lista_para_marcar, name="promocion_lista"),
 ]

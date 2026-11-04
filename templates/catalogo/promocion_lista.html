@@ -1,0 +1,89 @@
+{% load static %}<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lista para marcar · {{ promo.nombre }}</title>
+{% comment %} Hoja para recorrer la tienda poniendo los puntos rojos (04/11/2026).
+Página suelta, sin el menú del ERP, pensada para carta y para tinta: casi todo
+negro sobre blanco. Se imprime sola al abrirse. {% endcomment %}
+<style>
+  @page { size: letter; margin: 12mm 12mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #111; margin: 0; padding: 18px; font-size: 13px; }
+  .barra { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .barra button { font: inherit; font-weight: 600; padding: 9px 18px; border-radius: 8px; border: 0; background: #0b3161; color: #fff; cursor: pointer; }
+  .barra span { color: #666; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  .sub { color: #444; margin-bottom: 12px; }
+  .sub b { color: #111; }
+  .leyenda { display: flex; gap: 18px; border: 1px solid #bbb; border-radius: 6px; padding: 6px 10px; margin-bottom: 12px; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #555; border-bottom: 1.5px solid #111; padding: 4px 6px; }
+  td { border-bottom: 1px solid #ccc; padding: 5px 6px; vertical-align: middle; }
+  tr { break-inside: avoid; }
+  .g td { background: #eee; font-weight: 700; font-size: 12px; padding: 5px 6px; border-bottom: 1px solid #999; }
+  .cuadro { width: 22px; height: 22px; border: 2px solid #111; border-radius: 4px; display: inline-block; }
+  .foto { width: 46px; }
+  .foto img, .foto span { display: block; }
+  .n { text-align: right; white-space: nowrap; }
+  .nombre b { font-size: 13.5px; }
+  .nombre small { display: block; color: #555; font-size: 11px; }
+  .tach { text-decoration: line-through; color: #666; }
+  .ofe { font-weight: 700; }
+  .cero { color: #999; }
+  .pie { margin-top: 14px; font-size: 11.5px; color: #444; border-top: 1px solid #bbb; padding-top: 8px; }
+  @media print { body { padding: 0; } .barra { display: none; } }
+</style></head>
+<body>
+<div class="barra"><button type="button" id="imprimir">🖨 Imprimir</button><span>Tamaño carta. Si no se abrió el cuadro de impresión, tocá el botón.</span></div>
+
+<h1>{{ promo.nombre }} · lista para marcar con punto rojo</h1>
+<div class="sub">Del <b>{{ promo.inicio|date:"j/n/Y" }}</b> al <b>{{ promo.fin|date:"j/n/Y" }}</b> ·
+  {{ total }} producto{{ total|pluralize }} · {{ unidades|floatformat:0 }} unidad{{ unidades|pluralize:"es" }} en existencia ·
+  impreso el {{ impreso|date:"j/n/Y H:i" }}</div>
+<div class="leyenda"><span><span class="cuadro" style="width:14px;height:14px;vertical-align:-2px"></span> marcalo cuando le pongas el punto</span>
+  <span>Ordenado por categoría, como está la exhibición</span></div>
+
+{% if grupos %}
+<table>
+  <thead><tr><th style="width:34px"></th><th class="foto"></th><th>Producto</th><th class="n">Existencia</th><th class="n">Precio</th><th class="n">Oferta</th></tr></thead>
+  <tbody>
+  {% for nombre, filas in grupos %}
+    <tr class="g"><td colspan="6">{{ nombre }} · {{ filas|length }}</td></tr>
+    {% for f in filas %}
+    <tr>
+      <td><span class="cuadro"></span></td>
+      <td class="foto">{% foto_producto f.producto 40 %}</td>
+      <td class="nombre"><b>{{ f.producto.nombre }}</b>
+        <small>{{ f.producto.sku }}{% if f.producto.codigo_barras and f.producto.codigo_barras != f.producto.sku %} · {{ f.producto.codigo_barras }}{% endif %}</small></td>
+      <td class="n{% if f.stock <= 0 %} cero{% endif %}">{% if f.stock > 0 %}{{ f.stock|floatformat:0 }}{% else %}sin existencia{% endif %}</td>
+      <td class="n tach">₡{{ f.precio|crc }}</td>
+      <td class="n"><span class="ofe">₡{{ f.oferta|crc }}</span> <small>−{{ f.pct }} %</small></td>
+    </tr>
+    {% endfor %}
+  {% endfor %}
+  </tbody>
+</table>
+<div class="pie">Si a un producto de esta lista le falta el punto, igual le sale el descuento en caja. Lo contrario no:
+  un punto en un producto que NO está en la lista hace que el cliente espere un descuento que la caja no le va a dar.
+  Al terminar la promoción ({{ promo.fin|date:"j/n" }}, al cerrar) hay que quitar todos los puntos.</div>
+{% else %}
+<p>Esta promoción todavía no tiene productos.</p>
+{% endif %}
+
+<script src="{% static 'js/fotos.js' %}"></script>
+<script>
+  document.getElementById("imprimir").addEventListener("click", function () { window.print(); });
+  // Las miniaturas vienen con carga diferida; para imprimir hay que tenerlas
+  // todas antes de abrir el cuadro de impresión.
+  (function () {
+    var imgs = Array.prototype.slice.call(document.images);
+    imgs.forEach(function (i) { i.loading = "eager"; });
+    var pendientes = imgs.filter(function (i) { return !i.complete; }).map(function (i) {
+      return new Promise(function (ok) { i.addEventListener("load", ok); i.addEventListener("error", ok); });
+    });
+    var listo = Promise.all(pendientes);
+    var tope = new Promise(function (ok) { setTimeout(ok, 4000); });
+    Promise.race([listo, tope]).then(function () { window.print(); });
+  })();
+</script>
+</body></html>

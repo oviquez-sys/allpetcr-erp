@@ -551,6 +551,10 @@ TIQUETE_AUTOMATICO = os.environ.get("TIQUETE_AUTOMATICO", "1") != "0"
 # Gaveta de dinero (19/10/2026): enchufada a la térmica de recibos (puerto DK).
 # Se abre sola con las ventas que meten efectivo; en "0" no se abre nunca.
 GAVETA_AUTOMATICA = os.environ.get("GAVETA_AUTOMATICA", "1") != "0"
+# Etiquetas de oferta de las promociones (04/11/2026): apagadas por decisión de
+# Oscar para no tener que reetiquetar la tienda; la promo se ve en la caja y la
+# web igual. El diseño ya está hecho: "1" las vuelve a mostrar.
+PROMO_ETIQUETAS = os.environ.get("PROMO_ETIQUETAS", "0") == "1"
 
 # Caja compartida (auditoría 26/09/2026, CAJ-03): un solo cajón de dinero en la
 # tienda, una sola sesión de caja abierta a la vez. "0" = una caja por persona.

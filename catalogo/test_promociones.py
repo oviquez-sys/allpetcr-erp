@@ -11,6 +11,7 @@ from decimal import Decimal
 
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -220,6 +221,15 @@ class Pantalla(ConPromo):
         r = self.client.get(reverse("catalogo:promociones"))
         self.assertNotEqual(r.status_code, 200)
 
+    def test_etiquetas_apagadas_por_defecto(self):
+        # Decisión de Oscar (04/11): no reetiquetar la tienda por ahora.
+        r = self.client.get(reverse("catalogo:promocion", args=[self.promo.pk]))
+        self.assertNotContains(r, "Imprimir etiquetas de oferta")
+        self.client.post(reverse("catalogo:promocion", args=[self.promo.pk]), {"accion": "etiquetas"})
+        from impresion.models import TrabajoImpresion
+        self.assertEqual(TrabajoImpresion.objects.filter(tipo="etiqueta").count(), 0)
+
+    @override_settings(PROMO_ETIQUETAS=True)
     def test_etiqueta_de_oferta(self):
         from impresion.etiqueta import imagen_etiqueta_oferta
         o = oferta_de(Producto.objects.get(pk=self.producto.pk))
@@ -230,3 +240,14 @@ class Pantalla(ConPromo):
         self.assertEqual(r.status_code, 302)
         from impresion.models import TrabajoImpresion
         self.assertEqual(TrabajoImpresion.objects.filter(tipo="etiqueta").count(), 1)
+
+    def test_lista_para_marcar(self):
+        r = self.client.get(reverse("catalogo:promocion", args=[self.promo.pk]))
+        self.assertContains(r, reverse("catalogo:promocion_lista", args=[self.promo.pk]))
+        r = self.client.get(reverse("catalogo:promocion_lista", args=[self.promo.pk]))
+        self.assertEqual(r.status_code, 200)
+        self.assertContains(r, self.producto.nombre)
+        self.assertContains(r, "lista para marcar")
+        self.client.force_login(self.cajero)
+        r = self.client.get(reverse("catalogo:promocion_lista", args=[self.promo.pk]))
+        self.assertNotEqual(r.status_code, 200)

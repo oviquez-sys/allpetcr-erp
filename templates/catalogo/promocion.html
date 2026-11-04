@@ -9,6 +9,8 @@ body{background-color:#f5f5f7 !important}
 .pm-card{background:#fff;border-radius:22px;padding:22px 24px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:20px}
 .pm-migas{max-width:1180px;margin:0 auto 10px;font-size:13px;color:#86868b}.pm-migas a{color:#0b3161}
 .pm-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pm-imprimir{margin-left:auto;font-size:14px;font-weight:600;color:#0b3161;text-decoration:none;border:1px solid #d2d2d7;border-radius:999px;padding:7px 14px;background:#fff}
+.pm-imprimir:hover{background:#f0f4fa}
 .pm-top h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0;padding:0;background:none;color:#1d1d1f}
 .pm-est{font-size:12.5px;font-weight:700;border-radius:999px;padding:5px 12px}
 .e-Vigente{background:#e8f7ec;color:#1c7a36}.e-Programada{background:#eaf1fb;color:#0b3161}
@@ -71,7 +73,8 @@ body{background-color:#f5f5f7 !important}
  <div>
   {% for m in messages %}<div class="pm-msg {{ m.tags }}">{{ m }}</div>{% endfor %}
   <div class="pm-card">
-    <div class="pm-top"><h1>{{ promo.nombre }}</h1><span class="pm-est e-{{ estado }}">{{ estado }}</span></div>
+    <div class="pm-top"><h1>{{ promo.nombre }}</h1><span class="pm-est e-{{ estado }}">{{ estado }}</span>
+      <a class="pm-imprimir" href="{% url 'catalogo:promocion_lista' promo.pk %}" target="_blank" rel="noopener">🖨 Imprimir lista para marcar</a></div>
     <p class="pm-sub">{% if editable %}Escaneá los productos con la pistola: entran con el {{ promo.descuento_pct }} % de la promoción. Si querés otro % para alguno, cambialo en su fila.{% else %}La promoción terminó: así quedó la lista.{% endif %}</p>
     {% if editable %}
     <form class="pm-scan" id="scan" autocomplete="off">
@@ -104,7 +107,7 @@ body{background-color:#f5f5f7 !important}
   </div>
   {% endif %}
 
-  {% if vencida and filas %}
+  {% if vencida and filas and con_etiquetas %}
   <div class="pm-card">
     <h3 class="pm-h3">Etiquetas de oferta para quitar</h3>
     <p class="pm-nota">La promoción ya no aplica: quitá la etiqueta de oferta de estos productos.</p>
@@ -143,7 +146,7 @@ body{background-color:#f5f5f7 !important}
       <form method="post">{% csrf_token %}<input type="hidden" name="accion" value="pausar">
         <button class="pm-btn2">Pasar a borrador (pausar)</button></form>
     {% endif %}
-    {% if filas and editable %}
+    {% if filas and editable and con_etiquetas %}
       <form method="post">{% csrf_token %}<input type="hidden" name="accion" value="etiquetas">
         <button class="pm-btn2">🏷 Imprimir etiquetas de oferta (1 por producto)</button></form>
       <form method="post">{% csrf_token %}<input type="hidden" name="accion" value="etiquetas"><input type="hidden" name="por_unidad" value="1">

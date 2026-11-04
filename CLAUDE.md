@@ -848,7 +848,9 @@ precio bonito (`precios_bonitos.bonito_hacia_abajo`).
   % por fila, avisos (bajo costo con máximo sin perder, precio subido en 30
   días por `CambioPrecio`, otra promo cruzada), sugeridos, "Cómo le fue",
   etiquetas de oferta (`impresion/etiqueta.imagen_etiqueta_oferta`, con barras
-  y vigencia) y lista de etiquetas a quitar al terminar.
+  y vigencia) y lista de etiquetas a quitar al terminar. **Etiquetas APAGADAS**
+  (Oscar, 04/11: no quiere reetiquetar todo): `PROMO_ETIQUETAS=1` las vuelve a
+  mostrar; sin eso no hay botones ni lista de "quitar" y la acción se rechaza.
 - POS: tarjeta con -% y tachado; línea "🔥 Promo −40 % · aplicado solo"
   (`ganaLaPromo` en pos.html = misma regla del servidor). Tiquete: renglón con
   el nombre de la promo y "Usted ahorró".

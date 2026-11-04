@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
@@ -91,7 +92,38 @@ def detalle(request, pk):
         ctx["resultados"] = P.resultados(promo)
     ctx["vencida"] = promo.estado == Promocion.Estado.TERMINADA or promo.fin < timezone.localdate()
     ctx["hoy"] = timezone.localdate()
+    ctx["con_etiquetas"] = settings.PROMO_ETIQUETAS
     return render(request, "catalogo/promocion.html", ctx)
+
+
+@rol_requerido(GERENTE)
+def lista_para_marcar(request, pk):
+    """Hoja para imprimir en carta y recorrer la tienda poniendo los puntos
+    rojos (04/11/2026, pedido de Oscar: "comparar físicamente cuáles ya están
+    marcados y cuáles faltan"). Va agrupada por categoría porque así está
+    acomodada la exhibición: se marca un estante entero sin ir y venir."""
+    empresa = empresa_actual(request)
+    promo = get_object_or_404(Promocion, pk=pk, empresa=empresa)
+    items = list(promo.items.select_related("producto__categoria__padre", "producto__impuesto", "promocion"))
+
+    def grupo(p):
+        c = p.categoria
+        if c is None:
+            return "Sin categoría"
+        return f"{c.padre.nombre} › {c.nombre}" if c.padre_id else c.nombre
+
+    grupos = {}
+    for item in sorted(items, key=lambda i: (grupo(i.producto), i.producto.nombre.lower())):
+        p = item.producto
+        grupos.setdefault(grupo(p), []).append({
+            "producto": p, "pct": item.pct, "precio": p.precio_venta,
+            "oferta": P.precio_oferta(p.precio_venta, item.pct), "stock": p.stock_actual,
+        })
+    return render(request, "catalogo/promocion_lista.html", {
+        "promo": promo, "grupos": list(grupos.items()), "total": len(items),
+        "unidades": sum((i.producto.stock_actual for i in items), 0),
+        "impreso": timezone.localtime(),
+    })
 
 
 def _accion(request, promo):
@@ -170,7 +202,8 @@ def _accion(request, promo):
             messages.info(request, "La promoción quedó en borrador: ya no se aplica hasta volver a activarla.")
         elif accion == "terminar":
             P.terminar(promo, request.user)
-            messages.success(request, "Promoción terminada. Abajo está la lista de etiquetas de oferta para quitar.")
+            messages.success(request, "Promoción terminada. Abajo está la lista de etiquetas de oferta para quitar."
+                             if settings.PROMO_ETIQUETAS else "Promoción terminada: los precios vuelven a la normalidad.")
         elif accion == "eliminar":
             if promo.estado != Promocion.Estado.BORRADOR or promo.lineas_venta.exists():
                 raise ValidationError("Solo se borra un borrador que nunca vendió nada.")
@@ -178,6 +211,8 @@ def _accion(request, promo):
             messages.success(request, "Borrador eliminado.")
             return redirect("catalogo:promociones")
         elif accion == "etiquetas":
+            if not settings.PROMO_ETIQUETAS:
+                raise ValidationError("Las etiquetas de oferta están apagadas por ahora.")
             return _etiquetas(request, promo)
         else:
             raise ValidationError("Acción desconocida.")
