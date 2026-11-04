@@ -1,0 +1,31 @@
+{% comment %} Lista de productos de la promoción (04/11/2026). La arma el servidor y
+el JS la reemplaza entera después de cada escaneo o cambio. {% endcomment %}
+{% if filas %}
+<table class="pm-tabla">
+  <thead><tr><th>Producto</th><th>Precio normal</th><th>Desc.</th><th>Precio oferta</th><th>Ganancia</th><th></th></tr></thead>
+  <tbody>
+  {% for f in filas %}
+  <tr class="{% if f.item.pk == nuevo %}nuevo{% endif %}">
+    <td><div class="pm-prod">{% foto_producto f.producto 46 %}<div><b>{{ f.producto.nombre }}</b>
+      <small>{{ f.producto.sku }} · {% if f.stock > 0 %}quedan {{ f.stock|floatformat:0 }}{% else %}<span class="mal">sin existencia</span>{% endif %}</small></div></div></td>
+    <td class="n tach">₡{{ f.precio|crc }}</td>
+    <td class="n">{% if editable %}<input class="pm-pct{% if f.pct_propio %} propio{% endif %}" type="text" inputmode="numeric" maxlength="2"
+        value="{{ f.pct }}" data-item="{{ f.item.pk }}" aria-label="Descuento de {{ f.producto.nombre }}"> %{% else %}{{ f.pct }} %{% endif %}</td>
+    <td class="n oferta">₡{{ f.oferta|crc }}</td>
+    <td class="n {% if f.bajo_costo %}mal{% else %}bien{% endif %}">{% if f.margen is None %}—{% else %}{{ f.margen }} %{% endif %}</td>
+    <td>{% if editable %}<button type="button" class="pm-quitar" data-quitar="{{ f.item.pk }}" title="Quitar">×</button>{% endif %}</td>
+  </tr>
+  {% if f.bajo_costo or f.subio or f.choca %}
+  <tr class="pm-avisos"><td colspan="6">
+    {% if f.bajo_costo %}<span class="pm-aviso rojo">⚠ Con {{ f.pct }} % queda por DEBAJO del costo.{% if f.max_pct %} El máximo sin perder es {{ f.max_pct }} %.{% endif %}
+      {% if editable %}<label><input type="checkbox" data-bajo="{{ f.item.pk }}" {% if f.item.permitir_bajo_costo %}checked{% endif %}> Venderlo bajo costo igual</label>{% endif %}</span>{% endif %}
+    {% if f.subio %}<span class="pm-aviso">⚠ El precio subió el {{ f.subio.fecha|date:"j/n" }} (de ₡{{ f.subio.valor_anterior|crc }} a ₡{{ f.subio.valor_nuevo|crc }}). El precio tachado tiene que ser el real de antes.</span>{% endif %}
+    {% if f.choca %}<span class="pm-aviso rojo">⚠ Ya está en «{{ f.choca.promocion }}» en fechas que se cruzan.</span>{% endif %}
+  </td></tr>
+  {% endif %}
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="pm-vacio">Escaneá el primer producto con la pistola, o tocá «Sugerir productos que no se venden».</p>
+{% endif %}

@@ -206,6 +206,11 @@ class LineaVenta(models.Model):
     es_regalia = models.BooleanField(default=False,
                                      help_text="Producto entregado gratis: sin ingreso, pero su costo sale a gasto")
     costo_unitario = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    # La promoción que puso el descuento de esta línea (04/11/2026). Vacío si
+    # el descuento lo puso el cajero o el cupón (o no hubo). Con esto el
+    # tiquete dice "Black Friday 40%" y la promoción sabe cuánto vendió.
+    promocion = models.ForeignKey("catalogo.Promocion", null=True, blank=True, on_delete=models.PROTECT,
+                                  related_name="lineas_venta")
     total = models.DecimalField(max_digits=12, decimal_places=2)
     # Su parte del redondeo del total (ya incluida en descuento_monto).
     redondeo = models.DecimalField(max_digits=12, decimal_places=2, default=0)

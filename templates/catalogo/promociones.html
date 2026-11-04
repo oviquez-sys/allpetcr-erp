@@ -1,0 +1,54 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Promociones{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.pr-wrap{max-width:900px;margin:0 auto}
+.pr-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:6px 0 20px}
+.pr-head h1{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:0;padding:0;background:none;color:#1d1d1f}
+.pr-head p{margin:4px 0 0;color:#6e6e73;font-size:15px}
+.pr-nueva{display:flex;gap:8px}
+.pr-nueva input{padding:12px 14px;border:1px solid #e0e0e6;border-radius:12px;font-size:15px;font-family:inherit;width:260px}
+.pr-btn{padding:12px 20px;border:0;border-radius:980px;background:linear-gradient(135deg,#14498f,#072244);color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.pr-sec{font-size:12.5px;font-weight:700;color:#86868b;text-transform:uppercase;letter-spacing:.06em;margin:22px 4px 8px}
+.pr-card{display:flex;align-items:center;gap:16px;background:#fff;border-radius:18px;padding:16px 20px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 6px 18px rgba(0,0,0,.04);color:#1d1d1f;text-decoration:none}
+.pr-card:hover{box-shadow:0 2px 6px rgba(0,0,0,.06),0 10px 26px rgba(0,0,0,.07)}
+.pr-pct{min-width:64px;text-align:center;font-weight:800;font-size:20px;color:#c2410c;background:#fff4ec;border-radius:12px;padding:8px 6px}
+.pr-card b{font-size:16px;display:block}
+.pr-card small{color:#6e6e73;font-size:13px}
+.pr-est{margin-left:auto;font-size:12.5px;font-weight:700;border-radius:999px;padding:5px 12px;white-space:nowrap}
+.e-Vigente{background:#e8f7ec;color:#1c7a36}.e-Programada{background:#eaf1fb;color:#0b3161}
+.e-Borrador{background:#f2f2f5;color:#6e6e73}.e-Vencida,.e-Terminada{background:#f5f5f5;color:#86868b}
+.pr-vacio{background:#fff;border-radius:18px;padding:30px;text-align:center;color:#6e6e73;line-height:1.6}
+.pr-msg{padding:13px 18px;border-radius:14px;font-size:14.5px;margin-bottom:14px;background:rgba(52,199,89,.12);color:#1c6b30}
+@media (max-width:600px){.pr-nueva{width:100%}.pr-nueva input{flex:1;width:auto}}
+</style>{% endblock %}
+
+{% block messages %}{% endblock %}
+
+{% block content %}
+<div class="pr-wrap">
+  {% for m in messages %}<div class="pr-msg">{{ m }}</div>{% endfor %}
+  <div class="pr-head">
+    <div><h1>Promociones</h1><p>Productos con descuento por unas fechas. La caja la aplica sola y la web muestra el precio tachado.</p></div>
+    <form method="post" class="pr-nueva">{% csrf_token %}
+      <input type="text" name="nombre" maxlength="60" placeholder="Nombre (ej.: Black Friday)" required>
+      <button class="pr-btn">+ Nueva promoción</button>
+    </form>
+  </div>
+  {% for titulo, promos in grupos %}
+    <div class="pr-sec">{{ titulo }}</div>
+    {% for p in promos %}
+    <a class="pr-card" href="{% url 'catalogo:promocion' p.pk %}">
+      <div class="pr-pct">-{{ p.descuento_pct }}%</div>
+      <div><b>{{ p.nombre }}</b><small>{{ p.n_items }} producto{{ p.n_items|pluralize }} · del {{ p.inicio|date:"j/n" }} al {{ p.fin|date:"j/n/Y" }}</small></div>
+      <span class="pr-est e-{{ p.estado_txt }}">{{ p.estado_txt }}</span>
+    </a>
+    {% endfor %}
+  {% endfor %}
+  {% if not hay %}
+  <div class="pr-vacio">Todavía no hay promociones.<br>Poné un nombre arriba y escaneá los productos con la pistola.</div>
+  {% endif %}
+</div>
+{% endblock %}

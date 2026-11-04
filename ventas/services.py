@@ -190,9 +190,14 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     # mismo orden (por id de producto) evita interbloqueos (deadlock) en
     # PostgreSQL. El orden no afecta los totales (la suma es conmutativa).
     lineas = sorted(lineas, key=lambda l: l["producto_id"])
+    # Promociones vigentes de los productos de esta venta (04/11/2026): la
+    # caja las aplica sola, el cajero no tiene que acordarse de nada.
+    from catalogo.promociones import oferta_de, vigentes as promos_vigentes
+    promos = promos_vigentes(empresa, productos=[l["producto_id"] for l in lineas])
 
     subtotal = impuesto = total = descuento_total = Decimal("0")
     creadas = []
+    cupon_aplicado = False
     for linea in lineas:
         producto = Producto.objects.get(pk=linea["producto_id"], activo=True)
         cantidad = Decimal(str(linea["cantidad"]))
@@ -247,7 +252,8 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
                     )
                 desc_l = bruto_linea - (precio_final * cantidad).quantize(Decimal("0.01"))
                 desc_pct = (desc_l * 100 / bruto_linea).quantize(Decimal("0.01")) if bruto_linea else Decimal("0")
-            if pct_cupon > desc_pct:
+            gana_cupon = pct_cupon > desc_pct
+            if gana_cupon:
                 # El cupón da más que lo negociado: gana el cupón (no se suman).
                 desc_pct, desc_l = pct_cupon, None
             if desc_l is None:
@@ -255,6 +261,17 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
                 # total quedaba en ₡2.044,50 — nadie cobra ni da vuelto en
                 # céntimos. Se redondea el descuento, no el precio.
                 desc_l = (bruto_linea * desc_pct / 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+            # Promoción (04/11/2026): si da más que lo negociado o el cupón,
+            # gana la promoción (no se suman; empate = promoción, así la línea
+            # queda atribuida a ella). Su descuento es exacto: precio de
+            # oferta por cantidad, el mismo que muestran la web y el POS.
+            promo_linea = None
+            oferta = oferta_de(producto, promos[producto.pk]) if producto.pk in promos else None
+            if oferta is not None:
+                desc_promo = bruto_linea - (oferta["precio"] * cantidad).quantize(Decimal("0.01"))
+                if desc_promo >= desc_l:
+                    desc_l, promo_linea, gana_cupon = desc_promo, oferta["item"], False
+                    desc_pct = (desc_l * 100 / bruto_linea).quantize(Decimal("0.01")) if bruto_linea else Decimal("0")
             total_linea = bruto_linea - desc_l
             sub_l, imp_l = _desglose_fiscal(empresa, producto, total_linea)
             # Bloqueo de venta bajo costo: lo que le queda al negocio por
@@ -262,7 +279,10 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             # no puede quedar por debajo del costo promedio. Antes se
             # comparaba el precio con IVA: en régimen tradicional dejaba pasar
             # ventas que perdían plata (20/09/2026).
-            if not permitir_bajo_costo and producto.costo_promedio > 0:
+            # Una promoción que un gerente marcó "vender bajo costo" ya está
+            # autorizada; cualquier otra sigue frenada por el piso de costo.
+            if (not permitir_bajo_costo and producto.costo_promedio > 0
+                    and not (promo_linea is not None and promo_linea.permitir_bajo_costo)):
                 precio_efectivo = sub_l / cantidad
                 if precio_efectivo < producto.costo_promedio:
                     por_cupon = " (por el cupón)" if pct_cupon and desc_pct == pct_cupon else ""
@@ -276,13 +296,14 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             # descuento grande sin bajar del costo, y aun así representar una
             # fuga de margen que un cajero no debería poder decidir solo.
             if (not permitir_descuento_alto and desc_pct > DESCUENTO_MAXIMO_SIN_AUTORIZACION
-                    and desc_pct > pct_cupon):
+                    and desc_pct > pct_cupon and promo_linea is None):
                 raise ValidationError(
                     f"{producto.nombre}: un descuento de {desc_pct}% supera el "
                     f"{DESCUENTO_MAXIMO_SIN_AUTORIZACION}% que un cajero puede aplicar sin "
                     "autorización. Pedile a un gerente que registre la venta."
                 )
             tipo_kardex = "VEN"
+            cupon_aplicado = cupon_aplicado or gana_cupon
 
         # Kardex primero: si no hay stock, ValidationError revienta TODA la venta.
         registrar_movimiento(
@@ -295,6 +316,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             precio_unitario=precio, descuento_pct=desc_pct if not es_regalia else 0,
             descuento_monto=desc_l if not es_regalia else 0, es_regalia=es_regalia,
             costo_unitario=producto.costo_promedio, total=total_linea,
+            promocion=promo_linea.promocion if (not es_regalia and promo_linea is not None) else None,
             # Foto fiscal de la línea (VEN-08). En simplificado no hay tarifa
             # que declarar: se deja vacía en vez de inventar un 0 %.
             tarifa_iva=(producto.tarifa_iva if empresa.regimen == Empresa.Regimen.TRADICIONAL else None),
@@ -339,6 +361,11 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
         campos += ["monto_recibido", "vuelto"]
     factura.save(update_fields=campos)
 
+    # Si la promoción le ganó al cupón en TODAS las líneas, el cupón no se
+    # quema (04/11/2026): es de un solo uso y el cliente no recibió nada por
+    # él. Queda disponible para otra compra.
+    if cupon_obj is not None and not cupon_aplicado and descuento_total > 0:
+        cupon_obj = None
     if cupon_obj is not None:
         if descuento_total <= 0:
             # Todo regalía: el cupón no rebajó nada. Se rechaza en vez de

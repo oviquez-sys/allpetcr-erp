@@ -1,0 +1,210 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ promo.nombre }} · Promoción{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.pm-wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start}
+.pm-card{background:#fff;border-radius:22px;padding:22px 24px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:20px}
+.pm-migas{max-width:1180px;margin:0 auto 10px;font-size:13px;color:#86868b}.pm-migas a{color:#0b3161}
+.pm-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pm-top h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0;padding:0;background:none;color:#1d1d1f}
+.pm-est{font-size:12.5px;font-weight:700;border-radius:999px;padding:5px 12px}
+.e-Vigente{background:#e8f7ec;color:#1c7a36}.e-Programada{background:#eaf1fb;color:#0b3161}
+.e-Borrador{background:#f2f2f5;color:#6e6e73}.e-Vencida,.e-Terminada{background:#f5f5f5;color:#86868b}
+.pm-sub{color:#6e6e73;font-size:14.5px;margin:6px 0 16px;line-height:1.45}
+.pm-scan{display:flex;align-items:center;gap:12px;background:#f2f2f5;border:2px solid #0b3161;border-radius:16px;padding:6px 8px 6px 14px}
+.pm-scan input{flex:1;border:0;background:transparent;font-size:17px;font-family:inherit;padding:10px 0;outline:none;min-width:0}
+.pm-scan .ico{width:34px;height:34px;border-radius:10px;background:#0b3161;color:#fff;display:grid;place-items:center;font-size:17px}
+.pm-scan button{border:0;border-radius:12px;background:#0b3161;color:#fff;font-weight:600;padding:10px 16px;cursor:pointer;font-family:inherit}
+.pm-aviso-top{margin-top:10px;font-size:14px;min-height:20px}
+.pm-aviso-top.ok{color:#1c7a36}.pm-aviso-top.err{color:#b5231a;font-weight:600}
+.pm-tabla{width:100%;border-collapse:collapse;margin-top:14px;font-size:14.5px}
+.pm-tabla th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:#86868b;text-align:right;padding:8px 6px;font-weight:600}
+.pm-tabla th:first-child{text-align:left}
+.pm-tabla td{padding:10px 6px;border-top:1px solid #f0f0f2;vertical-align:middle}
+.pm-tabla td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pm-tabla tr.nuevo td{background:#fff8e6}
+.pm-tabla tr.pm-avisos td{border-top:0;padding-top:0}
+.pm-prod{display:flex;gap:12px;align-items:center}.pm-prod img{width:46px;height:46px;border-radius:10px;object-fit:contain;background:#f5f5f5}
+.pm-prod b{display:block;font-size:14.5px}.pm-prod small{color:#86868b;font-size:12px}
+.tach{color:#86868b;text-decoration:line-through}.oferta{font-weight:700;color:#c2410c;font-size:15.5px}
+.bien{color:#1c7a36;font-weight:600}.mal{color:#b5231a;font-weight:700}
+.pm-pct{width:46px;padding:6px;border:1px solid #e0e0e6;border-radius:9px;text-align:center;font-weight:600;background:#fbfbfd;font-family:inherit;font-size:14.5px}
+.pm-pct.propio{border-color:#c2410c;background:#fff7f1}
+.pm-quitar{border:0;background:none;color:#b5231a;font-size:22px;cursor:pointer;line-height:1}
+.pm-aviso{display:inline-block;background:#fff8ec;color:#8a4b00;border-radius:10px;padding:6px 10px;font-size:12.5px;font-weight:600;margin:2px 6px 2px 0}
+.pm-aviso.rojo{background:#fff0ee;color:#8a1f16}.pm-aviso label{font-weight:500;margin-left:6px}
+.pm-vacio{color:#86868b;text-align:center;padding:26px 0 8px}
+.pm-lbl{display:block;font-size:12.5px;font-weight:600;color:#6e6e73;margin:14px 0 6px}
+.pm-inp{width:100% !important;max-width:100%;min-width:0;box-sizing:border-box;border:1px solid #e0e0e6;border-radius:12px;padding:11px 13px;font-size:15.5px;background:#fbfbfd;font-family:inherit}
+.pm-big{display:flex;align-items:center;justify-content:center;gap:4px;border:2px solid #f3c9a8;background:#fff7f1;border-radius:16px;padding:6px}
+.pm-big input{width:90px;border:0 !important;background:transparent !important;box-shadow:none !important;padding:0 !important;-webkit-appearance:none;appearance:textfield;outline:0 !important;font-size:34px;font-weight:800;color:#c2410c;text-align:right;font-family:inherit;outline:none}
+.pm-big input::-webkit-outer-spin-button,.pm-big input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.pm-big span{font-size:30px;font-weight:800;color:#c2410c}
+.pm-dos{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.pm-check{display:flex;gap:8px;align-items:center;font-size:14px;margin-top:12px;color:#424245}
+.pm-res{margin-top:4px;font-size:14px}
+.pm-res div{display:flex;justify-content:space-between;padding:5px 0;color:#424245}.pm-res b{color:#1d1d1f}
+.pm-res .pm-res-aviso{display:block;color:#8a1f16;background:#fff0ee;border-radius:10px;padding:8px 10px;margin-top:8px;font-size:13px}
+.pm-btn{width:100%;margin-top:14px;padding:14px;border:0;border-radius:980px;background:linear-gradient(135deg,#14498f,#072244);color:#fff;font-size:15.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.pm-btn2{width:100%;margin-top:10px;padding:11px;border:1px solid #d2d2d7;border-radius:980px;background:#fff;color:#0b3161;font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.pm-btn2.rojo{color:#b5231a}
+.pm-msg{padding:12px 16px;border-radius:14px;font-size:14.5px;margin-bottom:14px}
+.pm-msg.success{background:rgba(52,199,89,.12);color:#1c6b30}.pm-msg.info{background:rgba(11,49,97,.08);color:#0b3161}
+.pm-msg.error{background:rgba(255,59,48,.1);color:#b5231a}
+.pm-sug table{width:100%;border-collapse:collapse;font-size:14px}.pm-sug td{padding:8px 6px;border-top:1px solid #f0f0f2}
+.pm-sug td.n{text-align:right;white-space:nowrap}
+.pm-h3{font-size:17px;font-weight:700;margin:0 0 6px;padding:0;background:none;color:#1d1d1f;text-transform:none}
+.pm-nota{font-size:13px;color:#6e6e73;line-height:1.45;margin:0 0 10px}
+.pm-quitar-lista{columns:2;font-size:13.5px;color:#424245;margin:8px 0 0;padding-left:18px}
+@media (max-width:980px){.pm-wrap{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:600px){.pm-tabla th:nth-child(2),.pm-tabla td:nth-child(2),.pm-tabla th:nth-child(5),.pm-tabla td:nth-child(5){display:none}.pm-quitar-lista{columns:1}}
+</style>{% endblock %}
+
+{% block messages %}{% endblock %}
+
+{% block content %}
+<div class="pm-migas"><a href="{% url 'catalogo:promociones' %}">Promociones</a> › {{ promo.nombre }}</div>
+<div class="pm-wrap">
+ <div>
+  {% for m in messages %}<div class="pm-msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+  <div class="pm-card">
+    <div class="pm-top"><h1>{{ promo.nombre }}</h1><span class="pm-est e-{{ estado }}">{{ estado }}</span></div>
+    <p class="pm-sub">{% if editable %}Escaneá los productos con la pistola: entran con el {{ promo.descuento_pct }} % de la promoción. Si querés otro % para alguno, cambialo en su fila.{% else %}La promoción terminó: así quedó la lista.{% endif %}</p>
+    {% if editable %}
+    <form class="pm-scan" id="scan" autocomplete="off">
+      <div class="ico">⌁</div>
+      <input type="text" id="codigo" placeholder="Escaneá o escribí el código del producto…" autofocus>
+      <button type="submit">Agregar</button>
+    </form>
+    <div class="pm-aviso-top" id="avisoScan" role="status"></div>
+    {% endif %}
+    <div id="tabla">{% include "catalogo/_promo_tabla.html" %}</div>
+    {% if editable %}
+    <p style="margin:14px 0 0"><a href="?sugeridos=1#sugeridos">💡 Sugerir productos que no se venden</a></p>
+    {% endif %}
+  </div>
+
+  {% if sugeridos is not None %}
+  <div class="pm-card pm-sug" id="sugeridos">
+    <h3 class="pm-h3">Productos que no se venden</h3>
+    <p class="pm-nota">Con existencia, sin ninguna venta en los últimos 60 días y que no entraron en ese tiempo. Los de más plata parada primero.</p>
+    {% if sugeridos %}
+    <form method="post">{% csrf_token %}<input type="hidden" name="accion" value="agregar_varios">
+      <table>{% for p in sugeridos %}
+        <tr><td style="width:26px"><input type="checkbox" name="producto" value="{{ p.pk }}" id="s{{ p.pk }}"></td>
+          <td><label for="s{{ p.pk }}">{{ p.nombre }}</label></td>
+          <td class="n">{{ p.stock_actual|floatformat:0 }} u.</td><td class="n">₡{{ p.precio_venta|crc }}</td></tr>
+      {% endfor %}</table>
+      <button class="pm-btn2">Agregar los marcados</button>
+    </form>
+    {% else %}<p class="pm-nota">No hay: todo lo que tiene existencia se vendió en los últimos 60 días. 👏</p>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if vencida and filas %}
+  <div class="pm-card">
+    <h3 class="pm-h3">Etiquetas de oferta para quitar</h3>
+    <p class="pm-nota">La promoción ya no aplica: quitá la etiqueta de oferta de estos productos.</p>
+    <ul class="pm-quitar-lista">{% for f in filas %}<li>{{ f.producto.nombre }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+ </div>
+
+ <div>
+  <form method="post" class="pm-card">{% csrf_token %}
+    <input type="hidden" name="accion" value="datos">
+    <label class="pm-lbl" for="pct">Descuento para toda la lista</label>
+    <div class="pm-big"><input id="pct" name="descuento_pct" type="number" min="1" max="90" value="{{ promo.descuento_pct }}" {% if not editable %}disabled{% endif %}><span>% OFF</span></div>
+    <label class="pm-lbl" for="nombre">Nombre</label>
+    <input class="pm-inp" id="nombre" name="nombre" maxlength="60" value="{{ promo.nombre }}" {% if not editable %}disabled{% endif %}>
+    <div class="pm-dos">
+      <div><label class="pm-lbl" for="inicio">Empieza</label><input class="pm-inp" type="date" id="inicio" name="inicio" value="{{ promo.inicio|date:'Y-m-d' }}" {% if not editable %}disabled{% endif %}></div>
+      <div><label class="pm-lbl" for="fin">Termina</label><input class="pm-inp" type="date" id="fin" name="fin" value="{{ promo.fin|date:'Y-m-d' }}" required {% if not editable %}disabled{% endif %}></div>
+    </div>
+    <label class="pm-lbl" for="etiqueta">Texto para la web y el tiquete</label>
+    <input class="pm-inp" id="etiqueta" name="etiqueta" maxlength="24" value="{{ promo.etiqueta }}" placeholder="{{ promo.nombre|truncatechars:24 }}" {% if not editable %}disabled{% endif %}>
+    <label class="pm-check"><input type="checkbox" name="en_ofertas" {% if promo.en_ofertas %}checked{% endif %} {% if not editable %}disabled{% endif %}> Mostrar en la sección «Ofertas» del sitio</label>
+    {% if editable %}<button class="pm-btn2">Guardar cambios</button>{% endif %}
+  </form>
+
+  <div class="pm-card">
+    <div id="resumen">{% include "catalogo/_promo_resumen.html" %}</div>
+    {% if promo.estado == "BOR" %}
+      <form method="post">{% csrf_token %}<input type="hidden" name="accion" value="activar">
+        <button class="pm-btn">{% if promo.inicio > hoy %}Programar la promoción{% else %}Activar la promoción{% endif %}</button></form>
+      <form method="post" onsubmit="return confirm('¿Borrar este borrador?')">{% csrf_token %}<input type="hidden" name="accion" value="eliminar">
+        <button class="pm-btn2 rojo">Borrar borrador</button></form>
+    {% elif promo.estado == "ACT" %}
+      <form method="post" onsubmit="return confirm('¿Terminar la promoción ya? Los precios vuelven a la normalidad hoy mismo.')">{% csrf_token %}<input type="hidden" name="accion" value="terminar">
+        <button class="pm-btn2 rojo">Terminar ya</button></form>
+      <form method="post">{% csrf_token %}<input type="hidden" name="accion" value="pausar">
+        <button class="pm-btn2">Pasar a borrador (pausar)</button></form>
+    {% endif %}
+    {% if filas and editable %}
+      <form method="post">{% csrf_token %}<input type="hidden" name="accion" value="etiquetas">
+        <button class="pm-btn2">🏷 Imprimir etiquetas de oferta (1 por producto)</button></form>
+      <form method="post">{% csrf_token %}<input type="hidden" name="accion" value="etiquetas"><input type="hidden" name="por_unidad" value="1">
+        <button class="pm-btn2">🏷 Una por cada unidad en existencia</button></form>
+    {% endif %}
+  </div>
+
+  {% if resultados %}
+  <div class="pm-card">
+    <h3 class="pm-h3">Cómo le fue</h3>
+    <div class="pm-res">
+      <div><span>Ventas con la promoción</span><b>{{ resultados.facturas }}</b></div>
+      <div><span>Unidades vendidas</span><b>{{ resultados.unidades|floatformat:0 }}</b></div>
+      <div><span>Vendido</span><b>₡{{ resultados.ventas|crc }}</b></div>
+      <div><span>Descuento dado</span><b>₡{{ resultados.descuento|crc }}</b></div>
+      <div><span>Ganancia (sin IVA)</span><b class="{% if resultados.ganancia < 0 %}mal{% endif %}">₡{{ resultados.ganancia|crc }}</b></div>
+    </div>
+  </div>
+  {% endif %}
+ </div>
+</div>
+
+{% if editable %}
+<script>
+(function () {
+  var CSRF = "{{ csrf_token }}";
+  var url = "{% url 'catalogo:promocion' promo.pk %}";
+  var aviso = document.getElementById("avisoScan");
+  var campo = document.getElementById("codigo");
+  function mostrar(t, err){ aviso.textContent = t || ""; aviso.className = "pm-aviso-top " + (err ? "err" : "ok"); }
+  async function enviar(datos){
+    var f = new FormData(); f.append("csrfmiddlewaretoken", CSRF);
+    Object.keys(datos).forEach(function (k){ f.append(k, datos[k]); });
+    try {
+      var r = await fetch(url, {method: "POST", body: f, headers: {"Accept": "application/json"}});
+      if (r.redirected || !(r.headers.get("content-type") || "").includes("json")) { mostrar("Se venció la sesión: recargá la página.", true); return; }
+      var d = await r.json();
+      document.getElementById("tabla").innerHTML = d.tabla;
+      document.getElementById("resumen").innerHTML = d.resumen;
+      if (d.error) mostrar("⛔ " + d.error, true); else if (d.aviso) mostrar("✓ " + d.aviso);
+    } catch (e) { mostrar("No se pudo conectar con el ERP.", true); }
+  }
+  // La pistola es un teclado que termina en Enter: se agrega y el foco vuelve
+  // al campo para el siguiente producto.
+  document.getElementById("scan").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var c = campo.value.trim(); if (!c) return;
+    campo.value = "";
+    await enviar({accion: "agregar", codigo: c});
+    campo.focus();
+  });
+  document.getElementById("tabla").addEventListener("change", function (e) {
+    var t = e.target;
+    if (t.dataset.item) enviar({accion: "pct", item: t.dataset.item, valor: t.value});
+    if (t.dataset.bajo) enviar({accion: "bajo_costo", item: t.dataset.bajo, valor: t.checked ? "1" : "0"});
+  });
+  document.getElementById("tabla").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-quitar]");
+    if (b) enviar({accion: "quitar", item: b.dataset.quitar});
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}

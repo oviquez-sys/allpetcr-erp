@@ -1,0 +1,8 @@
+<div class="pm-res">
+  <div><span>Productos</span><b>{{ resumen.productos }}</b></div>
+  <div><span>Unidades en existencia</span><b>{{ resumen.unidades|floatformat:0 }}</b></div>
+  <div><span>Si se vende todo: ventas</span><b>₡{{ resumen.ventas|crc }}</b></div>
+  <div><span>Ganancia esperada</span><b class="{% if resumen.ganancia < 0 %}mal{% endif %}">₡{{ resumen.ganancia|crc }}</b></div>
+  {% if resumen.bajo_costo %}<div class="pm-res-aviso">{{ resumen.bajo_costo|length }} producto{{ resumen.bajo_costo|length|pluralize }} quedaría{{ resumen.bajo_costo|length|pluralize:"n" }} bajo costo: bajale el % o marcá «venderlo bajo costo igual».</div>{% endif %}
+  {% if resumen.chocan %}<div class="pm-res-aviso">{{ resumen.chocan|length }} producto{{ resumen.chocan|length|pluralize }} ya está{{ resumen.chocan|length|pluralize:"n" }} en otra promoción en esas fechas.</div>{% endif %}
+</div>

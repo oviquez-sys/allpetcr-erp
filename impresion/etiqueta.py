@@ -303,3 +303,77 @@ def imagen_etiqueta(producto, ancho_mm: float = 44.5, alto_mm: float = 31.8,
         y += alto_renglon
 
     return lienzo.convert("RGB")
+
+
+def imagen_etiqueta_oferta(producto, oferta, ancho_mm: float = 44.5, alto_mm: float = 31.8):
+    """Etiqueta de OFERTA para pegar encima de la normal (04/11/2026).
+
+    De arriba abajo: franja negra con el nombre de la promoción y el %,
+    "Antes ₡…" tachado, el precio de oferta en grande, las barras con su
+    número —va encima de la etiqueta normal, así que tiene que poder
+    escanearse igual— y "Válido hasta …": el MEIC pide la vigencia a la vista.
+
+    `oferta` es lo que devuelve catalogo.promociones.oferta_de."""
+    from PIL import Image, ImageDraw
+
+    ancho_px = _mm_a_px(ancho_mm)
+    alto_px = _mm_a_px(alto_mm)
+    margen_px = _mm_a_px(MARGEN_MM)
+    util_px = ancho_px - 2 * margen_px
+    lienzo = Image.new("L", (ancho_px, alto_px), 255)
+    pincel = ImageDraw.Draw(lienzo)
+
+    def centrar_texto(texto, fuente, y, color=0):
+        ancho_texto = pincel.textlength(texto, font=fuente)
+        x = (ancho_px - ancho_texto) / 2
+        pincel.text((x, y), texto, font=fuente, fill=color)
+        return x, ancho_texto
+
+    def que_quepa(texto, estilo, mm, minimo_mm):
+        fuente = _fuente(estilo, _mm_a_px(mm))
+        while fuente.size > _mm_a_px(minimo_mm) and pincel.textlength(texto, font=fuente) > util_px:
+            fuente = _fuente(estilo, fuente.size - 2)
+        return fuente
+
+    def colones(valor):
+        return f"₡{int(Decimal(valor).quantize(Decimal('1'))):,}".replace(",", ".")
+
+    # --- 1. Franja negra: "BLACK FRIDAY −40%" ---
+    alto_franja = _mm_a_px(5.4)
+    pincel.rectangle([0, 0, ancho_px, alto_franja], fill=0)
+    titulo = f"{oferta['nombre'].upper()} -{oferta['pct']}%"
+    fuente_titulo = que_quepa(titulo, "negrita", 3.6, 2.2)
+    centrar_texto(titulo, fuente_titulo, (alto_franja - fuente_titulo.size) // 2 - 2, color=255)
+    y = alto_franja + _mm_a_px(0.6)
+
+    # --- 2. Antes, tachado ---
+    antes = f"Antes {colones(oferta['precio_antes'])}"
+    fuente_antes = _fuente("normal", _mm_a_px(2.6))
+    x, ancho_t = centrar_texto(antes, fuente_antes, y)
+    medio = y + int(fuente_antes.size * 0.62)
+    pincel.line([(x, medio), (x + ancho_t, medio)], fill=0, width=max(2, _mm_a_px(0.25)))
+    y += int(fuente_antes.size * 1.1)
+
+    # --- 3. Precio de oferta, lo más grande ---
+    precio = colones(oferta["precio"])
+    fuente_precio = que_quepa(precio, "negrita", 6.4, 3.0)
+    centrar_texto(precio, fuente_precio, y)
+    y += int(fuente_precio.size * 1.02) + _mm_a_px(0.4)
+
+    # --- 4. Barras y número (se escanea igual que la normal) ---
+    if producto.codigo_barras:
+        barras = imagen_codigo_barras(str(producto.codigo_barras), ancho_mm, _mm_a_px(6.2))
+        limite = ancho_px - 2 * _mm_a_px(MARGEN_CODIGO_MM)
+        if barras.width > limite:
+            barras = barras.resize((limite, max(1, int(barras.height * limite / barras.width))), Image.LANCZOS)
+        lienzo.paste(barras, ((ancho_px - barras.width) // 2, y))
+        y += barras.height
+        fuente_codigo = _fuente("normal", _mm_a_px(2.0))
+        centrar_texto(str(producto.codigo_barras), fuente_codigo, y)
+
+    # --- 5. Vigencia, pegada abajo ---
+    hasta = oferta["hasta"]
+    vigencia = f"Válido hasta el {hasta:%d/%m/%Y}"
+    fuente_vig = _fuente("negrita", _mm_a_px(2.1))
+    centrar_texto(vigencia, fuente_vig, alto_px - _mm_a_px(MARGEN_INFERIOR_MM) - int(fuente_vig.size * 1.1))
+    return lienzo.convert("RGB")

@@ -10,7 +10,7 @@ from core.admin_fotos import columna_foto
 from core.templatetags.fotos import foto_producto
 from core.templatetags.formato import crc as _crc  # formato CR (miles con punto)
 
-from .models import CambioPrecio, Categoria, FichaAlimento, Impuesto, Producto
+from .models import CambioPrecio, Categoria, FichaAlimento, Impuesto, Producto, Promocion, PromocionProducto
 
 
 @admin.register(Categoria)
@@ -244,3 +244,31 @@ class FichaAlimentoAdmin(admin.ModelAdmin):
     @admin.display(description="Presentaciones")
     def presentaciones(self, obj):
         return obj.productos.count()
+
+
+class PromocionProductoInline(admin.TabularInline):
+    model = PromocionProducto
+    extra = 0
+    fields = ("producto", "descuento_pct", "permitir_bajo_costo", "agregado_por", "agregado_en")
+    readonly_fields = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Promocion)
+class PromocionAdmin(admin.ModelAdmin):
+    """Solo para mirar (04/11/2026): las promociones se arman y se activan
+    en Herramientas → Promociones, que aplica las reglas (bajo costo, una
+    promoción por producto a la vez, fecha de fin)."""
+    list_display = ("nombre", "descuento_pct", "inicio", "fin", "estado", "en_ofertas")
+    list_filter = ("estado",)
+    inlines = [PromocionProductoInline]
+    readonly_fields = ("empresa", "nombre", "etiqueta", "descuento_pct", "inicio", "fin", "estado", "en_ofertas",
+                       "creada_por", "creada_en", "activada_en", "terminada_en")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

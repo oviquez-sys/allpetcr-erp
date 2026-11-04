@@ -80,6 +80,32 @@ class ProductoListaSerializer(serializers.ModelSerializer):
         from catalogo.palabras_clave import etiquetas
         return etiquetas(obj)
 
+    def to_representation(self, obj):
+        """Ofertas (04/11/2026): si el producto está en una promoción
+        vigente, `precio_venta` es el precio de OFERTA —lo que se cobra hoy,
+        igual que en la caja— y `precio_antes` el normal, para tacharlo.
+        Así el carrito, el checkout y el orden por precio del sitio usan el
+        precio correcto sin cambiar nada. `oferta` trae el % anunciado, el
+        nombre y hasta cuándo (el MEIC pide la vigencia a la vista).
+
+        Lo que NO va: cuántas unidades quedan (ver get_disponible)."""
+        datos = super().to_representation(obj)
+        from catalogo.promociones import oferta_de, vigentes
+
+        cache = self.context.setdefault("_promos", {})
+        if obj.empresa_id not in cache:
+            cache[obj.empresa_id] = vigentes(obj.empresa_id)
+        item = cache[obj.empresa_id].get(obj.pk)
+        oferta = oferta_de(obj, item) if item is not None else None
+        if oferta is None:
+            datos["precio_antes"], datos["oferta"] = None, None
+            return datos
+        datos["precio_antes"] = float(oferta["precio_antes"])
+        datos["precio_venta"] = float(oferta["precio"])
+        datos["oferta"] = {"pct": oferta["pct"], "nombre": oferta["nombre"],
+                           "hasta": oferta["hasta"].isoformat(), "en_ofertas": item.promocion.en_ofertas}
+        return datos
+
     def get_disponible(self, obj):
         # Booleano, NUNCA la cantidad exacta — mismo criterio que el puente
         # anterior: publicar "quedan 3" le regala a cualquiera tu volumen.

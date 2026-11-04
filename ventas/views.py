@@ -113,6 +113,20 @@ def _filas_pos(queryset, con_tope=False):
         p["mascota"] = p.get("mascota") or ""
         p["descripcion"] = p.get("descripcion") or ""
         completar_foto(p)
+    # Ofertas vigentes (04/11/2026): el POS muestra el precio tachado y la
+    # caja la aplica sola. El cálculo es el mismo de registrar_venta
+    # (catalogo/promociones.py), así el total en pantalla es el cobrado.
+    from catalogo.promociones import precio_oferta, vigentes
+    if filas:
+        empresa_id = queryset.values_list("empresa_id", flat=True).first()
+        promos = vigentes(empresa_id, productos=[p["id"] for p in filas]) if empresa_id else {}
+    else:
+        promos = {}
+    for p in filas:
+        item = promos.get(p["id"])
+        oferta = precio_oferta(p["precio_venta"], item.pct) if item else None
+        p["oferta"] = ({"precio": float(oferta), "pct": item.pct, "nombre": item.promocion.texto}
+                       if oferta is not None and oferta < p["precio_venta"] else None)
     if con_tope:
         # El margen sale del modelo (una sola fórmula para todo el ERP), no
         # se recalcula acá con los campos de .values().

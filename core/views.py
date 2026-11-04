@@ -374,6 +374,13 @@ para dejar la gaveta con poco efectivo. Se cuentan los billetes que se sacan, se
 imprime un comprobante para el sobre y se abre la gaveta; el cierre ya lo descuenta. \
 Queda "por depositar" hasta que en esa misma pantalla se anota el depósito con el \
 número de comprobante del banco.
+- Promociones (/precios/promociones/, solo gerente; Administración → Herramientas): \
+se arma una lista escaneando productos con la pistola, un % para toda la lista (se \
+puede cambiar por producto) y fechas de inicio y fin. La caja aplica la oferta sola \
+(no se suma al cupón ni al descuento del cajero: gana el mayor) y la web muestra el \
+precio tachado, el % y hasta cuándo. Avisa si un producto queda bajo costo o si su \
+precio subió en los últimos 30 días; sugiere productos sin ventas en 60 días; \
+imprime etiquetas de oferta.
 - ¿Pagó con otro medio? Si una venta se registró como efectivo, tarjeta o SINPE y se \
 cobró con otro de esos, se corrige con "Cambiar medio" en el Historial de ventas o \
 "¿Pagó con otro medio?" en el POS (solo mientras la caja siga abierta; no fiado ni \

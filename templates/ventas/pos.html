@@ -257,6 +257,12 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 .cupon-on b{font-variant-numeric:tabular-nums}
 .cupon-on .x{margin-left:auto;border:0;background:none;color:#7F5B25;font-size:13px;cursor:pointer;text-decoration:underline}
 .linea-x .cupontxt{font-size:12px;color:#7F5B25;font-weight:600}
+/* Ofertas (04/11/2026): la promoción vigente se ve y se aplica sola. */
+.linea-x .promotxt{font-size:12px;color:#9a3412;font-weight:700;background:#fff1e8;border-radius:8px;padding:3px 8px}
+.pcard{position:relative}
+.pcard .promo{position:absolute;top:8px;left:8px;z-index:1;background:#c2410c;color:#fff;font-weight:800;font-size:12.5px;border-radius:8px;padding:3px 7px}
+.pcard .p.oferta{color:#c2410c}
+.pcard .antes{font-size:12px;color:#9ca3af;text-decoration:line-through;font-weight:500;margin-left:4px}
 /* display:flex de arriba le gana al atributo hidden: sin esto quedaba una
    franja dorada vacía debajo del cupón (13/10/2026). */
 .cupon-fila[hidden],.cupon-on[hidden]{display:none}
@@ -615,7 +621,8 @@ function pintarGrid(){
       ${foto}
       <div class="n">${esc(p.nombre)}</div>
       <div class="cat">${esc(p.categoria)}</div>${pres}
-      <div class="fila-p"><span class="p">${fmt(p.precio_venta)}</span>
+      ${p.oferta ? `<span class="promo" title="${esc(p.oferta.nombre)}">-${p.oferta.pct}%</span>` : ''}
+      <div class="fila-p"><span class="p${p.oferta ? ' oferta' : ''}">${fmt(p.oferta ? p.oferta.precio : p.precio_venta)}${p.oferta ? `<span class="antes">${fmt(p.precio_venta)}</span>` : ''}</span>
       <span class="s"><span data-stock="${p.id}">quedan ${disp}</span>${refTope(p)}</span></div></div>`;
   }).join('') || (soloEscaneados
       ? '<p class="empty">Escaneá el siguiente producto, o tocá «Ver todo el catálogo».</p>'
@@ -726,15 +733,22 @@ function setMotivoRegalia(id, v){
 // cajero y el del cupón. No se suman — así lo cobra también el servidor.
 function pctLinea(it, p){ return Math.max(pctNegociado(it, p), cupon ? cupon.porcentaje : 0); }
 function ganaElCupon(it, p){ return !!cupon && cupon.porcentaje > pctNegociado(it, p); }
-function totalLinea(id){
-  const p = porId[id], it = carrito[id];
-  if (it.regalia) return 0;
+function totalSinPromo(it, p){
   // Con precio final (y sin un cupón que dé más), el total es ese precio por
   // la cantidad: exacto, sin redondeos del porcentaje. Igual que el servidor.
   if (it.precio_final != null && !ganaElCupon(it, p)) return it.precio_final * it.cantidad;
   const bruto = p.precio_venta * it.cantidad;
   // Descuento a colón entero, igual que el servidor (nada de ₡2.044,50).
   return Math.max(0, bruto - Math.round(bruto * pctLinea(it, p) / 100));
+}
+// La promoción vigente gana si deja la línea igual o más barata que el
+// descuento del cajero o el cupón (no se suman). Misma regla que
+// registrar_venta (04/11/2026).
+function ganaLaPromo(it, p){ return !it.regalia && !!p.oferta && p.oferta.precio * it.cantidad <= totalSinPromo(it, p); }
+function totalLinea(id){
+  const p = porId[id], it = carrito[id];
+  if (it.regalia) return 0;
+  return ganaLaPromo(it, p) ? p.oferta.precio * it.cantidad : totalSinPromo(it, p);
 }
 function pintar(){
   const ids = Object.keys(carrito);
@@ -744,7 +758,7 @@ function pintar(){
     let mt;
     if (it.regalia){
       mt = `<span class="orig">${fmt(bruto)}</span><span class="now regtxt">REGALÍA</span>`;
-    } else if (pctLinea(it, p) > 0){
+    } else if (pctLinea(it, p) > 0 || ganaLaPromo(it, p)){
       // Precio original tachado arriba, precio con descuento abajo
       mt = `<span class="orig">${fmt(bruto)}</span><span class="now">${fmt(totalLinea(id))}</span>`;
     } else {
@@ -757,7 +771,8 @@ function pintar(){
       : `<button class="toggle" onclick="toggleRegalo(${id})">🎁 Regalía</button>
          <span class="descbox">Descuento <input type="text" inputmode="numeric" maxlength="5" value="${it.precio_final != null ? '' : (it.descuento_pct||'')}" placeholder="${it.precio_final != null ? Math.round(pctNegociado(it, p)) : '0'}" onchange="setDescuentoPct(${id}, this.value)"> %</span>
          <span class="descbox">o precio ₡<input class="pf" type="text" inputmode="numeric" maxlength="9" value="${it.precio_final != null ? it.precio_final : ''}" placeholder="${Math.round(p.precio_venta)}" onchange="setPrecioFinal(${id}, this.value)"></span>
-         ${ganaElCupon(it, p) || (cupon && !pctNegociado(it, p)) ? `<span class="cupontxt">🎟 ${cupon.porcentaje}% cupón</span>` : ''}
+         ${ganaLaPromo(it, p) ? `<span class="promotxt">🔥 ${esc(p.oferta.nombre)} −${p.oferta.pct}% · aplicado solo</span>`
+           : (ganaElCupon(it, p) || (cupon && !pctNegociado(it, p)) ? `<span class="cupontxt">🎟 ${cupon.porcentaje}% cupón</span>` : '')}
          ${refTope(p, pctLinea(it, p) > p.tope)}`;
     // Una fila por producto (v2, 17/10/2026): qué es · cuántas · descuento o
     // regalía · cuánto suma.

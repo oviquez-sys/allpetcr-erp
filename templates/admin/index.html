@@ -264,6 +264,11 @@ body.dashboard #content-main{display:block}
       <div class="ti i-cod"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></div>
       <div><div class="th">Códigos de barras</div><div class="td">Generar e imprimir etiquetas de producto para el escáner del mostrador.</div></div>
     </a>
+    {% comment %} Promociones (04/11/2026): lista armada con la pistola, precio tachado en la web. {% endcomment %}
+    <a class="ax-tool" href="{% url 'catalogo:promociones' %}">
+      <div class="ti i-pre"><svg viewBox="0 0 24 24"><path d="M19 5 5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></svg></div>
+      <div><div class="th">Promociones</div><div class="td">Escaneá productos, ponéles un % por unas fechas: la caja lo aplica sola y la web muestra el precio tachado.</div></div>
+    </a>
     <a class="ax-tool" href="/precios/">
       <div class="ti i-pre"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/><path d="M9.5 9.5l5 5"/></svg></div>
       <div><div class="th">Precios y márgenes</div><div class="td">Precio, costo promedio y margen de cada producto, con su historial de cambios.</div></div>

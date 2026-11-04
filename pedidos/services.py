@@ -129,7 +129,10 @@ def crear_pedido(
         cantidad = Decimal(str(linea["cantidad"]))
         if cantidad <= 0:
             raise ValidationError("La cantidad de cada línea debe ser mayor que cero.")
-        precio_unitario = producto.precio_venta
+        # El mismo precio que la caja y la web: con la oferta si el producto
+        # está en una promoción vigente (04/11/2026).
+        from catalogo.promociones import precio_vigente
+        precio_unitario = precio_vigente(producto)
         total_linea = (cantidad * precio_unitario).quantize(Decimal("0.01"))
         sub_l, imp_l = _desglose_fiscal(empresa, producto, total_linea)
         LineaPedido.objects.create(

@@ -219,8 +219,14 @@ def bytes_tiquete(factura, ancho: int = 48, pie: str = "", logo: bytes = b"") ->
             )
         partes += [_texto(detalle), SALTO]
         if not linea.es_regalia and linea.descuento_pct > 0:
+            # Con promoción (04/11/2026) el renglón dice cuál: "Black Friday
+            # 40%" en vez de "descuento 40.21%". El % se muestra entero hacia
+            # abajo: el precio de oferta se redondea a favor del cliente.
+            promo = getattr(linea, "promocion", None) if getattr(linea, "promocion_id", None) else None
+            texto = (f"    {promo.texto[:ancho - 16]} {int(linea.descuento_pct)}%" if promo
+                     else f"    descuento {linea.descuento_pct:g}%")
             partes += [_texto(_dos_columnas(
-                f"    descuento {linea.descuento_pct:g}%",
+                texto,
                 f"-{_monto(linea.descuento_monto - (getattr(linea, 'redondeo', 0) or 0))}", ancho)), SALTO]
 
     partes += [_texto("-" * ancho), SALTO]
@@ -237,6 +243,10 @@ def bytes_tiquete(factura, ancho: int = 48, pie: str = "", logo: bytes = b"") ->
     partes += [NEGRITA_ON, DOBLE,
                _texto(_dos_columnas("TOTAL", _monto(factura.total), ancho // 2)),
                NORMAL, NEGRITA_OFF, SALTO]
+    # "Usted ahorró" (04/11/2026): cuando hubo una promoción en la venta, el
+    # cliente ve en el papel cuánto se ahorró (descuentos + redondeo).
+    if factura.descuento > 0 and any(getattr(l, "promocion_id", None) for l in factura.lineas.all()):
+        partes += [_texto(_dos_columnas("Usted ahorró", _monto(factura.descuento), ancho)), SALTO]
 
     # Cómo pagó (26/09/2026, TIQ-04): cada medio de un pago mixto, y el
     # efectivo recibido con su vuelto. Es lo primero que se mira cuando un

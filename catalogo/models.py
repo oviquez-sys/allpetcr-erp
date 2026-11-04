@@ -429,3 +429,91 @@ class FichaAlimento(models.Model):
             errores["estado"] = "Una ficha verificada necesita al menos una fuente y la fecha de verificación."
         if errores:
             raise ValidationError(errores)
+
+
+class Promocion(models.Model):
+    """Una promoción: una lista de productos con descuento por unas fechas
+    (04/11/2026, pedido de Oscar: "marcar los productos con la pistola,
+    ponerles un descuento a mi gusto y que en el sistema y la web se vean con
+    el precio tachado y un 40 % OFF").
+
+    El precio normal del producto NO se toca: la oferta se calcula encima
+    mientras la promoción está vigente (`catalogo/promociones.py`). Al
+    terminar, todo vuelve solo a su precio, sin que nadie se acuerde de nada.
+
+    Decisiones de Oscar (04/11/2026), sobre recomendación:
+    - Un % para toda la lista, que se puede cambiar producto por producto.
+    - Fecha de fin obligatoria (lo que más revisa el MEIC en las ofertas).
+    - No se suma al cupón de La manada ni al descuento del cajero: gana el
+      mayor, igual que el cupón.
+    - Bajo costo solo si un gerente lo marca a propósito en ese producto.
+    - Precio de oferta redondeado HACIA ABAJO a un precio bonito: el cliente
+      nunca recibe menos de lo anunciado."""
+
+    class Estado(models.TextChoices):
+        BORRADOR = "BOR", "Borrador"
+        ACTIVA = "ACT", "Activa"          # programada o vigente, según las fechas
+        TERMINADA = "TER", "Terminada"
+
+    empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, related_name="promociones")
+    nombre = models.CharField(max_length=60, help_text="Ej.: Black Friday collares y arneses")
+    etiqueta = models.CharField("texto para la web", max_length=24, blank=True,
+                                help_text="Lo que sale en la franja y en el tiquete. Vacío = el nombre.")
+    descuento_pct = models.PositiveSmallIntegerField("descuento de la lista (%)", default=20)
+    inicio = models.DateField()
+    fin = models.DateField()
+    estado = models.CharField(max_length=3, choices=Estado.choices, default=Estado.BORRADOR)
+    en_ofertas = models.BooleanField("mostrar en la sección Ofertas del sitio", default=True)
+    creada_por = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                                   related_name="promociones_creadas")
+    creada_en = models.DateTimeField(auto_now_add=True)
+    activada_en = models.DateTimeField(null=True, blank=True)
+    terminada_en = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "promoción"
+        verbose_name_plural = "promociones"
+        ordering = ["-inicio", "-id"]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(descuento_pct__gte=1, descuento_pct__lte=90),
+                                   name="promo_pct_1_a_90"),
+            models.CheckConstraint(condition=models.Q(fin__gte=models.F("inicio")), name="promo_fin_despues_inicio"),
+        ]
+
+    def __str__(self):
+        return self.nombre
+
+    @property
+    def texto(self):
+        return (self.etiqueta or self.nombre).strip()
+
+
+class PromocionProducto(models.Model):
+    """Un producto dentro de una promoción, con su propio % si se cambió."""
+
+    promocion = models.ForeignKey(Promocion, on_delete=models.CASCADE, related_name="items")
+    producto = models.ForeignKey(Producto, on_delete=models.PROTECT, related_name="en_promociones")
+    descuento_pct = models.PositiveSmallIntegerField("% propio", null=True, blank=True,
+                                                     help_text="Vacío = el de la promoción")
+    permitir_bajo_costo = models.BooleanField(
+        default=False, help_text="Un gerente aceptó venderlo por debajo del costo en esta promoción.")
+    agregado_por = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    agregado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "producto en promoción"
+        verbose_name_plural = "productos en promoción"
+        ordering = ["agregado_en", "id"]
+        constraints = [
+            models.UniqueConstraint(fields=["promocion", "producto"], name="producto_una_vez_por_promo"),
+            models.CheckConstraint(condition=models.Q(descuento_pct__isnull=True)
+                                   | models.Q(descuento_pct__gte=1, descuento_pct__lte=90),
+                                   name="promo_item_pct_1_a_90"),
+        ]
+
+    def __str__(self):
+        return f"{self.producto} en {self.promocion}"
+
+    @property
+    def pct(self):
+        return self.descuento_pct or self.promocion.descuento_pct

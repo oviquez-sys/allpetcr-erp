@@ -824,6 +824,40 @@ hoy le saqué 50.000 en billetes de 20 y 10 que se depositarán al BN otro día"
 - Resumen/tiquete/correo del cierre muestran retiros y cambios de medio.
 - Pruebas: `caja/test_retiros_y_medio.py`.
 
+## Promociones con precio tachado (04/11/2026)
+
+Pedido de Oscar: escanear productos con la pistola, ponerles un descuento y que
+en el ERP y la web se vean con el precio tachado y "40 % OFF". Decisiones de
+Oscar (sobre recomendación): % de lista con excepción por producto; fecha de
+fin obligatoria (MEIC); NO se suma al cupón ni al cajero (gana el mayor); bajo
+costo solo marcado por gerente; precio de oferta redondeado HACIA ABAJO a
+precio bonito (`precios_bonitos.bonito_hacia_abajo`).
+- Modelos `catalogo.Promocion` (BOR/ACT/TER; "Programada/Vigente/Vencida" sale
+  de las fechas) y `PromocionProducto` (% propio, `permitir_bajo_costo`).
+  `LineaVenta.promocion` dice qué promo puso el descuento.
+- TODO el cálculo en `catalogo/promociones.py` (`vigentes`, `oferta_de`,
+  `precio_vigente`, `fila`, `activar`, `terminar`, `sugeridos`, `resultados`).
+  Lo usan `registrar_venta` (aplica sola; empate = promoción; si la promo le
+  gana al cupón en todas las líneas, el cupón NO se quema), `crear_pedido`,
+  la API y el POS. El precio normal nunca se toca.
+- API: con oferta, `precio_venta` = precio de OFERTA y `precio_antes` = normal
+  + `oferta` {pct, nombre, hasta, en_ofertas}. Así carrito/checkout del sitio
+  cobran lo mismo que la caja sin cambios. No se publica el stock.
+- Pantallas (gerente): `catalogo:promociones` y `catalogo:promocion`
+  (/precios/promociones/<id>/): escaneo por fetch (responde la tabla armada),
+  % por fila, avisos (bajo costo con máximo sin perder, precio subido en 30
+  días por `CambioPrecio`, otra promo cruzada), sugeridos, "Cómo le fue",
+  etiquetas de oferta (`impresion/etiqueta.imagen_etiqueta_oferta`, con barras
+  y vigencia) y lista de etiquetas a quitar al terminar.
+- POS: tarjeta con -% y tachado; línea "🔥 Promo −40 % · aplicado solo"
+  (`ganaLaPromo` en pos.html = misma regla del servidor). Tiquete: renglón con
+  el nombre de la promo y "Usted ahorró".
+- allpetcr-web: `lib/ofertas.ts` (enOferta, resumen, fechas CR), tarjeta,
+  ficha (ahorro, vigencia, `CuentaRegresiva`), barra móvil, carrito, franja
+  naranja arriba (NavBar `ofertas`), sección "Ofertas" del menú y filtro
+  `/catalogo?ofertas=1`. Copia de 60 s: la web cambia a lo sumo 1 min después.
+- Pruebas: `catalogo/test_promociones.py`; web `lib/ofertas.test.ts`.
+
 ## Redondeo del total en el POS (17/10/2026)
 
 Caso real: ₡13.554 en efectivo, sin vuelto, se cobró ₡13.500 y el cierre quedó

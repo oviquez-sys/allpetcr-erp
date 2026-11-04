@@ -186,6 +186,29 @@ def imprimir_etiqueta(producto, copias: int = 1) -> int:
     return copias
 
 
+def imprimir_etiquetas_oferta(pares) -> int:
+    """Etiquetas de OFERTA (04/11/2026). `pares` = [(producto, oferta, copias)],
+    con `oferta` de catalogo.promociones.oferta_de. Mismo camino que la
+    etiqueta normal: imagen por el driver de la XP-360B."""
+    total = 0
+    for producto, oferta, copias in pares:
+        imagen = _etiqueta.imagen_etiqueta_oferta(producto, oferta, settings.ETIQUETA_ANCHO_MM,
+                                                  settings.ETIQUETA_ALTO_MM)
+        copias = max(1, int(copias))
+        titulo = f"Oferta {producto.sku}"
+        if por_agente():
+            png = _png(imagen)
+            for _ in range(copias):
+                cola.encolar_imagen(settings.IMPRESORA_ETIQUETAS, png, settings.ETIQUETA_ANCHO_MM,
+                                    settings.ETIQUETA_ALTO_MM, titulo, TrabajoImpresion.ETIQUETA)
+        else:
+            for _ in range(copias):
+                windows.imprimir_imagen(settings.IMPRESORA_ETIQUETAS, imagen, settings.ETIQUETA_ANCHO_MM,
+                                        settings.ETIQUETA_ALTO_MM, titulo=titulo)
+        total += copias
+    return total
+
+
 def imprimir_etiquetas(pares) -> int:
     """`pares` es una lista de (producto, copias). Devuelve el total impreso.
 

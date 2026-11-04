@@ -57,3 +57,21 @@ def precio_bonito(exacto: Decimal) -> Decimal:
     if abajo // grupo != arriba // grupo:
         return Decimal(abajo)
     return Decimal(abajo if (exacto - abajo) < (arriba - exacto) else arriba)
+
+
+def bonito_hacia_abajo(exacto: Decimal) -> Decimal:
+    """El precio bonito más alto que NO pasa de `exacto` (04/11/2026).
+
+    Para las ofertas: un "40 % OFF" no puede terminar cobrando 39,7 %. Con
+    ₡16.140 exactos queda en ₡16.090, y el cliente ahorra un poco más de lo
+    anunciado, nunca menos. Si no hay ninguno (precios de menos de ₡50), se
+    deja el exacto a colón entero hacia abajo."""
+    if exacto <= 0:
+        return Decimal("0")
+    t = int(exacto.to_integral_value(ROUND_HALF_UP))
+    if t > exacto:
+        t -= 1
+    v = t
+    while v > 0 and not es_bonito(v):
+        v -= 1
+    return Decimal(v if v > 0 else t)
