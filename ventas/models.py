@@ -21,6 +21,16 @@ class Cliente(models.Model):
         NITE = "NIT", "NITE"
         EXTRANJERO = "EXT", "Extranjero / pasaporte"
 
+    class ComoNosConocio(models.TextChoices):
+        # Encargo de Oscar v3 (05/11/2026): saber qué trae clientes nuevos.
+        # Se pregunta UNA vez, al crearlo en caja; nunca se pisa después.
+        MAPS = "MAP", "Google Maps"
+        INSTAGRAM = "INS", "Instagram"
+        PASABA = "PAS", "Pasaba por aquí"
+        RECOMENDACION = "REC", "Recomendación"
+        WEB = "WEB", "Página web"
+        OTRO = "OTR", "Otro"
+
     empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, related_name="clientes")
     nombre = models.CharField(max_length=150)
     tipo_identificacion = models.CharField(max_length=3, choices=TipoIdentificacion.choices, blank=True)
@@ -37,6 +47,8 @@ class Cliente(models.Model):
     saldo = models.DecimalField(max_digits=12, decimal_places=2, default=0,
                                 help_text="Deuda pendiente (denormalizado)")
     activo = models.BooleanField(default=True)
+    como_nos_conocio = models.CharField("¿cómo nos conoció?", max_length=3, choices=ComoNosConocio.choices,
+                                        blank=True)
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -91,11 +103,21 @@ class FacturaVenta(models.Model):
         # ventas mixtas tienen filas ahí, las de un solo medio siguen igual.
         MIXTO = "MIX", "Pago mixto"
 
+    class SinCliente(models.TextChoices):
+        # Encargo v3 (05/11/2026): ninguna venta sin cliente queda sin razón.
+        # El POS pregunta "¿WhatsApp o cédula?"; si el cliente no quiere, se
+        # anota. "No se le preguntó" lo pone el servidor cuando la venta llega
+        # sin cliente y sin razón (pantalla vieja, otra vía): así se ve en el
+        # tablero quién no está preguntando, en vez de esconderlo.
+        NO_QUISO = "NQ", "No quiso dar datos"
+        SIN_PREGUNTAR = "SP", "No se le preguntó"
+
     empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT)
     sucursal = models.ForeignKey(Sucursal, on_delete=models.PROTECT)
     sesion_caja = models.ForeignKey(SesionCaja, on_delete=models.PROTECT, related_name="ventas")
     numero = models.CharField(max_length=20, unique=True)
     cliente = models.ForeignKey(Cliente, null=True, blank=True, on_delete=models.PROTECT, related_name="compras")
+    sin_cliente = models.CharField("por qué no tiene cliente", max_length=2, choices=SinCliente.choices, blank=True)
     estado = models.CharField(max_length=3, choices=Estado.choices, default=Estado.EMITIDA)
     medio_pago = models.CharField(max_length=3, choices=MedioPago.choices)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)

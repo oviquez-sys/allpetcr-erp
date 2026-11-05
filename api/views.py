@@ -343,6 +343,7 @@ class ManadaRegaliaView(APIView):
 
     def get(self, request):
         from manada.correo import correo_activo
+        from manada.exclusiones import texto_con_condicion
         from manada.models import Regalia
 
         regalia = Regalia.vigente(empresa_actual(request))
@@ -354,6 +355,7 @@ class ManadaRegaliaView(APIView):
             "correo_activo": correo_activo(),
             "activa": True,
             "porcentaje": format(regalia.porcentaje.normalize(), "f"),
-            "texto": regalia.texto_cliente,
+            "texto": texto_con_condicion(regalia.texto_cliente, regalia.excluye_alimentos),
+            "excluye_alimentos": regalia.excluye_alimentos,
             "dias_vigencia": regalia.dias_vigencia,
         })

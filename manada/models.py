@@ -38,8 +38,12 @@ class Regalia(models.Model):
     )
     texto_cliente = models.CharField(
         "texto que ve el cliente", max_length=160,
-        default="10 % de descuento en tu primera compra",
+        default="10 % de descuento en tu primera compra (no aplica a alimentos)",
         help_text="Así aparece en la página y en el correo. Debe coincidir con el porcentaje.",
+    )
+    excluye_alimentos = models.BooleanField(
+        "no aplica a alimentos", default=True,
+        help_text="El descuento no rebaja el alimento (margen muy chico). Se agrega solo al texto que ve el cliente.",
     )
     dias_vigencia = models.PositiveSmallIntegerField(
         "días para usarlo", default=0,
@@ -182,7 +186,10 @@ class Cupon(models.Model):
     regalia = models.ForeignKey(Regalia, null=True, blank=True, on_delete=models.PROTECT,
                                 related_name="cupones", editable=False)
     porcentaje = models.DecimalField("descuento (%)", max_digits=5, decimal_places=2, editable=False)
-    descripcion = models.CharField(max_length=160, editable=False)
+    descripcion = models.CharField(max_length=200, editable=False)
+    # Copiado de la regalía al emitirse (05/11/2026). Los cupones anteriores
+    # quedan en False: se entregaron sin esa condición y se respetan así.
+    excluye_alimentos = models.BooleanField("no aplica a alimentos", default=False, editable=False)
     creado_en = models.DateTimeField(auto_now_add=True)
     vence_en = models.DateField(null=True, blank=True)
     usado_en = models.DateTimeField(null=True, blank=True, editable=False)

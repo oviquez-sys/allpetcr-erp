@@ -144,6 +144,12 @@ def nueva(request):
         p["presentacion"] = p.get("presentacion") or ""
         p["descripcion"] = p.get("descripcion") or ""
         completar_foto(p)
+    # Control antes de comprar (05/11/2026, compras/control.py): la línea de
+    # la compra avisa si el producto no se vende o ya sobra.
+    from .control import avisos as avisos_compra
+    aviso = avisos_compra(empresa, productos)
+    for p in productos:
+        p["aviso_compra"] = aviso.get(p["id"], "")
     proveedores = list(
         Proveedor.objects.filter(activo=True, empresa=empresa).values("id", "nombre").order_by("nombre")
     )

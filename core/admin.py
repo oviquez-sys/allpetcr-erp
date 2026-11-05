@@ -70,3 +70,13 @@ class ChatMensajeAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+from .models import MetaNegocio  # noqa: E402
+
+
+@admin.register(MetaNegocio)
+class MetaNegocioAdmin(admin.ModelAdmin):
+    """Gastos fijos, días abiertos y metas del tablero «¿Cómo vamos?»."""
+    list_display = ("empresa", "gasto_fijo_mensual", "dias_abiertos", "meta_con_cliente_pct", "actualizado_en")
+    fields = ("empresa", "gasto_fijo_mensual", "dias_abiertos", "meta_con_cliente_pct", "margen_respaldo_pct")

@@ -39,10 +39,11 @@ from decimal import Decimal
 from django.db.models import F, Sum
 from django.utils import timezone
 
-# Ventana de análisis. 60 días es el compromiso: suficiente para promediar el
-# ruido semanal (quincenas, fines de semana), corto para que un cambio real de
-# demanda se note en semanas y no en trimestres. Configurable sin tocar código.
-DIAS_VENTANA = int(os.environ.get("REPOSICION_DIAS_VENTANA", "60"))
+# Ventana de análisis: lo vendido en los últimos 30 días (encargo v3 de Oscar,
+# 05/11/2026: "basado en lo vendido en los últimos 30 días, no en el mínimo de
+# estante"). Antes eran 60; con una tienda de un mes, 60 días diluía la
+# demanda real a la mitad. Configurable sin tocar código.
+DIAS_VENTANA = int(os.environ.get("REPOSICION_DIAS_VENTANA", "30"))
 
 # Cobertura objetivo: cuántos días de venta querés tener en bodega después de
 # reponer. 30 días asume una compra mensual al proveedor.
@@ -125,11 +126,12 @@ def sugerencias(empresa, dias=None, objetivo=None, solo_urgentes=False):
             cobertura = p.stock_actual / diaria
             sugerido = (diaria * Decimal(objetivo)) - p.stock_actual
         else:
-            # Sin ventas en la ventana no hay velocidad que medir. No se
-            # inventa una: se cae al criterio viejo del mínimo fijo, que para
-            # un producto que no rota es suficiente.
+            # Sin ventas en la ventana no se sugiere comprar (05/11/2026). Antes
+            # se caía al mínimo de estante, y así se reponía lo que nadie
+            # compra: con 598 de 751 productos sin venderse, el mínimo fijo
+            # era la forma más segura de seguir inmovilizando plata.
             cobertura = None
-            sugerido = (p.stock_minimo - p.stock_actual) if p.stock_actual <= p.stock_minimo else Decimal("0")
+            sugerido = Decimal("0")
 
         if sugerido < 0:
             sugerido = Decimal("0")

@@ -257,6 +257,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 .cupon-on b{font-variant-numeric:tabular-nums}
 .cupon-on .x{margin-left:auto;border:0;background:none;color:#7F5B25;font-size:13px;cursor:pointer;text-decoration:underline}
 .linea-x .cupontxt{font-size:12px;color:#7F5B25;font-weight:600}
+.cupontxt.sin{color:#86868b;font-weight:500}
 /* Ofertas (04/11/2026): la promoción vigente se ve y se aplica sola. */
 .linea-x .promotxt{font-size:12px;color:#9a3412;font-weight:700;background:#fff1e8;border-radius:8px;padding:3px 8px}
 .pcard{position:relative}
@@ -268,6 +269,13 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 .cupon-fila[hidden],.cupon-on[hidden]{display:none}
 #btnManada{border-color:#CC9539;background:#CC9539;color:#fff;white-space:nowrap}
 .dlg label.chk{display:flex;gap:8px;align-items:center;font-weight:400;margin-top:10px}
+/* ¿Cómo nos conoció? y ¿A nombre de quién? (05/11/2026) */
+.dlg .origen{display:flex;flex-wrap:wrap;gap:8px}
+.dlg .origen button{padding:9px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:14px;cursor:pointer}
+.dlg .origen button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.dlg .quien-acc{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.dlg .quien-acc button{padding:12px;border-radius:12px;font-size:15px;cursor:pointer;border:1px solid var(--line);background:#fff}
+.dlg .quien-acc button.nq{color:var(--ink2);border-style:dashed}
 .dlg label.chk input{width:auto;margin:0}
 .busca-fila{display:flex;gap:8px}
 .busca-fila #buscar{flex:1}
@@ -435,7 +443,10 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
     <label for="cliTipo">Tipo de identificación</label>
     <select id="cliTipo"><option value="">(no sé / no dio)</option>{% for v, e in tipos_identificacion %}<option value="{{ v }}">{{ e }}</option>{% endfor %}</select>
     <label for="cliCedula">Cédula</label><input id="cliCedula" autocomplete="off" inputmode="numeric">
+    <label for="cliTel">WhatsApp</label><input id="cliTel" autocomplete="off" inputmode="tel" placeholder="8888-8888">
     <label for="cliCorreo">Correo</label><input id="cliCorreo" type="email" autocomplete="off">
+    <label>¿Cómo nos conoció?</label>
+    <div class="origen" data-origen="cli">{% for v, e in como_nos_conocio %}<button type="button" data-v="{{ v }}">{{ e }}</button>{% endfor %}</div>
     <div class="err" id="cliErr"></div>
     <div class="acc"><button type="button" data-cerrar>Cancelar</button><button class="pri" id="cliOk">Guardar</button></div>
   </form>
@@ -450,8 +461,26 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
     <label for="manCorreo">Correo <span style="font-weight:400;color:var(--ink2)">(opcional)</span></label><input id="manCorreo" type="email" autocomplete="off">
     <label class="chk"><input type="checkbox" id="manAcepto"> El cliente aceptó que guardemos sus datos</label>
     <label class="chk"><input type="checkbox" id="manPromos"> Quiere recibir promociones por WhatsApp</label>
+    <label>¿Cómo nos conoció?</label>
+    <div class="origen" data-origen="man">{% for v, e in como_nos_conocio %}<button type="button" data-v="{{ v }}">{{ e }}</button>{% endfor %}</div>
     <div class="err" id="manErr"></div>
     <div class="acc"><button type="button" data-cerrar>Cancelar</button><button class="pri" id="manOk">Unir y aplicar regalo</button></div>
+  </form>
+</dialog>
+
+<dialog class="dlg" id="dlgQuien" aria-labelledby="tQuien">
+  <form method="dialog" id="frmQuien">
+    <h2 id="tQuien">¿A nombre de quién?</h2>
+    <div class="sub">Pedile al cliente su WhatsApp o su cédula. Así sabemos quién vuelve y le avisamos cuando se le acabe la comida.</div>
+    <label for="quienDato">WhatsApp o cédula</label>
+    <input id="quienDato" autocomplete="off" inputmode="tel" placeholder="8888-8888">
+    <div class="err" id="quienErr"></div>
+    <div class="acc"><button class="pri" id="quienOk">Buscar y cobrar</button></div>
+    <div class="quien-acc">
+      <button type="button" id="quienNuevo">🐾 Es cliente nuevo: unirlo a la manada</button>
+      <button type="button" class="nq" id="quienNoQuiso">No quiso dar datos</button>
+      <button type="button" data-cerrar>Volver a la venta</button>
+    </div>
   </form>
 </dialog>
 
@@ -472,7 +501,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
     <div class="step2"><div class="n">3</div><div class="st">Tocá cómo paga: <b>Efectivo</b>, <b>Tarjeta</b> o <b>SINPE</b>. Sale el tiquete solo.</div></div>
     <div class="step2"><div class="n">4</div><div class="st">Si el cliente lleva fiado, elegí su nombre arriba y usá <b>Fiado</b>.</div></div>
     <div class="step2"><div class="n">5</div><div class="st"><b>Descuento o regalía.</b> En la fila de cada producto podés poner un <b>descuento</b> en % (número entero), o escribir directo <b>el precio</b> al que se lo dejás (ej. ₡2.000) y el sistema calcula el descuento. También podés marcarlo como <b>🎁 Regalía</b> (sale gratis, pero igual descuenta del inventario y se registra el costo).</div></div>
-    <div class="step2"><div class="n">6</div><div class="st"><b>🎟 Casilla dorada.</b> En <b>cada compra</b> preguntale al cliente su WhatsApp o su cédula y escribilo ahí + Enter: la venta queda a su nombre (así se arma su historial y los recordatorios de comida). Si tiene su regalo de bienvenida pendiente, se aplica solo. También acepta el código del cupón (ALP-22 o solo 22; los viejos empiezan con AP-). Si no pudo escanear el QR, tocá <b>🐾 Unir</b>: lo registrás ahí mismo y el regalo se aplica en esta compra. El descuento se aplica a toda la venta y el cupón queda usado al cobrar: no sirve dos veces.</div></div>
+    <div class="step2"><div class="n">6</div><div class="st"><b>🎟 Casilla dorada.</b> En <b>cada compra</b> preguntale al cliente su WhatsApp o su cédula y escribilo ahí + Enter: la venta queda a su nombre (así se arma su historial y los recordatorios de comida). Si tiene su regalo de bienvenida pendiente, se aplica solo. También acepta el código del cupón (ALP-22 o solo 22; los viejos empiezan con AP-). Si cobrás sin cliente, la caja te pregunta «¿A nombre de quién?»: si no quiere dar datos, tocá «No quiso dar datos» y queda anotado. Si no pudo escanear el QR, tocá <b>🐾 Unir</b>: lo registrás ahí mismo y el regalo se aplica en esta compra. El descuento se aplica a toda la venta <b>menos los alimentos</b> y el cupón queda usado al cobrar: no sirve dos veces. Si el cliente solo lleva alimento, el cupón no se gasta y le queda para otra compra.</div></div>
     <div class="step2"><div class="n">+</div><div class="st"><b>Atender a otro cliente.</b> Si un cliente se va a buscar algo más con su venta a medio armar y llega otro a pagar, tocá <b>Atender a otro cliente</b>: la primera venta queda guardada en una pestaña arriba (con su cliente y su total) y empezás una nueva. Cuando vuelva, tocá su pestaña y seguís donde quedaste. Lo que está apartado en una venta en espera no se le puede vender a otro.</div></div>
     <div class="step2"><div class="n">+</div><div class="st"><b>Redondear.</b> Si son ₡13.554 y el cliente no tiene para el vuelto exacto, tocá <b>Redondear el total</b> debajo del total (o el atajo que aparece al cobrar en efectivo) y dejalo en ₡13.500. La diferencia queda registrada como redondeo y el cierre de caja cuadra. Máximo ₡{{ redondeo_maximo }}; para más, poné un descuento en el producto.</div></div>
     <div class="step2"><div class="n">7</div><div class="st"><b>Con el teclado es más rápido.</b> <b>F1</b> cobra en efectivo (escribí con cuánto paga y Enter; Enter solo = pagó exacto), <b>F2</b> con tarjeta, <b>F3</b> por SINPE y <b>F4</b> pago mixto. <b>Esc</b> limpia la búsqueda y devuelve el cursor al escáner.</div></div>
@@ -731,8 +760,12 @@ function setMotivoRegalia(id, v){
 }
 // Descuento que de verdad lleva la línea: el mayor entre el que puso el
 // cajero y el del cupón. No se suman — así lo cobra también el servidor.
-function pctLinea(it, p){ return Math.max(pctNegociado(it, p), cupon ? cupon.porcentaje : 0); }
-function ganaElCupon(it, p){ return !!cupon && cupon.porcentaje > pctNegociado(it, p); }
+// El cupón de bienvenida no rebaja el alimento (05/11/2026): misma regla que
+// el servidor (manada/exclusiones.py). Los cupones viejos no traen la condición.
+function cuponAplica(p){ return !!cupon && !(cupon.excluye_alimentos && p.alimento); }
+function pctCupon(p){ return cuponAplica(p) ? cupon.porcentaje : 0; }
+function pctLinea(it, p){ return Math.max(pctNegociado(it, p), pctCupon(p)); }
+function ganaElCupon(it, p){ return cuponAplica(p) && cupon.porcentaje > pctNegociado(it, p); }
 function totalSinPromo(it, p){
   // Con precio final (y sin un cupón que dé más), el total es ese precio por
   // la cantidad: exacto, sin redondeos del porcentaje. Igual que el servidor.
@@ -772,7 +805,8 @@ function pintar(){
          <span class="descbox">Descuento <input type="text" inputmode="numeric" maxlength="5" value="${it.precio_final != null ? '' : (it.descuento_pct||'')}" placeholder="${it.precio_final != null ? Math.round(pctNegociado(it, p)) : '0'}" onchange="setDescuentoPct(${id}, this.value)"> %</span>
          <span class="descbox">o precio ₡<input class="pf" type="text" inputmode="numeric" maxlength="9" value="${it.precio_final != null ? it.precio_final : ''}" placeholder="${Math.round(p.precio_venta)}" onchange="setPrecioFinal(${id}, this.value)"></span>
          ${ganaLaPromo(it, p) ? `<span class="promotxt">🔥 ${esc(p.oferta.nombre)} −${p.oferta.pct}% · aplicado solo</span>`
-           : (ganaElCupon(it, p) || (cupon && !pctNegociado(it, p)) ? `<span class="cupontxt">🎟 ${cupon.porcentaje}% cupón</span>` : '')}
+           : (ganaElCupon(it, p) || (cuponAplica(p) && !pctNegociado(it, p)) ? `<span class="cupontxt">🎟 ${cupon.porcentaje}% cupón</span>`
+             : (cupon && !cuponAplica(p) ? `<span class="cupontxt sin">🎟 El cupón no aplica a alimentos</span>` : ''))}
          ${refTope(p, pctLinea(it, p) > p.tope)}`;
     // Una fila por producto (v2, 17/10/2026): qué es · cuántas · descuento o
     // regalía · cuánto suma.
@@ -879,6 +913,7 @@ document.querySelectorAll('dialog').forEach(d => d.addEventListener('close', () 
 // más, no un paso más.
 function pedirEfectivo(){
   if (cobrando || !listoParaCobrar()) return;
+  if (faltaCliente()){ pedirCliente(pedirEfectivo); return; }
   const total = totalCobrar();
   document.getElementById('efeTotal').textContent = fmt(total);
   // Atajo en el cobro en efectivo: si el cliente no tiene para el vuelto
@@ -924,6 +959,7 @@ document.getElementById('frmEfectivo').addEventListener('submit', e => {
 // Pago mixto (VEN-04): efectivo + tarjeta + SINPE, sumando exacto.
 function pedirMixto(){
   if (cobrando || !listoParaCobrar()) return;
+  if (faltaCliente()){ pedirCliente(pedirMixto); return; }
   document.getElementById('mixTotal').textContent = fmt(totalCobrar());
   ['mixEFE','mixTAR','mixSIN'].forEach(i => document.getElementById(i).value = '');
   calcMixto();
@@ -955,6 +991,7 @@ async function cobrar(medio, extra = {}){
   if (!listoParaCobrar()) return;
   const clienteId = document.getElementById('cliente').value;
   if (medio === 'CRE' && !clienteId){ msg("Para fiar, elegí primero el cliente arriba.", true); return; }
+  if (faltaCliente()){ pedirCliente(() => cobrar(medio, extra)); return; }
   cobrando = true;
   if (!clave) clave = nuevaClave();
   document.querySelectorAll('.pagos button, #btnCredito').forEach(b=>b.disabled=true);
@@ -964,7 +1001,8 @@ async function cobrar(medio, extra = {}){
       headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
       body: JSON.stringify({medio_pago: medio, lineas: lineasCarrito(), cliente_id: clienteId || null,
                             clave, pagos: extra.pagos || null, recibido: extra.recibido || null,
-                            cupon: cupon ? cupon.codigo : null, redondeo: montoRedondeo()})
+                            cupon: cupon ? cupon.codigo : null, redondeo: montoRedondeo(),
+                            sin_cliente: clienteId ? '' : (sinClienteMotivo || '')})
     });
     const d = await r.json();
     if (d.ok){
@@ -972,6 +1010,7 @@ async function cobrar(medio, extra = {}){
       carrito = {};
       redondeo = null;
       quitarCupon(false);             // el cupón ya quedó usado en esta venta
+      sinClienteMotivo = '';          // la próxima venta se vuelve a preguntar
       clave = null;                   // la próxima venta lleva una clave nueva
       soloEscaneados = false;         // la venta terminó: vuelve el catálogo entero
       document.getElementById('cliente').value = '';
@@ -1087,7 +1126,8 @@ async function enviarCorreo(){
 
 // --- Cliente nuevo sin salir de la venta (FE-03) ---
 document.getElementById('btnCliNuevo').addEventListener('click', () => {
-  ['cliNombre','cliCedula','cliCorreo'].forEach(i => document.getElementById(i).value = '');
+  ['cliNombre','cliCedula','cliCorreo','cliTel'].forEach(i => document.getElementById(i).value = '');
+  limpiarOrigen('cli');
   document.getElementById('cliTipo').value = ''; document.getElementById('cliErr').textContent = '';
   document.getElementById('dlgCliente').showModal(); document.getElementById('cliNombre').focus();
 });
@@ -1098,7 +1138,8 @@ document.getElementById('frmCliente').addEventListener('submit', async e => {
     const r = await fetch("{% url 'ventas:cliente_rapido' %}", {method:'POST',
       headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
       body: JSON.stringify({nombre: document.getElementById('cliNombre').value, tipo_identificacion: document.getElementById('cliTipo').value,
-                            identificacion: document.getElementById('cliCedula').value, email: document.getElementById('cliCorreo').value})});
+                            identificacion: document.getElementById('cliCedula').value, email: document.getElementById('cliCorreo').value,
+                            telefono: document.getElementById('cliTel').value, como_nos_conocio: origenDe('cli')})});
     const d = await r.json();
     if (!d.ok){ err.textContent = d.error; return; }
     const c = d.cliente, sel = document.getElementById('cliente');
@@ -1169,7 +1210,7 @@ function pintarCupon(){
   const fila = document.getElementById('cuponFila'), on = document.getElementById('cuponOn');
   const compras = c => (c && c.compras != null) ? ` · ${c.compras} compra${c.compras === 1 ? '' : 's'}` : '';
   if (cupon){
-    on.innerHTML = `🎟 <span>Cupón <b>${esc(cupon.codigo)}</b>: <b>${esc(cupon.porcentaje)}%</b> — ${esc(cupon.cliente.nombre)}${compras(cupon.cliente)}</span>
+    on.innerHTML = `🎟 <span>Cupón <b>${esc(cupon.codigo)}</b>: <b>${esc(cupon.porcentaje)}%</b>${cupon.excluye_alimentos ? ' (no aplica a alimentos)' : ''} — ${esc(cupon.cliente.nombre)}${compras(cupon.cliente)}</span>
       <button type="button" class="x" onclick="quitarCupon(true)">Quitar</button>`;
     on.hidden = false; fila.hidden = true;
   } else if (clienteReconocido){
@@ -1199,16 +1240,19 @@ function quitarCupon(repintar){
   pintarCupon();
   if (repintar) pintar();
 }
-async function aplicarCupon(){
+// Devuelve true si reconoció al cliente; con `alError` el que llama muestra
+// el error (el diálogo «¿A nombre de quién?»).
+async function aplicarCupon(dato, alError){
   const inp = document.getElementById('cuponCodigo');
-  const codigo = inp.value.trim();
-  if (!codigo){ msg("Escriba el cupón, el WhatsApp o la cédula del cliente.", true); inp.focus(); return; }
+  const codigo = (typeof dato === 'string' ? dato : inp.value).trim();
+  if (!codigo){ msg("Escriba el cupón, el WhatsApp o la cédula del cliente.", true); inp.focus(); return false; }
   try {
     const r = await fetch("{% url 'ventas:cupon' %}?codigo=" + encodeURIComponent(codigo));
     const d = await r.json();
-    if (!d.ok){ msg("⛔ " + d.error, true); inp.select(); return; }
+    if (!d.ok){ if (alError) alError(d.error); else { msg("⛔ " + d.error, true); inp.select(); } return false; }
     if (d.codigo){
-      cupon = {codigo: d.codigo, porcentaje: d.porcentaje, descripcion: d.descripcion, cliente: d.cliente};
+      cupon = {codigo: d.codigo, porcentaje: d.porcentaje, descripcion: d.descripcion, cliente: d.cliente,
+               excluye_alimentos: !!d.excluye_alimentos};
       clienteReconocido = null;
       msg(`Cupón aplicado: ${d.porcentaje}% a ${d.cliente.nombre}. Se marca usado al cobrar.`);
     } else {
@@ -1219,15 +1263,80 @@ async function aplicarCupon(){
     }
     elegirCliente(d.cliente);
     pintarCupon(); pintar();
-    volverAlEscaner();
+    if (!alError) volverAlEscaner();
+    return true;
   } catch(e){
-    msg("⛔ No se pudo revisar el cupón. Revise la conexión e intente de nuevo.", true);
+    if (alError) alError("No se pudo conectar con el ERP. Revise la conexión.");
+    else msg("⛔ No se pudo revisar el cupón. Revise la conexión e intente de nuevo.", true);
+    return false;
   }
 }
+
+// --- ¿A nombre de quién? (05/11/2026, encargo v3) ---------------------------
+// Al cobrar sin cliente, un paso corto: WhatsApp o cédula, cliente nuevo, o
+// «No quiso dar datos» (queda anotado en la venta). Fiado ya exige cliente.
+let sinClienteMotivo = '';
+let cobroPendiente = null;
+function faltaCliente(){ return !document.getElementById('cliente').value && !cupon && !sinClienteMotivo; }
+function pedirCliente(seguir){
+  cobroPendiente = seguir;
+  document.getElementById('quienDato').value = '';
+  document.getElementById('quienErr').textContent = '';
+  document.getElementById('dlgQuien').showModal();
+  document.getElementById('quienDato').focus();
+}
+// Retoma el cobro que quedó esperando al cliente (si había uno).
+function seguirCobro(){
+  const f = cobroPendiente; cobroPendiente = null;
+  if (!f) return false;
+  setTimeout(f, 0); return true;
+}
+document.getElementById('frmQuien').addEventListener('submit', async e => {
+  e.preventDefault();
+  const dato = document.getElementById('quienDato').value.trim();
+  const err = document.getElementById('quienErr');
+  if (!dato){ err.textContent = 'Escriba el WhatsApp o la cédula, o toque «No quiso dar datos».'; return; }
+  err.textContent = 'Buscando…';
+  const ok = await aplicarCupon(dato, t => {
+    err.textContent = /ningún cliente/.test(t) ? 'No hay ningún cliente con ese dato. Si es nuevo, tocá «Es cliente nuevo».' : t;
+  });
+  if (!ok) return;
+  document.getElementById('dlgQuien').close();
+  seguirCobro();
+});
+document.getElementById('quienNoQuiso').addEventListener('click', () => {
+  sinClienteMotivo = 'NQ';
+  document.getElementById('dlgQuien').close();
+  seguirCobro();
+});
+document.getElementById('quienNuevo').addEventListener('click', () => {
+  const dato = document.getElementById('quienDato').value.trim();
+  const pendiente = cobroPendiente;
+  document.getElementById('dlgQuien').close();
+  document.getElementById('btnManada').click();
+  manadaSigue = pendiente;                 // el cobro sigue esperando a que se una
+  if (/^[\d\s-]{8,}$/.test(dato)) document.getElementById('manTel').value = dato;
+});
+// «Volver a la venta» o Esc: no se cobra. Los botones de arriba ya tomaron
+// el cobro pendiente antes de que llegue este evento.
+document.getElementById('dlgQuien').addEventListener('close', () => { setTimeout(() => { cobroPendiente = null; }, 0); });
+// Cobro que espera a que el cliente nuevo se una (solo desde «¿A nombre de quién?»).
+let manadaSigue = null;
+// ¿Cómo nos conoció?: un toque, se puede dejar sin marcar.
+document.querySelectorAll('.origen').forEach(g => g.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const on = b.classList.contains('on');
+  g.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+  if (!on) b.classList.add('on');
+}));
+function origenDe(p){ const b = document.querySelector(`.origen[data-origen="${p}"] button.on`); return b ? b.dataset.v : ''; }
+function limpiarOrigen(p){ document.querySelectorAll(`.origen[data-origen="${p}"] button`).forEach(x => x.classList.remove('on')); }
 document.getElementById('btnCupon').addEventListener('click', aplicarCupon);
 // Unir a la manada desde la caja (14/10/2026): para quien no pudo con el QR.
 document.getElementById('btnManada').addEventListener('click', () => {
   ['manNombre','manTel','manCorreo'].forEach(i => document.getElementById(i).value = '');
+  limpiarOrigen('man');
+  manadaSigue = null;
   document.getElementById('manAcepto').checked = false;
   document.getElementById('manPromos').checked = false;
   document.getElementById('manErr').textContent = '';
@@ -1245,7 +1354,7 @@ document.getElementById('frmManada').addEventListener('submit', async e => {
     const r = await fetch("{% url 'ventas:manada_rapido' %}", {method:'POST',
       headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
       body: JSON.stringify({nombre: v('manNombre'), telefono: v('manTel'), email: v('manCorreo'), acepto: true,
-                            promos: document.getElementById('manPromos').checked})});
+                            promos: document.getElementById('manPromos').checked, como_nos_conocio: origenDe('man')})});
     const d = await r.json();
     if (!d.ok){ err.textContent = d.error; return; }
     const c = d.cliente, sel = document.getElementById('cliente');
@@ -1261,6 +1370,7 @@ document.getElementById('frmManada').addEventListener('submit', async e => {
     } else {
       msg(d.ya_era_miembro ? `${c.nombre} ya era de la manada; su regalo ${d.cupon_estado ? 'está ' + d.cupon_estado : 'no está disponible'}.` : `${c.nombre} se unió a la manada.`);
     }
+    if (manadaSigue){ const f = manadaSigue; manadaSigue = null; setTimeout(f, 0); }
   } catch(_){ err.textContent = 'No se pudo conectar con el ERP.'; }
 });
 document.getElementById('cuponCodigo').addEventListener('keydown', e=>{
@@ -1341,7 +1451,7 @@ function guardarActiva(){
 }
 function totalDeVenta(v){
   const antes = [carrito, cupon, redondeo];
-  carrito = v.carrito; cupon = v.cupon; redondeo = v.redondeo || null;
+  carrito = v.carrito; cupon = v.cupon; redondeo = v.redondeo || null; sinClienteMotivo = '';
   const t = totalCobrar();
   [carrito, cupon, redondeo] = antes;
   return t;
@@ -1384,7 +1494,7 @@ function recuperarLocal(){
 function cargarVenta(i, enfocar = true){
   activa = i;
   const v = ventas[i];
-  carrito = v.carrito; cupon = v.cupon; clienteReconocido = v.clienteReconocido;
+  carrito = v.carrito; cupon = v.cupon; clienteReconocido = v.clienteReconocido; sinClienteMotivo = '';
   clientePorCasilla = v.clientePorCasilla; clave = v.clave; redondeo = v.redondeo || null;
   document.getElementById('cliente').value = v.cliente || '';
   document.getElementById('cuponCodigo').value = '';

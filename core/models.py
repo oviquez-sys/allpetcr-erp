@@ -162,3 +162,42 @@ class ChatMensaje(models.Model):
 
     def __str__(self):
         return f"{self.creado_en:%d/%m %H:%M} {self.usuario} · {self.pregunta[:50]}"
+
+
+class MetaNegocio(models.Model):
+    """Los números con los que el tablero «¿Cómo vamos?» pinta el semáforo
+    (05/11/2026, encargo v3 de Oscar). Los edita el gerente en el admin; uno
+    por empresa. Si no existe, se usan los valores de fábrica de abajo, que
+    son los que Oscar dio ese día."""
+
+    DIAS = [("0", "Lunes"), ("1", "Martes"), ("2", "Miércoles"), ("3", "Jueves"),
+            ("4", "Viernes"), ("5", "Sábado"), ("6", "Domingo")]
+
+    empresa = models.OneToOneField(Empresa, on_delete=models.CASCADE, related_name="meta_negocio")
+    gasto_fijo_mensual = models.DecimalField(
+        "gastos fijos del mes (₡)", max_digits=12, decimal_places=2, default=855000,
+        help_text="Alquiler, luz, agua, internet, patente, contador, insumos… todo lo que se paga venda o no.")
+    dias_abiertos = models.CharField(
+        "días que abre la tienda", max_length=7, default="012345",
+        help_text="Números de los días: 0 = lunes … 6 = domingo. «012345» = de lunes a sábado.")
+    meta_con_cliente_pct = models.PositiveSmallIntegerField(
+        "meta de ventas con cliente (%)", default=80)
+    margen_respaldo_pct = models.DecimalField(
+        "ganancia por cada ₡100 vendidos, si todavía no hay ventas", max_digits=5, decimal_places=2, default=25,
+        help_text="El punto de equilibrio usa la ganancia real de los últimos 30 días; esto solo se usa sin ventas.")
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "meta del negocio"
+        verbose_name_plural = "metas del negocio"
+
+    def __str__(self):
+        return f"Metas de {self.empresa}"
+
+    @classmethod
+    def de(cls, empresa):
+        """La de la empresa, o una sin guardar con los valores de fábrica."""
+        return cls.objects.filter(empresa=empresa).first() or cls(empresa=empresa)
+
+    def abre(self, fecha) -> bool:
+        return str(fecha.weekday()) in (self.dias_abiertos or "")

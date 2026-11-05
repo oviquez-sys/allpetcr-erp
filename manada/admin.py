@@ -16,9 +16,9 @@ from .models import Cupon, Mascota, PerfilManada, Regalia
 class RegaliaAdmin(admin.ModelAdmin):
     """Donde Oscar cambia lo que se regala, sin tocar código."""
 
-    list_display = ("nombre", "porcentaje", "texto_cliente", "dias_vigencia", "activa",
+    list_display = ("nombre", "porcentaje", "texto_cliente", "excluye_alimentos", "dias_vigencia", "activa",
                     "cupones_emitidos", "cupones_usados")
-    fields = ("nombre", "porcentaje", "texto_cliente", "dias_vigencia", "activa")
+    fields = ("nombre", "porcentaje", "texto_cliente", "excluye_alimentos", "dias_vigencia", "activa")
 
     def get_queryset(self, request):
         return super().get_queryset(request).annotate(
@@ -140,7 +140,7 @@ class CuponAdmin(admin.ModelAdmin):
     list_display = ("codigo", "cliente", "porcentaje", "estado", "creado_en", "vence_en", "usado_en", "factura")
     list_filter = ("tipo", ("usado_en", admin.EmptyFieldListFilter), "creado_en")
     search_fields = ("codigo", "cliente__nombre", "cliente__email", "factura__numero")
-    readonly_fields = ("codigo", "cliente", "tipo", "regalia", "porcentaje", "descripcion",
+    readonly_fields = ("codigo", "cliente", "tipo", "regalia", "porcentaje", "descripcion", "excluye_alimentos",
                        "creado_en", "usado_en", "factura")
     # Lo único editable a mano es la fecha de vencimiento (por si hay que
     # darle unos días más a un cliente). Usado/no usado lo decide la caja.

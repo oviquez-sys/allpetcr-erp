@@ -23,6 +23,7 @@ from catalogo.consultas import productos_visibles
 from catalogo.models import Producto
 from catalogo.palabras_clave import etiquetas_por_id
 from catalogo.por_kilo import aplica, precio_por_kilo
+from manada.exclusiones import es_alimento
 from core.imagenes import completar_foto
 from core.pdf import html_a_pdf, logo_data_uri
 from core.roles import CAJERO, GERENTE, es_gerente, rol_requerido
@@ -70,6 +71,7 @@ def pos(request):
         "clientes": clientes,
         "es_gerente": es_gerente(request.user),
         "tipos_identificacion": Cliente.TipoIdentificacion.choices,
+        "como_nos_conocio": Cliente.ComoNosConocio.choices,
         "redondeo_maximo": int(services.REDONDEO_MAXIMO_GERENTE if es_gerente(request.user)
                                else services.REDONDEO_MAXIMO_CAJERO),
     })
@@ -92,7 +94,7 @@ def _filas_pos(queryset, con_tope=False):
         .values("id", "sku", "nombre", "codigo_barras", "precio_venta",
                 "stock_actual", "presentacion", "categoria__nombre", "imagen", "mascota",
                 "descripcion", "actualizado_en", "peso_valor", "peso_unidad",
-                "categoria__padre__nombre", "ficha_alimento_id")
+                "categoria__padre__nombre", "ficha_alimento_id", "ficha_alimento__tipo")
     )
     # Palabras de búsqueda (20/10/2026, catalogo/palabras_clave.py): con
     # ellas "comida perro cachorro" encuentra los "Puppy".
@@ -103,6 +105,10 @@ def _filas_pos(queryset, con_tope=False):
         # alimento, snacks y arena.
         peso_valor, peso_unidad = p.pop("peso_valor"), p.pop("peso_unidad")
         kilo = None
+        # Alimento = no lleva el cupón de bienvenida (05/11/2026,
+        # manada/exclusiones.py); el POS lo usa para no mostrarlo rebajado.
+        p["alimento"] = es_alimento(p["categoria__padre__nombre"] or p["categoria__nombre"],
+                                    p.pop("ficha_alimento__tipo"))
         if aplica(p["categoria__nombre"], p.pop("categoria__padre__nombre"), p.pop("ficha_alimento_id")):
             kilo = precio_por_kilo(p["precio_venta"], peso_valor, peso_unidad, p.get("presentacion"))
         p["por_kilo"], p["por_kilo_unidad"] = kilo if kilo else (None, "")
@@ -211,6 +217,7 @@ def cliente_rapido(request):
     cliente = Cliente.objects.create(
         empresa=empresa, nombre=nombre, email=email, tipo_identificacion=tipo,
         identificacion=identificacion, telefono=telefono,
+        como_nos_conocio=_como_nos_conocio(datos),
     )
     avisar_si_mismo_nombre(cliente, "Caja · cliente nuevo")
     return JsonResponse({"ok": True, "ya_existia": False, "cliente": _cliente_json(cliente)})
@@ -261,7 +268,8 @@ def cupon(request):
 
 def _json_cupon(c):
     return {"ok": True, "codigo": c.codigo, "porcentaje": float(c.porcentaje),
-            "descripcion": c.descripcion, "cliente": _cliente_json(c.cliente, con_historial=True)}
+            "descripcion": c.descripcion, "excluye_alimentos": c.excluye_alimentos,
+            "cliente": _cliente_json(c.cliente, con_historial=True)}
 
 
 @rol_requerido(CAJERO, GERENTE)
@@ -297,6 +305,11 @@ def manada_rapido(request):
         )
     except ValidationError as e:
         return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)
+    # "¿Cómo nos conoció?" (05/11/2026): solo si nunca se había anotado.
+    origen = _como_nos_conocio(datos)
+    if origen and not r.cliente.como_nos_conocio:
+        r.cliente.como_nos_conocio = origen
+        r.cliente.save(update_fields=["como_nos_conocio"])
     cupon = r.cupon
     return JsonResponse({
         "ok": True,
@@ -307,6 +320,11 @@ def manada_rapido(request):
         "cupon": cupon.codigo if cupon is not None and cupon.estado == "DISPONIBLE" else "",
         "cupon_estado": cupon.estado_display if cupon is not None else "",
     })
+
+
+def _como_nos_conocio(datos):
+    v = str(datos.get("como_nos_conocio") or "")[:3]
+    return v if v in Cliente.ComoNosConocio.values else ""
 
 
 def _cliente_json(c, con_historial=False):
@@ -392,6 +410,7 @@ def vender(request):
             clave_pos=clave_pos,
             monto_recibido=datos.get("recibido"),
             cupon=(str(datos.get("cupon") or "").strip()[:30] or None),
+            sin_cliente=str(datos.get("sin_cliente") or "")[:2],
             redondeo=datos.get("redondeo") or 0,
         )
     except ValidationError as e:

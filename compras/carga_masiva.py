@@ -455,6 +455,7 @@ def revisar(empresa, archivo, *, fotos=None, descuento=Decimal("0")) -> Revision
     fotos = fotos or {}
     fotos_usadas = set()
     calculo = []  # (fila, tarifa de IVA, ¿es alimento?) para el margen, al final
+    existentes = []  # (fila, producto) que ya existían: control antes de comprar
     rev = Revision(descuento=Decimal(descuento or 0))
     try:
         encabezado, crudas = _leer_filas(archivo)
@@ -606,12 +607,22 @@ def revisar(empresa, archivo, *, fotos=None, descuento=Decimal("0")) -> Revision
         raiz = (categoria.padre or categoria) if categoria is not None else None
         calculo.append((f, producto.tarifa_iva if producto is not None else TARIFA_GENERAL_IVA,
                         raiz is not None and raiz.nombre in RAICES_ALIMENTO))
+        if producto is not None:
+            existentes.append((f, producto))
         if celda("mascota"):
             f.mascota = normalizar_mascota(celda("mascota")) or ""
             if not f.mascota:
                 f.errores.append(f"Mascota «{celda('mascota')}» no válida. Opciones: {', '.join(MASCOTAS)}.")
         rev.filas.append(f)
 
+    # Control antes de comprar (05/11/2026, compras/control.py): avisa —no
+    # bloquea— si se está comprando más de algo que no se vende.
+    if existentes:
+        from .control import avisos as avisos_compra
+        textos = avisos_compra(empresa, [p for _, p in existentes])
+        for f, p in existentes:
+            if p.pk in textos:
+                f.avisos.append(textos[p.pk])
     if not rev.filas and not rev.errores_generales:
         rev.errores_generales.append("El archivo no trae ninguna fila con mercadería.")
     sobran = sorted(fotos[c][0] for c in set(fotos) - fotos_usadas)

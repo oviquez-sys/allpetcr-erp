@@ -380,7 +380,18 @@ puede cambiar por producto) y fechas de inicio y fin. La caja aplica la oferta s
 (no se suma al cupón ni al descuento del cajero: gana el mayor) y la web muestra el \
 precio tachado, el % y hasta cuándo. Avisa si un producto queda bajo costo o si su \
 precio subió en los últimos 30 días; sugiere productos sin ventas en 60 días; \
-imprime etiquetas de oferta.
+imprime la lista para marcar los productos con punto rojo.
+- ¿Cómo vamos? (/como-vamos/, solo gerente; botón en el Inicio): tablero de hoy, \
+semana, mes o fechas: clientes activos de alimento (60 días), venta contra el punto \
+de equilibrio, ganancia contra gastos fijos, % de ventas con cliente (meta 80 %), \
+clientes nuevos y que volvieron, cómo nos conocieron, tiquete promedio y mediano, \
+promoción activa, plata parada en inventario y lo que vence. Gastos fijos y días \
+abiertos se cambian en «Metas del negocio».
+- Al cobrar sin cliente la caja pregunta «¿A nombre de quién?» (WhatsApp o cédula, \
+cliente nuevo, o «No quiso dar datos», que queda anotado). Al crear un cliente en \
+caja se marca cómo nos conoció.
+- El cupón de bienvenida de La manada no rebaja el alimento (desde el 05/11/2026; \
+los cupones entregados antes se respetan). Si solo lleva alimento, no se gasta.
 - ¿Pagó con otro medio? Si una venta se registró como efectivo, tarjeta o SINPE y se \
 cobró con otro de esos, se corrige con "Cambiar medio" en el Historial de ventas o \
 "¿Pagó con otro medio?" en el POS (solo mientras la caja siga abierta; no fiado ni \
@@ -595,3 +606,18 @@ def reporte_ventas(request):
     datos["agrupaciones"] = rep.AGRUPACIONES
     datos["titulo_agrupacion"] = rep.AGRUPACIONES[agrupar]
     return render(request, "core/reporte_ventas.html", datos)
+
+
+@rol_requerido(GERENTE)
+def tablero(request):
+    """«¿Cómo vamos?» (05/11/2026, encargo v3): los números para decidir en el
+    momento. Se calcula al abrirlo; las definiciones están en core/tablero.py."""
+    from . import tablero as tb
+
+    empresa = empresa_actual(request)
+    if empresa is None:
+        return render(request, "core/tablero.html", {"sin_empresa": True})
+    desde, hasta, clave = tb.periodo(request.GET)
+    ctx = tb.calcular(empresa, desde, hasta)
+    ctx.update({"periodo": clave, "periodos": tb.PERIODOS})
+    return render(request, "core/tablero.html", ctx)

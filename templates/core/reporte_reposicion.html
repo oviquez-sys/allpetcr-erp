@@ -100,7 +100,7 @@
     <li><b>Sugerido</b> = venta por día × {{ dias_objetivo }} días − stock actual. Asume que le comprás al proveedor una vez al mes.</li>
     <li><b>Producto estacional:</b> el promedio de {{ dias_ventana }} días no distingue diciembre de febrero. Si vendiste mucho en una temporada corta, va a sugerir de más.</li>
     <li><b>Producto que estuvo agotado:</b> si no había, no se vendió, y el promedio sale bajo justo donde más te faltó. Esas filas están marcadas, pero el número no se corrige solo.</li>
-    <li><b>Sin rotación</b> significa cero ventas en la ventana. Para esos se sigue usando el mínimo fijo del producto, que para algo que no rota alcanza.</li>
+    <li><b>Sin rotación</b> significa cero ventas en la ventana. A esos no se les sugiere comprar: reponer lo que no se vende es inmovilizar plata.</li>
   </ul>
 </div>
 

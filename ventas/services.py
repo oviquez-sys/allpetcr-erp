@@ -91,7 +91,7 @@ def _validar_pagos(pagos, total):
 def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
                     permitir_bajo_costo=False, permitir_descuento_alto=False,
                     permitir_regalia_alta=False, pagos=None, clave_pos=None,
-                    monto_recibido=None, cupon=None, redondeo=0) -> FacturaVenta:
+                    monto_recibido=None, cupon=None, redondeo=0, sin_cliente="") -> FacturaVenta:
     """lineas: iterable de dicts {"producto_id": int, "cantidad": Decimal}.
 
     permitir_bajo_costo: por defecto NO se puede vender un producto por debajo
@@ -182,6 +182,10 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
         empresa=empresa, sucursal=sucursal, sesion_caja=sesion_caja,
         numero=numero, cliente=cliente, medio_pago=medio_pago, usuario=usuario,
         clave_pos=clave_pos or None,
+        # Sin cliente siempre queda la razón (05/11/2026); sin razón = "no se
+        # le preguntó", que es lo que el tablero tiene que poder contar.
+        sin_cliente="" if cliente is not None else (
+            sin_cliente if sin_cliente in FacturaVenta.SinCliente.values else FacturaVenta.SinCliente.SIN_PREGUNTAR),
     )
 
     # Orden estable de bloqueo: al recorrer las líneas se toma un lock de fila
@@ -193,6 +197,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     # Promociones vigentes de los productos de esta venta (04/11/2026): la
     # caja las aplica sola, el cajero no tiene que acordarse de nada.
     from catalogo.promociones import oferta_de, vigentes as promos_vigentes
+    from manada.exclusiones import cupon_aplica
     promos = promos_vigentes(empresa, productos=[l["producto_id"] for l in lineas])
 
     subtotal = impuesto = total = descuento_total = Decimal("0")
@@ -252,10 +257,13 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
                     )
                 desc_l = bruto_linea - (precio_final * cantidad).quantize(Decimal("0.01"))
                 desc_pct = (desc_l * 100 / bruto_linea).quantize(Decimal("0.01")) if bruto_linea else Decimal("0")
-            gana_cupon = pct_cupon > desc_pct
+            # El cupón de bienvenida no rebaja el alimento (05/11/2026,
+            # manada/exclusiones.py): en esa línea es como si no hubiera cupón.
+            pct_cupon_l = pct_cupon if (cupon_obj is None or cupon_aplica(cupon_obj, producto)) else Decimal("0")
+            gana_cupon = pct_cupon_l > desc_pct
             if gana_cupon:
                 # El cupón da más que lo negociado: gana el cupón (no se suman).
-                desc_pct, desc_l = pct_cupon, None
+                desc_pct, desc_l = pct_cupon_l, None
             if desc_l is None:
                 # A colón entero (13/10/2026): 13 % de ₡2.350 son ₡305,50 y el
                 # total quedaba en ₡2.044,50 — nadie cobra ni da vuelto en
@@ -285,7 +293,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
                     and not (promo_linea is not None and promo_linea.permitir_bajo_costo)):
                 precio_efectivo = sub_l / cantidad
                 if precio_efectivo < producto.costo_promedio:
-                    por_cupon = " (por el cupón)" if pct_cupon and desc_pct == pct_cupon else ""
+                    por_cupon = " (por el cupón)" if pct_cupon_l and desc_pct == pct_cupon_l else ""
                     raise ValidationError(
                         f"{producto.nombre}: el precio con descuento{por_cupon}, sin IVA (₡{precio_efectivo:.2f}), "
                         f"queda por debajo del costo (₡{producto.costo_promedio}). "
@@ -296,7 +304,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             # descuento grande sin bajar del costo, y aun así representar una
             # fuga de margen que un cajero no debería poder decidir solo.
             if (not permitir_descuento_alto and desc_pct > DESCUENTO_MAXIMO_SIN_AUTORIZACION
-                    and desc_pct > pct_cupon and promo_linea is None):
+                    and desc_pct > pct_cupon_l and promo_linea is None):
                 raise ValidationError(
                     f"{producto.nombre}: un descuento de {desc_pct}% supera el "
                     f"{DESCUENTO_MAXIMO_SIN_AUTORIZACION}% que un cajero puede aplicar sin "
@@ -361,16 +369,15 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
         campos += ["monto_recibido", "vuelto"]
     factura.save(update_fields=campos)
 
-    # Si la promoción le ganó al cupón en TODAS las líneas, el cupón no se
-    # quema (04/11/2026): es de un solo uso y el cliente no recibió nada por
-    # él. Queda disponible para otra compra.
-    if cupon_obj is not None and not cupon_aplicado and descuento_total > 0:
+    # El cupón solo se quema si rebajó algo. Si la promoción le ganó en todas
+    # las líneas (04/11/2026) o la compra fue solo de alimento (05/11/2026),
+    # el cliente no recibió nada por él: queda disponible para otra compra.
+    if cupon_obj is not None and not cupon_aplicado:
+        if not any(not l.get("es_regalia") for l in lineas):
+            # Todo regalía: se rechaza en vez de dar a entender que se usó.
+            raise ValidationError("El cupón no se puede usar en una venta sin productos cobrados.")
         cupon_obj = None
     if cupon_obj is not None:
-        if descuento_total <= 0:
-            # Todo regalía: el cupón no rebajó nada. Se rechaza en vez de
-            # quemarlo en una venta donde el cliente no recibió el beneficio.
-            raise ValidationError("El cupón no se puede usar en una venta sin productos cobrados.")
         from manada.services import marcar_usado
         marcar_usado(cupon_obj, factura)
 

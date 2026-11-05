@@ -692,6 +692,18 @@ compra, un solo uso por persona) → opcional "Contanos de tu mascota", una vez.
   `SITIO_WEB_URL` arma el enlace de mascotas.
 - Pruebas: `manada/tests.py`.
 
+**El cupón no rebaja el alimento (05/11/2026).** Oscar: el alimento tiene un
+margen tan chico que el 10 % lo dejaba casi sin ganancia. Regla única en
+`manada/exclusiones.py`: alimento = raíz "Alimento" o ficha seca/húmeda (los
+snacks SÍ llevan cupón). `Regalia.excluye_alimentos` (en el admin) se copia al
+`Cupon` al emitirse, junto con el texto + "(no aplica a alimentos)"; los
+cupones anteriores quedaron en False y se respetan como se ofrecieron. Si la
+compra fue solo de alimento, el cupón NO se gasta (y la venta igual queda a
+nombre del cliente). POS: `alimento` en cada producto y `cuponAplica(p)`.
+API `manada/regalia/` manda `excluye_alimentos`; la web lo dice junto al
+porcentaje (barra, portada, /manada, checkout, términos). Pruebas:
+`manada/test_sin_alimentos.py`.
+
 **Sin correo ni contraseña (14/10/2026).** En la tienda mucha gente mayor no
 se acordaba de su correo ni de su clave de Google. Ahora:
 - Registro web: nombre + WhatsApp (correo opcional). El código sale en
@@ -859,6 +871,31 @@ precio bonito (`precios_bonitos.bonito_hacia_abajo`).
   naranja arriba (NavBar `ofertas`), sección "Ofertas" del menú y filtro
   `/catalogo?ofertas=1`. Copia de 60 s: la web cambia a lo sumo 1 min después.
 - Pruebas: `catalogo/test_promociones.py`; web `lib/ofertas.test.ts`.
+
+## Encargo v3, fase 1 «Medir» (05/11/2026)
+
+Objetivo de Oscar: más clientes nuevos que vuelvan por el alimento, sin regalar
+margen ni inmovilizar plata. Una fase a la vez; esta es la 1.
+- **Cliente en cada venta.** `FacturaVenta.sin_cliente` (NQ «No quiso dar
+  datos» / SP «No se le preguntó»). El POS, al cobrar sin cliente, abre
+  `dlgQuien` (WhatsApp o cédula → `ventas:cupon`; «Es cliente nuevo» → 🐾 Unir
+  y sigue el cobro; «No quiso dar datos»). Si una venta llega sin cliente ni
+  razón, `registrar_venta` pone SP: no se rechaza (no rompe otras vías) pero
+  se ve en el tablero quién no pregunta.
+- **¿Cómo nos conoció?** `Cliente.como_nos_conocio` (MAP/INS/PAS/REC/WEB/OTR),
+  un toque en «＋ Cliente» y en 🐾 Unir; solo se llena si estaba vacío.
+- **Tablero** `core:tablero` (/como-vamos/, gerente, botón en el Inicio):
+  cálculo en `core/tablero.py` (docstring = definiciones). Metas en
+  `core.MetaNegocio` (admin: gastos fijos ₡855.000, días abiertos «012345»,
+  meta 80 %, margen de respaldo 25 %). Punto de equilibrio con el margen de
+  30 días. Listas de compras programadas y prospectos: fases 2 y 3.
+- **Control antes de comprar** `compras/control.py`: aviso (no bloqueo) en
+  Recibir mercadería y en la carga desde Excel si nunca se vendió (con
+  historia), no se vende hace 30 días o hay > 3 meses de inventario.
+- **Reposición** (`core/reposicion.py`): ventana 30 días (antes 60) y sin
+  ventas NO se sugiere comprar (antes caía al mínimo de estante).
+- Tiquete: vigencia + «o hasta agotar existencias» de cada promo y «No aplica
+  a alimentos» del cupón (Ley 7472). Pruebas: `core/test_tablero.py`.
 
 ## Redondeo del total en el POS (17/10/2026)
 

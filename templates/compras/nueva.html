@@ -210,6 +210,8 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
   #grid{padding-bottom:0}
   .col.cart{padding-bottom:90px}
 }
+/* Control antes de comprar (05/11/2026): no bloquea, avisa. */
+.aviso-compra{margin-top:4px;font-size:12.5px;color:#8a5700;background:#fff4d6;border-radius:8px;padding:3px 8px;display:inline-block}
 </style>
 <link rel="stylesheet" href="{% static 'css/fotos.css' %}">
 <script src="{% static 'js/fotos.js' %}"></script>
@@ -795,7 +797,7 @@ function pintarLineas(){
     return `<div class="linea" id="linea-${id}">
       <div class="li-prod">
         ${fotoHTML(p, 40, 'clickable-product-img')}
-        <div class="li-txt"><span class="nm">${esc(p.nombre)}</span>${precioInfo}${aviso}</div>
+        <div class="li-txt"><span class="nm">${esc(p.nombre)}</span>${precioInfo}${aviso}${p.aviso_compra ? `<div class="aviso-compra">⚠ ${esc(p.aviso_compra)}</div>` : ''}</div>
       </div>
       <div class="linea-campos">
         <label class="cant"><span class="lbl">Cantidad</span><input type="number" min="0.01" step="any" value="${l.cantidad}" onchange="cambiarCantidad(${id}, this.value)"></label>

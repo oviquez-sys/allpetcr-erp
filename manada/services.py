@@ -22,6 +22,7 @@ from django.utils import timezone
 
 from ventas.models import Cliente
 
+from .exclusiones import texto_con_condicion
 from .models import Cupon, Mascota, PerfilManada, Regalia
 
 logger = logging.getLogger(__name__)
@@ -262,7 +263,9 @@ def registrar_miembro(*, empresa, email="", nombre="", telefono="", google_sub="
                 with transaction.atomic():
                     cupon = Cupon.objects.create(
                         empresa=empresa, codigo=_nuevo_codigo(empresa), cliente=cliente, regalia=regalia,
-                        porcentaje=regalia.porcentaje, descripcion=regalia.texto_cliente, vence_en=vence,
+                        porcentaje=regalia.porcentaje, vence_en=vence,
+                        descripcion=texto_con_condicion(regalia.texto_cliente, regalia.excluye_alimentos),
+                        excluye_alimentos=regalia.excluye_alimentos,
                     )
                 cupon_nuevo = True
             except IntegrityError:

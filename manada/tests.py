@@ -437,7 +437,8 @@ class APIManada(ConRegalia):
     def test_regalia_vigente(self):
         r = self.api.get(reverse("api:manada_regalia"))
         self.assertEqual(r.data, {"activa": True, "porcentaje": "10", "correo_activo": True,
-                                  "texto": "10 % de descuento en tu primera compra", "dias_vigencia": 0})
+                                  "texto": "10 % de descuento en tu primera compra (no aplica a alimentos)",
+                                  "excluye_alimentos": True, "dias_vigencia": 0})
         self.regalia.activa = False
         self.regalia.save()
         self.assertEqual(self.api.get(reverse("api:manada_regalia")).data, {"activa": False, "correo_activo": True})

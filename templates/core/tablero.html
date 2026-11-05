@@ -1,0 +1,195 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}¿Cómo vamos?{% endblock %}
+{% block seccion %}¿Cómo vamos?{% endblock %}
+{% block breadcrumbs %}<div class="tb-migas"><a href="/">Inicio</a> › ¿Cómo vamos?</div>{% endblock %}
+{% block messages %}{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+{% comment %} Tablero del encargo v3 (05/11/2026). Pensado primero para el
+celular: una columna, números grandes, semáforo de color + palabra (nunca solo
+color). En escritorio se abre en dos columnas. {% endcomment %}
+body{background-color:#f5f5f7 !important}
+.tb-migas{max-width:1100px;margin:0 auto;padding:0 4px;font-size:13px;color:#86868b}.tb-migas a{color:#0b3161}
+.tb{max-width:1100px;margin:0 auto;color:#1d1d1f;padding-bottom:96px}
+.tb h1{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:4px 0 2px;padding:0;background:none;color:#1d1d1f}
+.tb .rango{color:#6e6e73;font-size:14px;margin-bottom:14px}
+.tb-per{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tb-per a{padding:8px 14px;border-radius:999px;background:#fff;border:1px solid #e0e0e6;color:#1d1d1f;text-decoration:none;font-size:14px;font-weight:500}
+.tb-per a.on{background:#0b3161;border-color:#0b3161;color:#fff}
+.tb-fechas{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:16px;font-size:14px}
+.tb-fechas input{padding:7px 10px;border:1px solid #e0e0e6;border-radius:10px;font:inherit}
+.tb-fechas button{padding:8px 14px;border-radius:10px;border:0;background:#0b3161;color:#fff;font:inherit;font-weight:600}
+.tb-grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:900px){.tb-grid{grid-template-columns:1fr 1fr}.tb-grid .ancho{grid-column:1/-1}}
+.tb-card{background:#fff;border-radius:18px;padding:18px 18px 16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.tb-card h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6e6e73;margin:0 0 10px;padding:0;background:none}
+.tb-card .nota{font-size:12.5px;color:#86868b;margin-top:8px;line-height:1.4}
+.tb-heroe{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.tb-heroe .n{font-size:64px;font-weight:800;letter-spacing:-.03em;line-height:1;color:#0b3161}
+.tb-heroe .t{font-size:16px;font-weight:600;max-width:320px;line-height:1.3}
+.tb-heroe .cambio{font-size:14px;font-weight:600}
+.sube{color:#1c7a36}.baja{color:#b5231a}.igual{color:#86868b}
+.sem{display:grid;gap:12px}
+.sem .f{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:baseline}
+.sem .f b{font-size:15px}
+.sem .v{font-size:22px;font-weight:700;text-align:right;white-space:nowrap}
+.sem .m{grid-column:1/-1;font-size:12.5px;color:#6e6e73}
+.barra{grid-column:1/-1;height:8px;border-radius:99px;background:#ececf0;overflow:hidden}
+.barra i{display:block;height:100%;border-radius:99px}
+.verde i{background:#34a853}.amarillo i{background:#f2b705}.rojo i{background:#e5483d}.gris i{background:#c7c7cc}
+.pill{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:2px}
+.pill.verde{background:#e6f4ea;color:#1c7a36}.pill.amarillo{background:#fff4d6;color:#8a5700}.pill.rojo{background:#fdecea;color:#b5231a}.pill.gris{background:#f0f0f3;color:#6e6e73}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:#f7f7fa;border-radius:12px;padding:10px 12px}
+.kpi span{display:block;font-size:12px;color:#6e6e73}
+.kpi b{font-size:20px;font-weight:700}
+.tb table{width:100%;border-collapse:collapse;font-size:14px}
+.tb th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:#86868b;font-weight:600;padding:6px 4px;border-bottom:1px solid #ececf0}
+.tb td{padding:7px 4px;border-bottom:1px solid #f2f2f5;vertical-align:top}
+.tb td.n,.tb th.n{text-align:right;white-space:nowrap}
+.tb td small{display:block;color:#86868b;font-size:12px}
+.vacio{color:#86868b;font-size:14px}
+.acc a{color:#0b3161;font-weight:600;text-decoration:none}
+.tramos{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.tramos div{background:#f7f7fa;border-radius:12px;padding:8px 10px}
+.tramos span{display:block;font-size:11.5px;color:#6e6e73}
+.tramos b{font-size:15px}
+@media (max-width:560px){.tramos{grid-template-columns:1fr 1fr}.tb-heroe .n{font-size:54px}}
+.pend{font-size:13.5px;color:#86868b;border:1px dashed #d2d2d7;border-radius:12px;padding:10px 12px;margin-top:8px}
+</style>{% endblock %}
+
+{% block content %}
+<div class="tb">
+{% if sin_empresa %}
+  <h1>¿Cómo vamos?</h1><p class="vacio">Todavía no hay empresa configurada.</p>
+{% else %}
+  <h1>¿Cómo vamos?</h1>
+  <div class="rango">{% if desde == hasta %}{{ desde|date:"l j \d\e F" }}{% else %}Del {{ desde|date:"j/n" }} al {{ hasta|date:"j/n/Y" }}{% endif %} ·
+    {{ ventas }} venta{{ ventas|pluralize }} · calculado {{ hoy|date:"j/n" }} {% now "H:i" %}</div>
+
+  <div class="tb-per">{% for k, e in periodos %}<a href="?periodo={{ k }}" class="{% if periodo == k %}on{% endif %}">{{ e }}</a>{% endfor %}</div>
+  {% if periodo == "rango" %}
+  <form class="tb-fechas" method="get"><input type="hidden" name="periodo" value="rango">
+    <input type="date" name="desde" value="{{ desde|date:'Y-m-d' }}" aria-label="Desde"> a
+    <input type="date" name="hasta" value="{{ hasta|date:'Y-m-d' }}" aria-label="Hasta">
+    <button>Ver</button></form>
+  {% endif %}
+
+  <div class="tb-grid">
+    <section class="tb-card ancho">
+      <h2>Clientes activos de alimento</h2>
+      <div class="tb-heroe"><span class="n">{{ activos }}</span>
+        <span class="t">compraron alimento en AllPet en los últimos 60 días
+          <span class="cambio {% if activos_cambio > 0 %}sube{% elif activos_cambio < 0 %}baja{% else %}igual{% endif %}">
+            ({% if activos_cambio > 0 %}+{% endif %}{{ activos_cambio }} contra hace 30 días)</span></span></div>
+      <div class="nota">Es el número que más importa: cada uno vuelve cada mes o dos por su saco. Solo cuenta ventas con cliente.</div>
+    </section>
+
+    <section class="tb-card">
+      <h2>Contra la meta</h2>
+      <div class="sem">
+      {% for s in semaforos %}
+        <div class="f {{ s.color }}">
+          <b>{{ s.titulo }} <span class="pill {{ s.color }}">{% if s.color == "verde" %}Cumplida{% elif s.color == "amarillo" %}Cerca{% elif s.color == "rojo" %}Lejos{% else %}Sin meta{% endif %}</span></b>
+          <span class="v">{% if s.formato == "pct" %}{{ s.valor|floatformat:0 }} %{% else %}₡{{ s.valor|crc }}{% endif %}</span>
+          <div class="barra {{ s.color }}"><i style="width:{% if s.avance is None %}0{% elif s.avance > 100 %}100{% else %}{{ s.avance }}{% endif %}%"></i></div>
+          <div class="m">Meta {% if s.formato == "pct" %}{{ s.meta|floatformat:0 }} %{% else %}₡{{ s.meta|crc }}{% endif %}{% if s.avance is not None and s.formato != "pct" %} · {{ s.avance }} % de la meta{% endif %} · {{ s.nota }}</div>
+        </div>
+      {% endfor %}
+      </div>
+      {% if abiertos == 0 %}<div class="nota">Este periodo no tiene días abiertos según la configuración: la meta queda en cero.</div>{% endif %}
+      <div class="nota">Gastos fijos ₡{{ meta.gasto_fijo_mensual|crc }} al mes = ₡{{ gasto|crc }} en {{ abiertos }} día{{ abiertos|pluralize }} abierto{{ abiertos|pluralize }}.
+        <span class="acc"><a href="{% if meta.pk %}{% url 'admin:core_metanegocio_change' meta.pk %}{% else %}{% url 'admin:core_metanegocio_add' %}{% endif %}">Cambiar metas</a></span></div>
+    </section>
+
+    <section class="tb-card">
+      <h2>Clientes</h2>
+      <div class="kpis">
+        <div class="kpi"><span>Nuevos</span><b>{{ clientes.nuevos }}</b></div>
+        <div class="kpi"><span>Volvieron</span><b>{{ clientes.volvieron }}</b></div>
+        <div class="kpi"><span>Tiquete promedio</span><b>{% if tiquete_promedio %}₡{{ tiquete_promedio|crc }}{% else %}—{% endif %}</b></div>
+        <div class="kpi"><span>Tiquete mediano</span><b>{% if tiquete_mediano %}₡{{ tiquete_mediano|crc }}{% else %}—{% endif %}</b></div>
+        <div class="kpi" style="grid-column:1/-1"><span>Ventas con alimento que también llevaron otra cosa</span>
+          <b>{% if alimento.pct is None %}—{% else %}{{ alimento.pct }} %{% endif %}</b>
+          <span>{{ alimento.con_otra }} de {{ alimento.con_alimento }} venta{{ alimento.con_alimento|pluralize }} con alimento</span></div>
+      </div>
+      <h2 style="margin-top:16px">¿Cómo nos conocieron los nuevos?</h2>
+      {% if clientes.origen %}
+        <table>{% for nombre, n in clientes.origen %}<tr><td>{{ nombre }}</td><td class="n"><b>{{ n }}</b></td></tr>{% endfor %}</table>
+      {% else %}<p class="vacio">Ningún cliente nuevo en este periodo.</p>{% endif %}
+    </section>
+
+    <section class="tb-card">
+      <h2>Ventas con cliente, por cajero</h2>
+      {% if con_cliente.cajeros %}
+      <table><thead><tr><th>Cajero</th><th class="n">Ventas</th><th class="n">Con cliente</th><th class="n">No quiso</th></tr></thead>
+        <tbody>{% for c in con_cliente.cajeros %}<tr><td>{{ c.nombre }}</td><td class="n">{{ c.ventas }}</td><td class="n"><b>{{ c.pct }} %</b></td><td class="n">{{ c.no_quiso }}</td></tr>{% endfor %}</tbody></table>
+      {% else %}<p class="vacio">Sin ventas en este periodo.</p>{% endif %}
+      {% if con_cliente.motivos %}<div class="nota">Sin cliente: {% for m, n in con_cliente.motivos %}{{ m }} {{ n }}{% if not forloop.last %} · {% endif %}{% endfor %}.</div>{% endif %}
+      {% if con_cliente.dias|length > 1 %}
+      <h2 style="margin-top:16px">Por día</h2>
+      <table>{% for d in con_cliente.dias %}<tr><td>{{ d.fecha|date:"D j/n" }}</td><td class="n">{{ d.ventas }} venta{{ d.ventas|pluralize }}</td><td class="n"><b>{{ d.pct }} %</b></td></tr>{% endfor %}</table>
+      {% endif %}
+    </section>
+
+    <section class="tb-card">
+      <h2>A quién avisar hoy</h2>
+      {% if avisar.filas %}
+      <table>{% for r in avisar.filas %}<tr><td>{{ r.cliente.nombre }}<small>{{ r.consumible.producto.nombre }} · {% if r.consumible.dias_para < 0 %}ya se le acabó{% elif r.consumible.dias_para == 0 %}se le acaba hoy{% else %}se le acaba en {{ r.consumible.dias_para }} día{{ r.consumible.dias_para|pluralize }}{% endif %}</small></td>
+        <td class="n acc">{% if r.enlace %}<a href="{{ r.enlace }}" target="_blank" rel="noopener">WhatsApp</a>{% else %}<small>sin permiso</small>{% endif %}</td></tr>{% endfor %}</table>
+      {% else %}<p class="vacio">Nadie para avisar en los próximos 3 días.</p>{% endif %}
+      <div class="nota acc"><a href="{% url 'manada:recordatorios' %}">Ver todos los recordatorios ›</a></div>
+      <div class="pend">Compras programadas por confirmar y prospectos de alimento: llegan con las fases 2 y 3.</div>
+    </section>
+
+    <section class="tb-card">
+      <h2>Promoción activa</h2>
+      {% for p in promociones %}
+        <p style="margin:0 0 8px"><b>{{ p.promo.nombre }}</b> <small style="color:#86868b">hasta el {{ p.promo.fin|date:"j/n" }}</small>
+          <span class="acc" style="float:right"><a href="{% url 'catalogo:promocion' p.promo.pk %}">Abrir ›</a></span></p>
+        <div class="kpis">
+          <div class="kpi"><span>Unidades vendidas</span><b>{{ p.unidades|floatformat:0 }}</b></div>
+          <div class="kpi"><span>Venta</span><b>₡{{ p.ventas|crc }}</b></div>
+          <div class="kpi"><span>Ganancia que dejó</span><b class="{% if p.ganancia < 0 %}baja{% endif %}">₡{{ p.ganancia|crc }}</b></div>
+          <div class="kpi"><span>Queda en stock</span><b>{{ p.quedan|floatformat:0 }}</b><span>₡{{ p.quedan_costo|crc }} al costo</span></div>
+        </div>
+      {% empty %}<p class="vacio">No hay ninguna promoción vigente hoy.</p>{% endfor %}
+    </section>
+
+    <section class="tb-card ancho">
+      <h2>Inventario: plata parada</h2>
+      <div class="tramos">
+        {% for t in inventario.tramos %}<div><span>Sin venta {{ t.dias }}+ días</span><b>₡{{ t.costo|crc }}</b><span>{{ t.productos }} producto{{ t.productos|pluralize }}</span></div>{% endfor %}
+        <div><span>Nunca vendidos</span><b>₡{{ inventario.nunca.costo|crc }}</b><span>{{ inventario.nunca.productos }} producto{{ inventario.nunca.productos|pluralize }}</span></div>
+      </div>
+      <div class="nota" style="margin:-4px 0 10px">Inventario total al costo: ₡{{ inventario.total|crc }}. «Días sin venta» cuenta desde la última venta o, si nunca se vendió, desde que entró: lo recién llegado no está parado.</div>
+      {% if inventario.lista %}
+      <table><thead><tr><th>Producto</th><th class="n">Días sin venta</th><th class="n">Al costo</th></tr></thead><tbody>
+      {% for f in inventario.lista %}<tr><td>{{ f.producto.nombre }}<small>{{ f.producto.sku }} · {{ f.producto.stock_actual|floatformat:0 }} en existencia{% if f.nunca %} · nunca vendido{% endif %}</small></td>
+        <td class="n">{% if f.dias is None %}—{% else %}{{ f.dias }}{% endif %}</td><td class="n"><b>₡{{ f.colones|crc }}</b></td></tr>{% endfor %}
+      </tbody></table>
+      {% endif %}
+    </section>
+
+    <section class="tb-card">
+      <h2>Meses de inventario por categoría</h2>
+      <table><thead><tr><th>Categoría</th><th class="n">Al costo</th><th class="n">Meses</th></tr></thead><tbody>
+      {% for c in inventario.categorias %}<tr><td>{{ c.nombre }}</td><td class="n">₡{{ c.costo|crc }}</td>
+        <td class="n"><b class="{% if c.meses is None or c.meses > 3 %}baja{% endif %}">{% if c.meses is None %}sin ventas{% else %}{{ c.meses }}{% endif %}</b></td></tr>{% endfor %}
+      </tbody></table>
+      <div class="nota">Meses = lo que hay al costo ÷ el costo de lo que se vendió en los últimos 30 días. Más de 3 meses se marca en rojo.</div>
+    </section>
+
+    <section class="tb-card">
+      <h2>Vence en los próximos 90 días</h2>
+      {% if vencimientos.filas %}
+      <table>{% for v in vencimientos.filas %}<tr><td>{{ v.producto.nombre }}<small>{{ v.quedan|floatformat:0 }} unidad{{ v.quedan|pluralize:"es" }}</small></td>
+        <td class="n {% if v.dias < 30 %}baja{% endif %}">{% if v.dias < 0 %}vencido{% else %}{{ v.lote.fecha_vencimiento|date:"j/n/Y" }}{% endif %}</td></tr>{% endfor %}</table>
+      <div class="nota">{{ vencimientos.lotes }} lote{{ vencimientos.lotes|pluralize }} · ₡{{ vencimientos.costo|crc }} al costo. <span class="acc"><a href="{% url 'inventario:vencimientos' %}">Ver todo ›</a></span></div>
+      {% else %}<p class="vacio">Nada anotado que venza en 90 días.</p>{% endif %}
+    </section>
+  </div>
+{% endif %}
+</div>
+{% endblock %}

@@ -247,6 +247,7 @@ def bytes_tiquete(factura, ancho: int = 48, pie: str = "", logo: bytes = b"") ->
     # cliente ve en el papel cuánto se ahorró (descuentos + redondeo).
     if factura.descuento > 0 and any(getattr(l, "promocion_id", None) for l in factura.lineas.all()):
         partes += [_texto(_dos_columnas("Usted ahorró", _monto(factura.descuento), ancho)), SALTO]
+    partes += _condiciones(factura, ancho)
 
     # Cómo pagó (26/09/2026, TIQ-04): cada medio de un pago mixto, y el
     # efectivo recibido con su vuelto. Es lo primero que se mira cuando un
@@ -270,3 +271,25 @@ def bytes_tiquete(factura, ancho: int = 48, pie: str = "", logo: bytes = b"") ->
             partes += [_texto(renglon), SALTO]
     partes += [SALTO, SALTO, CORTAR]
     return b"".join(partes)
+
+
+def _condiciones(factura, ancho) -> list:
+    """Vigencia y restricciones de lo que rebajó esta venta (05/11/2026, Ley
+    7472: toda promoción dice hasta cuándo vale y qué no incluye). Va en el
+    tiquete porque es lo que el cliente se lleva."""
+    partes = []
+    vistas = set()
+    for linea in factura.lineas.all():
+        promo = getattr(linea, "promocion", None) if getattr(linea, "promocion_id", None) else None
+        if promo is None or promo.pk in vistas:
+            continue
+        vistas.add(promo.pk)
+        partes += [_texto(f"{promo.texto[:ancho]}"), SALTO,
+                   _texto(f"  Válida hasta el {promo.fin:%d/%m/%Y}"), SALTO,
+                   _texto("  o hasta agotar existencias."), SALTO]
+    cupon = getattr(factura, "cupon_manada", None) if getattr(factura, "pk", None) else None
+    if cupon is not None and getattr(cupon, "excluye_alimentos", False):
+        partes += [_texto(f"Cupón La manada {cupon.codigo}"[:ancho]), SALTO,
+                   _texto("  No aplica a alimentos."), SALTO]
+    return partes
+

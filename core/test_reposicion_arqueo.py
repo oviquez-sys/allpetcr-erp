@@ -70,7 +70,7 @@ class ReposicionPorVelocidad(TestCase):
         primero y no tocar el segundo, y eso el mínimo fijo no lo distingue.
 
         Ojo con el matiz: la cobertura se calcula sobre el promedio de la
-        VENTANA (60 días), no sobre lo que se vendió hoy. Una venta grande de
+        VENTANA (30 días), no sobre lo que se vendió hoy. Una venta grande de
         un día no vuelve crítico a un producto — y eso es deseable, porque si
         no, cada venta mayorista dispararía una orden de compra.
         """
@@ -105,16 +105,17 @@ class ReposicionPorVelocidad(TestCase):
         self.assertEqual(fila["urgencia"], "critico")
         self.assertLess(fila["cobertura"], datos["dias_criticos"])
 
-    def test_sin_ventas_cae_al_criterio_del_minimo_fijo(self):
-        """Para lo que no rota, el mínimo fijo alcanza — y no se inventa una
-        velocidad que no existe."""
+    def test_sin_ventas_no_sugiere_comprar(self):
+        """Encargo v3 (05/11/2026): la reposición sale de lo vendido en 30
+        días, no del mínimo de estante. Lo que no se vende no se repone."""
         p = self._producto("QUIETO", stock=1, minimo=5)
-        datos = reposicion.sugerencias(self.empresa)
+        datos = reposicion.sugerencias(self.empresa, solo_urgentes=False)
         fila = next(f for f in datos["filas"] if f["producto"].sku == "QUIETO")
 
         self.assertIsNone(fila["cobertura"], "sin ventas no hay cobertura que calcular")
-        self.assertEqual(fila["urgencia"], "bajo_minimo")
-        self.assertEqual(fila["sugerido"], Decimal("4"), "5 de mínimo − 1 de stock")
+        self.assertEqual(fila["urgencia"], "sin_rotacion")
+        self.assertEqual(fila["sugerido"], Decimal("0"))
+        self.assertEqual(datos["dias_ventana"], 30)
 
     def test_marca_el_producto_que_estuvo_agotado(self):
         """El sesgo conocido del cálculo: si no había, no se vendió, y el
