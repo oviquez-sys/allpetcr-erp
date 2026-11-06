@@ -517,3 +517,34 @@ class PromocionProducto(models.Model):
     @property
     def pct(self):
         return self.descuento_pct or self.promocion.descuento_pct
+
+
+class PaqueteRedes(models.Model):
+    """Un .zip del «Catálogo para redes» (06/11/2026, ver catalogo/redes.py).
+    Se arma en segundo plano; la pantalla pregunta cómo va."""
+
+    class Estado(models.TextChoices):
+        ARMANDO = "ARM", "Armando"
+        LISTO = "LIS", "Listo"
+        ERROR = "ERR", "Error"
+
+    empresa = models.ForeignKey("core.Empresa", on_delete=models.CASCADE, related_name="paquetes_redes")
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    terminado_en = models.DateTimeField(null=True, blank=True)
+    estado = models.CharField(max_length=3, choices=Estado.choices, default=Estado.ARMANDO)
+    filtros = models.JSONField(default=dict, blank=True)
+    total = models.PositiveIntegerField(default=0)
+    hechos = models.PositiveIntegerField(default=0)
+    productos = models.PositiveIntegerField(default=0)
+    sin_foto = models.PositiveIntegerField(default=0)
+    archivo = models.CharField(max_length=255, blank=True)
+    error = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "catálogo para redes"
+        verbose_name_plural = "catálogos para redes"
+        ordering = ["-creado_en"]
+
+    def __str__(self):
+        return f"Catálogo {self.creado_en:%d/%m/%Y %H:%M} ({self.get_estado_display()})"

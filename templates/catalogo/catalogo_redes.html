@@ -1,0 +1,98 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Catálogo para redes{% endblock %}
+{% block messages %}{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.cr{max-width:820px;margin:0 auto;color:#1d1d1f}
+.cr h1{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:6px 0 4px;padding:0;background:none;color:#1d1d1f}
+.cr .sub{color:#6e6e73;font-size:15px;margin-bottom:18px;line-height:1.45}
+.cr-card{background:#fff;border-radius:18px;padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.cr-card h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6e6e73;margin:0 0 12px;padding:0;background:none}
+.cr-op{display:flex;flex-wrap:wrap;gap:10px 18px;margin-bottom:14px}
+.cr-op label{display:flex;gap:8px;align-items:center;font-size:15px}
+.cr-op select{padding:9px 12px;border:1px solid #d2d2d7;border-radius:10px;font:inherit}
+.cr-btn{background:#0b3161;color:#fff;border:0;border-radius:12px;padding:13px 20px;font-size:16px;font-weight:600;cursor:pointer}
+.cr-btn[disabled]{opacity:.5;cursor:not-allowed}
+.cr-msg{background:#eef4ff;color:#0b3161;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:14px}
+.cr-p{display:grid;grid-template-columns:1fr auto;gap:4px 14px;padding:12px 0;border-bottom:1px solid #f0f0f3;align-items:center}
+.cr-p:last-child{border-bottom:0}
+.cr-p b{font-size:15px}
+.cr-p small{color:#86868b;font-size:12.5px;grid-column:1}
+.cr-p .err{color:#b5231a}
+.cr-bar{grid-column:1/-1;height:8px;border-radius:99px;background:#ececf0;overflow:hidden}
+.cr-bar i{display:block;height:100%;background:#0b3161;border-radius:99px;transition:width .4s}
+.cr-dl{background:#34a853;color:#fff !important;text-decoration:none;border-radius:10px;padding:9px 14px;font-weight:600;font-size:14px;white-space:nowrap}
+.cr ul{margin:0;padding-left:18px;font-size:14px;color:#3c3c43;line-height:1.6}
+</style>{% endblock %}
+
+{% block content %}
+<div class="cr">
+  <div style="font-size:13px;color:#86868b"><a href="/admin/" style="color:#0b3161">Administración</a> › Catálogo para redes</div>
+  <h1>Catálogo para redes</h1>
+  <p class="sub">Arma un .zip con el catálogo en PDF, las fotos para WhatsApp y Facebook, tarjetas con precio para estados y los archivos para cargar el catálogo. Todo sale de las fotos, nombres, precios y promociones de hoy del sistema.</p>
+
+  {% for m in messages %}<div class="cr-msg">{{ m }}</div>{% endfor %}
+
+  <form class="cr-card" method="post">{% csrf_token %}
+    <h2>Qué entra</h2>
+    <div class="cr-op">
+      <label><input type="checkbox" name="solo_existencia" value="1" checked> Solo con existencia</label>
+      <label><input type="checkbox" name="con_precio" value="1" checked> Con precio</label>
+      <label><input type="checkbox" name="solo_ofertas" value="1"> Solo lo que está en promoción</label>
+      <label>Categoría <select name="categoria"><option value="">Todas</option>{% for c in categorias %}<option value="{{ c.pk }}">{{ c.nombre }}</option>{% endfor %}</select></label>
+    </div>
+    <button class="cr-btn" {% if armando %}disabled{% endif %}>{% if armando %}Se está armando…{% else %}Armar el paquete{% endif %}</button>
+    <p class="sub" style="margin:10px 0 0;font-size:13px">Los productos sin foto no entran. Con todo el catálogo tarda unos minutos: podés dejar esta página abierta o volver después.</p>
+  </form>
+
+  <div class="cr-card">
+    <h2>Paquetes</h2>
+    {% for p in paquetes %}
+    <div class="cr-p" data-pk="{{ p.pk }}" data-estado="{{ p.estado }}">
+      <b>{{ p.creado_en|date:"j/n/Y H:i" }} · {{ p.categoria_nombre }}{% if p.filtros.solo_ofertas %} · solo promociones{% endif %}{% if not p.filtros.con_precio %} · sin precio{% endif %}</b>
+      {% if p.estado == "LIS" %}<a class="cr-dl" href="{% url 'catalogo:redes_descargar' p.pk %}">Descargar .zip</a>{% else %}<span></span>{% endif %}
+      {% if p.estado == "ARM" %}
+        <small class="txt">Armando… {{ p.hechos }} de {{ p.total|default:"?" }} productos</small>
+        <div class="cr-bar"><i style="width:{% if p.total %}{% widthratio p.hechos p.total 100 %}{% else %}3{% endif %}%"></i></div>
+      {% elif p.estado == "LIS" %}
+        <small>{{ p.productos }} producto{{ p.productos|pluralize }}{% if p.sin_foto %} · {{ p.sin_foto }} sin foto quedaron fuera{% endif %}{% if p.error %} · <span class="err">{{ p.error }}</span>{% endif %}</small>
+      {% else %}
+        <small class="err">No se pudo armar: {{ p.error }}</small>
+      {% endif %}
+    </div>
+    {% empty %}<p class="sub" style="margin:0">Todavía no se ha armado ninguno.</p>{% endfor %}
+  </div>
+
+  <div class="cr-card">
+    <h2>Qué trae el .zip</h2>
+    <ul>
+      <li><b>PDF</b>: el catálogo completo y uno por categoría (más liviano para mandar por WhatsApp).</li>
+      <li><b>Para_WhatsApp_y_Facebook</b>: fotos limpias de 1080 × 1080 para los catálogos de WhatsApp Business y Facebook.</li>
+      <li><b>Para_estados_y_publicaciones</b>: tarjetas con nombre y precio (y la promoción, si hay).</li>
+      <li><b>catalogo_facebook.csv</b>: para subir todo el catálogo a Facebook de una vez.</li>
+      <li><b>lista_whatsapp.xlsx</b>: nombre, precio, descripción y enlace de cada producto.</li>
+    </ul>
+    <p class="sub" style="margin:10px 0 0;font-size:13px">Descomprimilo en <b>Escritorio\GRUPO VAYRU\AllPet\CATALOGO</b>. Se guardan los últimos 5 paquetes.</p>
+  </div>
+</div>
+<script>
+// Pregunta cómo va el que se está armando y recarga cuando termina.
+(function () {
+  const fila = document.querySelector('.cr-p[data-estado="ARM"]');
+  if (!fila) return;
+  const url = "{% url 'catalogo:redes_estado' 0 %}".replace('/0/', '/' + fila.dataset.pk + '/');
+  const tic = async () => {
+    try {
+      const d = await (await fetch(url, {headers: {Accept: 'application/json'}})).json();
+      if (d.estado !== 'ARM') { location.reload(); return; }
+      fila.querySelector('.txt').textContent = `Armando… ${d.hechos} de ${d.total || '?'} productos`;
+      if (d.total) fila.querySelector('.cr-bar i').style.width = Math.max(3, Math.round(d.hechos * 100 / d.total)) + '%';
+    } catch (_) {}
+    setTimeout(tic, 3000);
+  };
+  setTimeout(tic, 2000);
+})();
+</script>
+{% endblock %}

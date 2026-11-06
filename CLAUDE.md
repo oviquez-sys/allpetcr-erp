@@ -897,6 +897,26 @@ margen ni inmovilizar plata. Una fase a la vez; esta es la 1.
 - Tiquete: vigencia + «o hasta agotar existencias» de cada promo y «No aplica
   a alimentos» del cupón (Ley 7472). Pruebas: `core/test_tablero.py`.
 
+## Catálogo para redes (06/11/2026)
+
+Pedido de Oscar: carpeta con las fotos de los productos para un catálogo PDF,
+Facebook y WhatsApp. Diseño aprobado ese día (propuesta con imágenes).
+- `catalogo:redes` (/precios/catalogo-redes/, gerente; Administración →
+  Herramientas): filtros (con existencia, con precio, solo promociones,
+  categoría) → «Armar el paquete». Se arma en un HILO (`PaqueteRedes`, la
+  pantalla pregunta cada 3 s): con ~750 productos son minutos y gunicorn corta
+  a los 120 s. Un paquete «armando» de más de 30 min se da por perdido
+  (reinicio del servidor). Se guardan los últimos 5 en el almacén
+  (`catalogos_redes/`). En pruebas `CATALOGO_REDES_EN_HILO=False`.
+- `catalogo/redes.py` arma el .zip: PDF completo + uno por categoría y
+  mascota (reportlab; el servidor no tiene navegador), fotos limpias
+  1080×1080 (recorta el blanco sobrante), tarjetas con precio (o promoción:
+  naranja, −X %, tachado y vigencia), `catalogo_facebook.csv` (precio
+  «5190.00 CRC», sale_price con fechas), `lista_whatsapp.xlsx`, `LEAME.txt`.
+  Sin foto no entra. Fuentes y logos en `catalogo/redes_recursos/`: Poppins NO
+  trae el signo ₡; se dibuja con DejaVu (`_dibujar_precio`, `_precio_pdf`).
+- Nueva dependencia: `reportlab`. Pruebas: `catalogo/test_redes.py`.
+
 ## Redondeo del total en el POS (17/10/2026)
 
 Caso real: ₡13.554 en efectivo, sin vuelto, se cobró ₡13.500 y el cierre quedó

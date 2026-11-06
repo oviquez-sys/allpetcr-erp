@@ -387,6 +387,11 @@ de equilibrio, ganancia contra gastos fijos, % de ventas con cliente (meta 80 %)
 clientes nuevos y que volvieron, cómo nos conocieron, tiquete promedio y mediano, \
 promoción activa, plata parada en inventario y lo que vence. Gastos fijos y días \
 abiertos se cambian en «Metas del negocio».
+- Catálogo para redes (/precios/catalogo-redes/, solo gerente; Administración → \
+Herramientas): arma un .zip con el catálogo en PDF (completo y por categoría), fotos \
+limpias de 1080×1080 para WhatsApp Business y Facebook, tarjetas con precio para \
+estados, el archivo para subir el catálogo a Facebook y un Excel para WhatsApp. Tarda \
+unos minutos; se descarga desde la misma pantalla.
 - Al cobrar sin cliente la caja pregunta «¿A nombre de quién?» (WhatsApp o cédula, \
 cliente nuevo, o «No quiso dar datos», que queda anotado). Al crear un cliente en \
 caja se marca cómo nos conoció.

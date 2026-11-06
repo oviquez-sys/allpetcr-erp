@@ -19,4 +19,5 @@ pywin32>=306; sys_platform == "win32"   # imprimir en las impresoras de Windows 
                        # servidor. impresion/windows.py ya lo importa solo al momento de
                        # imprimir, así que el ERP levanta igual en un servidor sin impresora.
 Pillow>=10.0          # dibuja la etiqueta de 35x25 mm que se manda a la Xprinter
+reportlab>=4.0        # catálogo para redes en PDF (catalogo/redes.py): sin navegador en el servidor
 whitenoise>=6.6        # sirve CSS/JS/logo en el servidor; sin esto el ERP en la nube sale sin estilos
