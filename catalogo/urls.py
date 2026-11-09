@@ -19,6 +19,6 @@ urlpatterns = [
     path("catalogo-redes/<int:pk>/estado/", views_redes.catalogo_redes_estado, name="redes_estado"),
     path("catalogo-redes/<int:pk>/descargar/", views_redes.catalogo_redes_descargar, name="redes_descargar"),
     path("catalogo-redes/alimentos/", views_redes.publicaciones_alimentos, name="redes_alimentos"),
-    path("catalogo-redes/alimentos/<int:pk>/<str:formato>.jpg", views_redes.publicacion_imagen,
+    path("catalogo-redes/alimentos/<int:pk>.jpg", views_redes.publicacion_imagen,
          name="redes_alimentos_imagen"),
 ]

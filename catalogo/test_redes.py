@@ -1,7 +1,7 @@
 """Catálogo para redes (06/11/2026).
 
 Lo que no se puede romper: el .zip trae todo lo prometido (PDFs, fotos de
-1080 × 1080 limpias, publicaciones 1080 × 1350 y estados 1080 × 1920 con
+1080 × 1080 limpias, publicaciones 1080 × 1350 con
 precio, CSV de Facebook y Excel de WhatsApp); lo
 que no tiene foto no entra; la promoción sale con su precio de oferta; y solo
 el gerente lo arma.
@@ -81,17 +81,16 @@ class CatalogoRedes(Base):
         for esperado in ("PDF/Catalogo_completo.pdf", "PDF/Snacks y premios - Perro.pdf",
                          "PDF/Snacks y premios - Gato.pdf", "PDF/Juguetes - Perro.pdf", "PDF/Juguetes - Gato.pdf",
                          "Para_WhatsApp_y_Facebook/Snacks y premios/S2 Waldo Cat Pillows Salmón.jpg",
-                         "Para_estados_y_publicaciones/Publicaciones/Juguetes/J1 Peluche dona.jpg",
-                         "Para_estados_y_publicaciones/Estados/Juguetes/J1 Peluche dona.jpg",
+                         "Para_estados_y_publicaciones/Juguetes/J1 Peluche dona.jpg",
                          "catalogo_facebook.csv", "lista_whatsapp.xlsx", "LEAME.txt"):
             self.assertIn(f"{raiz}/{esperado}", nombres)
         self.assertFalse(any("Sin foto" in n for n in nombres))
         im = Image.open(io.BytesIO(z.read(f"{raiz}/Para_WhatsApp_y_Facebook/Juguetes/J1 Peluche dona.jpg")))
         self.assertEqual(im.size, (1080, 1080))
         # 09/11/2026: las publicaciones reemplazaron a la tarjeta 1080 × 1080.
-        for carpeta, tam in (("Publicaciones", (1080, 1350)), ("Estados", (1080, 1920))):
-            im = Image.open(io.BytesIO(z.read(f"{raiz}/Para_estados_y_publicaciones/{carpeta}/Juguetes/J1 Peluche dona.jpg")))
-            self.assertEqual(im.size, tam)
+        # Una sola, 1080 × 1350, para todas las redes (Oscar, 09/11/2026).
+        im = Image.open(io.BytesIO(z.read(f"{raiz}/Para_estados_y_publicaciones/Juguetes/J1 Peluche dona.jpg")))
+        self.assertEqual(im.size, (1080, 1350))
         self.assertTrue(z.read(f"{raiz}/PDF/Catalogo_completo.pdf").startswith(b"%PDF"))
         filas = list(csv.DictReader(io.StringIO(z.read(f"{raiz}/catalogo_facebook.csv").decode("utf-8-sig"))))
         self.assertEqual({f["id"] for f in filas}, {"S1", "S2", "J1"})

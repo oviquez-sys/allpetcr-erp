@@ -35,7 +35,7 @@ body{background-color:#f5f5f7 !important}
   <div style="font-size:13px;color:#86868b"><a href="/admin/" style="color:#0b3161">Administración</a> › Catálogo para redes</div>
   <h1>Catálogo para redes</h1>
   <div class="seg"><a class="on" href="{% url 'catalogo:redes' %}">Paquete del catálogo</a><a href="{% url 'catalogo:redes_alimentos' %}">Publicaciones de alimentos</a></div>
-  <p class="sub">Arma un .zip con el catálogo en PDF, las fotos para WhatsApp y Facebook, publicaciones y estados con precio, y los archivos para cargar el catálogo. Todo sale de las fotos, nombres, precios y promociones de hoy del sistema.</p>
+  <p class="sub">Arma un .zip con el catálogo en PDF, las fotos para WhatsApp y Facebook, publicaciones con precio, y los archivos para cargar el catálogo. Todo sale de las fotos, nombres, precios y promociones de hoy del sistema.</p>
 
   {% for m in messages %}<div class="cr-msg">{{ m }}</div>{% endfor %}
 
@@ -74,7 +74,7 @@ body{background-color:#f5f5f7 !important}
     <ul>
       <li><b>PDF</b>: el catálogo completo y uno por categoría (más liviano para mandar por WhatsApp).</li>
       <li><b>Para_WhatsApp_y_Facebook</b>: fotos limpias de 1080 × 1080 para los catálogos de WhatsApp Business y Facebook.</li>
-      <li><b>Para_estados_y_publicaciones</b>: una publicación de 1080 × 1350 y un estado de 1080 × 1920 por producto, con precio (y la promoción, si hay). Los alimentos con ficha técnica llevan ingredientes, nutrición y beneficios.</li>
+      <li><b>Para_estados_y_publicaciones</b>: una imagen de 1080 × 1350 por producto, la misma para Instagram, Facebook y estados de WhatsApp, con precio (y la promoción, si hay). Los alimentos con ficha técnica llevan ingredientes, nutrición y beneficios.</li>
       <li><b>catalogo_facebook.csv</b>: para subir todo el catálogo a Facebook de una vez.</li>
       <li><b>lista_whatsapp.xlsx</b>: nombre, precio, descripción y enlace de cada producto.</li>
     </ul>

@@ -176,7 +176,7 @@ def _precio_hoy(producto, promos):
     return (oferta["precio"] if oferta else producto.precio_venta), oferta
 
 
-def _tarjetas(empresa, ids, formatos, *, claves=None, aprobadas=(), desactualizadas=()):
+def _tarjetas(empresa, ids, *, claves=None, aprobadas=(), desactualizadas=()):
     """Una tarjeta por producto elegido, con lo que necesita la vista previa."""
     from . import publicacion
     from .models import Producto
@@ -200,7 +200,7 @@ def _tarjetas(empresa, ids, formatos, *, claves=None, aprobadas=(), desactualiza
             "huella": publicacion.huella(p, precio=precio, oferta=oferta),
             "beneficios": [{"clave": b.get("clave"), "texto": b["texto"], "on": b.get("clave") in elegidas}
                            for b in opciones],
-            "b": ",".join(elegidas), "tiene_foto": bool(p.imagen), "formatos": formatos,
+            "b": ",".join(elegidas), "tiene_foto": bool(p.imagen),
             "aprobada": pk in aprobadas, "desactualizada": pk in desactualizadas,
         })
     return salida
@@ -218,29 +218,23 @@ def _ids(valores):
     return salida[:MAX_SELECCION]
 
 
-def _formatos(valores):
-    from .publicacion import FORMATOS
-    return [f for f in ("feed", "story") if f in valores and f in FORMATOS] or ["feed", "story"]
-
-
 @rol_requerido(GERENTE)
 def publicaciones_alimentos(request):
     from .models import Producto
     empresa = empresa_actual(request)
     datos = request.POST if request.method == "POST" else request.GET
-    formatos = _formatos(datos.getlist("fmt"))
     ids = _ids(datos.getlist("sel"))
     buscando = request.method == "GET" and "buscar" in request.GET
-    contexto = {"formatos": formatos, "max": MAX_SELECCION}
+    contexto = {"max": MAX_SELECCION}
 
     if request.method == "POST":
         aprobadas = [pk for pk in _ids(request.POST.getlist("ap")) if pk in ids]
         claves = {pk: [c for c in request.POST.getlist(f"b_{pk}") if c] for pk in ids}
         if not aprobadas:
             messages.info(request, "Aprobá al menos una publicación antes de descargar.")
-            contexto["tarjetas"] = _tarjetas(empresa, ids, formatos, claves=claves)
+            contexto["tarjetas"] = _tarjetas(empresa, ids, claves=claves)
             return render(request, "catalogo/publicaciones_alimentos.html", contexto)
-        tarjetas = _tarjetas(empresa, ids, formatos, claves=claves, aprobadas=aprobadas)
+        tarjetas = _tarjetas(empresa, ids, claves=claves, aprobadas=aprobadas)
         viejas = [t["p"].pk for t in tarjetas
                   if t["p"].pk in aprobadas and t["huella"] != request.POST.get(f"h_{t['p'].pk}")]
         if viejas:
@@ -249,14 +243,14 @@ def publicaciones_alimentos(request):
             # descarga nada hasta que la miren de nuevo.
             messages.warning(request, "Algo cambió desde la vista previa (precio, promoción, ficha o foto). "
                                       "Revisá las marcadas como «Desactualizada» y aprobalas de nuevo.")
-            contexto["tarjetas"] = _tarjetas(empresa, ids, formatos, claves=claves,
+            contexto["tarjetas"] = _tarjetas(empresa, ids, claves=claves,
                                              aprobadas=[a for a in aprobadas if a not in viejas],
                                              desactualizadas=viejas)
             return render(request, "catalogo/publicaciones_alimentos.html", contexto)
-        return _zip_publicaciones([t for t in tarjetas if t["aprobada"]], formatos, claves)
+        return _zip_publicaciones([t for t in tarjetas if t["aprobada"]], claves)
 
     if ids and not buscando:
-        contexto["tarjetas"] = _tarjetas(empresa, ids, formatos)
+        contexto["tarjetas"] = _tarjetas(empresa, ids)
         return render(request, "catalogo/publicaciones_alimentos.html", contexto)
 
     q, especie, marca = datos.get("q", ""), datos.get("especie", ""), datos.get("marca", "")
@@ -276,7 +270,7 @@ def publicaciones_alimentos(request):
     return render(request, "catalogo/publicaciones_alimentos.html", contexto)
 
 
-def _zip_publicaciones(tarjetas, formatos, claves):
+def _zip_publicaciones(tarjetas, claves):
     import io
     import zipfile
 
@@ -285,7 +279,6 @@ def _zip_publicaciones(tarjetas, formatos, claves):
     from . import publicacion, redes
     hoy = timezone.localdate()
     carpeta = f"AllPetcr_publicaciones_{hoy:%Y-%m-%d}"
-    destino = {"feed": "Publicaciones_1080x1350", "story": "Estados_1080x1920"}
     salida = io.BytesIO()
     with zipfile.ZipFile(salida, "w", zipfile.ZIP_STORED) as z:
         for t in tarjetas:
@@ -296,18 +289,17 @@ def _zip_publicaciones(tarjetas, formatos, claves):
             d = publicacion.datos(p, precio=t["precio"], oferta=t["oferta"], fecha=hoy,
                                   claves_beneficio=claves.get(p.pk))
             nombre = redes._limpio(f"{p.sku} {p.nombre}") + ".jpg"
-            for f in formatos:
-                im, _ = publicacion.dibujar(f, d, foto)
-                b = io.BytesIO()
-                im.save(b, "JPEG", quality=90, optimize=True)
-                z.writestr(f"{carpeta}/{destino[f]}/{nombre}", b.getvalue())
+            im, _ = publicacion.dibujar(d, foto)
+            b = io.BytesIO()
+            im.save(b, "JPEG", quality=90, optimize=True)
+            z.writestr(f"{carpeta}/{nombre}", b.getvalue())
     r = HttpResponse(salida.getvalue(), content_type="application/zip")
     r["Content-Disposition"] = f'attachment; filename="{carpeta}.zip"'
     return r
 
 
 @rol_requerido(GERENTE)
-def publicacion_imagen(request, pk, formato):
+def publicacion_imagen(request, pk):
     """La vista previa: se dibuja al pedirla, no se guarda nada."""
     import io
 
@@ -316,8 +308,6 @@ def publicacion_imagen(request, pk, formato):
     from . import publicacion, redes
     from .models import Producto
     from .promociones import vigentes
-    if formato not in publicacion.FORMATOS:
-        raise Http404
     empresa = empresa_actual(request)
     p = get_object_or_404(Producto.objects.select_related("ficha_alimento"), pk=pk, empresa=empresa)
     if not p.imagen:
@@ -327,7 +317,7 @@ def publicacion_imagen(request, pk, formato):
     if "b" in request.GET:
         claves = [c for c in request.GET["b"].split(",") if c]
     d = publicacion.datos(p, precio=precio, oferta=oferta, fecha=timezone.localdate(), claves_beneficio=claves)
-    im, _ = publicacion.dibujar(formato, d, redes._abrir_foto(p))
+    im, _ = publicacion.dibujar(d, redes._abrir_foto(p))
     b = io.BytesIO()
     im.save(b, "JPEG", quality=82)
     r = HttpResponse(b.getvalue(), content_type="image/jpeg")

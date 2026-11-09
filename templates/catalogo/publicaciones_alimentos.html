@@ -27,13 +27,12 @@ body{background-color:#f5f5f7 !important}
 .btn.verde{background:#34a853}
 .msg{background:#eef4ff;color:#0b3161;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:14px}
 .msg.warning{background:#fff4d6;color:#8a5700}
-.formatos{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0 6px;font-size:14px}
-.pubs{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:16px}
+.pubs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .pub{border:1px solid #ececf0;border-radius:14px;padding:12px;background:#fafafa}
 .pub.vieja{border-color:#e0a100;background:#fffaf0}
 .pub .imgs{display:flex;gap:8px;align-items:flex-start}
 .pub img{display:block;border-radius:8px;background:#f0f0f3;width:100%;height:auto}
-.pub .feed{flex:1.25}.pub .story{flex:1}
+.pub .feed{flex:1}
 .pub .t{font-size:13px;margin:10px 0 6px}
 .pub .ben{font-size:12.5px;display:flex;flex-direction:column;gap:4px;margin:6px 0}
 .pub .ap{display:flex;gap:8px;align-items:center;font-weight:600;color:#1c7a36;margin-top:8px}
@@ -51,7 +50,6 @@ body{background-color:#f5f5f7 !important}
 
   {% if tarjetas is not None %}
   <form method="post">{% csrf_token %}
-    {% for f in formatos %}<input type="hidden" name="fmt" value="{{ f }}">{% endfor %}
     <div class="card">
       <h2>2 · Revisá y aprobá</h2>
       <div class="pubs">
@@ -61,7 +59,7 @@ body{background-color:#f5f5f7 !important}
           <input type="hidden" name="h_{{ t.p.pk }}" value="{{ t.huella }}">
           {% if t.tiene_foto %}
           <div class="imgs">
-            {% for f in t.formatos %}<div class="{{ f }}"><img loading="lazy" data-base="{% url 'catalogo:redes_alimentos_imagen' t.p.pk f %}" src="{% url 'catalogo:redes_alimentos_imagen' t.p.pk f %}?b={{ t.b|urlencode }}" alt="{{ t.p.nombre }}"></div>{% endfor %}
+            <div class="feed"><img loading="lazy" data-base="{% url 'catalogo:redes_alimentos_imagen' t.p.pk %}" src="{% url 'catalogo:redes_alimentos_imagen' t.p.pk %}?b={{ t.b|urlencode }}" alt="{{ t.p.nombre }}"></div>
           </div>
           {% else %}<p class="chip mal">Sin foto: no se puede publicar</p>{% endif %}
           <div class="t"><b>{{ t.p.nombre }}</b><br><small style="color:#86868b">{{ t.p.sku }}{% if t.oferta %} · en promoción −{{ t.oferta.pct }} %{% endif %}</small>
@@ -79,7 +77,7 @@ body{background-color:#f5f5f7 !important}
       <div class="barra">
         <button type="button" class="btn sec" id="todas">Aprobar todas</button>
         <button class="btn verde">Descargar las aprobadas (.zip de JPG)</button>
-        <a class="btn sec" href="{% url 'catalogo:redes_alimentos' %}?buscar=1{% for t in tarjetas %}&sel={{ t.p.pk }}{% endfor %}{% for f in formatos %}&fmt={{ f }}{% endfor %}">← Elegir otros</a>
+        <a class="btn sec" href="{% url 'catalogo:redes_alimentos' %}?buscar=1{% for t in tarjetas %}&sel={{ t.p.pk }}{% endfor %}">← Elegir otros</a>
       </div>
       <p class="sub" style="margin:10px 0 0;font-size:12.5px">Los precios son los de hoy, con IVA y la promoción si hay. Si un precio, una promoción, una ficha o una foto cambia después de esta vista previa, la publicación se marca «Desactualizada» y no se descarga hasta revisarla de nuevo.</p>
     </div>
@@ -121,10 +119,7 @@ body{background-color:#f5f5f7 !important}
     </label>
     {% empty %}<p class="sub">No hay alimentos con esos filtros.</p>{% endfor %}
     {% if total > lista_max %}<p class="sub" style="font-size:12.5px">Se muestran {{ lista_max }} de {{ total }}. Afiná la búsqueda para ver los demás.</p>{% endif %}
-    <div class="formatos">
-      <label><input type="checkbox" name="fmt" value="feed" {% if "feed" in formatos %}checked{% endif %}> Publicación (Instagram y Facebook) 1080 × 1350</label>
-      <label><input type="checkbox" name="fmt" value="story" {% if "story" in formatos %}checked{% endif %}> Estado (WhatsApp e Instagram) 1080 × 1920</label>
-    </div>
+    <p class="sub" style="margin:12px 0 4px">Una imagen de 1080 × 1350 por producto: sirve para Instagram, Facebook y estados de WhatsApp.</p>
     <button class="btn">Ver vistas previas</button>
     <p class="sub" style="margin:10px 0 0;font-size:12.5px">Una fila por presentación. Hasta {{ max }} a la vez. Solo lectura: generar publicaciones no cambia precios, inventario ni fichas.</p>
   </form>

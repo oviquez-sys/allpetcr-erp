@@ -8,8 +8,7 @@ y promociones de hoy):
       PDF/Catalogo_completo.pdf             portada + una sección por categoría
       PDF/<Categoría> - <Perro|Gato>.pdf     uno por categoría (más fácil de mandar)
       Para_WhatsApp_y_Facebook/<Categoría>/<SKU> <nombre>.jpg   foto limpia 1080
-      Para_estados_y_publicaciones/Publicaciones/<Categoría>/<SKU> <nombre>.jpg  1080 × 1350
-      Para_estados_y_publicaciones/Estados/<Categoría>/<SKU> <nombre>.jpg        1080 × 1920
+      Para_estados_y_publicaciones/<Categoría>/<SKU> <nombre>.jpg  1080 × 1350, todas las redes
       catalogo_facebook.csv                  formato de catálogo de Facebook
       lista_whatsapp.xlsx                    para copiar al catálogo de WhatsApp
 
@@ -24,8 +23,8 @@ Decisiones (Oscar dijo «dale» a la propuesta con estas recomendaciones):
 
 09/11/2026: las tarjetas 1080 × 1080 de Para_estados_y_publicaciones se
 reemplazaron por las publicaciones de catalogo/publicacion.py (Oscar: «cumplen
-la misma función y esto es mucho mejor»): una para publicar (4:5) y otra para
-estados (9:16). Los alimentos con ficha llevan ingredientes, nutrición y
+la misma función y esto es mucho mejor»): una sola de 1080 × 1350 que sirve
+para Instagram, Facebook y estados. Los alimentos con ficha llevan ingredientes, nutrición y
 beneficios; lo demás, foto, nombre, peso y precio.
 
 Se arma en segundo plano (`PaqueteRedes` + un hilo): con ~750 productos son
@@ -519,8 +518,7 @@ def generar(paquete, progreso=None):
                 datos = publicacion.datos(i.producto, precio=i.precio, oferta=i.oferta, fecha=fecha,
                                           con_precio=con_precio)
                 for prefijo, imagen in (("Para_WhatsApp_y_Facebook", foto_limpia(foto)),
-                                        ("Para_estados_y_publicaciones/Publicaciones", publicacion.feed(datos, foto)[0]),
-                                        ("Para_estados_y_publicaciones/Estados", publicacion.story(datos, foto)[0])):
+                                        ("Para_estados_y_publicaciones", publicacion.feed(datos, foto)[0])):
                     b = io.BytesIO()
                     imagen.save(b, "JPEG", quality=88, optimize=True)
                     z.writestr(zipfile.ZipInfo(f"{carpeta}/{prefijo}/{sub}/{i.archivo}",
@@ -566,8 +564,7 @@ def _leame(n, sin_foto, fallaron, fecha):
         "",
         "PDF/  → el catálogo completo y uno por categoría (más liviano para mandar por WhatsApp).",
         "Para_WhatsApp_y_Facebook/  → fotos limpias 1080×1080 para el catálogo de WhatsApp Business y Facebook.",
-        "Para_estados_y_publicaciones/Publicaciones/  → 1080×1350 para publicar en Instagram y Facebook.",
-        "Para_estados_y_publicaciones/Estados/  → 1080×1920 para estados de WhatsApp e historias de Instagram.",
+        "Para_estados_y_publicaciones/  → 1080×1350, la misma para Instagram, Facebook y estados de WhatsApp.",
         "   (Los alimentos con ficha técnica llevan ingredientes, nutrición y beneficios; lo demás, foto, peso y precio.)",
         "catalogo_facebook.csv  → se sube en Facebook (Administrador de ventas → Catálogo → Agregar artículos → Archivo).",
         "lista_whatsapp.xlsx  → nombre, precio, descripción y enlace de cada producto, para copiar en WhatsApp Business.",

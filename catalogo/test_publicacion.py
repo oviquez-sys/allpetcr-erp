@@ -111,6 +111,7 @@ class Publicaciones(Base):
         self.assertEqual(d.titulo, "Adult Medium Fish")
         self.assertEqual(d.sub, "Perro adulto · raza mediana")
         self.assertEqual(d.peso, "Bolsa de 3 kg")
+        self.assertEqual((d.envase, d.cantidad), ("Bolsa de", "3 kg"))   # la cantidad va en grande
         self.assertEqual(d.nutricion, [("Proteína bruta", "27 %"), ("Grasa bruta", "18 %"), ("Cereales", "Sin")])
         # Oscar: «piel, pelo y articulaciones» → los dos beneficios verificados.
         self.assertEqual(d.beneficios, ["Omega 3 para piel y pelaje.", "El omega 3 ayuda a mantener las articulaciones."])
@@ -147,10 +148,9 @@ class Publicaciones(Base):
         for p in (self.gosbi, self.balance):
             d = pub.datos(p, precio=oferta["precio"], oferta=oferta, fecha=hoy)
             d.titulo = largo
-            for f, tam in pub.FORMATOS.items():
-                im, cupo = pub.dibujar(f, d, foto)
-                self.assertEqual(im.size, tam)
-                self.assertTrue(cupo, f"{p.sku} {f}: algo no cupo")
+            im, cupo = pub.dibujar(d, foto)
+            self.assertEqual(im.size, pub.FEED)
+            self.assertTrue(cupo, f"{p.sku}: algo no cupo")
 
     # --- Pantalla ----------------------------------------------------------
     def test_solo_gerente(self):
@@ -159,7 +159,7 @@ class Publicaciones(Base):
         self.client.force_login(cajero)
         self.assertNotEqual(self.client.get(reverse("catalogo:redes_alimentos")).status_code, 200)
         self.assertNotEqual(self.client.get(reverse("catalogo:redes_alimentos_imagen",
-                                                    args=[self.gosbi.pk, "feed"])).status_code, 200)
+                                                    args=[self.gosbi.pk])).status_code, 200)
 
     def test_lista_y_vista_previa(self):
         self.client.force_login(self.usuario)
@@ -167,16 +167,15 @@ class Publicaciones(Base):
         self.assertContains(r, "GOS-918")
         self.assertNotContains(r, "BEL-1")
         r = self.client.get(reverse("catalogo:redes_alimentos"), {"sel": [self.gosbi.pk, self.balance.pk],
-                                                                  "fmt": ["feed", "story"]})
+                                                                  })
         self.assertContains(r, "Revisá y aprobá")
         self.assertContains(r, "Sin ficha: solo foto, peso y precio")
-        for f, tam in pub.FORMATOS.items():
-            r = self.client.get(reverse("catalogo:redes_alimentos_imagen", args=[self.gosbi.pk, f]), {"b": "articulaciones"})
-            self.assertEqual(r["Content-Type"], "image/jpeg")
-            self.assertEqual(Image.open(io.BytesIO(r.content)).size, tam)
+        r = self.client.get(reverse("catalogo:redes_alimentos_imagen", args=[self.gosbi.pk]), {"b": "articulaciones"})
+        self.assertEqual(r["Content-Type"], "image/jpeg")
+        self.assertEqual(Image.open(io.BytesIO(r.content)).size, (1080, 1350))
 
     def _huellas(self, *productos):
-        r = self.client.get(reverse("catalogo:redes_alimentos"), {"sel": [p.pk for p in productos], "fmt": ["feed", "story"]})
+        r = self.client.get(reverse("catalogo:redes_alimentos"), {"sel": [p.pk for p in productos]})
         return {p.pk: r.context["tarjetas"][i]["huella"] for i, p in enumerate(productos)}
 
     def test_descarga_solo_lo_aprobado(self):
@@ -185,14 +184,13 @@ class Publicaciones(Base):
         self.gosbi.refresh_from_db()
         precio_antes, stock_antes = self.gosbi.precio_venta, self.gosbi.stock_actual
         r = self.client.post(reverse("catalogo:redes_alimentos"), {
-            "sel": [self.gosbi.pk, self.balance.pk], "fmt": ["feed", "story"], "ap": [self.gosbi.pk],
+            "sel": [self.gosbi.pk, self.balance.pk], "ap": [self.gosbi.pk],
             "b_%d" % self.gosbi.pk: ["piel_pelaje", "articulaciones"],
             "h_%d" % self.gosbi.pk: h[self.gosbi.pk], "h_%d" % self.balance.pk: h[self.balance.pk]})
         self.assertEqual(r["Content-Type"], "application/zip")
         nombres = zipfile.ZipFile(io.BytesIO(r.content)).namelist()
-        self.assertEqual(len(nombres), 2)
-        self.assertTrue(any("Publicaciones_1080x1350/GOS-918" in n for n in nombres))
-        self.assertTrue(any("Estados_1080x1920/GOS-918" in n for n in nombres))
+        self.assertEqual(len(nombres), 1)                    # una sola imagen, para todas las redes
+        self.assertIn("GOS-918", nombres[0])
         self.gosbi.refresh_from_db()
         self.assertEqual((self.gosbi.precio_venta, self.gosbi.stock_actual), (precio_antes, stock_antes))
 
@@ -201,7 +199,7 @@ class Publicaciones(Base):
         h = self._huellas(self.gosbi)
         Producto.objects.filter(pk=self.gosbi.pk).update(precio_venta=Decimal("23500"))
         r = self.client.post(reverse("catalogo:redes_alimentos"), {
-            "sel": [self.gosbi.pk], "fmt": ["feed"], "ap": [self.gosbi.pk], "h_%d" % self.gosbi.pk: h[self.gosbi.pk]})
+            "sel": [self.gosbi.pk], "ap": [self.gosbi.pk], "h_%d" % self.gosbi.pk: h[self.gosbi.pk]})
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "Desactualizada")
         self.assertFalse(r.context["tarjetas"][0]["aprobada"])
@@ -215,10 +213,10 @@ class Publicaciones(Base):
         PromocionProducto.objects.create(promocion=promo, producto=self.gosbi)
         activar(promo)
         r = self.client.post(reverse("catalogo:redes_alimentos"), {
-            "sel": [self.gosbi.pk], "fmt": ["feed"], "ap": [self.gosbi.pk], "h_%d" % self.gosbi.pk: h[self.gosbi.pk]})
+            "sel": [self.gosbi.pk], "ap": [self.gosbi.pk], "h_%d" % self.gosbi.pk: h[self.gosbi.pk]})
         self.assertContains(r, "Desactualizada")
 
     def test_sin_aprobar_no_descarga(self):
         self.client.force_login(self.usuario)
-        r = self.client.post(reverse("catalogo:redes_alimentos"), {"sel": [self.gosbi.pk], "fmt": ["feed"]})
+        r = self.client.post(reverse("catalogo:redes_alimentos"), {"sel": [self.gosbi.pk]})
         self.assertContains(r, "Aprobá al menos una")

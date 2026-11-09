@@ -4,9 +4,10 @@ Pedido de Oscar («PROMPT MAESTRO», prototipo aprobado el 09/11/2026 con
 Gosbi Exclusive Grain Free Adult Medium Fish): una pieza minimalista, foto
 original grande, logo pequeño, y el precio como segundo protagonista.
 
-Dos tamaños:
-    feed()   1080 × 1350  publicación de Instagram / Facebook (4:5)
-    story()  1080 × 1920  estado de WhatsApp / historia de Instagram (9:16)
+Un solo tamaño, 1080 × 1350 (4:5), para TODAS las redes: Instagram,
+Facebook y estados de WhatsApp. Oscar, 09/11/2026: «no considero necesario
+crear la de los estados; la idea es usar la misma para todas las redes».
+(Hubo una versión 9:16 para estados; se quitó ese mismo día.)
 
 Dos variantes, según el producto:
 - CON ficha técnica publicable (verificada o parcial): marca y fórmula,
@@ -56,9 +57,6 @@ SITIO = "allpetcr.com"
 LUGAR = "Heredia"
 
 FEED = (1080, 1350)
-STORY = (1080, 1920)
-FORMATOS = {"feed": FEED, "story": STORY}
-NOMBRE_FORMATO = {"feed": "Publicación 1080 × 1350", "story": "Estado 1080 × 1920"}
 
 MAX_INGREDIENTES = 4
 MAX_BENEFICIOS = 2
@@ -71,6 +69,63 @@ REGIONALISMOS = [
     (r"\bguisantes\b", "arvejas"), (r"\bguisante\b", "arveja"),
 ]
 
+# Fichas de marcas de EE. UU. (NutriSource, PureVita, Tuffy's, Loving Pets…)
+# traen la lista en inglés, tal como la publica el fabricante. La ficha NO se
+# cambia (la web la muestra original); solo la publicación sale en español.
+# Traducción de cada ingrediente COMPLETO, nunca palabra por palabra, para
+# no inventar («brewers rice» no es «arroz de cerveceros» sino el arroz
+# partido que se usa en alimento). `test_publicacion` revisa que ningún
+# ingrediente de las fichas del repositorio salga en inglés: una ficha nueva
+# con uno que no esté acá hace fallar la prueba y se agrega aquí.
+TRADUCCION = {
+    "chicken": "Pollo", "deboned chicken": "Pollo deshuesado", "fresh chicken": "Pollo fresco",
+    "chicken meal": "Harina de pollo", "chicken broth": "Caldo de pollo", "chicken liver": "Hígado de pollo",
+    "chicken fat": "Grasa de pollo", "chicken by-product meal": "Harina de subproductos de pollo",
+    "turkey": "Pavo", "deboned turkey": "Pavo deshuesado", "turkey meal": "Harina de pavo",
+    "turkey broth": "Caldo de pavo", "turkey liver": "Hígado de pavo",
+    "duck": "Pato", "deboned duck": "Pato deshuesado", "duck meal": "Harina de pato", "duck broth": "Caldo de pato",
+    "natural duck flavor": "Saborizante natural de pato",
+    "lamb": "Cordero", "deboned lamb": "Cordero deshuesado", "lamb meal": "Harina de cordero",
+    "lamb broth": "Caldo de cordero", "lamb liver": "Hígado de cordero",
+    "beef": "Res", "beef meal": "Harina de res", "beef broth": "Caldo de res", "beef liver": "Hígado de res",
+    "beef lung": "Pulmón de res",
+    "pork": "Cerdo", "pork broth": "Caldo de cerdo", "pork liver": "Hígado de cerdo",
+    "rabbit": "Conejo", "venison": "Venado", "bison": "Bisonte",
+    "salmon": "Salmón", "deboned salmon": "Salmón deshuesado", "salmon meal": "Harina de salmón",
+    "salmon oil": "Aceite de salmón", "trout": "Trucha", "whitefish": "Pescado blanco",
+    "whitefish meal": "Harina de pescado blanco", "fish meal": "Harina de pescado",
+    "menhaden fish meal": "Harina de pescado menhaden", "menhaden fishmeal": "Harina de pescado menhaden",
+    "herring meal": "Harina de arenque", "tuna": "Atún", "fish broth": "Caldo de pescado",
+    "dried egg product": "Huevo deshidratado", "eggs": "Huevo", "water": "Agua",
+    "brown rice": "Arroz integral", "brown rice flour": "Harina de arroz integral", "rice": "Arroz",
+    "white rice": "Arroz blanco", "brewers rice": "Arroz partido", "ground rice": "Arroz molido",
+    "barley": "Cebada", "pearled barley": "Cebada perlada", "oatmeal": "Avena molida", "oats": "Avena",
+    "sorghum": "Sorgo", "ground whole grain corn": "Maíz integral molido", "corn": "Maíz",
+    "corn gluten meal": "Gluten de maíz", "wheat flour": "Harina de trigo",
+    "peas": "Arvejas", "pea flour": "Harina de arveja", "pea fiber": "Fibra de arveja",
+    "pea protein": "Proteína de arveja", "pea starch": "Almidón de arveja",
+    "chickpeas": "Garbanzos", "garbanzo beans": "Garbanzos", "chickpea flour": "Harina de garbanzo",
+    "lentils": "Lentejas", "green lentils": "Lentejas verdes", "red lentils": "Lentejas rojas",
+    "potatoes": "Papas", "dried potatoes": "Papa deshidratada", "potato flour": "Harina de papa",
+    "potato starch": "Almidón de papa", "sweet potatoes": "Camote", "sweet potato": "Camote",
+    "tapioca starch": "Almidón de tapioca", "carrots": "Zanahorias", "pumpkin": "Calabaza",
+    "ground flaxseed": "Linaza molida", "flaxseed": "Linaza", "sunflower meal": "Harina de girasol",
+    "cane molasses": "Melaza de caña", "vegetable glycerin": "Glicerina vegetal",
+    "coconut glycerin": "Glicerina de coco", "glycerin": "Glicerina",
+    "brewers dried yeast": "Levadura de cerveza deshidratada", "dried yeast": "Levadura deshidratada",
+    "natural flavor": "Saborizante natural",
+}
+
+# Palabras que delatan un ingrediente que se quedó en inglés (las usa la prueba).
+PALABRAS_INGLES = {
+    "chicken", "turkey", "duck", "lamb", "beef", "pork", "rabbit", "salmon", "trout", "fish", "whitefish",
+    "meal", "broth", "liver", "fat", "lung", "rice", "brown", "barley", "oatmeal", "oats", "sorghum", "corn",
+    "wheat", "flour", "peas", "pea", "chickpeas", "chickpea", "beans", "lentils", "green", "red", "potatoes",
+    "potato", "sweet", "starch", "carrots", "pumpkin", "flaxseed", "ground", "sunflower", "molasses",
+    "glycerin", "vegetable", "coconut", "brewers", "dried", "yeast", "deboned", "fresh", "flavor",
+    "water", "egg", "eggs", "and", "with",
+}
+
 
 # ---------------------------------------------------------------------------
 # Datos (lo único que sabe del ERP)
@@ -80,8 +135,10 @@ class Datos:
     marca: str
     titulo: str
     sub: str
-    peso: str
+    peso: str                         # «Bolsa de 3 kg» (texto completo)
     precio: Decimal | None            # None = sin precio
+    envase: str = ""                  # «Bolsa de» (rótulo chico sobre la cantidad)
+    cantidad: str = ""                # «3 kg» (uno de los tres protagonistas)
     precio_antes: Decimal | None = None
     oferta_pct: int | None = None
     oferta_hasta: date | None = None
@@ -146,6 +203,8 @@ def ingredientes_principales(texto, n=MAX_INGREDIENTES):
         nombre = re.split(r"\s\+\s|\+", nombre)[0].strip()
         if not nombre:
             continue
+        nombre = nombre.replace("*", "").strip()      # el * remite a una nota que no sale
+        nombre = TRADUCCION.get(nombre.lower(), nombre)
         nombre = _regional(nombre)
         nombre = nombre[0].upper() + nombre[1:]
         salida.append(f"{nombre} {pct} %" if pct else nombre)
@@ -218,25 +277,34 @@ def _titulo_ficha(ficha):
     return nombre
 
 
+def partes_peso(producto, ficha=None):
+    """(«Bolsa de», «3 kg»): el envase va chico y la cantidad en grande.
+    Sin peso conocido, la presentación tal cual y sin envase."""
+    cantidad = ""
+    if producto.peso_valor and producto.peso_unidad:
+        cantidad = f"{_numero(producto.peso_valor)} {producto.peso_unidad}"
+    elif (producto.presentacion or "").strip():
+        cantidad = producto.presentacion.strip()
+    envase = ""
+    if cantidad and ficha is not None and ficha.tipo == "seco" and \
+            contenido(producto.peso_valor, producto.peso_unidad, producto.presentacion):
+        envase = "Bolsa de"
+    return envase, cantidad
+
+
 def peso(producto, ficha=None):
     """«Bolsa de 3 kg» (alimento seco), «85 g», o la presentación tal cual."""
-    texto = ""
-    if producto.peso_valor and producto.peso_unidad:
-        texto = f"{_numero(producto.peso_valor)} {producto.peso_unidad}"
-    elif (producto.presentacion or "").strip():
-        texto = producto.presentacion.strip()
-    if texto and ficha is not None and ficha.tipo == "seco" and \
-            contenido(producto.peso_valor, producto.peso_unidad, producto.presentacion):
-        texto = f"Bolsa de {texto}"
-    return texto
+    envase, cantidad = partes_peso(producto, ficha)
+    return f"{envase} {cantidad}".strip()
 
 
 def datos(producto, *, precio, oferta=None, fecha=None, con_precio=True, claves_beneficio=None):
     """Lo que va en la pieza. `precio` es el que se cobra hoy (con la
     promoción si hay); `oferta` es el dict de `promociones.oferta_de`."""
     ficha = ficha_publicable(producto)
-    d = Datos(marca="", titulo=producto.nombre, sub="", peso=peso(producto, ficha),
-              precio=Decimal(precio) if con_precio else None, fecha=fecha)
+    envase, cantidad = partes_peso(producto, ficha)
+    d = Datos(marca="", titulo=producto.nombre, sub="", peso=f"{envase} {cantidad}".strip(),
+              precio=Decimal(precio) if con_precio else None, fecha=fecha, envase=envase, cantidad=cantidad)
     if con_precio and oferta:
         d.precio_antes = oferta["precio_antes"]
         d.oferta_pct = oferta["pct"]
@@ -417,13 +485,14 @@ def _info(d, ancho, datos_, t, n_ing, n_ben, centrado=False):
         # En el estado (una sola columna centrada) uno por renglón no cabe:
         # van seguidos, en el mismo orden, separados por «·».
         titulo_sec("Ingredientes principales")
-        b.lineas(" · ".join(ing), r._fuente("Regular", t["texto"]), TINTA, int(t["texto"] * 1.45), 3, centrado)
+        b.lineas(" · ".join(ing), r._fuente("Regular", t["texto"]), t.get("color_info", TINTA),
+                 int(t["texto"] * 1.45), 3, centrado)
     elif ing:
         titulo_sec("Ingredientes principales")
         f = r._fuente("Regular", t["texto"])
         for i, x in enumerate(ing):
             fuente = r._fuente("Medium", t["texto"]) if i == 0 else f
-            b.lineas(x, fuente, TINTA, int(t["texto"] * 1.5), 2, centrado)
+            b.lineas(x, fuente, t.get("color_info", TINTA), int(t["texto"] * 1.5), 2, centrado)
     if datos_.nutricion:
         titulo_sec("Información nutricional")
         b.nutricion(datos_.nutricion, r._fuente("Regular", t["h2"]), r._fuente("Bold", t["valor"]),
@@ -431,9 +500,9 @@ def _info(d, ancho, datos_, t, n_ing, n_ben, centrado=False):
     ben = datos_.beneficios[:n_ben]
     if ben:
         titulo_sec("Beneficios" if len(ben) > 1 else "Beneficio destacado")
-        f = r._fuente("Medium", t["beneficio"])
+        f = r._fuente(t.get("peso_beneficio", "Medium"), t["beneficio"])
         for x in ben:
-            b.lineas(x, f, TINTA, int(t["beneficio"] * 1.35), 3, centrado)
+            b.lineas(x, f, t.get("color_info", TINTA), int(t["beneficio"] * 1.35), 3, centrado)
             b.espacio(6)
     return b
 
@@ -470,18 +539,76 @@ def _precio_derecha(d, x_der, y_base, datos_, tam):
     return w
 
 
-def _precio_centro(d, cx, y_base, datos_, tam):
+# Tres protagonistas (Oscar, 09/11/2026: «que resalten el producto, la
+# cantidad y el precio»): la foto y el nombre grandes arriba; abajo, la
+# cantidad y el precio lado a lado, los dos en grande. Ingredientes,
+# nutrición y beneficios quedan como apoyo: más chicos y en gris oscuro.
+INFO = (75, 85, 99)                      # gris oscuro de la información de apoyo
+TAM_PRECIO = 132
+TAM_CANTIDAD = 104
+
+
+def _banda(d, x0, x1, y_base, datos_, tam_precio=TAM_PRECIO, tam_cantidad=TAM_CANTIDAD):
+    """Cantidad (izquierda) y precio (derecha) sobre la misma línea base.
+    Devuelve (y de arriba de la banda, cupo). La cantidad se achica si no
+    cabe al lado del precio; el precio nunca se achica."""
     r = _redes()
-    texto = r._crc(datos_.precio)
-    w = r._ancho_precio(d, texto, "Bold", tam)
-    color = r.OFERTA if datos_.oferta_pct else r.NAVY
-    r._dibujar_precio(d, cx - w / 2, y_base, texto, "Bold", tam, color)
-    if datos_.precio_antes:
-        antes = r._crc(datos_.precio_antes)
-        wa = r._ancho_precio(d, antes, "Regular", 40)
-        ya = y_base - int(tam * 0.78) - 16
-        r._dibujar_precio(d, cx - wa / 2, ya, antes, "Regular", 40, GRIS)
-        d.line([cx - wa / 2, ya - 14, cx + wa / 2, ya - 14], fill=GRIS, width=3)
+    ancho_precio = 0
+    alto = 0
+    if datos_.precio is not None:
+        ancho_precio = _precio_derecha(d, x1, y_base, datos_, tam_precio)
+        alto = int(tam_precio * 0.76) + (62 if datos_.precio_antes else 0)
+    cupo = True
+    if datos_.cantidad:
+        libre = (x1 - x0) - ancho_precio - (40 if ancho_precio else 0)
+        tam = tam_cantidad
+        while tam > 44 and d.textlength(datos_.cantidad, font=r._fuente("Bold", tam)) > libre:
+            tam -= 4
+        fuente = r._fuente("Bold", tam)
+        texto = datos_.cantidad
+        if d.textlength(texto, font=fuente) > libre:
+            texto = r._envolver(d, texto, fuente, libre, 1)[0]
+            cupo = False if not texto.strip("…") else cupo
+        d.text((x0, y_base), texto, font=fuente, fill=TINTA, anchor="ls")
+        alto_c = int(tam * 0.76)
+        if datos_.envase:
+            _texto_espaciado(d, (x0, y_base - alto_c - 40), datos_.envase, r._fuente("Medium", 20), r.DORADO, 3)
+            alto_c += 44
+        alto = max(alto, alto_c)
+    return y_base - alto, cupo
+
+
+def _bajo_banda(d, x0, x1, y, datos_, centrado=False, extra=""):
+    """Vigencia de la promoción y «IVA incluido · Precio al …», en chico."""
+    r = _redes()
+    lineas = []
+    if datos_.precio is not None and datos_.oferta_pct:
+        lineas.append((_vigencia(datos_), r._fuente("Medium", 19), r.OFERTA))
+    pie = _pie_precio(datos_) if datos_.precio is not None else ""
+    pie = " · ".join(x for x in (pie, extra) if x)
+    if pie:
+        lineas.append((pie, r._fuente("Regular", 17), GRIS))
+    for texto, fuente, color in lineas:
+        for fila in r._envolver(d, texto, fuente, x1 - x0, 2):
+            if centrado:
+                d.text(((x0 + x1) / 2, y), fila, font=fuente, fill=color, anchor="ms")
+            else:
+                d.text((x0, y), fila, font=fuente, fill=color, anchor="ls")
+            y += 27
+    return y - 27                       # línea base del último renglón dibujado
+
+
+def _titulo_bloques(d, ancho, datos_, t, centrado=False):
+    """Marca chica + nombre grande + para quién (variante sin ficha)."""
+    r = _redes()
+    b = _Bloques(d, ancho)
+    if datos_.marca:
+        b.espaciado(datos_.marca, r._fuente("Medium", t["marca"]), GRIS, 3, t["marca"] + 14, centrado, 2)
+    b.lineas(datos_.titulo, r._fuente("Bold", t["titulo"]), TINTA, int(t["titulo"] * 1.1), 2, centrado)
+    if datos_.sub:
+        b.espacio(6)
+        b.lineas(datos_.sub, r._fuente("Regular", t["sub"]), GRIS, int(t["sub"] * 1.4), 1, centrado)
+    return b
 
 
 def feed(datos_, foto):
@@ -492,57 +619,38 @@ def feed(datos_, foto):
     W, H = FEED
     im = Image.new("RGB", FEED, FONDO)
     d = ImageDraw.Draw(im)
-    logo = r._logo("logo_horizontal.png", 240)
-    im.paste(logo, (72, 64), logo)
-    linea_y = 1040
-    cupo = True
+    logo = r._logo("logo_horizontal.png", 220)
+    im.paste(logo, (72, 60), logo)
+
+    # Abajo: cantidad y precio. Se dibujan primero para saber cuánto alto queda.
+    y_base = 1172 if (datos_.precio is not None and datos_.oferta_pct) else 1198
+    tope, cupo = _banda(d, 72, W - 72, y_base, datos_)
+    # +58: debajo de la «g» de «kg», que baja ~26 px de la línea base.
+    y = _bajo_banda(d, 72, W - 72, y_base + 58, datos_)
+    cupo = cupo and y <= H - 46 - 30         # que no toque el pie
+    limite = tope - 44
 
     if datos_.con_ficha:
-        f = _foto_fundida(foto, 500, 860)
-        im.paste(f, (50 + (500 - f.width) // 2, 160 + (860 - f.height) // 2))
-        t = dict(marca=19, titulo=50, lineas_titulo=3, sub=23, sep=40, h2=15, texto=22, valor=34, beneficio=23)
-        b, cupo = _info_que_quepa(d, 420, datos_, t, linea_y - 40 - 170)
-        b.dibujar(596, 170)
+        t = dict(marca=18, titulo=56, lineas_titulo=3, sub=22, sep=30, h2=13, texto=19, valor=27,
+                 beneficio=19, ing_en_linea=True, color_info=INFO, peso_beneficio="Regular")
+        b, cupo_info = _info_que_quepa(d, 430, datos_, t, limite - 150)
+        cupo = cupo and cupo_info
+        b.dibujar(590, 150)
+        alto_foto = limite - 140
+        f = _foto_fundida(foto, 520, alto_foto)
+        im.paste(f, (40 + (520 - f.width) // 2, 140 + (alto_foto - f.height) // 2))
     else:
-        t = dict(marca=19, titulo=50, lineas_titulo=2, sub=24)
-        b = _Bloques(d, W - 144)
-        if datos_.marca:
-            b.espaciado(datos_.marca, r._fuente("Medium", t["marca"]), GRIS, 3, t["marca"] + 14)
-        b.lineas(datos_.titulo, r._fuente("Bold", t["titulo"]), TINTA, int(t["titulo"] * 1.1), 2)
-        if datos_.sub:
-            b.espacio(6)
-            b.lineas(datos_.sub, r._fuente("Regular", t["sub"]), GRIS, int(t["sub"] * 1.4), 1)
-        y_txt = linea_y - 34 - b.alto
-        alto_foto = y_txt - 40 - 150
-        f = _foto_fundida(foto, 900, alto_foto)
-        im.paste(f, ((W - f.width) // 2, 150 + (alto_foto - f.height) // 2))
+        b = _titulo_bloques(d, W - 144, datos_, dict(marca=18, titulo=58, sub=23))
+        y_txt = limite - b.alto
+        alto_foto = y_txt - 40 - 140
+        f = _foto_fundida(foto, 940, alto_foto)
+        im.paste(f, ((W - f.width) // 2, 140 + (alto_foto - f.height) // 2))
         b.dibujar(72, y_txt)
-
-    # Fila del precio
-    d.line([72, linea_y, W - 72, linea_y], fill=LINEA, width=2)
-    izq = 72
-    ancho_precio = 0
-    if datos_.precio is not None:
-        ancho_precio = _precio_derecha(d, W - 72, 1222, datos_, 128)
-    ancho_izq = W - 144 - ancho_precio - 30
-    y = 1072
-    if datos_.peso:
-        for fila in r._envolver(d, datos_.peso, r._fuente("Medium", 30), ancho_izq, 2):
-            d.text((izq, y), fila, font=r._fuente("Medium", 30), fill=GRIS)
-            y += 40
-    if datos_.precio is not None:
-        if datos_.oferta_pct:
-            for fila in r._envolver(d, _vigencia(datos_), r._fuente("Medium", 19), ancho_izq, 3):
-                d.text((izq, y + 6), fila, font=r._fuente("Medium", 19), fill=r.OFERTA)
-                y += 27
-        for fila in r._envolver(d, _pie_precio(datos_), r._fuente("Regular", 16), ancho_izq, 2):
-            d.text((izq, y + 14), fila, font=r._fuente("Regular", 16), fill=GRIS)
-            y += 22
-    cupo = cupo and y < 1262
+        cupo = cupo and alto_foto > 500
 
     # Pie
     fp, fb = r._fuente("Regular", 18), r._fuente("Medium", 18)
-    yb = H - 56
+    yb = H - 46
     d.text((72, yb), SITIO, font=fb, fill=TINTA, anchor="ls")
     d.text((72 + d.textlength(SITIO, font=fb), yb), f" · {LUGAR}", font=fp, fill=GRIS, anchor="ls")
     wa = d.textlength(r.WHATSAPP, font=fb)
@@ -551,72 +659,8 @@ def feed(datos_, foto):
     return im, cupo
 
 
-def story(datos_, foto):
-    """1080 × 1920. Arriba y abajo ~250 px los tapa la interfaz de Instagram
-    y WhatsApp: todo lo importante va entre 250 y 1680."""
-    from PIL import Image, ImageDraw
-    r = _redes()
-    W, H = STORY
-    im = Image.new("RGB", STORY, FONDO)
-    d = ImageDraw.Draw(im)
-    logo = r._logo("logo_horizontal.png", 264)
-    im.paste(logo, ((W - logo.width) // 2, 250), logo)
-    margen = 96
-    ancho = W - 2 * margen
-
-    # Bloque del precio, de abajo hacia arriba.
-    y_pie = 1676                           # línea base del renglón «IVA incluido…»
-    tam_precio = 150
-    y_precio = y_pie - 44
-    tope_precio = y_precio - int(tam_precio * 0.76)
-    if datos_.precio is not None and datos_.precio_antes:
-        tope_precio -= 62
-    if datos_.precio is not None and datos_.oferta_pct:
-        tope_precio -= 36
-    if datos_.precio is None:
-        tope_precio = y_pie - 10
-    y_peso = tope_precio - 26
-
-    # Texto del producto.
-    t = dict(marca=21, titulo=58, lineas_titulo=2, sub=26, sep=30, h2=16, texto=24, valor=36, beneficio=25,
-             ing_en_linea=True)
-    cupo = True
-    alto_min_foto = 440 if datos_.con_ficha else 700
-    disponible = (y_peso - 50) - (340 + alto_min_foto + 36)
-    if datos_.con_ficha:
-        b, cupo = _info_que_quepa(d, ancho, datos_, t, disponible, centrado=True)
-    else:
-        b = _Bloques(d, ancho)
-        if datos_.marca:
-            b.espaciado(datos_.marca, r._fuente("Medium", t["marca"]), GRIS, 3, t["marca"] + 14, True)
-        b.lineas(datos_.titulo, r._fuente("Bold", t["titulo"]), TINTA, int(t["titulo"] * 1.1), 2, True)
-        if datos_.sub:
-            b.espacio(6)
-            b.lineas(datos_.sub, r._fuente("Regular", t["sub"]), GRIS, int(t["sub"] * 1.4), 1, True)
-    y_txt = y_peso - 50 - b.alto
-    alto_foto = y_txt - 36 - 340
-    f = _foto_fundida(foto, 860, alto_foto)
-    im.paste(f, ((W - f.width) // 2, 340 + (alto_foto - f.height) // 2))
-    b.dibujar(margen, y_txt)
-
-    cx = W / 2
-    if datos_.peso:
-        d.text((cx, y_peso), datos_.peso, font=r._fuente("Medium", 30), fill=GRIS, anchor="ms")
-    if datos_.precio is not None:
-        _precio_centro(d, cx, y_precio, datos_, tam_precio)
-        if datos_.oferta_pct:
-            d.text((cx, y_precio - int(tam_precio * 0.76) - 18 - (62 if datos_.precio_antes else 0)),
-                   _vigencia(datos_), font=r._fuente("Medium", 21), fill=r.OFERTA, anchor="ms")
-        pie = _pie_precio(datos_) + f" · WhatsApp {r.WHATSAPP}"
-    else:
-        pie = f"{SITIO} · WhatsApp {r.WHATSAPP}"
-    d.text((cx, y_pie), pie, font=r._fuente("Regular", 19), fill=GRIS, anchor="ms")
-    cupo = cupo and alto_foto >= alto_min_foto - 1 and y_txt > 340
-    return im, cupo
-
-
-def dibujar(formato, datos_, foto):
-    return (feed if formato == "feed" else story)(datos_, foto)
+def dibujar(datos_, foto):
+    return feed(datos_, foto)
 
 
 def como_dict(datos_):
