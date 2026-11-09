@@ -195,6 +195,26 @@ class Pantalla(ConPromo):
         r = self.client.post(self.url(), {"accion": "agregar", "codigo": "no-existe"}, HTTP_ACCEPT="application/json")
         self.assertFalse(r.json()["ok"])
 
+    def test_buscar_por_nombre_y_agregar_con_un_clic(self):
+        """09/11/2026: un producto con el código de barras sin registrar no se
+        podía agregar. Ahora se busca por nombre y se elige de la lista."""
+        buscar = reverse("catalogo:promocion_buscar", args=[self.nueva.pk])
+        d = self.client.get(buscar, {"q": "collar"}).json()
+        self.assertEqual([x["nombre"] for x in d["resultados"]], ["Collar"])
+        self.assertFalse(d["resultados"][0]["ya"])
+        self.assertIn("miniatura", d["resultados"][0])
+        r = self.client.post(self.url(), {"accion": "agregar_id", "producto": self.otro.pk},
+                             HTTP_ACCEPT="application/json")
+        self.assertTrue(r.json()["ok"])
+        self.assertTrue(self.nueva.items.filter(producto=self.otro).exists())
+        self.assertTrue(self.client.get(buscar, {"q": "collar"}).json()["resultados"][0]["ya"])
+        self.assertEqual(self.client.get(buscar, {"q": "c"}).json()["resultados"], [])    # 1 letra no busca
+
+    def test_buscar_solo_gerente(self):
+        self.client.force_login(self.cajero)
+        r = self.client.get(reverse("catalogo:promocion_buscar", args=[self.nueva.pk]), {"q": "collar"})
+        self.assertNotEqual(r.status_code, 200)
+
     def test_cambiar_el_pct_de_un_producto(self):
         item, _ = agregar(self.nueva, self.otro)
         self.client.post(self.url(), {"accion": "pct", "item": item.pk, "valor": "40"}, HTTP_ACCEPT="application/json")

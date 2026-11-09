@@ -21,6 +21,14 @@ body{background-color:#f5f5f7 !important}
 .pm-scan .ico{width:34px;height:34px;border-radius:10px;background:#0b3161;color:#fff;display:grid;place-items:center;font-size:17px}
 .pm-scan button{border:0;border-radius:12px;background:#0b3161;color:#fff;font-weight:600;padding:10px 16px;cursor:pointer;font-family:inherit}
 .pm-aviso-top{margin-top:10px;font-size:14px;min-height:20px}
+.pm-busca{margin-top:8px;border:1px solid #e5e5ea;border-radius:14px;background:#fff;max-height:420px;overflow:auto;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.pm-busca .r{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;padding:8px 12px;border-bottom:1px solid #f0f0f3}
+.pm-busca .r:last-child{border-bottom:0}
+.pm-busca .r b{display:block;font-size:14.5px;font-weight:600;color:#1d1d1f}
+.pm-busca .r small{color:#86868b;font-size:12.5px}
+.pm-busca .r button{border:0;border-radius:10px;background:#0b3161;color:#fff;font-weight:600;padding:8px 14px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.pm-busca .r button[disabled]{background:#e8f7ec;color:#1c7a36;cursor:default}
+.pm-busca .vacio{padding:12px 14px;color:#86868b;font-size:14px}
 .pm-aviso-top.ok{color:#1c7a36}.pm-aviso-top.err{color:#b5231a;font-weight:600}
 .pm-tabla{width:100%;border-collapse:collapse;margin-top:14px;font-size:14.5px}
 .pm-tabla th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:#86868b;text-align:right;padding:8px 6px;font-weight:600}
@@ -79,9 +87,10 @@ body{background-color:#f5f5f7 !important}
     {% if editable %}
     <form class="pm-scan" id="scan" autocomplete="off">
       <div class="ico">⌁</div>
-      <input type="text" id="codigo" placeholder="Escaneá o escribí el código del producto…" autofocus>
+      <input type="text" id="codigo" placeholder="Escaneá el código o escribí el nombre del producto…" autofocus>
       <button type="submit">Agregar</button>
     </form>
+    <div class="pm-busca" id="resultados" hidden></div>
     <div class="pm-aviso-top" id="avisoScan" role="status"></div>
     {% endif %}
     <div id="tabla">{% include "catalogo/_promo_tabla.html" %}</div>
@@ -194,8 +203,48 @@ body{background-color:#f5f5f7 !important}
   document.getElementById("scan").addEventListener("submit", async function (e) {
     e.preventDefault();
     var c = campo.value.trim(); if (!c) return;
+    // Con la lista de nombres abierta y una sola opción, Enter la agrega.
+    var unico = cajaRes.querySelectorAll("button[data-agregar]:not([disabled])");
+    if (!cajaRes.hidden && cajaRes.querySelectorAll(".r").length === 1 && unico.length === 1) { unico[0].click(); return; }
     campo.value = "";
+    cerrarRes();
     await enviar({accion: "agregar", codigo: c});
+    campo.focus();
+  });
+
+  // Buscar por nombre: lista con foto para elegir. Lo que parece un código
+  // de barras (solo números largos) no busca: es la pistola escribiendo.
+  var cajaRes = document.getElementById("resultados");
+  var urlBuscar = "{% url 'catalogo:promocion_buscar' promo.pk %}";
+  var espera = null, ultima = "";
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function (c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function cerrarRes(){ cajaRes.hidden = true; cajaRes.innerHTML = ""; ultima = ""; }
+  async function buscar(q){
+    try {
+      var r = await fetch(urlBuscar + "?q=" + encodeURIComponent(q), {headers: {"Accept": "application/json"}});
+      if (!(r.headers.get("content-type") || "").includes("json")) return;
+      var d = await r.json();
+      if (campo.value.trim() !== q) return;          // ya escribió otra cosa
+      if (!d.resultados.length) { cajaRes.innerHTML = '<div class="vacio">Nada con «' + esc(q) + '». Probá con otra palabra.</div>'; cajaRes.hidden = false; return; }
+      cajaRes.innerHTML = d.resultados.map(function (p){
+        var det = [p.sku, p.presentacion, "₡" + p.precio, "hay " + p.stock].filter(Boolean).join(" · ");
+        return '<div class="r">' + window.fotoHTML(p, 52) + '<div><b>' + esc(p.nombre) + '</b><small>' + esc(det) + '</small></div>' +
+          (p.ya ? '<button type="button" disabled>✓ Ya está</button>' : '<button type="button" data-agregar="' + p.id + '">Agregar</button>') + '</div>';
+      }).join("");
+      cajaRes.hidden = false;
+    } catch (e) { /* sin conexión: queda el escaneo */ }
+  }
+  campo.addEventListener("input", function (){
+    var q = campo.value.trim();
+    clearTimeout(espera);
+    if (q.length < 2 || /^\d{6,}$/.test(q)) { cerrarRes(); return; }
+    espera = setTimeout(function (){ if (q !== ultima) { ultima = q; buscar(q); } }, 250);
+  });
+  campo.addEventListener("keydown", function (e){ if (e.key === "Escape") { campo.value = ""; cerrarRes(); } });
+  cajaRes.addEventListener("click", async function (e){
+    var b = e.target.closest("button[data-agregar]"); if (!b) return;
+    b.disabled = true; b.textContent = "✓ Ya está";
+    await enviar({accion: "agregar_id", producto: b.dataset.agregar});
     campo.focus();
   });
   document.getElementById("tabla").addEventListener("change", function (e) {

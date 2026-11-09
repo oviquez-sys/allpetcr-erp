@@ -9,6 +9,12 @@ Las reglas viven en catalogo/promociones.py; aquí solo se muestran y se
 llaman. Las acciones de la lista (escanear, cambiar %, quitar) responden
 JSON con la tabla ya armada, para que la pistola pueda seguir disparando sin
 que la página se recargue en cada producto.
+
+Buscar por nombre (09/11/2026, pedido de Oscar: un producto cuyo código de
+barras no estaba registrado no se podía agregar): al escribir en el mismo
+campo aparece una lista con foto, nombre, precio y existencia, con la
+búsqueda inteligente de siempre (catalogo/palabras_clave). Se elige con un
+clic; la pistola sigue funcionando igual.
 """
 from __future__ import annotations
 
@@ -149,8 +155,18 @@ def _accion(request, promo):
         elif accion == "agregar":
             producto = P.buscar_producto(promo.empresa, request.POST.get("codigo"))
             if producto is None:
-                raise ValidationError(f"No encontré «{request.POST.get('codigo', '').strip()}». "
-                                      "Escaneá el código de barras o escribí el SKU exacto.")
+                raise ValidationError(f"No encontré el código «{request.POST.get('codigo', '').strip()}». "
+                                      "Escribí parte del nombre y elegilo de la lista.")
+            item, creado = P.agregar(promo, producto, request.user)
+            aviso = f"{producto.nombre} agregado." if creado else f"{producto.nombre} ya estaba en la lista."
+            if es_json:
+                return _json(request, promo, aviso=aviso, nuevo=item.pk)
+            messages.success(request, aviso)
+        elif accion == "agregar_id":
+            producto = Producto.objects.filter(pk=request.POST.get("producto") or 0, empresa=promo.empresa,
+                                               activo=True).first()
+            if producto is None:
+                raise ValidationError("Ese producto ya no está disponible.")
             item, creado = P.agregar(promo, producto, request.user)
             aviso = f"{producto.nombre} agregado." if creado else f"{producto.nombre} ya estaba en la lista."
             if es_json:
@@ -243,3 +259,26 @@ def _etiquetas(request, promo):
     else:
         messages.success(request, f"{n} etiqueta(s) de oferta enviada(s) a la impresora de etiquetas.")
     return redirect("catalogo:promocion", pk=promo.pk)
+
+
+@rol_requerido(GERENTE)
+def buscar(request, pk):
+    """Productos que coinciden con lo escrito, para elegirlos por nombre y
+    foto. Máximo 12: si son más, se sigue escribiendo."""
+    from core.imagenes import datos_foto
+    from core.templatetags.formato import crc
+
+    from .palabras_clave import filtrar
+    empresa = empresa_actual(request)
+    promo = get_object_or_404(Promocion, pk=pk, empresa=empresa)
+    q = (request.GET.get("q") or "").strip()
+    if len(q) < 2:
+        return JsonResponse({"resultados": []})
+    qs = Producto.objects.filter(empresa=empresa, activo=True, precio_venta__gt=0).order_by("nombre")
+    ya = set(promo.items.values_list("producto_id", flat=True))
+    resultados = []
+    for p in filtrar(qs, q, limite=12):
+        resultados.append({"id": p.pk, "nombre": p.nombre, "sku": p.sku, "presentacion": p.presentacion,
+                           "precio": crc(p.precio_venta), "stock": crc(p.stock_actual), "ya": p.pk in ya,
+                           **datos_foto(p)})
+    return JsonResponse({"resultados": resultados})

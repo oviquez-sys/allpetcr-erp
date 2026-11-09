@@ -15,6 +15,7 @@ urlpatterns = [
     path("promociones/", views_promociones.lista, name="promociones"),
     path("promociones/<int:pk>/", views_promociones.detalle, name="promocion"),
     path("promociones/<int:pk>/lista/", views_promociones.lista_para_marcar, name="promocion_lista"),
+    path("promociones/<int:pk>/buscar/", views_promociones.buscar, name="promocion_buscar"),
     path("catalogo-redes/", views_redes.catalogo_redes, name="redes"),
     path("catalogo-redes/<int:pk>/estado/", views_redes.catalogo_redes_estado, name="redes_estado"),
     path("catalogo-redes/<int:pk>/descargar/", views_redes.catalogo_redes_descargar, name="redes_descargar"),

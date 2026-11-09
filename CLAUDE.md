@@ -863,6 +863,11 @@ precio bonito (`precios_bonitos.bonito_hacia_abajo`).
   y vigencia) y lista de etiquetas a quitar al terminar. **Etiquetas APAGADAS**
   (Oscar, 04/11: no quiere reetiquetar todo): `PROMO_ETIQUETAS=1` las vuelve a
   mostrar; sin eso no hay botones ni lista de "quitar" y la acción se rechaza.
+- **Buscar por nombre** (09/11/2026; un Special Care con el código de barras sin
+  registrar no se podía agregar): en el mismo campo del escáner, al escribir
+  ≥2 letras sale una lista con foto, nombre, SKU, precio y existencia
+  (`catalogo:promocion_buscar`, `palabras_clave.filtrar`, máx. 12) y se agrega
+  con un clic (`accion=agregar_id`). Solo números largos = pistola, no busca.
 - POS: tarjeta con -% y tachado; línea "🔥 Promo −40 % · aplicado solo"
   (`ganaLaPromo` en pos.html = misma regla del servidor). Tiquete: renglón con
   el nombre de la promo y "Usted ahorró".
