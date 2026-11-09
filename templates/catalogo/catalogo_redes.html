@@ -65,7 +65,7 @@ body{background-color:#f5f5f7 !important}
         {% if p.estado != "ARM" %}<form method="post" action="{% url 'catalogo:redes_borrar' p.pk %}" onsubmit="return confirm('¿Eliminar este paquete? No se puede deshacer.')">{% csrf_token %}<button class="cr-del" title="Eliminar este paquete">Eliminar</button></form>{% endif %}
       </span>
       {% if p.estado == "ARM" %}
-        <small class="txt">Armando… {{ p.hechos }} de {{ p.total|default:"?" }} productos</small>
+        <small class="txt">{% if p.total and p.hechos == p.total %}Armando los PDF y el .zip…{% else %}Armando… {{ p.hechos }} de {{ p.total|default:"?" }} productos{% endif %}</small>
         <div class="cr-bar"><i style="width:{% if p.total %}{% widthratio p.hechos p.total 100 %}{% else %}3{% endif %}%"></i></div>
       {% elif p.estado == "LIS" %}
         <small>{{ p.productos }} producto{{ p.productos|pluralize }}{% if p.sin_foto %} · {{ p.sin_foto }} sin foto quedaron fuera{% endif %}{% if p.error %} · <span class="err">{{ p.error }}</span>{% endif %}</small>
@@ -98,7 +98,8 @@ body{background-color:#f5f5f7 !important}
     try {
       const d = await (await fetch(url, {headers: {Accept: 'application/json'}})).json();
       if (d.estado !== 'ARM') { location.reload(); return; }
-      fila.querySelector('.txt').textContent = `Armando… ${d.hechos} de ${d.total || '?'} productos`;
+      fila.querySelector('.txt').textContent = (d.total && d.hechos === d.total)
+        ? 'Armando los PDF y el .zip…' : `Armando… ${d.hechos} de ${d.total || '?'} productos`;
       if (d.total) fila.querySelector('.cr-bar i').style.width = Math.max(3, Math.round(d.hechos * 100 / d.total)) + '%';
     } catch (_) {}
     setTimeout(tic, 3000);

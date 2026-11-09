@@ -543,6 +543,8 @@ def generar(paquete, progreso=None):
                 pdf(completo, secciones, fecha=fecha, con_precio=con_precio)
                 z.write(completo, f"{carpeta}/PDF/Catalogo_completo.pdf")
                 for k, (g, l) in enumerate(por_grupo.items()):
+                    if progreso:
+                        progreso(total, total)      # señal de vida: los PDF tardan
                     ruta = tmp / f"grupo_{k}.pdf"
                     raiz, _, mascota = g.partition(" - ")
                     sub = f"Para {mascota.lower()}s · {len(l)} productos" if mascota else f"{len(l)} productos"

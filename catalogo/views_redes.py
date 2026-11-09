@@ -3,8 +3,9 @@
 El .zip se arma en un hilo aparte (catalogo/redes.py tarda minutos con todo
 el catálogo y gunicorn corta las páginas a los 120 s). La pantalla pregunta
 cada pocos segundos cómo va. Si el servidor se reinicia a mitad de camino el
-hilo muere: a los 30 minutos un paquete que sigue «armando» se da por perdido
-y se puede volver a pedir.
+hilo muere: a los 10 minutos sin señales de vida (`senal_en`) un paquete que
+sigue «armando» se da por perdido y se puede volver a pedir (antes eran 30
+minutos desde el inicio; Oscar lo vio «pegado» el 09/11/2026 tras publicar).
 """
 from __future__ import annotations
 
@@ -26,13 +27,15 @@ from core.tenancy import empresa_actual
 from .models import Categoria, PaqueteRedes
 
 logger = logging.getLogger(__name__)
-MINUTOS_PERDIDO = 30
+MINUTOS_SIN_SENAL = 10
 GUARDAR_ULTIMOS = 5
 
 
 def _perdidos(empresa):
-    limite = timezone.now() - timedelta(minutes=MINUTOS_PERDIDO)
-    PaqueteRedes.objects.filter(empresa=empresa, estado=PaqueteRedes.Estado.ARMANDO, creado_en__lt=limite) \
+    from django.db.models import Q
+    limite = timezone.now() - timedelta(minutes=MINUTOS_SIN_SENAL)
+    PaqueteRedes.objects.filter(empresa=empresa, estado=PaqueteRedes.Estado.ARMANDO) \
+        .filter(Q(senal_en__lt=limite) | Q(senal_en__isnull=True, creado_en__lt=limite)) \
         .update(estado=PaqueteRedes.Estado.ERROR, error="Se interrumpió (probablemente el servidor se reinició). "
                                                          "Generalo de nuevo.", terminado_en=timezone.now())
 
@@ -46,7 +49,7 @@ def _armar(pk):
         paquete = PaqueteRedes.objects.select_related("empresa").get(pk=pk)
 
         def progreso(hechos, total):
-            PaqueteRedes.objects.filter(pk=pk).update(hechos=hechos, total=total)
+            PaqueteRedes.objects.filter(pk=pk).update(hechos=hechos, total=total, senal_en=timezone.now())
 
         archivo, n, sin_foto, fallaron = redes.generar(paquete, progreso)
         if n == 0:

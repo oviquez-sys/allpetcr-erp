@@ -532,6 +532,10 @@ class PaqueteRedes(models.Model):
     creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
     creado_en = models.DateTimeField(auto_now_add=True)
     terminado_en = models.DateTimeField(null=True, blank=True)
+    # Última vez que el hilo dio señales de vida (09/11/2026). Si el servidor
+    # se reinicia a mitad (p. ej. al publicar cambios) el hilo muere sin
+    # avisar; con esto se nota a los 10 min sin señal, no a los 30 del inicio.
+    senal_en = models.DateTimeField(null=True, blank=True)
     estado = models.CharField(max_length=3, choices=Estado.choices, default=Estado.ARMANDO)
     filtros = models.JSONField(default=dict, blank=True)
     total = models.PositiveIntegerField(default=0)

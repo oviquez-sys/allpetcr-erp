@@ -168,3 +168,16 @@ class CatalogoRedes(Base):
         self.client.force_login(cajero)
         self.client.post(reverse("catalogo:redes_borrar", args=[p.pk]))
         self.assertTrue(PaqueteRedes.objects.filter(pk=p.pk).exists())
+
+    def test_sin_senal_de_vida_por_10_minutos_se_da_por_perdido(self):
+        """Un reinicio del servidor mata el hilo: no hay que esperar 30 min."""
+        self.client.force_login(self.usuario)
+        vivo = PaqueteRedes.objects.create(empresa=self.empresa)
+        PaqueteRedes.objects.filter(pk=vivo.pk).update(creado_en=timezone.now() - timedelta(minutes=25),
+                                                       senal_en=timezone.now() - timedelta(minutes=2))
+        self.client.get(reverse("catalogo:redes"))
+        self.assertEqual(PaqueteRedes.objects.get(pk=vivo.pk).estado, "ARM")      # largo pero vivo
+        PaqueteRedes.objects.filter(pk=vivo.pk).update(senal_en=timezone.now() - timedelta(minutes=11))
+        r = self.client.get(reverse("catalogo:redes"))
+        self.assertEqual(PaqueteRedes.objects.get(pk=vivo.pk).estado, "ERR")
+        self.assertContains(r, "Se interrumpió")
