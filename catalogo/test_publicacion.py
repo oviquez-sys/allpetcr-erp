@@ -11,6 +11,7 @@ Lo que no se puede romper:
 """
 import io
 import json
+import re
 import tempfile
 import zipfile
 from datetime import date, timedelta
@@ -55,6 +56,25 @@ class Datos(SimpleTestCase):
         self.assertEqual(pub.ingredientes_principales("pollo deshuesado, harina de pollo (fuente de glucosamina), arroz"),
                          ["Pollo deshuesado", "Harina de pollo", "Arroz"])
         self.assertEqual(pub.ingredientes_principales(""), [])
+
+    def test_ingredientes_en_ingles_salen_en_espanol(self):
+        self.assertEqual(pub.ingredientes_principales("Chicken, Duck Meal, Chicken Meal, Turkey Meal, Brown Rice"),
+                         ["Pollo", "Harina de pato", "Harina de pollo", "Harina de pavo"])
+        self.assertEqual(pub.ingredientes_principales("pollo* (60 %), arroz* (5 %)"), ["Pollo 60 %", "Arroz 5 %"])
+
+    def test_ninguna_ficha_del_repositorio_sale_en_ingles(self):
+        """Si falla: agregá la traducción del ingrediente en publicacion.TRADUCCION."""
+        carpeta = GOSBI.parent
+        quedaron = set()
+        for ruta in carpeta.glob("*.json"):
+            j = json.loads(ruta.read_text(encoding="utf-8"))
+            if j.get("estado") not in pub.ESTADOS_PUBLICABLES:
+                continue
+            for x in pub.ingredientes_principales(j.get("ingredientes", "")):
+                palabras = set(re.findall(r"[a-záéíóúñ]+", x.lower()))
+                if palabras & pub.PALABRAS_INGLES:
+                    quedaron.add(f"{ruta.name}: {x}")
+        self.assertEqual(sorted(quedaron), [])
 
     def test_numeros_al_estilo_de_costa_rica(self):
         self.assertEqual(pub._numero("6.9"), "6,9")

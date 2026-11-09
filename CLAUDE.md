@@ -924,7 +924,10 @@ cálido, foto original, logo, precio grande en azul del logo (#092E5E; naranja
 y tachado si hay promoción vigente) y «Precio al <fecha>».
 - Con ficha publicable (verificada/parcial): marca · línea, fórmula, para
   quién, 4 primeros ingredientes en el orden declarado con su % (sin el
-  detalle entre paréntesis; patata→papa, boniato→camote), proteína, grasa,
+  detalle entre paréntesis; patata→papa, boniato→camote; las fichas de EE. UU.
+  vienen en inglés y se traducen con `TRADUCCION`, ingrediente completo, sin
+  tocar la ficha: si una ficha nueva trae uno sin traducir, falla
+  `test_ninguna_ficha_del_repositorio_sale_en_ingles`), proteína, grasa,
   «Cereales: Sin» SOLO si declara `libre_granos`, y hasta 2 beneficios
   (Oscar quiso los dos de Gosbi: piel/pelaje y articulaciones). Si no cabe,
   quita ingredientes y luego un beneficio; nunca se sale (prueba).
