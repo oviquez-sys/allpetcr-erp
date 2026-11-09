@@ -8,7 +8,8 @@ y promociones de hoy):
       PDF/Catalogo_completo.pdf             portada + una sección por categoría
       PDF/<Categoría> - <Perro|Gato>.pdf     uno por categoría (más fácil de mandar)
       Para_WhatsApp_y_Facebook/<Categoría>/<SKU> <nombre>.jpg   foto limpia 1080
-      Para_estados_y_publicaciones/<Categoría>/<SKU> <nombre>.jpg  tarjeta con precio
+      Para_estados_y_publicaciones/Publicaciones/<Categoría>/<SKU> <nombre>.jpg  1080 × 1350
+      Para_estados_y_publicaciones/Estados/<Categoría>/<SKU> <nombre>.jpg        1080 × 1920
       catalogo_facebook.csv                  formato de catálogo de Facebook
       lista_whatsapp.xlsx                    para copiar al catálogo de WhatsApp
 
@@ -20,6 +21,12 @@ Decisiones (Oscar dijo «dale» a la propuesta con estas recomendaciones):
 - Sin foto no entra: un catálogo con huellitas en lugar de productos no vende.
 - La foto limpia va SIN texto encima: WhatsApp y Facebook ponen nombre y
   precio al lado.
+
+09/11/2026: las tarjetas 1080 × 1080 de Para_estados_y_publicaciones se
+reemplazaron por las publicaciones de catalogo/publicacion.py (Oscar: «cumplen
+la misma función y esto es mucho mejor»): una para publicar (4:5) y otra para
+estados (9:16). Los alimentos con ficha llevan ingredientes, nutrición y
+beneficios; lo demás, foto, nombre, peso y precio.
 
 Se arma en segundo plano (`PaqueteRedes` + un hilo): con ~750 productos son
 unos minutos, y gunicorn corta cualquier página a los 120 s.
@@ -95,7 +102,7 @@ def productos(empresa, *, solo_existencia=True, categoria_id=None, solo_ofertas=
     from .promociones import oferta_de, vigentes
 
     qs = Producto.objects.filter(empresa=empresa, activo=True, precio_venta__gt=0) \
-        .select_related("categoria__padre", "empresa")
+        .select_related("categoria__padre", "empresa", "ficha_alimento")
     if solo_existencia:
         qs = qs.filter(stock_actual__gt=0)
     if categoria_id:
@@ -234,62 +241,6 @@ def _logo(nombre, ancho):
         im = Image.open(RECURSOS / nombre).convert("RGBA")
         _logo_cache[clave] = im.resize((ancho, int(im.height * ancho / im.width)), Image.LANCZOS)
     return _logo_cache[clave]
-
-
-def tarjeta(item, foto, con_precio=True):
-    """B: 1080 × 1080 con logo, foto, nombre, detalle y precio. Si está en
-    promoción: banda naranja, −X %, precio tachado y la vigencia."""
-    from PIL import Image, ImageDraw
-    p, of = item.producto, item.oferta
-    banda_alto = 270
-    lienzo = Image.new("RGB", (LADO, LADO), "white")
-    logo = _logo("logo_horizontal.png", 300)
-    lienzo.paste(logo, (44, 40), logo)
-    zona = (130, LADO - banda_alto - 30)
-    im = _encajar(foto, int(LADO * 0.8), zona[1] - zona[0])
-    lienzo.paste(im, ((LADO - im.width) // 2, zona[0] + (zona[1] - zona[0] - im.height) // 2))
-    d = ImageDraw.Draw(lienzo)
-    color = OFERTA if of else NAVY
-    y0 = LADO - banda_alto
-    d.rectangle([0, y0 - 8, LADO, y0], fill=(255, 255, 255) if of else DORADO)
-    d.rectangle([0, y0, LADO, LADO], fill=color)
-    if of:
-        f = _fuente("Bold", 54)
-        txt = f"−{of['pct']}%"
-        w = d.textlength(txt, font=f)
-        d.rounded_rectangle([LADO - 44 - w - 44, 36, LADO - 44, 36 + 92], radius=22, fill=OFERTA)
-        d.text((LADO - 44 - w - 22, 46), txt, font=f, fill="white")
-    # Precio a la derecha
-    ancho_precio = 0
-    if con_precio:
-        precio = _crc(item.precio)
-        ancho_precio = _ancho_precio(d, precio, "Bold", 84)
-        _dibujar_precio(d, LADO - 50 - ancho_precio, y0 + 130, precio, "Bold", 84, "white")
-        if of:
-            antes = _crc(of["precio_antes"])
-            wa = _ancho_precio(d, antes, "Regular", 38)
-            xa, ya = LADO - 50 - wa, y0 + 52
-            _dibujar_precio(d, xa, ya, antes, "Regular", 38, (255, 225, 205))
-            d.line([xa, ya - 13, xa + wa, ya - 13], fill=(255, 225, 205), width=3)
-        ancho_precio += 40
-    # Nombre y detalle a la izquierda
-    fn = _fuente("Medium", 44)
-    ancho_txt = LADO - 100 - ancho_precio
-    filas = _envolver(d, p.nombre, fn, ancho_txt, 2)
-    y = y0 + 40
-    for fila in filas:
-        d.text((50, y), fila, font=fn, fill="white")
-        y += 56
-    fd = _fuente("Regular", 30)
-    if of:
-        detalle = f"Válido hasta el {of['hasta']:%d/%m} o hasta agotar existencias"
-    else:
-        partes = [x for x in (p.presentacion, p.mascota) if x] + [f"Pedí al {WHATSAPP}"]
-        detalle = " · ".join(partes)
-    for fila in _envolver(d, detalle, fd, LADO - 100 if of else ancho_txt, 2):
-        d.text((50, y + 10), fila, font=fd, fill=(225, 232, 242) if not of else (255, 232, 220))
-        y += 40
-    return lienzo
 
 
 # ---------------------------------------------------------------------------
@@ -541,6 +492,7 @@ def xlsx_whatsapp(items) -> bytes:
 def generar(paquete, progreso=None):
     """Arma el .zip del `paquete` (PaqueteRedes) y lo guarda en el almacén.
     `progreso(hechos, total)` se llama cada tanto. Devuelve la ruta guardada."""
+    from . import publicacion
     f = paquete.filtros or {}
     con_precio = f.get("con_precio", True)
     items, sin_foto = productos(paquete.empresa, solo_existencia=f.get("solo_existencia", True),
@@ -564,8 +516,11 @@ def generar(paquete, progreso=None):
                     fallaron.append(i.producto.sku)
                     continue
                 sub = _limpio(i.raiz, 60)
+                datos = publicacion.datos(i.producto, precio=i.precio, oferta=i.oferta, fecha=fecha,
+                                          con_precio=con_precio)
                 for prefijo, imagen in (("Para_WhatsApp_y_Facebook", foto_limpia(foto)),
-                                        ("Para_estados_y_publicaciones", tarjeta(i, foto, con_precio))):
+                                        ("Para_estados_y_publicaciones/Publicaciones", publicacion.feed(datos, foto)[0]),
+                                        ("Para_estados_y_publicaciones/Estados", publicacion.story(datos, foto)[0])):
                     b = io.BytesIO()
                     imagen.save(b, "JPEG", quality=88, optimize=True)
                     z.writestr(zipfile.ZipInfo(f"{carpeta}/{prefijo}/{sub}/{i.archivo}",
@@ -611,7 +566,9 @@ def _leame(n, sin_foto, fallaron, fecha):
         "",
         "PDF/  → el catálogo completo y uno por categoría (más liviano para mandar por WhatsApp).",
         "Para_WhatsApp_y_Facebook/  → fotos limpias 1080×1080 para el catálogo de WhatsApp Business y Facebook.",
-        "Para_estados_y_publicaciones/  → tarjetas con precio para estados y publicaciones.",
+        "Para_estados_y_publicaciones/Publicaciones/  → 1080×1350 para publicar en Instagram y Facebook.",
+        "Para_estados_y_publicaciones/Estados/  → 1080×1920 para estados de WhatsApp e historias de Instagram.",
+        "   (Los alimentos con ficha técnica llevan ingredientes, nutrición y beneficios; lo demás, foto, peso y precio.)",
         "catalogo_facebook.csv  → se sube en Facebook (Administrador de ventas → Catálogo → Agregar artículos → Archivo).",
         "lista_whatsapp.xlsx  → nombre, precio, descripción y enlace de cada producto, para copiar en WhatsApp Business.",
         "",

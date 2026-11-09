@@ -917,6 +917,29 @@ Facebook y WhatsApp. Diseño aprobado ese día (propuesta con imágenes).
   trae el signo ₡; se dibuja con DejaVu (`_dibujar_precio`, `_precio_pdf`).
 - Nueva dependencia: `reportlab`. Pruebas: `catalogo/test_redes.py`.
 
+**Publicaciones con ficha técnica (09/11/2026).** Prototipo aprobado por Oscar
+con Gosbi Exclusive Grain Free Adult Medium Fish. `catalogo/publicacion.py`
+(Pillow) dibuja una publicación 1080×1350 y un estado 1080×1920: fondo blanco
+cálido, foto original, logo, precio grande en azul del logo (#092E5E; naranja
+y tachado si hay promoción vigente) y «Precio al <fecha>».
+- Con ficha publicable (verificada/parcial): marca · línea, fórmula, para
+  quién, 4 primeros ingredientes en el orden declarado con su % (sin el
+  detalle entre paréntesis; patata→papa, boniato→camote), proteína, grasa,
+  «Cereales: Sin» SOLO si declara `libre_granos`, y hasta 2 beneficios
+  (Oscar quiso los dos de Gosbi: piel/pelaje y articulaciones). Si no cabe,
+  quita ingredientes y luego un beneficio; nunca se sale (prueba).
+- Sin ficha (y todo lo que no es alimento): foto, nombre, peso/presentación y
+  precio. Oscar: «igual publicalo, solo que sin la información».
+- REEMPLAZÓ a la tarjeta 1080×1080: el paquete trae
+  `Para_estados_y_publicaciones/Publicaciones/` y `.../Estados/`.
+- Pestaña «Publicaciones de alimentos» (`catalogo:redes_alimentos`, gerente):
+  buscar (búsqueda inteligente), elegir hasta 24 SKUs, vista previa dibujada al
+  vuelo (`redes_alimentos_imagen`, no se guarda), elegir beneficios, aprobar y
+  bajar un .zip de JPG. Cada vista previa lleva una huella (precio, promo,
+  ficha, foto): si cambió al descargar, se marca «Desactualizada» y no baja.
+- Solo lee: no cambia precios, inventario ni fichas. Pruebas:
+  `catalogo/test_publicacion.py`.
+
 ## Redondeo del total en el POS (17/10/2026)
 
 Caso real: ₡13.554 en efectivo, sin vuelto, se cobró ₡13.500 y el cierre quedó

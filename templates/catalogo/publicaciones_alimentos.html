@@ -1,0 +1,133 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Publicaciones de alimentos{% endblock %}
+{% block messages %}{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.pa{max-width:1180px;margin:0 auto;color:#1d1d1f;padding-bottom:90px}
+.pa h1{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:6px 0 14px;padding:0;background:none;color:#1d1d1f}
+.pa .sub{color:#6e6e73;font-size:14px;line-height:1.45}
+.seg{display:inline-flex;background:#e8e8ed;border-radius:12px;padding:4px;margin-bottom:18px;flex-wrap:wrap}
+.seg a{padding:9px 16px;border-radius:9px;font-size:15px;font-weight:600;color:#3c3c43 !important;text-decoration:none}
+.seg a.on{background:#fff;color:#0b3161 !important;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.card{background:#fff;border-radius:18px;padding:18px 20px;margin-bottom:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.card h2{font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#6e6e73;margin:0 0 12px;padding:0;background:none}
+.filtros{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.filtros input[type=search],.filtros select{padding:9px 12px;border:1px solid #d2d2d7;border-radius:10px;font:inherit;font-size:14px}
+.filtros input[type=search]{flex:1;min-width:220px}
+.fila{display:grid;grid-template-columns:24px 44px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f3;font-size:14px}
+.fila b{font-weight:600;display:block}
+.fila small{color:#86868b;font-size:12px}
+.fila input{width:18px;height:18px}
+.chip{font-size:11.5px;border-radius:99px;padding:3px 9px;white-space:nowrap}
+.ok{background:#e6f4ea;color:#1c7a36}.pend{background:#fff4d6;color:#8a5700}.mal{background:#fde8e7;color:#b5231a}
+.btn{display:inline-block;background:#0b3161;color:#fff !important;border:0;border-radius:12px;padding:12px 18px;font-weight:600;font-size:15px;cursor:pointer;text-decoration:none}
+.btn.sec{background:#e8e8ed;color:#0b3161 !important}
+.btn.verde{background:#34a853}
+.msg{background:#eef4ff;color:#0b3161;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:14px}
+.msg.warning{background:#fff4d6;color:#8a5700}
+.formatos{display:flex;gap:18px;flex-wrap:wrap;margin:14px 0 6px;font-size:14px}
+.pubs{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:16px}
+.pub{border:1px solid #ececf0;border-radius:14px;padding:12px;background:#fafafa}
+.pub.vieja{border-color:#e0a100;background:#fffaf0}
+.pub .imgs{display:flex;gap:8px;align-items:flex-start}
+.pub img{display:block;border-radius:8px;background:#f0f0f3;width:100%;height:auto}
+.pub .feed{flex:1.25}.pub .story{flex:1}
+.pub .t{font-size:13px;margin:10px 0 6px}
+.pub .ben{font-size:12.5px;display:flex;flex-direction:column;gap:4px;margin:6px 0}
+.pub .ap{display:flex;gap:8px;align-items:center;font-weight:600;color:#1c7a36;margin-top:8px}
+.barra{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+@media (max-width:600px){.pubs{grid-template-columns:1fr}}
+</style>{% endblock %}
+
+{% block content %}
+<div class="pa">
+  <div style="font-size:13px;color:#86868b"><a href="/admin/" style="color:#0b3161">Administración</a> › Catálogo para redes</div>
+  <h1>Catálogo para redes</h1>
+  <div class="seg"><a href="{% url 'catalogo:redes' %}">Paquete del catálogo</a><a class="on" href="{% url 'catalogo:redes_alimentos' %}">Publicaciones de alimentos</a></div>
+
+  {% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}
+
+  {% if tarjetas is not None %}
+  <form method="post">{% csrf_token %}
+    {% for f in formatos %}<input type="hidden" name="fmt" value="{{ f }}">{% endfor %}
+    <div class="card">
+      <h2>2 · Revisá y aprobá</h2>
+      <div class="pubs">
+      {% for t in tarjetas %}
+        <div class="pub{% if t.desactualizada %} vieja{% endif %}" data-pk="{{ t.p.pk }}">
+          <input type="hidden" name="sel" value="{{ t.p.pk }}">
+          <input type="hidden" name="h_{{ t.p.pk }}" value="{{ t.huella }}">
+          {% if t.tiene_foto %}
+          <div class="imgs">
+            {% for f in t.formatos %}<div class="{{ f }}"><img loading="lazy" data-base="{% url 'catalogo:redes_alimentos_imagen' t.p.pk f %}" src="{% url 'catalogo:redes_alimentos_imagen' t.p.pk f %}?b={{ t.b|urlencode }}" alt="{{ t.p.nombre }}"></div>{% endfor %}
+          </div>
+          {% else %}<p class="chip mal">Sin foto: no se puede publicar</p>{% endif %}
+          <div class="t"><b>{{ t.p.nombre }}</b><br><small style="color:#86868b">{{ t.p.sku }}{% if t.oferta %} · en promoción −{{ t.oferta.pct }} %{% endif %}</small>
+            {% if t.desactualizada %}<br><span class="chip pend">Desactualizada: cambió algo, revisala de nuevo</span>{% endif %}
+            {% if not t.con_ficha %}<br><span class="chip pend">Sin ficha: solo foto, peso y precio</span>{% endif %}</div>
+          {% if t.beneficios %}
+          <div class="ben"><span style="color:#6e6e73">Beneficios (máximo 2):</span>
+            {% for b in t.beneficios %}<label><input type="checkbox" name="b_{{ t.p.pk }}" value="{{ b.clave }}" {% if b.on %}checked{% endif %}> {{ b.texto }}</label>{% endfor %}
+          </div>
+          {% endif %}
+          {% if t.tiene_foto %}<label class="ap"><input type="checkbox" name="ap" value="{{ t.p.pk }}" {% if t.aprobada %}checked{% endif %}> Aprobada</label>{% endif %}
+        </div>
+      {% endfor %}
+      </div>
+      <div class="barra">
+        <button type="button" class="btn sec" id="todas">Aprobar todas</button>
+        <button class="btn verde">Descargar las aprobadas (.zip de JPG)</button>
+        <a class="btn sec" href="{% url 'catalogo:redes_alimentos' %}?buscar=1{% for t in tarjetas %}&sel={{ t.p.pk }}{% endfor %}{% for f in formatos %}&fmt={{ f }}{% endfor %}">← Elegir otros</a>
+      </div>
+      <p class="sub" style="margin:10px 0 0;font-size:12.5px">Los precios son los de hoy, con IVA y la promoción si hay. Si un precio, una promoción, una ficha o una foto cambia después de esta vista previa, la publicación se marca «Desactualizada» y no se descarga hasta revisarla de nuevo.</p>
+    </div>
+  </form>
+  <script>
+  (function () {
+    document.getElementById('todas').addEventListener('click', () => {
+      document.querySelectorAll('input[name=ap]').forEach(c => { c.checked = true; });
+    });
+    document.querySelectorAll('.pub').forEach(card => {
+      const cajas = card.querySelectorAll('.ben input');
+      cajas.forEach(c => c.addEventListener('change', () => {
+        const on = [...cajas].filter(x => x.checked);
+        if (on.length > 2) { c.checked = false; return; }
+        const b = on.map(x => x.value).join(',');
+        const ap = card.querySelector('input[name=ap]');
+        if (ap) ap.checked = false;           // cambió: hay que volver a mirarla
+        card.querySelectorAll('img[data-base]').forEach(img => { img.src = img.dataset.base + '?b=' + encodeURIComponent(b); });
+      }));
+    });
+  })();
+  </script>
+  {% else %}
+  <form class="card" method="get">
+    <h2>1 · Elegí los alimentos</h2>
+    <div class="filtros">
+      <input type="search" name="q" value="{{ q }}" placeholder="Buscar: «gosbi grain free», «gato castrado»…">
+      <select name="especie"><option value="">Perro y gato</option><option value="perro" {% if especie == "perro" %}selected{% endif %}>Perro</option><option value="gato" {% if especie == "gato" %}selected{% endif %}>Gato</option></select>
+      <select name="marca"><option value="">Todas las marcas</option>{% for m in marcas %}<option {% if m == marca %}selected{% endif %}>{{ m }}</option>{% endfor %}</select>
+      <label style="font-size:14px"><input type="checkbox" name="todos" value="1" {% if todos %}checked{% endif %}> Incluir sin existencia</label>
+      <button class="btn sec" name="buscar" value="1">Buscar</button>
+    </div>
+    {% for f in filas %}
+    <label class="fila">
+      <input type="checkbox" name="sel" value="{{ f.p.pk }}" {% if f.on %}checked{% endif %} {% if not f.p.imagen %}disabled{% endif %}>
+      {% foto_producto f.p 44 %}
+      <div><b>{{ f.p.nombre }}</b><small>{{ f.p.sku }}{% if f.p.presentacion %} · {{ f.p.presentacion }}{% endif %} · ₡{{ f.p.precio_venta|crc }} · hay {{ f.p.stock_actual|floatformat:"0" }}</small></div>
+      {% if not f.p.imagen %}<span class="chip mal">Falta foto</span>{% elif f.con_ficha %}<span class="chip ok">Con ficha</span>{% else %}<span class="chip pend">Sin ficha: solo foto, peso y precio</span>{% endif %}
+    </label>
+    {% empty %}<p class="sub">No hay alimentos con esos filtros.</p>{% endfor %}
+    {% if total > lista_max %}<p class="sub" style="font-size:12.5px">Se muestran {{ lista_max }} de {{ total }}. Afiná la búsqueda para ver los demás.</p>{% endif %}
+    <div class="formatos">
+      <label><input type="checkbox" name="fmt" value="feed" {% if "feed" in formatos %}checked{% endif %}> Publicación (Instagram y Facebook) 1080 × 1350</label>
+      <label><input type="checkbox" name="fmt" value="story" {% if "story" in formatos %}checked{% endif %}> Estado (WhatsApp e Instagram) 1080 × 1920</label>
+    </div>
+    <button class="btn">Ver vistas previas</button>
+    <p class="sub" style="margin:10px 0 0;font-size:12.5px">Una fila por presentación. Hasta {{ max }} a la vez. Solo lectura: generar publicaciones no cambia precios, inventario ni fichas.</p>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

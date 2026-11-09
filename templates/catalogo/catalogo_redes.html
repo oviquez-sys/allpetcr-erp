@@ -24,6 +24,9 @@ body{background-color:#f5f5f7 !important}
 .cr-bar{grid-column:1/-1;height:8px;border-radius:99px;background:#ececf0;overflow:hidden}
 .cr-bar i{display:block;height:100%;background:#0b3161;border-radius:99px;transition:width .4s}
 .cr-dl{background:#34a853;color:#fff !important;text-decoration:none;border-radius:10px;padding:9px 14px;font-weight:600;font-size:14px;white-space:nowrap}
+.seg{display:inline-flex;background:#e8e8ed;border-radius:12px;padding:4px;margin:6px 0 14px;flex-wrap:wrap}
+.seg a{padding:9px 16px;border-radius:9px;font-size:15px;font-weight:600;color:#3c3c43 !important;text-decoration:none}
+.seg a.on{background:#fff;color:#0b3161 !important;box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .cr ul{margin:0;padding-left:18px;font-size:14px;color:#3c3c43;line-height:1.6}
 </style>{% endblock %}
 
@@ -31,7 +34,8 @@ body{background-color:#f5f5f7 !important}
 <div class="cr">
   <div style="font-size:13px;color:#86868b"><a href="/admin/" style="color:#0b3161">Administración</a> › Catálogo para redes</div>
   <h1>Catálogo para redes</h1>
-  <p class="sub">Arma un .zip con el catálogo en PDF, las fotos para WhatsApp y Facebook, tarjetas con precio para estados y los archivos para cargar el catálogo. Todo sale de las fotos, nombres, precios y promociones de hoy del sistema.</p>
+  <div class="seg"><a class="on" href="{% url 'catalogo:redes' %}">Paquete del catálogo</a><a href="{% url 'catalogo:redes_alimentos' %}">Publicaciones de alimentos</a></div>
+  <p class="sub">Arma un .zip con el catálogo en PDF, las fotos para WhatsApp y Facebook, publicaciones y estados con precio, y los archivos para cargar el catálogo. Todo sale de las fotos, nombres, precios y promociones de hoy del sistema.</p>
 
   {% for m in messages %}<div class="cr-msg">{{ m }}</div>{% endfor %}
 
@@ -70,7 +74,7 @@ body{background-color:#f5f5f7 !important}
     <ul>
       <li><b>PDF</b>: el catálogo completo y uno por categoría (más liviano para mandar por WhatsApp).</li>
       <li><b>Para_WhatsApp_y_Facebook</b>: fotos limpias de 1080 × 1080 para los catálogos de WhatsApp Business y Facebook.</li>
-      <li><b>Para_estados_y_publicaciones</b>: tarjetas con nombre y precio (y la promoción, si hay).</li>
+      <li><b>Para_estados_y_publicaciones</b>: una publicación de 1080 × 1350 y un estado de 1080 × 1920 por producto, con precio (y la promoción, si hay). Los alimentos con ficha técnica llevan ingredientes, nutrición y beneficios.</li>
       <li><b>catalogo_facebook.csv</b>: para subir todo el catálogo a Facebook de una vez.</li>
       <li><b>lista_whatsapp.xlsx</b>: nombre, precio, descripción y enlace de cada producto.</li>
     </ul>

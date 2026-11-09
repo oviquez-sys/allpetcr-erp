@@ -135,3 +135,201 @@ def catalogo_redes_descargar(request, pk):
         return redirect(url)          # en el servidor: directo del almacén, sin pasar por el ERP
     nombre = p.archivo.rsplit("/", 1)[-1]
     return FileResponse(default_storage.open(p.archivo, "rb"), as_attachment=True, filename=nombre)
+
+
+# ---------------------------------------------------------------------------
+# Publicaciones de alimentos (09/11/2026, prototipo aprobado por Oscar)
+# ---------------------------------------------------------------------------
+# Segunda pestaña de la misma pantalla. El paquete de arriba hace TODO el
+# catálogo de una vez; esta sirve para elegir unos pocos alimentos, ver cómo
+# quedan, escoger el beneficio y bajar solo los aprobados.
+#
+# Solo lee: no cambia precios, inventario ni fichas. Cada vista previa lleva
+# una «huella» de los datos con que se dibujó (precio, promoción, ficha,
+# foto); si al descargar la huella ya no coincide, esa publicación se marca
+# «Desactualizada» y no se descarga hasta volver a verla.
+MAX_SELECCION = 24
+MAX_LISTA = 80
+
+
+def _alimentos(empresa, *, q="", especie="", marca="", solo_existencia=True):
+    from django.db.models import Q
+
+    from .models import Producto
+    from .palabras_clave import filtrar
+    qs = Producto.objects.filter(empresa=empresa, activo=True, precio_venta__gt=0).filter(
+        Q(ficha_alimento__isnull=False) | Q(categoria__nombre__iexact="Alimento")
+        | Q(categoria__padre__nombre__iexact="Alimento"))
+    if solo_existencia:
+        qs = qs.filter(stock_actual__gt=0)
+    if marca:
+        qs = qs.filter(marca__iexact=marca)
+    if especie:
+        qs = qs.filter(Q(ficha_alimento__especie=especie.lower()) | Q(mascota__icontains=especie))
+    qs = qs.select_related("ficha_alimento", "categoria__padre").order_by("marca", "nombre")
+    return filtrar(qs, q) if q.strip() else list(qs)
+
+
+def _precio_hoy(producto, promos):
+    from .promociones import oferta_de
+    oferta = oferta_de(producto, promos[producto.pk]) if producto.pk in promos else None
+    return (oferta["precio"] if oferta else producto.precio_venta), oferta
+
+
+def _tarjetas(empresa, ids, formatos, *, claves=None, aprobadas=(), desactualizadas=()):
+    """Una tarjeta por producto elegido, con lo que necesita la vista previa."""
+    from . import publicacion
+    from .models import Producto
+    from .promociones import vigentes
+    productos = {p.pk: p for p in Producto.objects.filter(empresa=empresa, pk__in=ids)
+                 .select_related("ficha_alimento")}
+    promos = vigentes(empresa, productos=productos.keys())
+    salida = []
+    for pk in ids:
+        p = productos.get(pk)
+        if p is None:
+            continue
+        precio, oferta = _precio_hoy(p, promos)
+        ficha = publicacion.ficha_publicable(p)
+        opciones = [b for b in (ficha.beneficios or []) if b.get("texto")] if ficha else []
+        elegidas = (claves or {}).get(pk)
+        if elegidas is None:
+            elegidas = [b.get("clave") for b in opciones[:publicacion.MAX_BENEFICIOS]]
+        salida.append({
+            "p": p, "precio": precio, "oferta": oferta, "con_ficha": ficha is not None,
+            "huella": publicacion.huella(p, precio=precio, oferta=oferta),
+            "beneficios": [{"clave": b.get("clave"), "texto": b["texto"], "on": b.get("clave") in elegidas}
+                           for b in opciones],
+            "b": ",".join(elegidas), "tiene_foto": bool(p.imagen), "formatos": formatos,
+            "aprobada": pk in aprobadas, "desactualizada": pk in desactualizadas,
+        })
+    return salida
+
+
+def _ids(valores):
+    salida = []
+    for v in valores:
+        try:
+            n = int(v)
+        except (TypeError, ValueError):
+            continue
+        if n not in salida:
+            salida.append(n)
+    return salida[:MAX_SELECCION]
+
+
+def _formatos(valores):
+    from .publicacion import FORMATOS
+    return [f for f in ("feed", "story") if f in valores and f in FORMATOS] or ["feed", "story"]
+
+
+@rol_requerido(GERENTE)
+def publicaciones_alimentos(request):
+    from .models import Producto
+    empresa = empresa_actual(request)
+    datos = request.POST if request.method == "POST" else request.GET
+    formatos = _formatos(datos.getlist("fmt"))
+    ids = _ids(datos.getlist("sel"))
+    buscando = request.method == "GET" and "buscar" in request.GET
+    contexto = {"formatos": formatos, "max": MAX_SELECCION}
+
+    if request.method == "POST":
+        aprobadas = [pk for pk in _ids(request.POST.getlist("ap")) if pk in ids]
+        claves = {pk: [c for c in request.POST.getlist(f"b_{pk}") if c] for pk in ids}
+        if not aprobadas:
+            messages.info(request, "Aprobá al menos una publicación antes de descargar.")
+            contexto["tarjetas"] = _tarjetas(empresa, ids, formatos, claves=claves)
+            return render(request, "catalogo/publicaciones_alimentos.html", contexto)
+        tarjetas = _tarjetas(empresa, ids, formatos, claves=claves, aprobadas=aprobadas)
+        viejas = [t["p"].pk for t in tarjetas
+                  if t["p"].pk in aprobadas and t["huella"] != request.POST.get(f"h_{t['p'].pk}")]
+        if viejas:
+            # Cambió el precio, la promoción, la ficha o la foto después de la
+            # vista previa: se vuelve a mostrar con los datos de ahora y NO se
+            # descarga nada hasta que la miren de nuevo.
+            messages.warning(request, "Algo cambió desde la vista previa (precio, promoción, ficha o foto). "
+                                      "Revisá las marcadas como «Desactualizada» y aprobalas de nuevo.")
+            contexto["tarjetas"] = _tarjetas(empresa, ids, formatos, claves=claves,
+                                             aprobadas=[a for a in aprobadas if a not in viejas],
+                                             desactualizadas=viejas)
+            return render(request, "catalogo/publicaciones_alimentos.html", contexto)
+        return _zip_publicaciones([t for t in tarjetas if t["aprobada"]], formatos, claves)
+
+    if ids and not buscando:
+        contexto["tarjetas"] = _tarjetas(empresa, ids, formatos)
+        return render(request, "catalogo/publicaciones_alimentos.html", contexto)
+
+    q, especie, marca = datos.get("q", ""), datos.get("especie", ""), datos.get("marca", "")
+    solo_existencia = datos.get("todos") != "1"
+    lista = _alimentos(empresa, q=q, especie=especie, marca=marca, solo_existencia=solo_existencia)
+    marcas = (Producto.objects.filter(empresa=empresa, activo=True).exclude(marca="")
+              .filter(ficha_alimento__isnull=False).values_list("marca", flat=True).distinct().order_by("marca"))
+    from .publicacion import ficha_publicable
+    en_lista = {p.pk for p in lista[:MAX_LISTA]}
+    # Lo ya elegido que no sale en esta búsqueda se conserva (va arriba).
+    previos = [p for p in Producto.objects.filter(empresa=empresa, pk__in=ids).select_related("ficha_alimento")
+               if p.pk not in en_lista]
+    filas = [{"p": p, "con_ficha": ficha_publicable(p) is not None, "on": p.pk in ids}
+             for p in previos + lista[:MAX_LISTA]]
+    contexto.update({"filas": filas, "total": len(lista), "q": q, "especie": especie, "marca": marca,
+                     "marcas": list(marcas), "todos": not solo_existencia, "lista_max": MAX_LISTA})
+    return render(request, "catalogo/publicaciones_alimentos.html", contexto)
+
+
+def _zip_publicaciones(tarjetas, formatos, claves):
+    import io
+    import zipfile
+
+    from django.http import HttpResponse
+
+    from . import publicacion, redes
+    hoy = timezone.localdate()
+    carpeta = f"AllPetcr_publicaciones_{hoy:%Y-%m-%d}"
+    destino = {"feed": "Publicaciones_1080x1350", "story": "Estados_1080x1920"}
+    salida = io.BytesIO()
+    with zipfile.ZipFile(salida, "w", zipfile.ZIP_STORED) as z:
+        for t in tarjetas:
+            p = t["p"]
+            if not p.imagen:
+                continue
+            foto = redes._abrir_foto(p)
+            d = publicacion.datos(p, precio=t["precio"], oferta=t["oferta"], fecha=hoy,
+                                  claves_beneficio=claves.get(p.pk))
+            nombre = redes._limpio(f"{p.sku} {p.nombre}") + ".jpg"
+            for f in formatos:
+                im, _ = publicacion.dibujar(f, d, foto)
+                b = io.BytesIO()
+                im.save(b, "JPEG", quality=90, optimize=True)
+                z.writestr(f"{carpeta}/{destino[f]}/{nombre}", b.getvalue())
+    r = HttpResponse(salida.getvalue(), content_type="application/zip")
+    r["Content-Disposition"] = f'attachment; filename="{carpeta}.zip"'
+    return r
+
+
+@rol_requerido(GERENTE)
+def publicacion_imagen(request, pk, formato):
+    """La vista previa: se dibuja al pedirla, no se guarda nada."""
+    import io
+
+    from django.http import HttpResponse
+
+    from . import publicacion, redes
+    from .models import Producto
+    from .promociones import vigentes
+    if formato not in publicacion.FORMATOS:
+        raise Http404
+    empresa = empresa_actual(request)
+    p = get_object_or_404(Producto.objects.select_related("ficha_alimento"), pk=pk, empresa=empresa)
+    if not p.imagen:
+        raise Http404("Este producto no tiene foto.")
+    precio, oferta = _precio_hoy(p, vigentes(empresa, productos=[p.pk]))
+    claves = None
+    if "b" in request.GET:
+        claves = [c for c in request.GET["b"].split(",") if c]
+    d = publicacion.datos(p, precio=precio, oferta=oferta, fecha=timezone.localdate(), claves_beneficio=claves)
+    im, _ = publicacion.dibujar(formato, d, redes._abrir_foto(p))
+    b = io.BytesIO()
+    im.save(b, "JPEG", quality=82)
+    r = HttpResponse(b.getvalue(), content_type="image/jpeg")
+    r["Cache-Control"] = "no-store"
+    return r
