@@ -908,6 +908,8 @@ Facebook y WhatsApp. Diseño aprobado ese día (propuesta con imágenes).
   a los 120 s. Un paquete «armando» de más de 30 min se da por perdido
   (reinicio del servidor). Se guardan los últimos 5 en el almacén
   (`catalogos_redes/`). En pruebas `CATALOGO_REDES_EN_HILO=False`.
+  Cada paquete tiene «Eliminar» (`redes_borrar`, POST, gerente; 09/11/2026):
+  borra el .zip del almacén y el registro; uno «armando» no se toca.
 - `catalogo/redes.py` arma el .zip: PDF completo + uno por categoría y
   mascota (reportlab; el servidor no tiene navegador), fotos limpias
   1080×1080 (recorta el blanco sobrante), tarjetas con precio (o promoción:

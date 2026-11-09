@@ -143,3 +143,28 @@ class CatalogoRedes(Base):
         p = PaqueteRedes.objects.get()
         self.assertEqual(p.estado, "ERR")
         self.assertIn("Ningún producto", p.error)
+
+    def test_eliminar_un_paquete(self):
+        p, _ = self._armar()
+        archivo = p.archivo
+        self.assertTrue(default_storage.exists(archivo))
+        r = self.client.post(reverse("catalogo:redes_borrar", args=[p.pk]))
+        self.assertEqual(r.status_code, 302)
+        self.assertFalse(PaqueteRedes.objects.filter(pk=p.pk).exists())
+        self.assertFalse(default_storage.exists(archivo))
+
+    def test_uno_que_se_esta_armando_no_se_elimina(self):
+        self.client.force_login(self.usuario)
+        p = PaqueteRedes.objects.create(empresa=self.empresa)
+        self.client.post(reverse("catalogo:redes_borrar", args=[p.pk]))
+        self.assertTrue(PaqueteRedes.objects.filter(pk=p.pk).exists())
+
+    def test_eliminar_solo_gerente_y_solo_por_post(self):
+        p, _ = self._armar()
+        self.client.get(reverse("catalogo:redes_borrar", args=[p.pk]))
+        self.assertTrue(PaqueteRedes.objects.filter(pk=p.pk).exists())
+        cajero = User.objects.create_user("maria", password="c", is_staff=True)
+        cajero.groups.add(Group.objects.get_or_create(name="Cajero")[0])
+        self.client.force_login(cajero)
+        self.client.post(reverse("catalogo:redes_borrar", args=[p.pk]))
+        self.assertTrue(PaqueteRedes.objects.filter(pk=p.pk).exists())

@@ -323,3 +323,25 @@ def publicacion_imagen(request, pk):
     r = HttpResponse(b.getvalue(), content_type="image/jpeg")
     r["Cache-Control"] = "no-store"
     return r
+
+
+@rol_requerido(GERENTE)
+def catalogo_redes_borrar(request, pk):
+    """Elimina un paquete que ya no sirve (pedido de Oscar, 09/11/2026: los
+    .zip viejos quedaban en la lista con precios o diseño de otro día).
+    Borra el archivo del almacén y el registro. Uno que se está armando no se
+    toca: el hilo lo actualizaría después de borrado."""
+    if request.method != "POST":
+        return redirect("catalogo:redes")
+    p = get_object_or_404(PaqueteRedes, pk=pk, empresa=empresa_actual(request))
+    if p.estado == PaqueteRedes.Estado.ARMANDO:
+        messages.info(request, "Ese paquete se está armando; esperá a que termine para eliminarlo.")
+        return redirect("catalogo:redes")
+    if p.archivo:
+        try:
+            default_storage.delete(p.archivo)
+        except Exception:  # noqa: BLE001 — si el archivo ya no estaba, igual se quita de la lista
+            logger.warning("No se pudo borrar %s", p.archivo)
+    p.delete()
+    messages.info(request, "Paquete eliminado.")
+    return redirect("catalogo:redes")

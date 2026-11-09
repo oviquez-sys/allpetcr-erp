@@ -27,6 +27,10 @@ body{background-color:#f5f5f7 !important}
 .seg{display:inline-flex;background:#e8e8ed;border-radius:12px;padding:4px;margin:6px 0 14px;flex-wrap:wrap}
 .seg a{padding:9px 16px;border-radius:9px;font-size:15px;font-weight:600;color:#3c3c43 !important;text-decoration:none}
 .seg a.on{background:#fff;color:#0b3161 !important;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.cr-acc{display:flex;gap:8px;align-items:center}
+.cr-acc form{margin:0}
+.cr-del{background:none;border:1px solid #e3b4b0;color:#b5231a;border-radius:10px;padding:8px 12px;font:inherit;font-weight:600;font-size:14px;cursor:pointer}
+.cr-del:hover{background:#fdecea}
 .cr ul{margin:0;padding-left:18px;font-size:14px;color:#3c3c43;line-height:1.6}
 </style>{% endblock %}
 
@@ -35,7 +39,7 @@ body{background-color:#f5f5f7 !important}
   <div style="font-size:13px;color:#86868b"><a href="/admin/" style="color:#0b3161">Administración</a> › Catálogo para redes</div>
   <h1>Catálogo para redes</h1>
   <div class="seg"><a class="on" href="{% url 'catalogo:redes' %}">Paquete del catálogo</a><a href="{% url 'catalogo:redes_alimentos' %}">Publicaciones de alimentos</a></div>
-  <p class="sub">Arma un .zip con el catálogo en PDF, las fotos para WhatsApp y Facebook, publicaciones con precio, y los archivos para cargar el catálogo. Todo sale de las fotos, nombres, precios y promociones de hoy del sistema.</p>
+  <p class="sub">Arma un .zip con el catálogo en PDF, las fotos para WhatsApp y Facebook, publicaciones con precio y los archivos para cargar el catálogo. Todo sale de las fotos, nombres, precios y promociones de hoy del sistema.</p>
 
   {% for m in messages %}<div class="cr-msg">{{ m }}</div>{% endfor %}
 
@@ -56,7 +60,10 @@ body{background-color:#f5f5f7 !important}
     {% for p in paquetes %}
     <div class="cr-p" data-pk="{{ p.pk }}" data-estado="{{ p.estado }}">
       <b>{{ p.creado_en|date:"j/n/Y H:i" }} · {{ p.categoria_nombre }}{% if p.filtros.solo_ofertas %} · solo promociones{% endif %}{% if not p.filtros.con_precio %} · sin precio{% endif %}</b>
-      {% if p.estado == "LIS" %}<a class="cr-dl" href="{% url 'catalogo:redes_descargar' p.pk %}">Descargar .zip</a>{% else %}<span></span>{% endif %}
+      <span class="cr-acc">
+        {% if p.estado == "LIS" %}<a class="cr-dl" href="{% url 'catalogo:redes_descargar' p.pk %}">Descargar .zip</a>{% endif %}
+        {% if p.estado != "ARM" %}<form method="post" action="{% url 'catalogo:redes_borrar' p.pk %}" onsubmit="return confirm('¿Eliminar este paquete? No se puede deshacer.')">{% csrf_token %}<button class="cr-del" title="Eliminar este paquete">Eliminar</button></form>{% endif %}
+      </span>
       {% if p.estado == "ARM" %}
         <small class="txt">Armando… {{ p.hechos }} de {{ p.total|default:"?" }} productos</small>
         <div class="cr-bar"><i style="width:{% if p.total %}{% widthratio p.hechos p.total 100 %}{% else %}3{% endif %}%"></i></div>
