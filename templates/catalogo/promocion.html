@@ -191,8 +191,10 @@ body{background-color:#f5f5f7 !important}
     Object.keys(datos).forEach(function (k){ f.append(k, datos[k]); });
     try {
       var r = await fetch(url, {method: "POST", body: f, headers: {"Accept": "application/json"}});
+      if (r.status >= 500) { mostrar("El ERP tuvo un problema (código " + r.status + "). No se agregó nada.", true); return; }
       if (r.redirected || !(r.headers.get("content-type") || "").includes("json")) { mostrar("Se venció la sesión: recargá la página.", true); return; }
       var d = await r.json();
+      if (d.resultados && d.resultados.length) { pintar(d.resultados, datos.codigo || ""); }
       document.getElementById("tabla").innerHTML = d.tabla;
       document.getElementById("resumen").innerHTML = d.resumen;
       if (d.error) mostrar("⛔ " + d.error, true); else if (d.aviso) mostrar("✓ " + d.aviso);
@@ -206,9 +208,13 @@ body{background-color:#f5f5f7 !important}
     // Con la lista de nombres abierta y una sola opción, Enter la agrega.
     var unico = cajaRes.querySelectorAll("button[data-agregar]:not([disabled])");
     if (!cajaRes.hidden && cajaRes.querySelectorAll(".r").length === 1 && unico.length === 1) { unico[0].click(); return; }
+    clearTimeout(espera);
     campo.value = "";
     cerrarRes();
     await enviar({accion: "agregar", codigo: c});
+    // Si no era un código sino un nombre, el ERP devolvió la lista: el texto
+    // vuelve al campo para seguir afinando.
+    if (!cajaRes.hidden) campo.value = c;
     campo.focus();
   });
 
@@ -225,14 +231,17 @@ body{background-color:#f5f5f7 !important}
       if (!(r.headers.get("content-type") || "").includes("json")) return;
       var d = await r.json();
       if (campo.value.trim() !== q) return;          // ya escribió otra cosa
-      if (!d.resultados.length) { cajaRes.innerHTML = '<div class="vacio">Nada con «' + esc(q) + '». Probá con otra palabra.</div>'; cajaRes.hidden = false; return; }
-      cajaRes.innerHTML = d.resultados.map(function (p){
+      pintar(d.resultados, q);
+    } catch (e) { /* sin conexión: queda el escaneo */ }
+  }
+  function pintar(lista, q){
+      if (!lista.length) { cajaRes.innerHTML = '<div class="vacio">Nada con «' + esc(q) + '». Probá con otra palabra.</div>'; cajaRes.hidden = false; return; }
+      cajaRes.innerHTML = lista.map(function (p){
         var det = [p.sku, p.presentacion, "₡" + p.precio, "hay " + p.stock].filter(Boolean).join(" · ");
         return '<div class="r">' + window.fotoHTML(p, 52) + '<div><b>' + esc(p.nombre) + '</b><small>' + esc(det) + '</small></div>' +
           (p.ya ? '<button type="button" disabled>✓ Ya está</button>' : '<button type="button" data-agregar="' + p.id + '">Agregar</button>') + '</div>';
       }).join("");
       cajaRes.hidden = false;
-    } catch (e) { /* sin conexión: queda el escaneo */ }
   }
   campo.addEventListener("input", function (){
     var q = campo.value.trim();

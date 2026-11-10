@@ -210,6 +210,16 @@ class Pantalla(ConPromo):
         self.assertTrue(self.client.get(buscar, {"q": "collar"}).json()["resultados"][0]["ya"])
         self.assertEqual(self.client.get(buscar, {"q": "c"}).json()["resultados"], [])    # 1 letra no busca
 
+    def test_enter_con_un_nombre_muestra_la_lista(self):
+        """Oscar escribía «special» y apretaba Enter: salía «No encontré el código»."""
+        r = self.client.post(self.url(), {"accion": "agregar", "codigo": "collar"}, HTTP_ACCEPT="application/json")
+        d = r.json()
+        self.assertTrue(d["ok"])
+        self.assertEqual([x["nombre"] for x in d["resultados"]], ["Collar"])
+        self.assertFalse(self.nueva.items.exists())                     # no agrega solo: se elige
+        r = self.client.post(self.url(), {"accion": "agregar", "codigo": "zzzz"}, HTTP_ACCEPT="application/json")
+        self.assertFalse(r.json()["ok"])
+
     def test_buscar_solo_gerente(self):
         self.client.force_login(self.cajero)
         r = self.client.get(reverse("catalogo:promocion_buscar", args=[self.nueva.pk]), {"q": "collar"})

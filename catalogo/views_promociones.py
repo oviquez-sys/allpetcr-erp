@@ -75,11 +75,11 @@ def _contexto(request, promo):
             "editable": promo.estado != Promocion.Estado.TERMINADA}
 
 
-def _json(request, promo, aviso="", error="", nuevo=None):
+def _json(request, promo, aviso="", error="", nuevo=None, resultados=None):
     ctx = _contexto(request, promo)
     ctx["nuevo"] = nuevo
     return JsonResponse({
-        "ok": not error, "aviso": aviso, "error": error,
+        "ok": not error, "aviso": aviso, "error": error, "resultados": resultados,
         "tabla": render_to_string("catalogo/_promo_tabla.html", ctx, request=request),
         "resumen": render_to_string("catalogo/_promo_resumen.html", ctx, request=request),
     })
@@ -154,6 +154,13 @@ def _accion(request, promo):
             messages.success(request, "Datos guardados.")
         elif accion == "agregar":
             producto = P.buscar_producto(promo.empresa, request.POST.get("codigo"))
+            if producto is None and es_json:
+                # No es un código: puede ser un nombre («special»). Enter con
+                # un nombre muestra la lista para elegir, no un error (Oscar,
+                # 09/11/2026: escribía el nombre y apretaba Enter por costumbre).
+                encontrados = _resultados(promo, request.POST.get("codigo"))
+                if encontrados:
+                    return _json(request, promo, aviso="Elegí el producto de la lista.", resultados=encontrados)
             if producto is None:
                 raise ValidationError(f"No encontré el código «{request.POST.get('codigo', '').strip()}». "
                                       "Escribí parte del nombre y elegilo de la lista.")
@@ -265,20 +272,22 @@ def _etiquetas(request, promo):
 def buscar(request, pk):
     """Productos que coinciden con lo escrito, para elegirlos por nombre y
     foto. Máximo 12: si son más, se sigue escribiendo."""
+    empresa = empresa_actual(request)
+    promo = get_object_or_404(Promocion, pk=pk, empresa=empresa)
+    return JsonResponse({"resultados": _resultados(promo, request.GET.get("q"))})
+
+
+def _resultados(promo, q):
+    """Lo que coincide por nombre/descripción (búsqueda inteligente), con foto."""
     from core.imagenes import datos_foto
     from core.templatetags.formato import crc
 
     from .palabras_clave import filtrar
-    empresa = empresa_actual(request)
-    promo = get_object_or_404(Promocion, pk=pk, empresa=empresa)
-    q = (request.GET.get("q") or "").strip()
+    q = (q or "").strip()
     if len(q) < 2:
-        return JsonResponse({"resultados": []})
-    qs = Producto.objects.filter(empresa=empresa, activo=True, precio_venta__gt=0).order_by("nombre")
+        return []
+    qs = Producto.objects.filter(empresa=promo.empresa, activo=True, precio_venta__gt=0).order_by("nombre")
     ya = set(promo.items.values_list("producto_id", flat=True))
-    resultados = []
-    for p in filtrar(qs, q, limite=12):
-        resultados.append({"id": p.pk, "nombre": p.nombre, "sku": p.sku, "presentacion": p.presentacion,
-                           "precio": crc(p.precio_venta), "stock": crc(p.stock_actual), "ya": p.pk in ya,
-                           **datos_foto(p)})
-    return JsonResponse({"resultados": resultados})
+    return [{"id": p.pk, "nombre": p.nombre, "sku": p.sku, "presentacion": p.presentacion,
+             "precio": crc(p.precio_venta), "stock": crc(p.stock_actual), "ya": p.pk in ya, **datos_foto(p)}
+            for p in filtrar(qs, q, limite=12)]

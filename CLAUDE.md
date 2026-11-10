@@ -868,6 +868,8 @@ precio bonito (`precios_bonitos.bonito_hacia_abajo`).
   ≥2 letras sale una lista con foto, nombre, SKU, precio y existencia
   (`catalogo:promocion_buscar`, `palabras_clave.filtrar`, máx. 12) y se agrega
   con un clic (`accion=agregar_id`). Solo números largos = pistola, no busca.
+  Enter con un nombre («special») tampoco da error: `agregar` devuelve la lista
+  (`resultados`) para elegir; un 500 se muestra como tal, no como «sesión vencida».
 - POS: tarjeta con -% y tachado; línea "🔥 Promo −40 % · aplicado solo"
   (`ganaLaPromo` en pos.html = misma regla del servidor). Tiquete: renglón con
   el nombre de la promo y "Usted ahorró".
