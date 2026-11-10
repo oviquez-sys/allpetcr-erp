@@ -1,0 +1,211 @@
+{
+ "clave": "farmina-nd-ancestral-grain-cat-kitten-pollo-granada",
+ "marca": "Farmina N&D",
+ "linea": "Ancestral Grain",
+ "nombre": "Ancestral Grain Pollo y Granada Kitten",
+ "especie": "gato",
+ "tipo": "seco",
+ "etapas": [
+  "gatito"
+ ],
+ "tamanos_raza": [],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo y granada",
+ "descripcion_corta": "Alimento completo y balanceado para gatitos y para hembras en gestación y lactancia.",
+ "descripcion": "Alimento completo y balanceado para gatitos y para hembras en gestación y lactancia. Con aproximadamente el 90 % de las proteínas derivadas de fuentes animales, la fórmula apoya el desarrollo muscular y la vitalidad. Contiene cebada y avena, cereales ancestrales, en cantidades limitadas para una dieta equilibrada. Libre de ingredientes genéticamente modificados y sin colorantes ni aromas artificiales.",
+ "beneficios": [
+  {
+   "clave": "alta_proteina",
+   "texto": "Cerca del 90 % de la proteína es de origen animal."
+  },
+  {
+   "clave": "masa_muscular",
+   "texto": "Apoya el desarrollo muscular y la vitalidad."
+  }
+ ],
+ "ingredientes": "carne de pollo (mecánicamente separada), harina de vísceras de aves (mín. 10%), huevo deshidratado, harina de pescado, harina de torrezno (proteína aislada de cerdo), sorgo, avena (mín. 0,5%), cebada (mín. 0,5%), aceite de pollo, aceite de pescado, pulpa de remolacha, cáscara de guisante, alfalfa deshidratada, lignocelulosa, semilla de psyllium, levadura seca de cervecería, zanahoria deshidratada, espinaca deshidratada, naranja deshidratada, manzana deshidratada, arándano deshidratado, extracto de granada (mín. 0,08%), extracto de té verde, extracto de aloe vera, cúrcuma en polvo, beta caroteno, aditivos prebióticos (FOS y MOS), DL-metionina, taurina, L-carnitina, sulfato de condroitina, sulfato de glucosamina, aditivos adsorbentes (extracto de yucca y zeolita), hidrolizado de hígado de pollo y cerdo, vitaminas (A, D3, E, B1, B2, B6, B12, C, biotina, niacina, ácido pantoténico, ácido fólico, cloruro de colina), fosfato bicálcico, ácido fosfórico, carbonato de calcio, cloruro de potasio, hierro aminoácido quelato, cobre aminoácido quelato, zinc aminoácido quelato, manganeso aminoácido quelato, proteinato de selenio, yodato de calcio, propionato de calcio, concentrado de tocoferoles. Eventuales sustitutivos: proteína hidrolizada de pescado, proteína hidrolizada de pollo.",
+ "aditivos": "Enriquecimiento mínimo por kg: vitamina A 18.700UI; vitamina D3 1.250UI; vitamina E 510UI; vitamina B1 8,4mg; vitamina B2 17mg; vitamina B6 6,5mg; vitamina B12 80mcg; vitamina C 255mg; biotina 1,25mg; niacina 127mg; ácido pantoténico 42mg; ácido fólico 1,25mg; colina 2.400mg; hierro 80mg; cobre 18mg; zinc 145mg; manganeso 48mg; selenio 0,15mg; yodo 2,2mg.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "min",
+   "valor": "38",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "min",
+   "valor": "22",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Materia fibrosa",
+   "calificador": "max",
+   "valor": "3",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "9",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia mineral",
+   "calificador": "max",
+   "valor": "8.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "min",
+   "valor": "0.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "max",
+   "valor": "1.4",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "min",
+   "valor": "0.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "sodio",
+   "etiqueta": "Sodio",
+   "calificador": "min",
+   "valor": "2000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "potasio",
+   "etiqueta": "Potasio",
+   "calificador": "min",
+   "valor": "5000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "magnesio",
+   "etiqueta": "Magnesio",
+   "calificador": "min",
+   "valor": "900",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Omega 6",
+   "calificador": "min",
+   "valor": "25",
+   "unidad": "g/kg"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Omega 3",
+   "calificador": "min",
+   "valor": "2900",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "min",
+   "valor": "950",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "epa",
+   "etiqueta": "EPA",
+   "calificador": "min",
+   "valor": "740",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "min",
+   "valor": "2000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "l_carnitina",
+   "etiqueta": "L-Carnitina",
+   "calificador": "min",
+   "valor": "100",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "glucosamina",
+   "etiqueta": "Sulfato de glucosamina",
+   "calificador": "min",
+   "valor": "300",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "condroitina",
+   "etiqueta": "Sulfato de condroitina",
+   "calificador": "min",
+   "valor": "200",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Fructo-oligosacáridos",
+   "calificador": "min",
+   "valor": "400",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Manano-oligosacáridos",
+   "calificador": "min",
+   "valor": "240",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Metionina",
+   "calificador": "min",
+   "valor": "7800",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Lisina",
+   "calificador": "min",
+   "valor": "16",
+   "unidad": "g/kg"
+  }
+ ],
+ "kcal_kg": 4097,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.farmina.com/cr/eshop/alimento-para-su-gato/n&d-ancestral-grain-feline/422-pollo-y-granada-kitten.html",
+   "tipo": "fabricante",
+   "entidad": "Farmina Pet Foods — sitio oficial para Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-11-09"
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-11-09",
+ "notas_internas": "Fuente: farmina.com/cr, sitio oficial de Farmina para Costa Rica (fórmula para Latinoamérica: sorgo, avena, cebada y harina de vísceras). OJO: la foto del producto en el sitio muestra el empaque de EE. UU./Europa (receta con espelta); si la bolsa de la tienda dice «espelta» o «spelt», esta ficha NO corresponde y hay que corregirla con la etiqueta. Farmina rotula la grasa como «Extracto etéreo»; se guardó como «Grasa bruta». Guía de alimentación: solo en PDF del fabricante, no se cargó.",
+ "skus": [
+  "VPT-PLG015201B"
+ ]
+}

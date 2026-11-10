@@ -501,6 +501,17 @@ chat estaba conectado (Haiku 4.5, sin errores desde julio, números = Inicio).
   con lo que falta. `recomendar.alimentos_sin_ficha` / `fichas_incompletas`.
   `buscar_alimento` devuelve `alimentos_sin_ficha` y el asistente lo dice.
 - En el PC las fichas JSON están en CRLF: conservarlo al copiar.
+- **Farmina N&D (09/11/2026)**: 10 fichas `farmina-nd-*.json` (Ancestral Grain
+  perro/gato, Prime Adult Mini, Tropical Selection gato castrado cerdo y perro
+  mini salmón) desde farmina.com/cr (sitio oficial para CR, en español):
+  ingredientes y enriquecimiento copiados tal cual (verificados por huella
+  contra la página) y análisis comparado campo por campo. Es la fórmula
+  latinoamericana (sorgo, harina de vísceras); la FOTO del sitio muestra el
+  empaque de EE. UU./Europa (espelta): falta confirmar contra una bolsa de la
+  tienda. «Extracto etéreo» se guardó como «Grasa bruta». La página de Prime
+  Adult Mini dice por error «cachorros de razas grandes»: se cargó como adulto.
+  Buscador: grupo `nd` en `palabras_clave` («nd», «n d», «farmina»): «N&D» sin
+  símbolos queda «n d» y «nd» no lo encontraba.
 
 ## Buscador "inteligente" en ERP y sitio (20/10/2026)
 

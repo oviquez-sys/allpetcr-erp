@@ -1,0 +1,220 @@
+{
+ "clave": "farmina-nd-ancestral-grain-dog-senior-mini-pollo-granada",
+ "marca": "Farmina N&D",
+ "linea": "Ancestral Grain",
+ "nombre": "Ancestral Grain Pollo y Granada Senior Mini",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "senior"
+ ],
+ "tamanos_raza": [
+  "pequena"
+ ],
+ "necesidades": [],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo y granada",
+ "descripcion_corta": "Alimento completo y balanceado para perros adultos de razas pequeñas a partir de 8 años.",
+ "descripcion": "Alimento completo y balanceado para perros adultos de razas pequeñas a partir de 8 años. Con aproximadamente el 90 % de las proteínas derivadas de fuentes animales, la fórmula apoya el desarrollo muscular y la vitalidad. Contiene cebada y avena, cereales ancestrales, en cantidades limitadas para una dieta equilibrada. Libre de ingredientes genéticamente modificados y sin colorantes ni aromas artificiales.",
+ "beneficios": [
+  {
+   "clave": "alta_proteina",
+   "texto": "Cerca del 90 % de la proteína es de origen animal."
+  },
+  {
+   "clave": "masa_muscular",
+   "texto": "Apoya el desarrollo muscular y la vitalidad."
+  }
+ ],
+ "ingredientes": "carne de pollo (mecánicamente separada), harina de vísceras de aves (mín. 10%), huevo en polvo, avena (mín. 1%), granos de sorgo, cebada en granos (mín. 1%), harina de pescado, aceite de pollo, aceite de pescado, pulpa de remolacha, cáscara de guisante, alfalfa deshidratada, lignocelulosa, semilla de psyllium, levadura seca de cervecería, zanahoria deshidratada, espinaca deshidratada, naranja deshidratada, manzana deshidratada, extracto de arándano, extracto de granada (mín. 0,075%), extracto de té verde, extracto de aloe vera, cúrcuma en polvo, beta caroteno, aditivo prebióticos (FOS y MOS), DL-metionina, taurina, L-carnitina, sulfato de condroitina, sulfato de glucosamina, aditivos adsorbentes (extracto de yucca y zeolita), hidrolizado de hígado de aves y cerdos, vitaminas (retinol (A), colecalciferol (D3), acetato de DL-alfa-tocoferol (E), tiamina (B1), riboflavina (B2), clorhidrato de piridoxina (B6), cianocobalamina (B12), ácido ascórbico monofosfato (C), biotina, niacina, ácido pantoténico, ácido fólico, cloruro de colina), fosfato bicalcico, cloruro de potasio, hierro aminoácido quelato, cobre aminoácido quelato, zinc aminoácido quelato, manganeso aminoácido quelato, proteinato de selenio, yodato de calcio, propionato de calcio, concentrado de tocoferoles. Eventuales sustitutivos: proteína hidrolizada de pescado, proteína hidrolizada de pollo.",
+ "aditivos": "Enriquecimiento mínimo por kg: vitamina A 15.000UI; vitamina D3 1.500UI; vitamina E 600UI; vitamina B1 4,5mg; vitamina B2 7,5mg; vitamina B6 6mg; vitamina B12 60mcg; vitamina C 150mg; biotina 0,38mg; niacina 37,5mg; ácido pantoténico 15mg; ácido fólico 0,45mg; colina 1.300mg; hierro 40mg; cobre 13mg; zinc 145mg; manganeso 49mg; selenio 0,15mg; yodo 1,6mg.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "min",
+   "valor": "27",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "min",
+   "valor": "15",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Materia fibrosa",
+   "calificador": "max",
+   "valor": "5",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "9",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia mineral",
+   "calificador": "max",
+   "valor": "6.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "min",
+   "valor": "0.7",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "max",
+   "valor": "1.4",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "min",
+   "valor": "0.5",
+   "unidad": "%"
+  },
+  {
+   "clave": "sodio",
+   "etiqueta": "Sodio",
+   "calificador": "min",
+   "valor": "2000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "potasio",
+   "etiqueta": "Potasio",
+   "calificador": "min",
+   "valor": "5000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "magnesio",
+   "etiqueta": "Magnesio",
+   "calificador": "min",
+   "valor": "900",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Omega 6",
+   "calificador": "min",
+   "valor": "25",
+   "unidad": "g/kg"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Omega 3",
+   "calificador": "min",
+   "valor": "2500",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "min",
+   "valor": "500",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "epa",
+   "etiqueta": "EPA",
+   "calificador": "min",
+   "valor": "400",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "min",
+   "valor": "1000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "l_carnitina",
+   "etiqueta": "L-Carnitina",
+   "calificador": "min",
+   "valor": "100",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "glucosamina",
+   "etiqueta": "Sulfato de glucosamina",
+   "calificador": "min",
+   "valor": "300",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "condroitina",
+   "etiqueta": "Sulfato de condroitina",
+   "calificador": "min",
+   "valor": "200",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Betacaroteno",
+   "calificador": "min",
+   "valor": "1.5",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Fructo-oligosacáridos",
+   "calificador": "min",
+   "valor": "700",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Manano-oligosacáridos",
+   "calificador": "min",
+   "valor": "240",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Metionina",
+   "calificador": "min",
+   "valor": "5000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Lisina",
+   "calificador": "min",
+   "valor": "11",
+   "unidad": "g/kg"
+  }
+ ],
+ "kcal_kg": 3619,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.farmina.com/cr/eshop/alimento-para-su-perro/n&d-ancestral-grain-canine/624-pollo-y-granada-senior-mini.html",
+   "tipo": "fabricante",
+   "entidad": "Farmina Pet Foods — sitio oficial para Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-11-09"
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-11-09",
+ "notas_internas": "Fuente: farmina.com/cr, sitio oficial de Farmina para Costa Rica (fórmula para Latinoamérica: sorgo, avena, cebada y harina de vísceras). OJO: la foto del producto en el sitio muestra el empaque de EE. UU./Europa (receta con espelta); si la bolsa de la tienda dice «espelta» o «spelt», esta ficha NO corresponde y hay que corregirla con la etiqueta. Farmina rotula la grasa como «Extracto etéreo»; se guardó como «Grasa bruta». Guía de alimentación: solo en PDF del fabricante, no se cargó.",
+ "skus": [
+  "VPT-PLG025111B"
+ ]
+}

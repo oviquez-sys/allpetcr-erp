@@ -89,3 +89,13 @@ class BuscadorInteligenteTests(TestCase):
         fila = _filas_pos(Producto.objects.filter(pk=p.pk))[0]
         self.assertIn("cachorro", fila["etiquetas"])
         self.assertIn("comida", ProductoListaSerializer(p).data["etiquetas"])
+
+    def test_nd_se_encuentra_como_nd_n_y_d_o_farmina(self):
+        """Oscar dice «ND»; el producto se llama «N&D Ancestral Grain…»."""
+        from .palabras_clave import coincide, etiquetas
+        p = Producto(nombre="N&D Ancestral Grain Gato Castrado Pollo y Granada 1.5 kg", sku="VPT-1", mascota="Gato")
+        for consulta in ("nd gato", "N&D castrado", "farmina", "nd pomegranate"):
+            self.assertTrue(coincide(consulta, p.nombre, etiquetas(p)), consulta)
+        otro = Producto(nombre="Gosbi Exclusive Adult Medium Fish", sku="GOS-1", mascota="Perro")
+        self.assertFalse(coincide("nd", otro.nombre, etiquetas(otro)))
+

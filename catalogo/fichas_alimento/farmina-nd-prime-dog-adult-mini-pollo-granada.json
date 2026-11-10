@@ -1,0 +1,215 @@
+{
+ "clave": "farmina-nd-prime-dog-adult-mini-pollo-granada",
+ "marca": "Farmina N&D",
+ "linea": "Prime",
+ "nombre": "Prime Pollo y Granada Adult Mini",
+ "especie": "perro",
+ "tipo": "seco",
+ "etapas": [
+  "adulto"
+ ],
+ "tamanos_raza": [
+  "pequena"
+ ],
+ "necesidades": [
+  "libre_granos"
+ ],
+ "proteina_principal": "Pollo",
+ "sabor": "Pollo y granada",
+ "descripcion_corta": "Alimento completo y balanceado sin cereales para perros adultos de razas pequeñas.",
+ "descripcion": "Alimento completo y balanceado sin cereales para perros adultos de razas pequeñas. El 98 % de sus proteínas son de origen animal: apoya la formación muscular y la salud con una nutrición rica en aminoácidos esenciales. Sin cereales (sin soja, maíz ni arroz), libre de ingredientes genéticamente modificados y sin colorantes ni aromas artificiales.",
+ "beneficios": [
+  {
+   "clave": "alta_proteina",
+   "texto": "98 % de las proteínas son de origen animal."
+  },
+  {
+   "clave": "masa_muscular",
+   "texto": "Apoya la formación muscular y la salud."
+  }
+ ],
+ "ingredientes": "carne de pollo (mecánicamente separada), harina de vísceras de aves (mín. 10%), huevo deshidratado, harina de pescado, harina de torrezno (proteína aislada de cerdo), almidón de papa, almidón de mandioca, aceite de pescado, aceite de pollo, pulpa de remolacha, cáscara de guisante, alfalfa deshidratada, lignocelulosa, semilla de psyllium, levadura seca de cervecería, zanahoria deshidratada, espinaca deshidratada, naranja deshidratada, manzana deshidratada, arándano deshidratado, extracto de granada (mín. 0,075%), extracto de té verde, extracto de aloe vera, cúrcuma en polvo, beta caroteno, aditivos prebióticos (FOS y MOS), DL-metionina, taurina, L-carnitina, sulfato de condroitina, sulfato de glucosamina, aditivos adsorbentes (extracto de yucca y zeolita), hidrolizado de hígado de pollo y cerdo, vitaminas (A, D3, E, B1, B2, B6, B12, C, biotina, niacina, ácido pantoténico, ácido fólico, cloruro de colina), cloruro de potasio, fosfato bicalcico, hierro aminoácido quelato, cobre aminoácido quelato, zinc aminoácido quelato, manganeso aminoácido quelato, proteinato de selenio, yodato de calcio, propionato de calcio, concentrado de tocoferoles. Eventual sustitutivo: proteína hidrolizada de pescado.",
+ "aditivos": "Enriquecimiento mínimo por kg: vitamina A 16.000UI; vitamina D3 1.600UI; vitamina E 600UI; vitamina B1 4,8mg; vitamina B2 8mg; vitamina B6 6,4mg; vitamina B12 64mcg; vitamina C 160mg; biotina 0,40mg; niacina 40mg; ácido pantoténico 16mg; ácido fólico 0,48mg; colina 1.800mg; hierro 40mg; cobre 13mg; zinc 145mg; manganeso 49mg; selenio 0,12mg; yodo 1,6mg.",
+ "analisis": [
+  {
+   "clave": "proteina",
+   "etiqueta": "Proteína bruta",
+   "calificador": "min",
+   "valor": "38",
+   "unidad": "%"
+  },
+  {
+   "clave": "grasa",
+   "etiqueta": "Grasa bruta",
+   "calificador": "min",
+   "valor": "20",
+   "unidad": "%"
+  },
+  {
+   "clave": "fibra",
+   "etiqueta": "Materia fibrosa",
+   "calificador": "max",
+   "valor": "2.3",
+   "unidad": "%"
+  },
+  {
+   "clave": "humedad",
+   "etiqueta": "Humedad",
+   "calificador": "max",
+   "valor": "9",
+   "unidad": "%"
+  },
+  {
+   "clave": "cenizas",
+   "etiqueta": "Materia mineral",
+   "calificador": "max",
+   "valor": "8.7",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "min",
+   "valor": "1",
+   "unidad": "%"
+  },
+  {
+   "clave": "calcio",
+   "etiqueta": "Calcio",
+   "calificador": "max",
+   "valor": "1.4",
+   "unidad": "%"
+  },
+  {
+   "clave": "fosforo",
+   "etiqueta": "Fósforo",
+   "calificador": "min",
+   "valor": "0.8",
+   "unidad": "%"
+  },
+  {
+   "clave": "sodio",
+   "etiqueta": "Sodio",
+   "calificador": "min",
+   "valor": "2000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "potasio",
+   "etiqueta": "Potasio",
+   "calificador": "min",
+   "valor": "5000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "magnesio",
+   "etiqueta": "Magnesio",
+   "calificador": "min",
+   "valor": "900",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "omega6",
+   "etiqueta": "Omega 6",
+   "calificador": "min",
+   "valor": "30",
+   "unidad": "g/kg"
+  },
+  {
+   "clave": "omega3",
+   "etiqueta": "Omega 3",
+   "calificador": "min",
+   "valor": "5000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "dha",
+   "etiqueta": "DHA",
+   "calificador": "min",
+   "valor": "1500",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "epa",
+   "etiqueta": "EPA",
+   "calificador": "min",
+   "valor": "1200",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "taurina",
+   "etiqueta": "Taurina",
+   "calificador": "min",
+   "valor": "1000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "l_carnitina",
+   "etiqueta": "L-Carnitina",
+   "calificador": "min",
+   "valor": "250",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "glucosamina",
+   "etiqueta": "Sulfato de glucosamina",
+   "calificador": "min",
+   "valor": "600",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "condroitina",
+   "etiqueta": "Sulfato de condroitina",
+   "calificador": "min",
+   "valor": "500",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Fructo-oligosacáridos",
+   "calificador": "min",
+   "valor": "1000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Manano-oligosacáridos",
+   "calificador": "min",
+   "valor": "240",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Metionina",
+   "calificador": "min",
+   "valor": "6000",
+   "unidad": "mg/kg"
+  },
+  {
+   "clave": "otro",
+   "etiqueta": "Lisina",
+   "calificador": "min",
+   "valor": "13.5",
+   "unidad": "g/kg"
+  }
+ ],
+ "kcal_kg": 3927,
+ "kcal_unidad": null,
+ "unidad_kcal": "",
+ "guia_alimentacion": {},
+ "fuentes": [
+  {
+   "url": "https://www.farmina.com/cr/eshop/alimento-para-su-perro/n&d-prime-canine/267-pollo-y-granada-adult-mini-.html",
+   "tipo": "fabricante",
+   "entidad": "Farmina Pet Foods — sitio oficial para Costa Rica",
+   "region": "Costa Rica",
+   "verificado_en": "2026-11-09"
+  }
+ ],
+ "estado": "verificado",
+ "verificado_en": "2026-11-09",
+ "notas_internas": "Fuente: farmina.com/cr, sitio oficial de Farmina para Costa Rica (fórmula para Latinoamérica: sorgo, avena, cebada y harina de vísceras). OJO: la foto del producto en el sitio muestra el empaque de EE. UU./Europa (receta con espelta); si la bolsa de la tienda dice «espelta» o «spelt», esta ficha NO corresponde y hay que corregirla con la etiqueta. Farmina rotula la grasa como «Extracto etéreo»; se guardó como «Grasa bruta». Guía de alimentación: solo en PDF del fabricante, no se cargó. La página del fabricante describe por error esta fórmula como «para perros cachorros de razas grande y gigantes»; el producto es Adult Mini y así se cargó (descripción corta redactada a partir del nombre).",
+ "skus": [
+  "VPT-PND025105B"
+ ]
+}

@@ -72,6 +72,10 @@ GRUPOS = {
     "ropa": ["ropa", "camisa", "buzo", "sueter", "disfraz"],
     "transportador": ["transportador", "kennel", "jaula", "bolso"],
     "rascador": ["rascador", "scratcher"],
+    # Marcas que se escriben de varias formas (09/11/2026: Oscar las llama «ND»;
+    # en el nombre dice «N&D», que sin símbolos queda «n d» y no lo encontraba).
+    "nd": ["n d", "nd", "farmina", "natural delicious"],
+    "granada": ["granada", "pomegranate"],
 }
 
 # Palabras de la consulta que no aportan ("comida PARA perro DE raza…").
