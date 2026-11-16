@@ -62,7 +62,8 @@ body{background-color:#f5f5f7 !important}
     {% foto_producto producto 96 %}
     <div class="info">
       <div class="nombre">{{ producto.nombre }}{% if not producto.activo %} <span style="font-size:13px;color:#8a1f16">(inactivo)</span>{% endif %}</div>
-      <div class="cods">Código {{ producto.sku }}{% if producto.codigo_barras %} · Barras {{ producto.codigo_barras }}{% endif %}{% if producto.categoria %} · {{ producto.categoria.nombre }}{% endif %}</div>
+      <div class="cods">Código {{ producto.sku }}{% if producto.codigo_barras %} · Barras {{ producto.codigo_barras }}{% endif %}{% if producto.categoria %} · {{ producto.categoria.nombre }}{% endif %}
+        · <a href="{% url 'inventario:abrir_producto' producto.pk %}">{% if producto.unidad_suelta_id %}📦 Abrir en {{ producto.unidades_por_empaque }} unidades ›{% else %}¿Viene en caja para vender suelto? ›{% endif %}</a></div>
       <div class="ap-kpis">
         <div class="ap-kpi stock {% if producto.stock_actual <= 0 %}cero{% endif %}">El sistema dice<b>{{ producto.stock_actual|floatformat:"-2" }}</b></div>
         <div class="ap-kpi">Precio de venta<b>₡{{ producto.precio_venta|crc:0 }}</b></div>

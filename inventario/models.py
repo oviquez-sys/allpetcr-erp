@@ -68,6 +68,10 @@ class MovimientoInventario(models.Model):
         DEVOLUCION = "DEV", "Devolución / anulación"
         AJUSTE = "AJU", "Ajuste"
         TRANSFERENCIA = "TRA", "Transferencia"
+        # Una caja que se abre para vender por unidad (16/11/2026): sale la
+        # caja y entran sus unidades, con el mismo documento (APE-…). Ver
+        # inventario/empaques.py.
+        APERTURA = "ABR", "Apertura de empaque"
 
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT, related_name="kardex")
     bodega = models.ForeignKey(Bodega, on_delete=models.PROTECT, related_name="movimientos")

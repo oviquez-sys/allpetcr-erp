@@ -86,6 +86,9 @@ SALIDAS_QUE_AGOTAN = {
     MovimientoInventario.Tipo.REGALIA,
     MovimientoInventario.Tipo.AJUSTE,
     MovimientoInventario.Tipo.TRANSFERENCIA,
+    # Abrir la última caja la deja en cero: como caja ya no se puede vender y
+    # hay que decidir si se vuelve a pedir, igual que si se hubiera vendido.
+    MovimientoInventario.Tipo.APERTURA,
 }
 
 

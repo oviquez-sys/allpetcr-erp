@@ -550,3 +550,112 @@ def vencimientos(request):
         "recien_guardado": request.GET.get("ok") == "1",
         "vista": vista, "vistas": venc.VISTAS, "lista": lista,
     })
+
+
+# --------------------------------------------------------------------------
+# Abrir cajas para vender por unidad (16/11/2026, a pedido de Oscar)
+# --------------------------------------------------------------------------
+# Se entra desde Recibir mercadería y desde Ajustes de inventario. Las reglas
+# viven en inventario/empaques.py; acá solo se arma la pantalla.
+
+@rol_requerido(GERENTE)
+def abrir_lista(request):
+    empresa = empresa_actual(request)
+    # Solo activos: abrir una caja de un producto que ya no se vende no tiene
+    # sentido. Sí aparecen los que están en cero, para poder configurarlos
+    # antes de que llegue la mercadería; los ya configurados van primero.
+    productos = list(
+        Producto.objects.filter(empresa=empresa, activo=True)
+        .select_related("categoria", "unidad_suelta")
+        .order_by("nombre")
+    )
+    productos.sort(key=lambda p: p.unidad_suelta_id is None)
+    return render(request, "inventario/abrir.html", {
+        "title": "Abrir cajas en unidades", "productos": productos,
+    })
+
+
+def _bodegas(empresa):
+    from .models import Bodega
+    return list(Bodega.objects.filter(sucursal__empresa=empresa).order_by("nombre"))
+
+
+@rol_requerido(GERENTE)
+@require_http_methods(["GET", "POST"])
+def abrir_producto(request, producto_id):
+    from . import empaques
+
+    empresa = empresa_actual(request)
+    caja = get_object_or_404(Producto.objects.select_related("unidad_suelta"), pk=producto_id, empresa=empresa)
+    bodegas = _bodegas(empresa)
+    accion = request.POST.get("accion") if request.method == "POST" else None
+    error = ""
+    # Lo escrito vuelve a la pantalla si hubo un error (nadie quiere volver a
+    # escribir el nombre del sobre porque el precio estaba vacío).
+    previo = request.POST if request.method == "POST" else {}
+    try:
+        if accion == "crear":
+            unidad = empaques.crear_unidad(
+                empaque=caja, unidades=request.POST.get("unidades"),
+                nombre=request.POST.get("nombre"), precio_venta=_decimal(request.POST.get("precio_venta")),
+                codigo_barras=request.POST.get("codigo_barras", ""),
+                presentacion=request.POST.get("presentacion", ""),
+            )
+            messages.success(request, f"Listo: «{unidad.nombre}» quedó creado ({unidad.sku}). Ya podés abrir cajas.")
+            return redirect("inventario:abrir_producto", producto_id=caja.pk)
+        if accion == "vincular":
+            codigo = (request.POST.get("codigo") or "").strip()
+            unidad = (Producto.objects.filter(empresa=empresa, codigo_barras=codigo).first()
+                      or Producto.objects.filter(empresa=empresa, sku__iexact=codigo).first()) if codigo else None
+            if unidad is None:
+                raise ValidationError(f"No encontré ningún producto con el código «{codigo}». "
+                                      "Si el sobre no está en el catálogo, crealo en «Es nuevo».")
+            empaques.vincular_unidad(empaque=caja, unidad=unidad, unidades=request.POST.get("unidades"))
+            messages.success(request, f"Listo: al abrir esta caja entran unidades de «{unidad.nombre}».")
+            return redirect("inventario:abrir_producto", producto_id=caja.pk)
+        if accion == "abrir":
+            bodega = next((b for b in bodegas if str(b.pk) == request.POST.get("bodega")), None)
+            if bodega is None and len(bodegas) == 1:
+                bodega = bodegas[0]
+            if bodega is None:
+                raise ValidationError("Elegí la bodega.")
+            r = empaques.abrir_empaque(empaque=caja, cajas=request.POST.get("cajas"), bodega=bodega,
+                                       usuario=request.user)
+            messages.success(
+                request,
+                f"{r['referencia']}: se abrieron {_num(-r['salida'].cantidad)} caja(s) y entraron "
+                f"{r['unidades']} unidades de «{r['entrada'].producto.nombre}». "
+                f"Ahora hay {_num(r['salida'].stock_resultante)} caja(s) y {_num(r['entrada'].stock_resultante)} sueltas.",
+            )
+            return redirect("inventario:abrir_producto", producto_id=caja.pk)
+        if accion == "quitar":
+            caja.unidad_suelta = None
+            caja.unidades_por_empaque = None
+            caja.save(update_fields=["unidad_suelta", "unidades_por_empaque", "actualizado_en"])
+            messages.success(request, "Listo: esta caja ya no se abre en unidades. Lo que ya se abrió queda igual.")
+            return redirect("inventario:abrir_producto", producto_id=caja.pk)
+    except ValidationError as e:
+        error = " ".join(e.messages)
+
+    caja.refresh_from_db()
+    unidad = caja.unidad_suelta
+    return render(request, "inventario/abrir_producto.html", {
+        "title": f"Abrir · {caja.nombre}", "caja": caja, "unidad": unidad, "error": error,
+        "previo": previo, "bodegas": bodegas,
+        "costo_unidad": empaques.costo_por_unidad(caja) if unidad else 0,
+        "nombre_sugerido": previo.get("nombre") or f"{caja.nombre} (unidad)",
+        "aperturas": empaques.aperturas(caja),
+        # Otros productos que se abren en esta misma unidad (otra caja de
+        # 24 del mismo sobre, por ejemplo): solo para que se sepa.
+        "otras_cajas": list(unidad.empaques.exclude(pk=caja.pk)) if unidad else [],
+    })
+
+
+def _decimal(valor):
+    """El precio llega de un <input type=number> (colones enteros, "1990")."""
+    from decimal import Decimal, InvalidOperation
+    texto = (valor or "").strip().replace("₡", "").replace(" ", "").replace(",", ".")
+    try:
+        return Decimal(texto or "0")
+    except InvalidOperation:
+        raise ValidationError("El precio no es un número.")

@@ -332,6 +332,14 @@ Ganancia %. Abajo: proveedor, número de factura, "Descuento de la factura" \
 - Al tocar "Registrar compra" el botón dice "Registrando…"; si algo falla, el \
 aviso rojo queda en pantalla hasta tocarlo.
 - Se puede dar de alta un producto nuevo desde ahí si no existe en el catálogo.
+- "📦 Abrir cajas" (/inventario/abrir/, también en Administración → \
+Herramientas) — para vender suelto lo que llega en caja (los sobres de una \
+caja de 12). La caja y la unidad son dos productos, cada uno con su precio y \
+su código de barras. La primera vez se dice qué producto es la unidad (se \
+crea ahí mismo o se escanea si ya existe) y cuántas trae; después se escribe \
+cuántas cajas se abren: salen de la existencia y entran sus unidades, al \
+costo de la caja dividido entre las unidades. El cajero no puede abrir cajas: \
+lo hace un gerente.
 - Las compras también se pueden anular.
 
 Reportes (/reportes/, solo gerentes — se llega desde /admin/):

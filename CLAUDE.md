@@ -677,6 +677,29 @@ todos los datos del producto y su foto.
   faltantes venían en una factura ya registrada sin esa línea, lo correcto es
   completar la compra, no ajustar.
 
+## Abrir cajas para vender por unidad (16/11/2026)
+
+Pedido de Oscar: en Recibir mercadería, tomar un producto que trae sobres
+individuales, «abrirlo» y vender el sobre suelto.
+- La caja y la unidad son DOS productos (cada uno con precio, código de
+  barras y existencia). `Producto.unidad_suelta` (FK a sí mismo) +
+  `unidades_por_empaque` en la caja; migración catalogo 0015.
+- `inventario/empaques.py` (docstring = reglas): `crear_unidad` (hereda
+  categoría, marca, mascota, IVA, CABYS, foto, descripción y ficha; pide
+  nombre, precio, código de barras y presentación; SKU `<caja>-U`; el peso
+  NO se divide), `vincular_unidad` (escanear un producto que ya existe),
+  `abrir_empaque` → kardex tipo nuevo **ABR** «Apertura de empaque» con un
+  documento `APE-…`: −n cajas y +n×N unidades al costo promedio de la caja / N.
+  Sin asiento contable (misma cuenta de Inventario; solo céntimos de
+  redondeo). ABR está en `SALIDAS_QUE_AGOTAN`: abrir la última caja la
+  marca agotada. Migración inventario 0009 (solo choices).
+- Pantallas (gerente): `inventario:abrir` (lista, las configuradas primero) y
+  `inventario:abrir_producto`. Enlaces: «📦 Abrir cajas» en la barra de
+  Recibir mercadería, tarjeta en Administración → Herramientas y en la ficha
+  de Ajustes de inventario. El cajero NO abre cajas (pendiente si Oscar lo
+  pide: abrir desde el POS cuando el sobre está en 0).
+- Pruebas: `inventario/test_empaques.py`.
+
 ## La manada AllPetcr.com — clientes por QR (13/10/2026)
 
 Pedido de Oscar: QR en la tienda → `www.allpetcr.com/manada?o=qr-tienda` →

@@ -1,0 +1,208 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Abrir · {{ caja.nombre }}{% endblock %}
+
+{% block extrahead %}{{ block.super }}<script src="{% static 'js/formato.js' %}"></script><style>
+body{background-color:#f5f5f7 !important}
+.ab-wrap{max-width:980px;margin:0 auto;padding-bottom:90px}
+.ab-volver{display:inline-block;font-size:14px;color:#0B3161 !important;margin-bottom:12px}
+.ab-card{background:#fff;border-radius:18px;padding:20px 22px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:16px}
+.ab-card h2{font-size:17px;font-weight:700;margin:0 0 4px;color:#1d1d1f;background:none;padding:0;text-transform:none;letter-spacing:-.01em}
+.ab-card .ex{font-size:13px;color:#6e6e73;margin-bottom:14px;line-height:1.45}
+.ab-prod{display:flex;gap:16px;align-items:center}
+.ab-prod .info{flex:1;min-width:0}
+.ab-prod .nombre{font-size:20px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.ab-prod .cods{font-size:13px;color:#6e6e73;margin-top:4px}
+.ab-kpis{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.ab-kpi{background:#f5f7fa;border-radius:12px;padding:8px 14px;font-size:12px;color:#6e6e73}
+.ab-kpi b{display:block;font-size:18px;color:#1d1d1f;font-variant-numeric:tabular-nums}
+.ab-kpi.stock b{color:#0B3161;font-size:22px}
+.ab-kpi.cero b{color:#b5231a}
+.ab-flecha{text-align:center;font-size:13px;color:#6e6e73;margin:-6px 0 10px}
+.ab-flecha b{font-size:22px;color:#0B3161;display:block;line-height:1}
+.ab-abrir{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.ab-f{margin-bottom:12px}
+.ab-f label{display:block;font-size:12.5px;font-weight:600;color:#6e6e73;margin-bottom:5px}
+.ab-f input,.ab-f select{width:100% !important;box-sizing:border-box;font-size:15px !important;padding:10px 12px !important;border-radius:11px !important;font-family:inherit}
+.ab-f .help{color:#86868b;font-size:12px;margin-top:4px}
+#cajas{font-size:24px !important;font-weight:700;width:110px !important;text-align:center;border:2px solid #0B3161 !important}
+.ab-res{font-size:14px;border-radius:10px;padding:10px 12px;background:#eefaf1;color:#1c6b30;flex:1;min-width:220px;margin-bottom:12px}
+.ab-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.ab-2{grid-template-columns:1fr}.ab-prod{align-items:flex-start}}
+.ab-btn{display:inline-block;padding:13px 22px;border:none;border-radius:12px;background:#0B3161;color:#fff !important;font-size:15px;font-weight:600;cursor:pointer}
+.ab-btn:hover{filter:brightness(1.1)}
+.ab-btn.sec{background:#efeff1;color:#1d1d1f !important}
+.ab-link{background:none;border:none;color:#8a1f16;font-size:13px;cursor:pointer;padding:0;text-decoration:underline}
+.ab-msg{padding:12px 16px;border-radius:12px;margin-bottom:14px;font-size:14.5px}
+.ab-msg.error{background:#fff0ee;color:#8a1f16}
+.seg{display:inline-flex;background:#efeff1;border-radius:11px;padding:3px;margin-bottom:14px}
+.seg button{border:none;background:none;padding:8px 16px;border-radius:9px;font-size:14px;font-weight:600;color:#3a3a3c;cursor:pointer}
+.seg button.on{background:#fff;color:#0B3161;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.ab-mov{width:100%;border-collapse:collapse;font-size:13px}
+.ab-mov td{padding:7px 6px;border-bottom:1px solid #f0f0f3;vertical-align:top}
+.ab-mov td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ab-mov small{color:#6e6e73}
+</style>{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="ab-wrap">
+  <a class="ab-volver" href="{% url 'inventario:abrir' %}">← Abrir cajas en unidades</a>
+
+  {% if error %}<div class="ab-msg error">{{ error }}</div>{% endif %}
+
+  <div class="ab-card ab-prod">
+    {% foto_producto caja 80 %}
+    <div class="info">
+      <div class="nombre">{{ caja.nombre }}</div>
+      <div class="cods">La caja · Código {{ caja.sku }}{% if caja.codigo_barras %} · Barras {{ caja.codigo_barras }}{% endif %}</div>
+      <div class="ab-kpis">
+        <div class="ab-kpi stock {% if caja.stock_actual <= 0 %}cero{% endif %}">Cajas en existencia<b>{{ caja.stock_actual|floatformat:"-2" }}</b></div>
+        <div class="ab-kpi">Precio de la caja<b>₡{{ caja.precio_venta|crc:0 }}</b></div>
+        {% if caja.unidades_por_empaque %}<div class="ab-kpi">Trae<b>{{ caja.unidades_por_empaque }} unidades</b></div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if unidad %}
+  <div class="ab-flecha"><b>↓</b>se abre en</div>
+  <div class="ab-card ab-prod">
+    {% foto_producto unidad 64 %}
+    <div class="info">
+      <div class="nombre" style="font-size:17px">{{ unidad.nombre }}</div>
+      <div class="cods">Suelta · Código {{ unidad.sku }}{% if unidad.codigo_barras %} · Barras {{ unidad.codigo_barras }}{% endif %}</div>
+      <div class="ab-kpis">
+        <div class="ab-kpi stock {% if unidad.stock_actual <= 0 %}cero{% endif %}">Sueltas en existencia<b>{{ unidad.stock_actual|floatformat:"-2" }}</b></div>
+        <div class="ab-kpi">Precio suelta<b>₡{{ unidad.precio_venta|crc:0 }}</b></div>
+        {% if costo_unidad %}<div class="ab-kpi">Costo por unidad<b>₡{{ costo_unidad|crc:0 }}</b></div>{% endif %}
+        {% if unidad.precio_venta and caja.precio_venta and caja.unidades_por_empaque %}{% widthratio unidad.precio_venta 1 caja.unidades_por_empaque as suelto_total %}
+        <div class="ab-kpi">{{ caja.unidades_por_empaque }} sueltas valen<b>₡{{ suelto_total|crc:0 }}</b></div>{% endif %}
+      </div>
+      <div class="cods" style="margin-top:8px"><a href="{% url 'inventario:ajuste_producto' unidad.pk %}">Cambiar precio, foto o datos de la unidad ›</a></div>
+    </div>
+  </div>
+
+  <div class="ab-card">
+    <h2>Abrir cajas</h2>
+    <div class="ex">Sale la caja de la existencia y entran sus unidades, en un solo movimiento con tu nombre. Cada unidad entra al costo de la caja dividido entre {{ caja.unidades_por_empaque }}.</div>
+    {% if caja.stock_actual < 1 %}
+    <div class="ab-msg error" style="margin:0">No hay cajas en existencia para abrir. Primero recibila en Recibir mercadería.</div>
+    {% else %}
+    <form method="post" class="ab-abrir">
+      {% csrf_token %}<input type="hidden" name="accion" value="abrir">
+      <div class="ab-f"><label for="cajas">Cajas a abrir</label>
+        <input id="cajas" type="number" name="cajas" min="1" max="{{ caja.stock_actual|floatformat:0 }}" step="1" value="1" required autofocus></div>
+      {% if bodegas|length > 1 %}<div class="ab-f"><label for="bodega">Bodega</label>
+        <select id="bodega" name="bodega">{% for b in bodegas %}<option value="{{ b.pk }}">{{ b.nombre }}</option>{% endfor %}</select></div>{% endif %}
+      <div class="ab-res" id="res"></div>
+      <div class="ab-f"><button class="ab-btn" type="submit">📦 Abrir</button></div>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="ab-card">
+    <h2>Últimas aperturas</h2>
+    {% if aperturas %}
+    <table class="ab-mov">
+      {% for m in aperturas %}
+      <tr><td>{{ m.fecha|date:"d/m/Y H:i" }}<br><small>{{ m.referencia }}{% if m.usuario %} · {{ m.usuario.get_full_name|default:m.usuario.username }}{% endif %}</small></td>
+          <td class="n">se abrieron {{ m.cantidad|floatformat:"-2"|slice:"1:" }}</td>
+          <td class="n"><small>quedaron</small> {{ m.stock_resultante|floatformat:"-2" }}</td></tr>
+      {% endfor %}
+    </table>
+    {% else %}<div class="ex" style="margin:0">Todavía no se ha abierto ninguna.</div>{% endif %}
+    {% if otras_cajas %}<div class="ex" style="margin:12px 0 0">Esta misma unidad también sale de: {% for o in otras_cajas %}{{ o.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}.</div>{% endif %}
+    <form method="post" style="margin-top:14px" onsubmit="return confirm('¿Dejar de abrir esta caja en unidades? Lo que ya se abrió queda igual.')">
+      {% csrf_token %}<input type="hidden" name="accion" value="quitar">
+      <button class="ab-link" type="submit">Esta caja ya no se abre en unidades</button>
+    </form>
+  </div>
+
+  {% else %}
+  <div class="ab-card">
+    <h2>¿Qué se vende suelto de esta caja?</h2>
+    <div class="ex">Se configura una sola vez. La unidad suelta es otro producto, con su propio precio y su código de barras (el sobre casi siempre trae el suyo de fábrica).</div>
+    <div class="seg" role="tablist">
+      <button type="button" class="on" data-ver="nuevo">Es nuevo</button>
+      <button type="button" data-ver="existe">Ya existe en el catálogo</button>
+    </div>
+
+    <form method="post" id="nuevo">
+      {% csrf_token %}<input type="hidden" name="accion" value="crear">
+      <div class="ab-2">
+        <div class="ab-f"><label for="u1">¿Cuántas unidades trae la caja?</label>
+          <input id="u1" type="number" name="unidades" min="2" max="500" step="1" value="{{ previo.unidades|default:'' }}" placeholder="ej. 12" required></div>
+        <div class="ab-f"><label for="pv">Precio de venta de UNA unidad (con IVA)</label>
+          <input id="pv" type="number" name="precio_venta" min="1" step="1" value="{{ previo.precio_venta|default:'' }}" required>
+          <div class="help" id="sug"></div></div>
+      </div>
+      <div class="ab-f"><label for="nm">Nombre de la unidad</label>
+        <input id="nm" type="text" name="nombre" maxlength="200" value="{{ nombre_sugerido }}" required></div>
+      <div class="ab-2">
+        <div class="ab-f"><label for="cb">Código de barras del sobre</label>
+          <input id="cb" type="text" name="codigo_barras" maxlength="30" value="{{ previo.codigo_barras|default:'' }}" placeholder="Escaneá el sobre">
+          <div class="help">Si no trae, dejalo vacío: el sistema le da uno para la etiqueta.</div></div>
+        <div class="ab-f"><label for="pr">Presentación</label>
+          <input id="pr" type="text" name="presentacion" maxlength="120" value="{{ previo.presentacion|default:'' }}" placeholder="ej. 85 g">
+          <div class="help">Si es un peso («85 g»), el POS calcula el precio por kilo.</div></div>
+      </div>
+      <div class="ex">Se copian de la caja: categoría, marca, mascota, IVA, CABYS, foto, descripción y ficha técnica. Se cambian después en Ajustes de inventario.</div>
+      <button class="ab-btn" type="submit">Crear la unidad suelta</button>
+    </form>
+
+    <form method="post" id="existe" style="display:none">
+      {% csrf_token %}<input type="hidden" name="accion" value="vincular">
+      <div class="ab-2">
+        <div class="ab-f"><label for="cod">Escaneá el sobre (o escribí su código)</label>
+          <input id="cod" type="text" name="codigo" maxlength="30" value="{{ previo.codigo|default:'' }}" required autocomplete="off"></div>
+        <div class="ab-f"><label for="u2">¿Cuántas unidades trae la caja?</label>
+          <input id="u2" type="number" name="unidades" min="2" max="500" step="1" value="{{ previo.unidades|default:'' }}" placeholder="ej. 12" required></div>
+      </div>
+      <button class="ab-btn" type="submit">Usar ese producto</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+(function(){
+  function crc(n){ return AllPetFormato.crc(Math.round(n), 0); }  // mismo formato que el resto del ERP
+  {% if unidad %}
+  var n = {{ caja.unidades_por_empaque|default:0 }}, cajas = document.getElementById('cajas'), res = document.getElementById('res');
+  function pintar(){
+    if (!cajas) return;
+    var c = parseInt(cajas.value, 10) || 0;
+    res.innerHTML = c > 0 ? 'Entran <b>' + (c * n) + ' unidades</b> sueltas y quedan <b>' + ({{ caja.stock_actual|stringformat:"f" }} - c) + '</b> caja(s).' : 'Escribí cuántas cajas.';
+  }
+  if (cajas){ cajas.addEventListener('input', pintar); pintar(); }
+  {% else %}
+  // Pestañas "Es nuevo" / "Ya existe": el formulario que no se usa se esconde.
+  var botones = document.querySelectorAll('.seg button');
+  function ver(cual){
+    botones.forEach(function(b){ b.classList.toggle('on', b.dataset.ver === cual); });
+    document.getElementById('nuevo').style.display = cual === 'nuevo' ? '' : 'none';
+    document.getElementById('existe').style.display = cual === 'existe' ? '' : 'none';
+    (document.getElementById(cual === 'nuevo' ? 'u1' : 'cod')).focus();
+  }
+  botones.forEach(function(b){ b.addEventListener('click', function(){ ver(b.dataset.ver); }); });
+  {% if previo.accion == 'vincular' %}ver('existe');{% endif %}
+  // Punto de partida del precio: lo que vale una unidad dentro de la caja.
+  // Casi siempre el suelto se vende algo más caro; lo decide quien carga.
+  var precioCaja = {{ caja.precio_venta|stringformat:"f" }}, u1 = document.getElementById('u1'), sug = document.getElementById('sug');
+  function sugerir(){
+    var u = parseInt(u1.value, 10) || 0;
+    sug.textContent = (u >= 2 && precioCaja > 0) ? 'Dentro de la caja, cada una sale a ' + crc(precioCaja / u) + '.' : '';
+  }
+  u1.addEventListener('input', sugerir); sugerir();
+  // La pistola manda Enter al final del código: que no envíe el formulario a
+  // medias, que pase a la siguiente casilla.
+  ['cb', 'cod'].forEach(function(id){
+    var el = document.getElementById(id);
+    el.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); (id === 'cb' ? document.getElementById('pr') : document.getElementById('u2')).focus(); } });
+  });
+  {% endif %}
+})();
+</script>
+{% endblock %}

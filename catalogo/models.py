@@ -195,6 +195,21 @@ class Producto(models.Model):
         related_name="productos",
         help_text="Fórmula a la que pertenece esta presentación (solo alimentos).",
     )
+    # Cajas que se abren para vender por unidad (16/11/2026, pedido de Oscar:
+    # una caja de 12 sobres se vende entera y también sobre por sobre). La
+    # caja y el sobre son DOS productos, cada uno con su precio, su código y
+    # su existencia; acá la caja dice cuál es su unidad y cuántas trae. Abrir
+    # una caja lo hace `inventario/empaques.abrir_empaque` (kardex ABR), nunca
+    # se edita el stock a mano. Vacío en todo lo que no se abre.
+    unidad_suelta = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="empaques",
+        help_text="Producto que se vende por unidad al abrir este (ej. el sobre de una caja de 12).",
+    )
+    unidades_por_empaque = models.PositiveSmallIntegerField(
+        null=True, blank=True,
+        help_text="Cuántas unidades sueltas trae este empaque (ej. 12).",
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
     actualizado_en = models.DateTimeField(auto_now=True)
 

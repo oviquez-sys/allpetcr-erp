@@ -224,6 +224,7 @@ select:focus, .txt-in:focus{border-color:var(--brand2)}
   <span class="sp"></span>
   <span class="version-pag" title="Si no ves este sello, la página está en caché: Ctrl+F5">v6.2 · 19-10-2026</span>
   <a href="#" onclick="document.getElementById('ayuda').classList.add('on');return false">❓ Cómo se usa</a>
+  <a href="{% url 'inventario:abrir' %}" title="Abrir una caja para vender sus unidades sueltas (sobres, latas…)">📦 Abrir cajas</a>
   <a href="{% url 'compras:carga_masiva' %}">Cargar desde Excel</a>
   <a class="home" href="/">Inicio</a>
 </div>
