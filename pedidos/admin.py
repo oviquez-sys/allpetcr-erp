@@ -2,7 +2,8 @@ from django.contrib import admin
 
 from core.admin_fotos import columna_foto
 
-from .models import AvisoDisponibilidad, CambioEstadoPedido, LineaPedido, Pedido, ReservaStock
+from .models import (AvisoDisponibilidad, CambioEstadoPedido, LineaPedido, Pedido, PedidoPorConfirmar,
+                     ReservaStock)
 
 
 class LineaPedidoInline(admin.TabularInline):
@@ -63,4 +64,23 @@ class ReservaStockAdmin(admin.ModelAdmin):
         return False
 
     def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PedidoPorConfirmar)
+class PedidoPorConfirmarAdmin(admin.ModelAdmin):
+    """Pedidos del sitio que llegan por WhatsApp (16/11/2026). Se cobran
+    desde la caja («🌐 Pedidos web»); acá se consultan y se corrige el costo
+    del envío si se anotó mal."""
+
+    list_display = ("numero", "cliente_nombre", "cliente_telefono", "estado", "entrega", "canton", "distrito",
+                    "subtotal_productos", "envio_gratis", "envio_costo", "factura", "creado_en")
+    list_filter = ("estado", "entrega", "envio_gratis")
+    search_fields = ("numero", "cliente_nombre", "cliente_telefono")
+    readonly_fields = [f.name for f in PedidoPorConfirmar._meta.fields if f.name != "envio_costo"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False

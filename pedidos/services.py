@@ -159,6 +159,9 @@ def crear_pedido(
         estado_nuevo=Pedido.Estado.PAGO_CONFIRMADO,
         nota="Pedido creado (pago confirmado por la pasarela)", usuario=usuario,
     )
+    # Campaña con sorteo (16/11/2026): un pedido pagado es una compra más.
+    from campanas.reglas import acreditar_pedido
+    acreditar_pedido(pedido, usuario=usuario)
     return pedido
 
 
@@ -178,4 +181,7 @@ def cambiar_estado(*, pedido: Pedido, nuevo_estado: str, usuario=None, nota: str
         pedido=pedido, estado_anterior=anterior, estado_nuevo=nuevo_estado,
         nota=nota, usuario=usuario,
     )
+    if nuevo_estado == Pedido.Estado.CANCELADO:
+        from campanas.reglas import revertir_pedido
+        revertir_pedido(pedido, usuario=usuario)
     return pedido

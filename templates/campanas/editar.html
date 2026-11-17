@@ -1,0 +1,50 @@
+{% extends "admin/base_site.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block seccion %}Campañas{% endblock %}
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="/">Inicio</a> &rsaquo; <a href="{% url 'campanas:lista' %}">Campañas</a> &rsaquo; {{ title }}</div>{% endblock %}
+{% block extrahead %}{{ block.super }}{% include "campanas/_estilos.html" %}{% endblock %}
+{% block content_title %}{% endblock %}
+{% block content %}
+<div class="mn" style="max-width:900px">
+  <a class="cp-volver" href="{% if campana %}{% url 'campanas:detalle' campana.pk %}{% else %}{% url 'campanas:lista' %}{% endif %}">← Volver</a>
+  <div class="mn-title">{{ title }}</div>
+  <div class="mn-sub">{% if borrador %}Guardar no activa nada: la campaña queda en borrador hasta que la revises y la actives.{% else %}Con la campaña en marcha solo se cambian los costos y lo que sigue al finalizar. Las reglas y las bases quedan como el cliente las aceptó.{% endif %}</div>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="msg error">{{ form.non_field_errors }}</div>{% endif %}
+    {% if form.errors %}<div class="msg error">Revisá los campos marcados en rojo.</div>{% endif %}
+    {% if borrador %}
+    <div class="card"><h2>La campaña</h2>
+      <div class="g2">{% include "campanas/_campo.html" with c=form.nombre %}{% include "campanas/_campo.html" with c=form.slug %}</div>
+      {% include "campanas/_campo.html" with c=form.premio %}
+      <div class="g3">{% include "campanas/_campo.html" with c=form.inicio %}{% include "campanas/_campo.html" with c=form.cierre %}{% include "campanas/_campo.html" with c=form.sorteo_en %}</div>
+    </div>
+    <div class="card"><h2>Números para el sorteo</h2>
+      <div class="ex">Cada número es una oportunidad en el sorteo. El monto de una compra se mide por lo pagado en productos, con IVA, después de descuentos; el envío no cuenta.</div>
+      <div class="g3">{% include "campanas/_campo.html" with c=form.numeros_inscripcion %}{% include "campanas/_campo.html" with c=form.numeros_compra %}{% include "campanas/_campo.html" with c=form.numeros_bono %}</div>
+      <div class="g2">{% include "campanas/_campo.html" with c=form.umbral_bono %}{% include "campanas/_campo.html" with c=form.compra_minima %}</div>
+    </div>
+    <div class="card"><h2>Envío gratis en pedidos web</h2>
+      {% include "campanas/_check.html" with c=form.envio_gratis %}
+      <div class="g2">{% include "campanas/_campo.html" with c=form.envio_gratis_hasta %}{% include "campanas/_campo.html" with c=form.zonas_envio %}</div>
+    </div>
+    <div class="card"><h2>Regalo de bienvenida de La manada</h2>
+      {% include "campanas/_check.html" with c=form.reemplaza_bienvenida %}
+      {% include "campanas/_campo.html" with c=form.despues %}
+      <div class="ex">Los cupones ya entregados siguen valiendo siempre: esto solo decide si se entregan cupones nuevos.</div>
+    </div>
+    <div class="card"><h2>Bases y reclamo del premio</h2>
+      {% include "campanas/_campo.html" with c=form.bases %}
+      <div class="g2">{% include "campanas/_campo.html" with c=form.suplentes %}{% include "campanas/_campo.html" with c=form.plazo_reclamo_dias %}</div>
+      {% include "campanas/_campo.html" with c=form.procedimiento_sin_respuesta %}
+    </div>
+    {% endif %}
+    <div class="card"><h2>Costos de la campaña</h2>
+      <div class="ex">Lo que no sale de ninguna venta. Se usan para calcular el costo por cliente nuevo y el margen de la campaña.</div>
+      <div class="g3">{% include "campanas/_campo.html" with c=form.costo_impresion %}{% include "campanas/_campo.html" with c=form.costo_reparto %}{% include "campanas/_campo.html" with c=form.otros_costos %}</div>
+      {% if not borrador %}{% include "campanas/_campo.html" with c=form.despues %}{% endif %}
+    </div>
+    <button class="btn azul grande" type="submit">Guardar</button>
+  </form>
+</div>
+{% endblock %}

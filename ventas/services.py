@@ -91,7 +91,8 @@ def _validar_pagos(pagos, total):
 def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
                     permitir_bajo_costo=False, permitir_descuento_alto=False,
                     permitir_regalia_alta=False, pagos=None, clave_pos=None,
-                    monto_recibido=None, cupon=None, redondeo=0, sin_cliente="") -> FacturaVenta:
+                    monto_recibido=None, cupon=None, redondeo=0, sin_cliente="",
+                    pedido_web=None, envio_costo=None) -> FacturaVenta:
     """lineas: iterable de dicts {"producto_id": int, "cantidad": Decimal}.
 
     permitir_bajo_costo: por defecto NO se puede vender un producto por debajo
@@ -129,7 +130,12 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     redondeo: colones que se rebajan del total para dejarlo redondo (₡13.554
     → ₡13.500). Se reparte entre las líneas cobradas como descuento (así lo
     pide la factura electrónica) y queda anotado aparte en `redondeo`. Techo:
-    REDONDEO_MAXIMO_CAJERO, o REDONDEO_MAXIMO_GERENTE si permitir_descuento_alto."""
+    REDONDEO_MAXIMO_CAJERO, o REDONDEO_MAXIMO_GERENTE si permitir_descuento_alto.
+
+    pedido_web: número de un pedido web por confirmar (WEB-12) que se está
+    cobrando en caja. La venta queda ligada a él en ESTA transacción: así se
+    sabe que nació en el sitio aunque se pague en el mostrador. `envio_costo`
+    es lo que la tienda le paga al mensajero por ese pedido (para medir)."""
     if clave_pos:
         ya_hecha = FacturaVenta.objects.filter(clave_pos=clave_pos).first()
         if ya_hecha is not None:
@@ -399,6 +405,16 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     # asiento no cuadra, la venta entera se revierte. Nadie digita contabilidad.
     from .contabilizar import asentar_venta
     asentar_venta(factura, usuario=usuario)
+
+    # Pedido web que se cobra en caja y campaña vigente (16/11/2026). Van al
+    # final: con la venta ya completa, y sin poder tumbarla (ver los
+    # docstrings de `concretar` y de `campanas.reglas.acreditar_venta`).
+    es_web = False
+    if pedido_web:
+        from pedidos.por_confirmar import concretar
+        es_web = concretar(pedido_web, factura, envio_costo=envio_costo) is not None
+    from campanas.reglas import acreditar_venta
+    acreditar_venta(factura, es_web=es_web, usuario=usuario)
     return factura
 
 
@@ -496,6 +512,12 @@ def anular_factura(*, factura, motivo, usuario) -> FacturaVenta:
     factura.anulada_en = timezone.now()
     factura.anulada_por = usuario
     factura.save(update_fields=["estado", "motivo_anulacion", "anulada_en", "anulada_por"])
+    # Una venta anulada no da números para el sorteo, y el pedido web que se
+    # había cobrado con ella vuelve a quedar por confirmar.
+    from campanas.reglas import recalcular_venta
+    recalcular_venta(factura, motivo=f"Venta {factura.numero} anulada", usuario=usuario)
+    from pedidos.por_confirmar import reabrir_por_anulacion
+    reabrir_por_anulacion(factura)
 
     # Asiento inverso de la venta y del costo.
     from .contabilizar import asentar_anulacion

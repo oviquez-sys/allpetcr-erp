@@ -1,0 +1,92 @@
+{% comment %} «Antes de activar, mostrame qué monto evalúa el umbral después de descuentos, qué zonas
+   de Heredia califican y qué vigencia tendrá cada beneficio» (Oscar, 16/11/2026). Todo sale de
+   la campaña guardada y de campanas/reglas.py: es lo mismo que va a aplicar la caja. {% endcomment %}
+<div class="dos">
+  <div>
+    <div class="card">
+      <h2>1 · Qué monto se mide contra los ₡{{ campana.umbral_bono|crc:0 }}</h2>
+      <div class="ex">Lo que el cliente paga por los <b>productos</b> de esa compra, con IVA, <b>después</b> de descuentos, promociones, cupón y redondeo. El <b>envío no cuenta</b> y un regalo vale ₡0. Tiene que <b>superar</b> el monto: ₡{{ campana.umbral_bono|crc:0 }} exactos no ganan el bono.</div>
+      <table class="mt">
+        <tr><th>Compra de…</th><th class="n">Por comprar</th><th class="n">Bono</th><th class="n">Números</th><th>Envío gratis (web, en zona)</th></tr>
+        {% for e in ejemplos %}
+        <tr><td>₡{{ e.monto|crc:0 }}</td><td class="n">{{ e.habituales }}</td><td class="n">{% if e.bono %}+{{ e.bono }}{% else %}—{% endif %}</td>
+            <td class="n"><b>{{ e.total }}</b></td><td>{% if e.envio %}<span class="bien">Sí</span>{% else %}<span class="gris">No</span>{% endif %}</td></tr>
+        {% endfor %}
+      </table>
+      <div class="ex" style="margin:12px 0 0">Además, inscribirse da <b>{{ campana.numeros_inscripcion }}</b> número{{ campana.numeros_inscripcion|pluralize }}, sin comprar.
+        {% if campana.compra_minima %}Las compras de menos de ₡{{ campana.compra_minima|crc:0 }} no dan número.{% else %}Cualquier compra da número, por pequeña que sea.{% endif %}
+        Si una compra se devuelve o se anula, pierde los números que dio.</div>
+      {% if not campana.compra_minima %}<div class="nota" style="margin:12px 0 0">Ojo: sin compra mínima, partir una compra de ₡20.000 en cuatro de ₡5.000 da 4 números en vez de 1. Si te preocupa, poné una compra mínima (por ejemplo ₡5.000) antes de activar.</div>{% endif %}
+    </div>
+
+    <div class="card">
+      <h2>2 · Qué zonas tienen envío gratis</h2>
+      {% if campana.envio_gratis %}
+      <div class="ex">Solo pedidos <b>web</b> con <b>envío a domicilio</b> que superen ₡{{ campana.umbral_bono|crc:0 }} en productos. Se compara con el cantón y el distrito que el cliente escribe en el pedido.</div>
+      {% for z in zonas %}<span class="chip marca">📍 {{ z }}</span>{% empty %}<div class="nota roja">No hay ninguna zona escrita: ningún pedido tendría envío gratis.</div>{% endfor %}
+      <div class="ex" style="margin:10px 0 0">Cada renglón es «cantón / distrito». Un cantón solo (por ejemplo «Heredia») vale por todos sus distritos, incluido Varablanca, que queda lejos: por eso van escritos uno por uno. Fuera de estas zonas el envío se cotiza como siempre. El retiro en tienda no paga envío y también gana números.</div>
+      {% else %}<div class="ex" style="margin:0">Esta campaña no da envío gratis.</div>{% endif %}
+    </div>
+
+    <div class="card">
+      <h2>3 · Vigencia de cada beneficio <span class="gris" style="font-weight:400;font-size:12.5px">(hora de Costa Rica)</span></h2>
+      <dl class="def">
+        <dt>Inscripción gratuita</dt><dd>{{ campana.inicio|date:"d/m/Y h:i a" }} → {{ campana.cierre|date:"d/m/Y h:i a" }}</dd>
+        <dt>Números por compras</dt><dd>{{ campana.inicio|date:"d/m/Y h:i a" }} → {{ campana.cierre|date:"d/m/Y h:i a" }}<br><span class="gris" style="font-size:12.5px">Una compra después del cierre ya no entra al sorteo.</span></dd>
+        <dt>Envío gratis</dt><dd>{% if campana.envio_gratis %}{{ campana.inicio|date:"d/m/Y h:i a" }} → {{ campana.envio_hasta|date:"d/m/Y h:i a" }}{% else %}No aplica{% endif %}</dd>
+        <dt>Sorteo</dt><dd>{{ campana.sorteo_en|date:"l j \d\e F \d\e Y, h:i a" }}</dd>
+        <dt>Reclamo del premio</dt><dd>{{ campana.plazo_reclamo_dias }} día{{ campana.plazo_reclamo_dias|pluralize }} desde el aviso · {% if campana.suplentes %}{{ campana.suplentes }} suplente{{ campana.suplentes|pluralize }}{% else %}sin suplentes{% endif %}</dd>
+        <dt>Cupón de 10 % de bienvenida</dt><dd>{% if campana.reemplaza_bienvenida %}No se emiten cupones nuevos desde el inicio hasta finalizar la campaña. Los ya entregados siguen valiendo.{% else %}Se sigue emitiendo como siempre.{% endif %}</dd>
+        <dt>Al finalizar</dt><dd>{{ campana.get_despues_display }}</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2>Estado</h2>
+      {% if campana.estado == 'BOR' %}
+        <div class="ex">Está <b>apagada</b>: la caja y la web no la ven, y el cupón de bienvenida sigue igual.</div>
+        {% if pendientes %}<div class="nota roja">Las bases tienen <b>{{ pendientes }}</b> parte{{ pendientes|pluralize }} marcada{{ pendientes|pluralize }} «[POR DEFINIR]». Hay que decidirlas y corregir el texto antes de activar.</div>{% endif %}
+        {% if otra_activa %}<div class="nota roja">Ya hay otra campaña activa ({{ otra_activa.nombre }}). Finalizala primero.</div>{% endif %}
+        <form method="post" action="{% url 'campanas:accion' campana.pk %}">
+          {% csrf_token %}<input type="hidden" name="accion" value="activar">
+          <div class="f chk"><label><input type="checkbox" name="revise" value="1" required> Revisé el monto que se evalúa, las zonas y las fechas</label></div>
+          <button class="btn azul grande" type="submit" {% if pendientes or otra_activa %}disabled{% endif %}>Activar la campaña</button>
+        </form>
+        <form method="post" action="{% url 'campanas:accion' campana.pk %}" style="margin-top:14px" onsubmit="return confirm('¿Borrar este borrador?')">
+          {% csrf_token %}<input type="hidden" name="accion" value="borrar"><button class="btn gris" type="submit">Borrar el borrador</button>
+        </form>
+      {% elif campana.estado == 'ACT' %}
+        <div class="kpis"><div class="kpi">Participantes<b>{{ n_participantes }}</b></div></div>
+        {% if ahora < campana.inicio %}<div class="nota">Activada, pero todavía no empieza: arranca el {{ campana.inicio|date:"d/m/Y" }} a las {{ campana.inicio|date:"h:i a" }}</div>
+        {% elif ahora > campana.cierre %}<div class="nota">Las inscripciones ya cerraron. Sigue: congelar la lista y sortear, en la pestaña <a href="?t=sorteo">Sorteo</a>.</div>
+        {% else %}<div class="ex">En marcha: la caja y la web inscriben y cada compra de un inscrito da números.</div>{% endif %}
+      {% elif campana.estado == 'CER' %}
+        <div class="ex">Lista congelada. Falta realizar el sorteo, en la pestaña <a href="?t=sorteo">Sorteo</a>.</div>
+      {% elif campana.estado == 'SOR' %}
+        <div class="ex">Sorteo realizado. Cuando el premio esté entregado, finalizá la campaña.</div>
+      {% else %}
+        <div class="ex">Finalizada el {{ campana.finalizada_en|date:"d/m/Y" }}. {{ campana.get_despues_display }}.</div>
+      {% endif %}
+      {% if campana.estado != 'BOR' and campana.estado != 'FIN' and not campana.es_demo %}
+        <form method="post" action="{% url 'campanas:accion' campana.pk %}" style="margin-top:8px" onsubmit="return confirm('¿Finalizar la campaña? Deja de dar beneficios y no se puede volver a activar.')">
+          {% csrf_token %}<input type="hidden" name="accion" value="finalizar">
+          <button class="btn gris" type="submit">Finalizar la campaña</button>
+          <div class="ex" style="margin:8px 0 0">Al finalizar: {{ campana.get_despues_display|lower }}.</div>
+        </form>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2>Bases</h2>
+      {% if campana.bases %}<div class="bases">{{ campana.bases }}</div>{% else %}<div class="ex" style="margin:0">Todavía no hay bases escritas.</div>{% endif %}
+      <div class="ex" style="margin:10px 0 0">Es un borrador de trabajo: antes de publicarlo, que lo revise un abogado.</div>
+    </div>
+
+    <div class="card">
+      <h2>Si el ganador no responde</h2>
+      <div class="ex" style="margin:0;font-size:13.5px">{{ campana.procedimiento_sin_respuesta|default:"Sin definir." }}</div>
+    </div>
+  </div>
+</div>

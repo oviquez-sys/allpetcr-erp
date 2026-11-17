@@ -100,6 +100,7 @@ INSTALLED_APPS = [
     "api",
     "impresion",
     "manada",  # clientes registrados por el QR de la tienda (13/10/2026)
+    "campanas",  # campañas con sorteo: Navidad AllPet 2026 (16/11/2026)
 ]
 
 MIDDLEWARE = [

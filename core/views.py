@@ -322,6 +322,19 @@ todos, y "Sin fecha" (alimentos con existencia a los que les falta anotarla). \
 Lo que queda de cada fecha se calcula suponiendo que se vende primero lo que \
 vence primero.
 
+Campañas con sorteo (/campanas/, solo gerentes; Administración → \
+Herramientas y Manada → Campañas) — Navidad AllPet 2026: inscripción gratis \
+en la web o en caja; 1 número por inscribirse, 1 por cada compra de un \
+inscrito y 1 más si la compra SUPERA ₡20.000 (₡20.000 exactos no). El monto \
+es lo pagado en productos con IVA, después de descuentos, sin envío. \
+Devolver o anular quita los números de esa venta. En la caja, la franja \
+verde dice si el cliente participa y cuántos números lleva; «Inscribir» lo \
+anota con su sí (publicidad es otra casilla). «🌐 Pedidos web» carga en la \
+venta un pedido del sitio (WEB-12) para cobrarlo. Mientras la campaña está \
+activa NO se emiten cupones nuevos del 10 % de bienvenida; los ya \
+entregados siguen valiendo. El sorteo lo hace un administrador con permiso, \
+una sola vez, con la lista congelada; queda un acta para imprimir.
+
 Compras — "Recibir mercadería" (/compras/, solo gerentes):
 - Registrar una compra nueva (mercadería que entra) — esto sube el stock y \
 recalcula el costo promedio del producto.

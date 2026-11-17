@@ -1,0 +1,63 @@
+{% if entrega %}
+<div class="card">
+  <h2>✅ Premio entregado</h2>
+  <dl class="def">
+    <dt>Canasta elegida</dt><dd><b>{{ entrega.get_version_display }}</b></dd>
+    <dt>Recibió</dt><dd>{{ entrega.recibe_nombre }}{% if entrega.recibe_identificacion %} · cédula {{ entrega.recibe_identificacion }}{% endif %}</dd>
+    <dt>Fecha</dt><dd>{{ entrega.entregado_en|date:"d/m/Y h:i a" }} · entregó {{ entrega.entregado_por.get_full_name|default:entrega.entregado_por.username }}</dd>
+    <dt>Salió del inventario con</dt><dd>{% if entrega.factura %}<a href="{% url 'ventas:factura' entrega.factura_id %}" target="_blank">{{ entrega.factura.numero }}</a> (venta de regalía, ₡0){% endif %}</dd>
+    <dt>Costo de lo entregado</dt><dd><b>₡{{ entrega.costo|crc:0 }}</b> (sin IVA)</dd>
+    {% if entrega.nota %}<dt>Nota</dt><dd>{{ entrega.nota }}</dd>{% endif %}
+  </dl>
+</div>
+{% endif %}
+
+<div class="dos">
+  {% for v in versiones %}
+  <div class="card">
+    <h2>Canasta {{ v.nombre|lower }} <span class="gris" style="font-weight:400;font-size:12.5px">· {{ v.unidades }} producto{{ v.unidades|pluralize }} · costo hoy ₡{{ v.costo|crc:0 }}</span></h2>
+    {% if v.unidades != 15 %}<div class="nota">La tarjeta promete <b>15 productos</b>; esta versión lleva {{ v.unidades }}.</div>{% endif %}
+    {% if v.faltan %}<div class="nota roja">No alcanza la existencia de: {% for i in v.faltan %}{{ i.producto.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}.</div>{% endif %}
+    <table class="mt">
+      {% for i in v.items %}
+      <tr><td style="width:46px">{% foto_producto i.producto 40 %}</td>
+          <td>{{ i.producto.nombre }}<div class="prod">{{ i.producto.sku }} · hay {{ i.producto.stock_actual|floatformat:"-2" }} · costo ₡{{ i.producto.costo_promedio|crc:0 }}</div></td>
+          <td class="n">× {{ i.cantidad }}</td>
+          <td class="n">{% if not entrega %}<form method="post" action="{% url 'campanas:accion' campana.pk %}">{% csrf_token %}<input type="hidden" name="accion" value="canasta_quitar"><input type="hidden" name="item" value="{{ i.pk }}"><button class="btn gris" type="submit" title="Quitar">✕</button></form>{% endif %}</td></tr>
+      {% empty %}<tr><td class="vacio">Todavía no tiene productos.</td></tr>
+      {% endfor %}
+    </table>
+    {% if not entrega %}
+    <form method="post" action="{% url 'campanas:accion' campana.pk %}" class="enlinea" style="margin-top:12px">
+      {% csrf_token %}<input type="hidden" name="accion" value="canasta_agregar"><input type="hidden" name="version" value="{{ v.clave }}">
+      <div class="f" style="flex:1;margin:0"><label>Escaneá el producto (o escribí su código)</label><input type="text" name="codigo" autocomplete="off" required></div>
+      <div class="f" style="width:90px;margin:0"><label>Cantidad</label><input type="number" name="cantidad" value="1" min="1" max="50"></div>
+      <button class="btn azul" type="submit">Agregar</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{% if not entrega %}
+<div class="card">
+  <h2>Entregar el premio</h2>
+  {% if campana.es_demo %}
+    <div class="ex" style="margin:0">Apagado en la demostración: entregar descuenta inventario de verdad.</div>
+  {% elif titular and titular.estado == 'TIT' %}
+    <div class="ex">Para <b>{{ titular.participante.cliente.nombre }}</b> ({{ titular.lugar|lower }}). Al registrar, los productos de la versión elegida salen del inventario como regalía (sin cobro) y queda la constancia con su costo. Necesita la caja abierta; no entra ni sale efectivo.</div>
+    <form method="post" action="{% url 'campanas:accion' campana.pk %}" onsubmit="return confirm('¿Registrar la entrega? Los productos salen del inventario.')">
+      {% csrf_token %}<input type="hidden" name="accion" value="entregar"><input type="hidden" name="t" value="canasta">
+      <div class="g3">
+        <div class="f"><label>Canasta que eligió</label><select name="version" required><option value="">— elegir —</option>{% for v in versiones %}<option value="{{ v.clave }}">{{ v.nombre }} ({{ v.unidades }} productos)</option>{% endfor %}</select></div>
+        <div class="f"><label>Quién la recibe</label><input type="text" name="recibe_nombre" maxlength="150" value="{{ titular.participante.cliente.nombre }}" required></div>
+        <div class="f"><label>Cédula de quien recibe</label><input type="text" name="recibe_identificacion" maxlength="30" value="{{ titular.participante.cliente.identificacion }}"></div>
+      </div>
+      <div class="f"><label>Nota (opcional)</label><input type="text" name="nota" maxlength="200" placeholder="Ej.: retiró en la tienda, se tomó foto con autorización"></div>
+      <button class="btn azul grande" type="submit">Registrar la entrega</button>
+    </form>
+  {% else %}
+    <div class="ex" style="margin:0">Se habilita cuando haya un ganador con el premio por reclamar.</div>
+  {% endif %}
+</div>
+{% endif %}

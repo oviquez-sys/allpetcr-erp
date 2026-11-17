@@ -207,6 +207,11 @@ def unir_clientes(*, conservar, absorber, usuario=None):
     Pedido.objects.filter(cliente=absorber).update(cliente=conservar)
     DocumentoCxC.objects.filter(cliente=absorber).update(cliente=conservar)
     Mascota.objects.filter(cliente=absorber).update(cliente=conservar)
+    from pedidos.models import PedidoPorConfirmar
+    PedidoPorConfirmar.objects.filter(cliente=absorber).update(cliente=conservar)
+    # Participaciones en campañas: se juntan sin duplicar la inscripción.
+    from campanas.reglas import al_unir_clientes
+    al_unir_clientes(conservar, absorber)
     if absorber.saldo:
         conservar.saldo += absorber.saldo
         absorber.saldo = 0

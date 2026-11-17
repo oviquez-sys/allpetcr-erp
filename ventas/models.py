@@ -152,6 +152,13 @@ class FacturaVenta(models.Model):
         """Los descuentos de verdad (por producto o cupón), sin el redondeo."""
         return self.descuento - self.redondeo
 
+    @property
+    def numeros_del_sorteo(self):
+        """Desglose de los números que esta venta dio en una campaña con
+        sorteo (16/11/2026), o None. Para el comprobante, en todos sus formatos."""
+        from campanas.reglas import desglose_de
+        return desglose_de(self)
+
     class Meta:
         verbose_name = "factura de venta"
         verbose_name_plural = "facturas de venta"

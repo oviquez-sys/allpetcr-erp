@@ -159,6 +159,21 @@ def cliente_por_telefono(empresa, telefono, *, bloquear=False):
     return next((c for c in qs if _ocho_digitos(c.telefono) == ocho), None)
 
 
+def regalia_para_nuevos(empresa):
+    """La regalía que recibe quien se une HOY, o None.
+
+    Es la ÚNICA puerta por la que se emiten cupones de bienvenida (web, caja
+    y cualquier canal futuro pasan por `registrar_miembro`). Mientras una
+    campaña reemplace la bienvenida (Navidad AllPet 2026) devuelve None: la
+    gente se sigue uniendo a la manada, pero sin cupón nuevo. Los cupones ya
+    emitidos no se tocan: se validan en `cupon_para_venta`, que no mira esto."""
+    from campanas.reglas import bloquea_bienvenida
+
+    if bloquea_bienvenida(empresa):
+        return None
+    return Regalia.vigente(empresa)
+
+
 @transaction.atomic
 def registrar_miembro(*, empresa, email="", nombre="", telefono="", google_sub="", verificado=False,
                       acepta_promociones=False, fuente="", origen=None) -> ResultadoRegistro:
@@ -255,7 +270,7 @@ def registrar_miembro(*, empresa, email="", nombre="", telefono="", google_sub="
     cupon = Cupon.objects.filter(cliente=cliente, tipo=Cupon.Tipo.BIENVENIDA).first()
     cupon_nuevo = False
     if cupon is None:
-        regalia = Regalia.vigente(empresa)
+        regalia = regalia_para_nuevos(empresa)
         if regalia is not None:
             vence = (timezone.localdate() + timedelta(days=regalia.dias_vigencia)
                      if regalia.dias_vigencia else None)

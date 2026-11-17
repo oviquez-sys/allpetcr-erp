@@ -700,6 +700,59 @@ individuales, «abrirlo» y vender el sobre suelto.
   pide: abrir desde el POS cuando el sobre está en 0).
 - Pruebas: `inventario/test_empaques.py`.
 
+## Campañas con sorteo: Navidad AllPet 2026 (16/11/2026)
+
+Pedido de Oscar: sorteo de una canasta de 15 productos el 24/12/2026,
+inscripción gratis en web o tienda, «doble puntaje» por compras de más de
+₡20.000 y envío gratis web en Heredia; reemplaza el 10 % de bienvenida. El ERP
+es la fuente oficial de participantes, números y resultados.
+- **Los «puntos» son números de rifa** (Oscar, 16/11): no hay sistema de puntos
+  canjeables. 1 por inscribirse + 1 por CADA compra de un inscrito + 1 de bono
+  si la compra SUPERA el umbral (₡20.000 exactos no). Sorteo parejo POR NÚMERO.
+- App `campanas`: `Campana` (BOR/ACT/CER/SOR/FIN, una activa por empresa,
+  `es_demo`), `Participante` (uno por cliente; canal WEB/TIE; `origen_visita`
+  vacío = «origen desconocido»), `NumerosVenta` (foto vigente por venta:
+  habituales, bono, revertidos, monto evaluado/vigente, margen),
+  `MovimientoNumeros` (libro; saldo = suma), `Sorteo` (lista congelada JSON +
+  huella SHA-256), `Adjudicacion` (ganador y suplentes), `CanastaProducto`,
+  `EntregaPremio`. Permiso `campanas.sortear` (superusuario siempre).
+- Reglas SOLO en `campanas/reglas.py` (docstring = definiciones): monto
+  evaluado = `FacturaVenta.total` (después de descuentos, cupón, promo y
+  redondeo; sin envío). `acreditar_venta` va al final de `registrar_venta`;
+  `recalcular_venta` en `anular_factura` y `registrar_devolucion` (solo baja).
+  Ninguna falla de la campaña tumba la venta (se loguea).
+- Bienvenida: `manada.services.regalia_para_nuevos` es la ÚNICA puerta de
+  cupones nuevos; `reglas.bloquea_bienvenida` la cierra mientras corre una
+  campaña con `reemplaza_bienvenida` y, al finalizar, según `despues`. La API
+  `manada/regalia/` responde `activa: false`. Cupones viejos siguen valiendo.
+- **Pedidos web por confirmar** (`pedidos.PedidoPorConfirmar` +
+  `pedidos/por_confirmar.py`): el sitio los anota antes del WhatsApp y recibe
+  WEB-n; la caja los carga («🌐 Pedidos web») y `registrar_venta(pedido_web=,
+  envio_costo=)` los liga a la venta (canal WEB). No aparta inventario.
+  Anular la venta reabre el pedido. Los `Pedido` de pasarela acreditan en
+  `crear_pedido` y se revierten al cancelar.
+- Sorteo (`campanas/sorteo.py`): congelar (solo después del cierre; se puede
+  recongelar antes de sortear y queda la versión previa) → `secrets.randbelow`
+  sobre el total de números → suplentes sin repetir persona. Segunda pulsación
+  devuelve lo guardado (bloqueo de fila). `no_respondio` sube al suplente.
+  `entregar` = venta de regalía (kardex REG, asiento de gasto) + constancia.
+- Pantallas `campanas:*` (gerente): lista, nueva (`?plantilla=navidad` llena el
+  borrador de bases con «[POR DEFINIR]», que IMPIDE activar), detalle con
+  pestañas Resumen (monto, zonas, vigencias: lo que Oscar pidió ver antes de
+  activar) · Participantes · Sorteo · Canasta y entrega · Resultados
+  (`medicion.py`, docstring = definiciones y límites). Acta imprimible y CSV.
+- Caja: franja verde `#campFila`, diálogo `dlgCamp`, casilla 🎄 en Unir,
+  `ventas:campana_cliente`, `campana_inscribir`, `pedidos_web`. Comprobante:
+  `FacturaVenta.numeros_del_sorteo` en tiquete impreso, de pantalla y recibo.
+- API (token del sitio): `campana/`, `campana/inscripcion/`,
+  `campana/participante/`, `campana/beneficios/`, `pedidos/por-confirmar/` y
+  `pedidos/por-confirmar/<WEB-n>/?telefono=`. Montos como texto "20001.00".
+- Demostración (`campanas/demo.py`): 14 clientes ficticios INACTIVOS, sin
+  ventas ni inventario; nunca es «la vigente».
+- Zonas: «cantón / distrito», sin tildes; «Heredia» sola incluye Varablanca,
+  por eso la plantilla trae los 4 distritos cercanos.
+- Pruebas: `campanas/tests.py`, `campanas/test_integracion.py`.
+
 ## La manada AllPetcr.com — clientes por QR (13/10/2026)
 
 Pedido de Oscar: QR en la tienda → `www.allpetcr.com/manada?o=qr-tienda` →

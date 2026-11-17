@@ -1,0 +1,23 @@
+<div class="card">
+  <div class="enlinea" style="margin-bottom:12px">
+    <div style="flex:1"><h2>{{ filas|length }} participante{{ filas|length|pluralize }} · {{ total_numeros }} número{{ total_numeros|pluralize }}</h2>
+      <div class="ex" style="margin:0">Una fila por persona. Los números son sus oportunidades en el sorteo.</div></div>
+    <a class="btn gris" href="{% url 'campanas:participantes_csv' campana.pk %}">Bajar a Excel</a>
+  </div>
+  <div class="tabla-scroll"><table class="mt">
+    <tr><th>Participante</th><th>Se inscribió</th><th>Canal</th><th>Origen de la visita</th><th>Publicidad</th><th class="n">Números</th></tr>
+    {% for f in filas %}
+    <tr>
+      <td>{% if campana.es_demo %}<b>{{ f.p.cliente.nombre }}</b>{% else %}<a href="{% url 'manada:ficha' f.p.cliente_id %}"><b>{{ f.p.cliente.nombre }}</b></a>{% endif %}
+        {% if f.p.cliente_nuevo %}<span class="chip ok">cliente nuevo</span>{% elif f.p.miembro_nuevo %}<span class="chip oro">miembro nuevo</span>{% endif %}
+        <div class="prod">{{ f.p.cliente.telefono|default:f.p.cliente.email }}</div></td>
+      <td>{{ f.p.creado_en|date:"d/m/Y h:i a" }}</td>
+      <td><span class="canal {% if f.p.canal == 'WEB' %}w{% else %}t{% endif %}">{{ f.p.get_canal_display }}</span></td>
+      <td class="{% if not f.p.origen_visita %}gris{% endif %}">{{ f.p.origen_texto }}</td>
+      <td>{% if f.p.cliente.manada.acepta_promociones %}<span class="bien">Aceptó</span>{% else %}<span class="gris">No</span>{% endif %}</td>
+      <td class="n"><b>{{ f.numeros }}</b></td>
+    </tr>
+    {% empty %}<tr><td colspan="6" class="vacio">Todavía no hay nadie inscrito.</td></tr>
+    {% endfor %}
+  </table></div>
+</div>

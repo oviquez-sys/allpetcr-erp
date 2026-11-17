@@ -51,6 +51,18 @@ td{padding:2px 0;vertical-align:top}
   <tr><td><b>Vuelto</b></td><td class="n"><b>₡{{ f.vuelto|crc:0 }}</b></td></tr>
   {% endif %}
 </table>
+{% with n=f.numeros_del_sorteo %}{% if n %}
+<hr>
+<table>
+  <tr><td colspan="2"><b>🎄 {{ n.campana }}</b> · números para el sorteo</td></tr>
+  <tr><td style="padding-left:8px">Por la compra</td><td class="n">{{ n.habituales }}</td></tr>
+  {% if n.bono %}<tr><td style="padding-left:8px">Bono (supera ₡{{ n.umbral|crc:0 }})</td><td class="n">+{{ n.bono }}</td></tr>{% endif %}
+  {% if n.revertidos %}<tr><td style="padding-left:8px">Quitados por devolución</td><td class="n">−{{ n.revertidos }}</td></tr>{% endif %}
+  <tr><td style="padding-left:8px"><b>Total de esta compra</b></td><td class="n"><b>{{ n.total }}</b></td></tr>
+  <tr><td>Lleva en total</td><td class="n">{{ n.lleva }}</td></tr>
+  <tr><td colspan="2">Sorteo: {{ n.sorteo|date:"d/m/Y" }}</td></tr>
+</table>
+{% endif %}{% endwith %}
 <hr>
 <p class="c">¡Gracias por su compra! 🐾<br>www.allpetcr.com</p>
 {% comment %}La mención del régimen simplificado sale solo si la empresa está en él

@@ -1,0 +1,39 @@
+{% extends "admin/base_site.html" %}
+{% block title %}{{ campana.nombre }}{% endblock %}
+{% block seccion %}Campañas{% endblock %}
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="/">Inicio</a> &rsaquo; <a href="{% url 'campanas:lista' %}">Campañas</a> &rsaquo; {{ campana.nombre }}</div>{% endblock %}
+{% block extrahead %}{{ block.super }}{% include "campanas/_estilos.html" %}{% endblock %}
+{% block content_title %}{% endblock %}
+{% block content %}
+<div class="mn">
+  <div class="cp-head">
+    <div>
+      <div class="mn-title">{{ campana.nombre }} <span class="est {{ campana.estado }}">{{ campana.get_estado_display }}</span>{% if campana.es_demo %} <span class="est demo">Demostración</span>{% endif %}</div>
+      <div class="mn-sub" style="margin:0">{{ campana.premio }}</div>
+    </div>
+    <span class="sp"></span>
+    {% if not campana.es_demo %}<a class="btn gris" href="{% url 'campanas:editar' campana.pk %}">{% if campana.estado == 'BOR' %}Editar{% else %}Costos y qué sigue{% endif %}</a>{% endif %}
+  </div>
+  {% if campana.es_demo %}<div class="demo-banda">🧪 <b>Datos ficticios.</b> Nada de esto es una venta ni un cliente real. Podés congelar la lista y sortear para ver cómo queda; la entrega del premio está apagada acá porque descontaría inventario de verdad.</div>{% endif %}
+
+  <div class="mn-nav"><div class="seg">
+    <a class="{% if pestana == 'resumen' %}on{% endif %}" href="?t=resumen">Resumen</a>
+    <a class="{% if pestana == 'participantes' %}on{% endif %}" href="?t=participantes">Participantes</a>
+    <a class="{% if pestana == 'sorteo' %}on{% endif %}" href="?t=sorteo">Sorteo</a>
+    <a class="{% if pestana == 'canasta' %}on{% endif %}" href="?t=canasta">Canasta y entrega</a>
+    <a class="{% if pestana == 'medicion' %}on{% endif %}" href="?t=medicion">Resultados</a>
+  </div></div>
+
+  {% if pestana == 'resumen' %}
+  {% include "campanas/_resumen.html" %}
+  {% elif pestana == 'participantes' %}
+  {% include "campanas/_participantes.html" %}
+  {% elif pestana == 'sorteo' %}
+  {% include "campanas/_sorteo.html" %}
+  {% elif pestana == 'canasta' %}
+  {% include "campanas/_canasta.html" %}
+  {% else %}
+  {% include "campanas/_medicion.html" %}
+  {% endif %}
+</div>
+{% endblock %}

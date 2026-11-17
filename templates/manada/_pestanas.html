@@ -10,6 +10,7 @@
     <a class="{% if pestana == 'promociones' %}on{% endif %}" href="{% url 'manada:promociones' %}">Promociones</a>
   </div>
   <div class="mn-links">
+    <a href="{% url 'campanas:lista' %}" title="Sorteos con inscripción: participantes, números y resultados">Campañas</a>
     <a href="{% url 'manada:exportar' %}">Exportar a Excel</a>
     <a href="{% url 'admin:manada_regalia_changelist' %}" title="El regalo que recibe cada miembro nuevo">Regalo de bienvenida</a>
   </div>

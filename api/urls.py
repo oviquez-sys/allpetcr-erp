@@ -16,4 +16,12 @@ urlpatterns = [
     path("manada/registro/", views.ManadaRegistroView.as_view(), name="manada_registro"),
     path("manada/mascotas/", views.ManadaMascotasView.as_view(), name="manada_mascotas"),
     path("manada/regalia/", views.ManadaRegaliaView.as_view(), name="manada_regalia"),
+    # Campañas con sorteo (16/11/2026)
+    path("campana/", views.CampanaView.as_view(), name="campana"),
+    path("campana/inscripcion/", views.CampanaInscripcionView.as_view(), name="campana_inscripcion"),
+    path("campana/participante/", views.CampanaParticipanteView.as_view(), name="campana_participante"),
+    path("campana/beneficios/", views.CampanaBeneficiosView.as_view(), name="campana_beneficios"),
+    path("pedidos/por-confirmar/", views.PedidoPorConfirmarView.as_view(), name="pedido_por_confirmar"),
+    path("pedidos/por-confirmar/<str:numero>/", views.PedidoPorConfirmarEstadoView.as_view(),
+         name="pedido_por_confirmar_estado"),
 ]

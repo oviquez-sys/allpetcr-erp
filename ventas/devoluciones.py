@@ -177,4 +177,8 @@ def registrar_devolucion(*, factura, lineas, motivo, usuario=None) -> Devolucion
         reducir_cxc=reducir_cxc, reembolso_efectivo=reembolso_efectivo, reembolso_bancos=reembolso_bancos,
         usuario=usuario,
     )
+    # Campaña con sorteo (16/11/2026): con lo devuelto, la venta puede dejar
+    # de superar el umbral o quedar en cero; se le quitan esos números.
+    from campanas.reglas import recalcular_venta
+    recalcular_venta(factura, motivo=f"Devolución {numero}", usuario=usuario)
     return devolucion

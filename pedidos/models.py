@@ -191,3 +191,80 @@ class ReservaStock(models.Model):
 
     def __str__(self):
         return f"{self.cantidad} × {self.producto.sku} (carrito {self.token_carrito[:8]}…)"
+
+
+class PedidoPorConfirmar(models.Model):
+    """El pedido que el cliente arma en el sitio y manda por WhatsApp, ANTES
+    de pagarlo (16/11/2026, campaña Navidad AllPet).
+
+    Hasta esta fecha ese pedido no existía en el ERP: el sitio solo armaba un
+    mensaje de WhatsApp y la venta se cobraba después en caja como cualquier
+    otra, así que era imposible saber qué ventas habían nacido en la web.
+
+    Ahora el sitio lo anota acá al armar el mensaje y recibe un número corto
+    (WEB-12) que viaja en el WhatsApp. Cuando la tienda lo cobra en caja, la
+    venta queda ligada a este registro: la identidad del pedido web se
+    conserva aunque se confirme por WhatsApp y se cobre en el mostrador.
+
+    No aparta inventario ni mueve nada: es una intención de compra. Lo que
+    cuenta —existencias, precio, números de la campaña— se decide al cobrar.
+    Por eso es otro modelo y no un estado más de `Pedido`, que nace pagado y
+    descuenta el kardex al crearse.
+    """
+
+    class Estado(models.TextChoices):
+        PENDIENTE = "PEN", "Por confirmar"
+        CONCRETADO = "CON", "Cobrado"
+        CANCELADO = "CAN", "Cancelado"
+
+    class Entrega(models.TextChoices):
+        RETIRO = "RET", "Retiro en tienda"
+        ENVIO = "ENV", "Envío a domicilio"
+
+    empresa = models.ForeignKey(Empresa, on_delete=models.PROTECT, related_name="pedidos_por_confirmar")
+    numero = models.CharField(max_length=20, unique=True)
+    estado = models.CharField(max_length=3, choices=Estado.choices, default=Estado.PENDIENTE)
+    # La misma clave reenviada (doble toque, reintento de la red) devuelve el
+    # mismo pedido en vez de crear dos.
+    clave = models.CharField(max_length=64, null=True, blank=True, unique=True, editable=False)
+
+    cliente_nombre = models.CharField(max_length=150)
+    cliente_telefono = models.CharField(max_length=30)
+    cliente_email = models.EmailField(blank=True)
+    cliente = models.ForeignKey("ventas.Cliente", null=True, blank=True, on_delete=models.PROTECT,
+                                related_name="pedidos_por_confirmar")
+
+    entrega = models.CharField(max_length=3, choices=Entrega.choices, default=Entrega.RETIRO)
+    provincia = models.CharField(max_length=40, blank=True)
+    canton = models.CharField("cantón", max_length=60, blank=True)
+    distrito = models.CharField(max_length=60, blank=True)
+    senas = models.CharField("señas", max_length=300, blank=True)
+    nota = models.CharField(max_length=300, blank=True)
+    # De dónde vino la visita (UTM del sitio). Vacío = origen desconocido.
+    origen_visita = models.CharField(max_length=80, blank=True)
+
+    # Lo que pidió, como lo vio ese día: [{"sku", "nombre", "cantidad", "precio"}].
+    # Es una foto para el que atiende; al cobrar manda el precio de la caja.
+    lineas = models.JSONField(default=list)
+    subtotal_productos = models.DecimalField(max_digits=12, decimal_places=2, default=0,
+                                             help_text="Suma de los productos con IVA, sin envío.")
+
+    # Se llenan al cobrar.
+    factura = models.OneToOneField("ventas.FacturaVenta", null=True, blank=True, on_delete=models.PROTECT,
+                                   related_name="pedido_web")
+    envio_gratis = models.BooleanField(default=False, help_text="¿El envío de este pedido lo pagó la tienda?")
+    envio_costo = models.DecimalField("costo del envío para la tienda (₡)", max_digits=12, decimal_places=2,
+                                      default=0, help_text="Lo que se le pagó al mensajero.")
+    concretado_en = models.DateTimeField(null=True, blank=True)
+    cancelado_en = models.DateTimeField(null=True, blank=True)
+    motivo_cancelacion = models.CharField(max_length=200, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "pedido web por confirmar"
+        verbose_name_plural = "pedidos web por confirmar"
+        ordering = ["-creado_en"]
+        indexes = [models.Index(fields=["empresa", "estado", "creado_en"], name="pedweb_emp_est_fecha_idx")]
+
+    def __str__(self):
+        return f"{self.numero} — {self.cliente_nombre} ({self.get_estado_display()})"

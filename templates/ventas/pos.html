@@ -267,6 +267,25 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 /* display:flex de arriba le gana al atributo hidden: sin esto quedaba una
    franja dorada vacía debajo del cupón (13/10/2026). */
 .cupon-fila[hidden],.cupon-on[hidden]{display:none}
+/* Campaña con sorteo (16/11/2026): ¿participa?, ¿cuántos números lleva y
+   cuántos le da esta compra? Verde navideño para que no se confunda con el
+   dorado del cupón. */
+.camp-fila{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding:9px 12px;border-radius:10px;
+  background:#eef8f0;border:1px solid #bfe3c7;font-size:13.5px;color:#14532d}
+.camp-fila.no{background:#fff8e6;border-color:#f0dca3;color:#6b4e00}
+.camp-fila[hidden],.pedweb-fila[hidden]{display:none}
+.camp-fila button{margin-left:auto;padding:7px 12px;border-radius:10px;border:0;background:#15803d;color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.pedweb-fila{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 10px;padding:9px 12px;border-radius:10px;
+  background:#f3eefa;border:1px solid #d9c9f0;font-size:13.5px;color:#4a2378}
+.pedweb-fila input{width:96px;padding:6px 8px;border:1px solid #c9b6e6;border-radius:8px;font-size:14px}
+.pedweb-fila .x{margin-left:auto;border:0;background:none;color:#4a2378;font-size:13px;cursor:pointer;text-decoration:underline}
+#ultima .camp{margin-top:8px;padding:8px 10px;border-radius:10px;background:#eef8f0;color:#14532d;font-weight:600}
+.pw-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;text-align:left}
+.pw-item .t{font-weight:700}.pw-item .d{font-size:13px;color:var(--ink2);margin-top:2px}
+.pw-item .bts{display:flex;gap:8px;margin-top:8px}
+.pw-item .bts button{padding:7px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--brand);font-size:13.5px;cursor:pointer}
+.pw-item .bts button.pri{background:var(--brand);color:#fff;border-color:var(--brand);font-weight:700}
+#pedWebLista{max-height:55vh;overflow:auto}
 #btnManada{border-color:#CC9539;background:#CC9539;color:#fff;white-space:nowrap}
 .dlg label.chk{display:flex;gap:8px;align-items:center;font-weight:400;margin-top:10px}
 /* ¿Cómo nos conoció? y ¿A nombre de quién? (05/11/2026) */
@@ -341,6 +360,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
     <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>Asistente</button>
   <button type="button" class="nb" onclick="document.getElementById('ayuda').classList.add('on')" title="Cómo cobrar">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.3 2.4c-.5.2-.8.6-.8 1.1v.5M12 17h.01"/></svg>Ayuda</button>
+  <a href="#" id="btnPedidosWeb" title="Pedidos del sitio que llegaron por WhatsApp y esperan cobro">🌐 Pedidos web{% if pedidos_web_pendientes %} <b id="nPedWeb">({{ pedidos_web_pendientes }})</b>{% else %}<b id="nPedWeb"></b>{% endif %}</a>
   <a href="{% url 'ventas:historial' %}">Historial de ventas</a>
   {% if es_gerente %}<a href="{% url 'caja:retiro' %}" title="Sacar efectivo de la gaveta para depositar">Sacar efectivo</a>{% endif %}
   <a href="{% url 'caja:cerrar' %}">Cerrar caja</a>
@@ -369,6 +389,8 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
         <div class="cupon-on" id="cuponOn" hidden></div>
       </div>
     </div>
+    <div class="camp-fila" id="campFila" hidden></div>
+    <div class="pedweb-fila" id="pedWebFila" hidden></div>
     <div id="lineas"></div>
     <div class="pie">
       <div class="pie-izq">
@@ -455,16 +477,17 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 <dialog class="dlg" id="dlgManada" aria-labelledby="tMan">
   <form method="dialog" id="frmManada">
     <h2 id="tMan">🐾 Unir a la manada</h2>
-    <div class="sub">Para el cliente que no pudo escanear el QR. Recibe su regalo de bienvenida en esta misma compra.</div>
+    <div class="sub">Para el cliente que no pudo escanear el QR.{% if campana.bienvenida %} Recibe su regalo de bienvenida en esta misma compra.{% endif %}{% if campana.acepta %} Si quiere participar en el sorteo, queda inscrito ya y esta compra le da números.{% endif %}</div>
     <label for="manNombre">Nombre</label><input id="manNombre" autocomplete="off">
     <label for="manTel">WhatsApp</label><input id="manTel" autocomplete="off" inputmode="tel" placeholder="8888-8888">
     <label for="manCorreo">Correo <span style="font-weight:400;color:var(--ink2)">(opcional)</span></label><input id="manCorreo" type="email" autocomplete="off">
     <label class="chk"><input type="checkbox" id="manAcepto"> El cliente aceptó que guardemos sus datos</label>
     <label class="chk"><input type="checkbox" id="manPromos"> Quiere recibir promociones por WhatsApp</label>
+    <label class="chk" id="manCampFila"{% if not campana.acepta %} hidden{% endif %}><input type="checkbox" id="manCamp"> 🎄 Quiere participar en el sorteo{% if campana.nombre %} de {{ campana.nombre }}{% endif %} (gratis)</label>
     <label>¿Cómo nos conoció?</label>
     <div class="origen" data-origen="man">{% for v, e in como_nos_conocio %}<button type="button" data-v="{{ v }}">{{ e }}</button>{% endfor %}</div>
     <div class="err" id="manErr"></div>
-    <div class="acc"><button type="button" data-cerrar>Cancelar</button><button class="pri" id="manOk">Unir y aplicar regalo</button></div>
+    <div class="acc"><button type="button" data-cerrar>Cancelar</button><button class="pri" id="manOk">{% if campana.bienvenida %}Unir y aplicar regalo{% else %}Unir{% endif %}</button></div>
   </form>
 </dialog>
 
@@ -482,6 +505,24 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
       <button type="button" data-cerrar>Volver a la venta</button>
     </div>
   </form>
+</dialog>
+
+<dialog class="dlg" id="dlgCamp" aria-labelledby="tCamp">
+  <form method="dialog" id="frmCamp">
+    <h2 id="tCamp">🎄 Inscribir en el sorteo</h2>
+    <div class="sub" id="campSub"></div>
+    <label class="chk"><input type="checkbox" id="campAcepto"> El cliente dijo que sí quiere participar y acepta las bases</label>
+    <label class="chk"><input type="checkbox" id="campPromos"> Además quiere recibir promociones por WhatsApp <span style="font-weight:400;color:var(--ink2)">(aparte, opcional)</span></label>
+    <div class="err" id="campErr"></div>
+    <div class="acc"><button type="button" data-cerrar>No quiere: seguir la venta</button><button class="pri" id="campOk">Inscribir</button></div>
+  </form>
+</dialog>
+
+<dialog class="dlg" id="dlgPedWeb" aria-labelledby="tPedWeb">
+  <h2 id="tPedWeb">🌐 Pedidos web por cobrar</h2>
+  <div class="sub">Los que llegaron del sitio por WhatsApp. El número (WEB-12) viene en el mensaje del cliente. Tocá uno para cargarlo en la venta.</div>
+  <div id="pedWebLista"></div>
+  <div class="acc"><button type="button" data-cerrar>Cerrar</button></div>
 </dialog>
 
 <dialog class="dlg" id="dlgCamara" aria-labelledby="tCam">
@@ -502,6 +543,8 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
     <div class="step2"><div class="n">4</div><div class="st">Si el cliente lleva fiado, elegí su nombre arriba y usá <b>Fiado</b>.</div></div>
     <div class="step2"><div class="n">5</div><div class="st"><b>Descuento o regalía.</b> En la fila de cada producto podés poner un <b>descuento</b> en % (número entero), o escribir directo <b>el precio</b> al que se lo dejás (ej. ₡2.000) y el sistema calcula el descuento. También podés marcarlo como <b>🎁 Regalía</b> (sale gratis, pero igual descuenta del inventario y se registra el costo).</div></div>
     <div class="step2"><div class="n">6</div><div class="st"><b>🎟 Casilla dorada.</b> En <b>cada compra</b> preguntale al cliente su WhatsApp o su cédula y escribilo ahí + Enter: la venta queda a su nombre (así se arma su historial y los recordatorios de comida). Si tiene su regalo de bienvenida pendiente, se aplica solo. También acepta el código del cupón (ALP-22 o solo 22; los viejos empiezan con AP-). Si cobrás sin cliente, la caja te pregunta «¿A nombre de quién?»: si no quiere dar datos, tocá «No quiso dar datos» y queda anotado. Si no pudo escanear el QR, tocá <b>🐾 Unir</b>: lo registrás ahí mismo y el regalo se aplica en esta compra. El descuento se aplica a toda la venta <b>menos los alimentos</b> y el cupón queda usado al cobrar: no sirve dos veces. Si el cliente solo lleva alimento, el cupón no se gasta y le queda para otra compra.</div></div>
+    {% if campana.nombre %}<div class="step2"><div class="n">🎄</div><div class="st"><b>{{ campana.nombre }}.</b> Al poner al cliente en la venta, una franja verde dice si ya participa en el sorteo y cuántos números lleva. Si no participa, preguntale y tocá <b>Inscribir</b> (o marcá la casilla 🎄 en <b>🐾 Unir</b> si es nuevo): si se inscribe antes de cobrar, esa misma compra ya le da números. Cada compra da 1 número y, si supera ₡{{ campana.umbral|crc:0 }}, 1 más. Recibir promociones es otra casilla, aparte. Si no quiere participar, la venta sigue igual.</div></div>{% endif %}
+    <div class="step2"><div class="n">🌐</div><div class="st"><b>Pedidos web.</b> Cuando un cliente manda su pedido del sitio por WhatsApp, el mensaje trae un número (WEB-12). Tocá <b>🌐 Pedidos web</b> arriba, elegí ese pedido y se carga en la venta con su cliente. Cobrá como siempre: la venta queda anotada como nacida en la web. Si es con envío, escribí cuánto le pagó la tienda al mensajero.</div></div>
     <div class="step2"><div class="n">+</div><div class="st"><b>Atender a otro cliente.</b> Si un cliente se va a buscar algo más con su venta a medio armar y llega otro a pagar, tocá <b>Atender a otro cliente</b>: la primera venta queda guardada en una pestaña arriba (con su cliente y su total) y empezás una nueva. Cuando vuelva, tocá su pestaña y seguís donde quedaste. Lo que está apartado en una venta en espera no se le puede vender a otro.</div></div>
     <div class="step2"><div class="n">+</div><div class="st"><b>Redondear.</b> Si son ₡13.554 y el cliente no tiene para el vuelto exacto, tocá <b>Redondear el total</b> debajo del total (o el atajo que aparece al cobrar en efectivo) y dejalo en ₡13.500. La diferencia queda registrada como redondeo y el cierre de caja cuadra. Máximo ₡{{ redondeo_maximo }}; para más, poné un descuento en el producto.</div></div>
     <div class="step2"><div class="n">7</div><div class="st"><b>Con el teclado es más rápido.</b> <b>F1</b> cobra en efectivo (escribí con cuánto paga y Enter; Enter solo = pagó exacto), <b>F2</b> con tarjeta, <b>F3</b> por SINPE y <b>F4</b> pago mixto. <b>Esc</b> limpia la búsqueda y devuelve el cursor al escáner.</div></div>
@@ -511,6 +554,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 
 {{ productos|json_script:"datos-productos" }}
 {{ clientes|json_script:"datos-clientes" }}
+{{ campana|json_script:"datos-campana" }}
 <script>
 const productos = JSON.parse(document.getElementById('datos-productos').textContent);
 const clientes = JSON.parse(document.getElementById('datos-clientes').textContent);
@@ -534,6 +578,15 @@ let clientePorCasilla = false;   // el selector de cliente lo puso la casilla, n
 // aplica y se quita solo (no vaya a quedar un −₡54 sobre otra venta).
 let redondeo = null;
 const REDONDEO_MAX = {{ redondeo_maximo }};
+// Campaña con sorteo vigente (16/11/2026): {nombre, acepta, umbral, minima,
+// por_compra, bono, sorteo} o solo {bienvenida} si no hay ninguna. Las reglas
+// las aplica el servidor al cobrar; esto es para que el cajero las vea.
+const CAMP = JSON.parse(document.getElementById('datos-campana').textContent);
+const hayCamp = !!CAMP.nombre;
+const campEstado = {};            // por id de cliente: {nombre, participa, numeros}
+// Pedido web que se está cobrando en esta venta: {numero, nombre, telefono,
+// entrega, entrega_texto, zona, envio_costo} o null.
+let pedidoWeb = null;
 
 const selCli = document.getElementById('cliente');
 clientes.forEach(c => {
@@ -839,6 +892,7 @@ function pintar(){
   document.getElementById('cuentaVenta').textContent = ids.length
     ? `${ids.length} producto${ids.length === 1 ? '' : 's'} · ${unidades} unidad${unidades === 1 ? '' : 'es'}` : '';
   if (typeof pintarPestanas === 'function'){ pintarPestanas(); guardarLocal(); }
+  if (typeof pintarCamp === 'function'){ pintarCamp(); pintarPedidoWeb(); }
   // pintarGrid() ya NO se llama acá: reconstruía las 150 tarjetas del catálogo
   // en cada cambio de cantidad. Ahora quien cambia el carrito actualiza solo
   // el contador del producto afectado con refrescarStock(id). El catálogo se
@@ -1002,7 +1056,9 @@ async function cobrar(medio, extra = {}){
       body: JSON.stringify({medio_pago: medio, lineas: lineasCarrito(), cliente_id: clienteId || null,
                             clave, pagos: extra.pagos || null, recibido: extra.recibido || null,
                             cupon: cupon ? cupon.codigo : null, redondeo: montoRedondeo(),
-                            sin_cliente: clienteId ? '' : (sinClienteMotivo || '')})
+                            sin_cliente: clienteId ? '' : (sinClienteMotivo || ''),
+                            pedido_web: pedidoWeb ? pedidoWeb.numero : null,
+                            envio_costo: pedidoWeb ? (pedidoWeb.envio_costo || 0) : 0})
     });
     const d = await r.json();
     if (d.ok){
@@ -1011,6 +1067,9 @@ async function cobrar(medio, extra = {}){
       redondeo = null;
       quitarCupon(false);             // el cupón ya quedó usado en esta venta
       sinClienteMotivo = '';          // la próxima venta se vuelve a preguntar
+      if (clienteId) delete campEstado[clienteId];   // sus números cambiaron: se vuelven a consultar
+      if (pedidoWeb && d.pedido_web) contarPedidosWeb(-1);
+      pedidoWeb = null;
       clave = null;                   // la próxima venta lleva una clave nueva
       soloEscaneados = false;         // la venta terminó: vuelve el catálogo entero
       document.getElementById('cliente').value = '';
@@ -1055,6 +1114,16 @@ function mostrarUltima(d){
                                                  : `No salió el tiquete. ${d.error_impresion||''}`);
   if (!d.impreso && !d.repetida) imp.classList.add('mal');
   u.appendChild(imp);
+  // Campaña (16/11/2026): el desglose que también sale en el comprobante.
+  if (d.campana){
+    const c = d.campana, cp = document.createElement('div'); cp.className = 'camp';
+    cp.textContent = `🎄 +${c.total} número${c.total === 1 ? '' : 's'} para el sorteo (${c.habituales} por la compra`
+      + (c.bono ? ` + ${c.bono} de bono por superar ${fmt(CAMP.umbral || 0)}` : '') + `). Lleva ${c.lleva}.`;
+    u.appendChild(cp);
+  }
+  if (d.pedido_web){
+    const pw = document.createElement('div'); pw.className = 'imp'; pw.textContent = `🌐 Pedido web ${d.pedido_web} cobrado.`; u.appendChild(pw);
+  }
   // Alarma de agotado (02/10/2026): esta venta se llevó la última unidad.
   if (d.agotados && d.agotados.length){
     const ag = document.createElement('div'); ag.className = 'agotado';
@@ -1147,6 +1216,7 @@ document.getElementById('frmCliente').addEventListener('submit', async e => {
       const o = document.createElement('option'); o.value = c.id; o.textContent = `${c.nombre} — disponible ${fmt(c.disponible)}`; sel.appendChild(o);
     }
     sel.value = c.id;
+    consultarCamp(c.id);
     document.getElementById('dlgCliente').close();
     msg(d.ya_existia ? `Ese cliente ya existía: ${c.nombre}.` : `Cliente ${c.nombre} registrado.`);
     volverAlEscaner();
@@ -1230,6 +1300,7 @@ function elegirCliente(c){
   }
   sel.value = c.id;
   clientePorCasilla = true;
+  anotarCamp(c);
 }
 function quitarCupon(repintar){
   cupon = null;
@@ -1280,7 +1351,7 @@ let cobroPendiente = null;
 function faltaCliente(){ return !document.getElementById('cliente').value && !cupon && !sinClienteMotivo; }
 function pedirCliente(seguir){
   cobroPendiente = seguir;
-  document.getElementById('quienDato').value = '';
+  document.getElementById('quienDato').value = pedidoWeb ? (pedidoWeb.telefono || '') : '';
   document.getElementById('quienErr').textContent = '';
   document.getElementById('dlgQuien').showModal();
   document.getElementById('quienDato').focus();
@@ -1339,7 +1410,12 @@ document.getElementById('btnManada').addEventListener('click', () => {
   manadaSigue = null;
   document.getElementById('manAcepto').checked = false;
   document.getElementById('manPromos').checked = false;
+  document.getElementById('manCamp').checked = false;
   document.getElementById('manErr').textContent = '';
+  if (pedidoWeb && !document.getElementById('cliente').value){
+    document.getElementById('manNombre').value = pedidoWeb.nombre || '';
+    document.getElementById('manTel').value = pedidoWeb.telefono || '';
+  }
   document.getElementById('dlgManada').showModal();
   document.getElementById('manNombre').focus();
 });
@@ -1354,7 +1430,8 @@ document.getElementById('frmManada').addEventListener('submit', async e => {
     const r = await fetch("{% url 'ventas:manada_rapido' %}", {method:'POST',
       headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
       body: JSON.stringify({nombre: v('manNombre'), telefono: v('manTel'), email: v('manCorreo'), acepto: true,
-                            promos: document.getElementById('manPromos').checked, como_nos_conocio: origenDe('man')})});
+                            promos: document.getElementById('manPromos').checked, como_nos_conocio: origenDe('man'),
+                            campana: hayCamp && CAMP.acepta && document.getElementById('manCamp').checked})});
     const d = await r.json();
     if (!d.ok){ err.textContent = d.error; return; }
     const c = d.cliente, sel = document.getElementById('cliente');
@@ -1362,6 +1439,7 @@ document.getElementById('frmManada').addEventListener('submit', async e => {
       const o = document.createElement('option'); o.value = c.id; o.textContent = `${c.nombre} — disponible ${fmt(c.disponible)}`; sel.appendChild(o);
     }
     sel.value = c.id;
+    anotarCamp(c); pintarCamp();
     document.getElementById('dlgManada').close();
     if (d.cupon){
       document.getElementById('cuponCodigo').value = d.cupon;
@@ -1437,7 +1515,8 @@ let ventas = [nuevaVenta()];
 let activa = 0;
 const CLAVE_LOCAL = 'allpetcr.pos.ventas';
 function nuevaVenta(){
-  return {carrito:{}, cupon:null, clienteReconocido:null, clientePorCasilla:false, cliente:'', clave:null, redondeo:null};
+  return {carrito:{}, cupon:null, clienteReconocido:null, clientePorCasilla:false, cliente:'', clave:null, redondeo:null,
+          pedidoWeb:null};
 }
 function ventaVacia(v){ return !Object.keys(v.carrito).length && !v.cupon && !v.clienteReconocido && !v.cliente; }
 // Unidades de un producto apartadas en las OTRAS ventas: no se pueden vender
@@ -1447,7 +1526,7 @@ function enEspera(id){
 }
 function guardarActiva(){
   Object.assign(ventas[activa], {carrito, cupon, clienteReconocido, clientePorCasilla,
-                                 cliente: document.getElementById('cliente').value, clave, redondeo});
+                                 cliente: document.getElementById('cliente').value, clave, redondeo, pedidoWeb});
 }
 function totalDeVenta(v){
   const antes = [carrito, cupon, redondeo];
@@ -1496,7 +1575,9 @@ function cargarVenta(i, enfocar = true){
   const v = ventas[i];
   carrito = v.carrito; cupon = v.cupon; clienteReconocido = v.clienteReconocido; sinClienteMotivo = '';
   clientePorCasilla = v.clientePorCasilla; clave = v.clave; redondeo = v.redondeo || null;
+  pedidoWeb = v.pedidoWeb || null;
   document.getElementById('cliente').value = v.cliente || '';
+  consultarCamp(v.cliente);
   document.getElementById('cuponCodigo').value = '';
   soloEscaneados = false;
   pintarCupon(); pintar(); pintarGrid();
@@ -1544,7 +1625,159 @@ function pintarPestanas(){
   }).join('') + '</div>';
 }
 document.getElementById('btnOtraVenta').addEventListener('click', otraVenta);
-document.getElementById('cliente').addEventListener('change', () => { pintarPestanas(); guardarLocal(); });
+document.getElementById('cliente').addEventListener('change', e => { pintarPestanas(); guardarLocal(); consultarCamp(e.target.value); });
+
+// --- Campaña con sorteo (16/11/2026) ----------------------------------------
+// Al identificar al cliente se ve si ya participa y cuántos números lleva; si
+// no, se le puede inscribir ahí mismo (con su sí) y la compra en curso ya le
+// da números. Inscribirse y aceptar publicidad son dos casillas distintas.
+function anotarCamp(c){
+  if (c && c.id && c.campana && 'participa' in c.campana) campEstado[c.id] = Object.assign({nombre: c.nombre}, c.campana);
+}
+async function consultarCamp(id){
+  if (!hayCamp || !id || campEstado[id]){ pintarCamp(); return; }
+  pintarCamp();
+  try {
+    const d = await (await fetch("{% url 'ventas:campana_cliente' %}?cliente_id=" + encodeURIComponent(id))).json();
+    if (d.ok) campEstado[id] = {nombre: d.nombre, participa: !!d.participa, numeros: d.numeros || 0};
+  } catch(_){ /* sin conexión: la franja queda en «revisando»; al cobrar decide el servidor */ }
+  pintarCamp();
+}
+function numerosDeEstaCompra(){
+  const t = totalCobrar();
+  if (!CAMP.acepta || t <= 0 || t < CAMP.minima) return 0;
+  return CAMP.por_compra + (t > CAMP.umbral ? CAMP.bono : 0);
+}
+function pintarCamp(){
+  const el = document.getElementById('campFila');
+  if (!hayCamp){ el.hidden = true; return; }
+  const id = document.getElementById('cliente').value;
+  const e = id ? campEstado[id] : null;
+  const total = totalCobrar(), n = numerosDeEstaCompra();
+  const pl = k => `${k} número${k === 1 ? '' : 's'}`;
+  let html = '', no = false;
+  if (!id){
+    if (!CAMP.acepta){ el.hidden = true; return; }
+    html = `🎄 <span><b>${esc(CAMP.nombre)}</b>: preguntale al cliente si quiere participar en el sorteo. Es gratis.</span>`;
+    no = true;
+  } else if (!e){
+    html = '🎄 <span>Revisando si participa…</span>';
+  } else if (e.participa){
+    html = `🎄 <span><b>${esc(e.nombre)}</b> participa · lleva <b>${pl(e.numeros)}</b>.`;
+    if (total > 0 && CAMP.acepta){
+      if (n > CAMP.por_compra) html += ` Esta compra le da <b>+${n}</b> (supera ${fmt(CAMP.umbral)}).`;
+      else if (n > 0) html += ` Esta compra le da <b>+${n}</b>; con ${fmt(CAMP.umbral - total + 1)} más gana el doble.`;
+      else html += ` Esta compra todavía no da número (mínimo ${fmt(CAMP.minima)}).`;
+    } else if (!CAMP.acepta) html += ' Las compras ya no suman: cerró la inscripción.';
+    html += '</span>';
+  } else if (CAMP.acepta){
+    html = `🎄 <span><b>${esc(e.nombre)}</b> todavía no participa en el sorteo.`
+      + (n > 0 ? ` Si se inscribe antes de cobrar, se lleva ${pl(CAMP.por_inscribirse + n)}.` : '') + '</span>'
+      + '<button type="button" onclick="abrirInscripcion()">Inscribir</button>';
+    no = true;
+  } else { el.hidden = true; return; }
+  el.className = 'camp-fila' + (no ? ' no' : '');
+  el.innerHTML = html;
+  el.hidden = false;
+}
+function abrirInscripcion(){
+  const id = document.getElementById('cliente').value, e = campEstado[id];
+  if (!id || !e) return;
+  document.getElementById('campSub').textContent =
+    `Preguntale a ${e.nombre} si quiere participar en el sorteo de ${CAMP.nombre} (${CAMP.sorteo}). Es gratis y no lo obliga a recibir publicidad.`;
+  document.getElementById('campAcepto').checked = false;
+  document.getElementById('campPromos').checked = false;
+  document.getElementById('campErr').textContent = '';
+  document.getElementById('dlgCamp').showModal();
+}
+document.getElementById('frmCamp').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const err = document.getElementById('campErr'); err.textContent = '';
+  const id = document.getElementById('cliente').value;
+  if (!document.getElementById('campAcepto').checked){ err.textContent = 'Preguntale y marcá la primera casilla. Si no quiere, tocá «No quiere: seguir la venta».'; return; }
+  try {
+    const r = await fetch("{% url 'ventas:campana_inscribir' %}", {method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'},
+      body: JSON.stringify({cliente_id: id, acepto: true, promos: document.getElementById('campPromos').checked})});
+    const d = await r.json();
+    if (!d.ok){ err.textContent = d.error; return; }
+    campEstado[id] = {nombre: d.nombre, participa: true, numeros: d.numeros};
+    document.getElementById('dlgCamp').close();
+    pintarCamp();
+    msg(d.ya_participaba ? `${d.nombre} ya estaba participando.` : `🎄 ${d.nombre} quedó inscrito en el sorteo.`);
+  } catch(_){ err.textContent = 'No se pudo conectar con el ERP.'; }
+});
+
+// --- Pedidos web por cobrar (16/11/2026) -------------------------------------
+// El pedido del sitio llega por WhatsApp con su número (WEB-12). Se carga acá
+// y al cobrar la venta queda ligada a él: así se sabe que nació en la web.
+function contarPedidosWeb(delta){
+  const b = document.getElementById('nPedWeb');
+  const n = Math.max(0, (parseInt((b.textContent.match(/\d+/) || ['0'])[0], 10) || 0) + delta);
+  b.textContent = n ? `(${n})` : '';
+}
+function pintarPedidoWeb(){
+  const el = document.getElementById('pedWebFila');
+  if (!pedidoWeb){ el.hidden = true; return; }
+  const envio = pedidoWeb.entrega === 'ENV';
+  el.innerHTML = `🌐 <span>Pedido web <b>${esc(pedidoWeb.numero)}</b> · ${esc(pedidoWeb.nombre)} · ${esc(pedidoWeb.entrega_texto)}${pedidoWeb.zona ? ' a ' + esc(pedidoWeb.zona) : ''}</span>`
+    + (envio ? `<label>Envío: la tienda paga ₡ <input type="text" inputmode="numeric" maxlength="7" value="${pedidoWeb.envio_costo || ''}" placeholder="0" onchange="pedidoWeb.envio_costo = montoDe(this.value); guardarLocal();"></label>` : '')
+    + '<button type="button" class="x" onclick="quitarPedidoWeb()">Quitar</button>';
+  el.hidden = false;
+}
+function quitarPedidoWeb(){ pedidoWeb = null; pintarPedidoWeb(); guardarLocal(); }
+async function abrirPedidosWeb(cuerpo){
+  const lista = document.getElementById('pedWebLista');
+  lista.textContent = 'Cargando…';
+  if (!document.getElementById('dlgPedWeb').open) document.getElementById('dlgPedWeb').showModal();
+  let d;
+  try {
+    d = await (await fetch("{% url 'ventas:pedidos_web' %}", cuerpo ? {method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':'{{ csrf_token }}'}, body: JSON.stringify(cuerpo)} : {})).json();
+  } catch(_){ lista.textContent = 'No se pudo conectar con el ERP.'; return; }
+  if (!d.ok){ lista.textContent = d.error; return; }
+  document.getElementById('nPedWeb').textContent = d.pedidos.length ? `(${d.pedidos.length})` : '';
+  lista.textContent = '';
+  if (!d.pedidos.length){ lista.textContent = 'No hay pedidos web esperando cobro.'; return; }
+  d.pedidos.forEach(pw => {
+    const it = document.createElement('div'); it.className = 'pw-item';
+    const t = document.createElement('div'); t.className = 't';
+    t.textContent = `${pw.numero} · ${pw.nombre} · ${fmt(pw.subtotal)}`;
+    const dd = document.createElement('div'); dd.className = 'd';
+    dd.textContent = `${pw.cuando} · WhatsApp ${pw.telefono} · ${pw.entrega_texto}${pw.zona ? ' a ' + pw.zona : ''} · `
+      + pw.lineas.map(l => `${l.cantidad} × ${l.nombre}`).join(', ') + (pw.nota ? ` · Nota: ${pw.nota}` : '');
+    const bts = document.createElement('div'); bts.className = 'bts';
+    const b1 = document.createElement('button'); b1.type = 'button'; b1.className = 'pri'; b1.textContent = 'Cargar en la venta';
+    b1.addEventListener('click', () => cargarPedidoWeb(pw));
+    const b2 = document.createElement('button'); b2.type = 'button'; b2.textContent = 'El cliente ya no lo quiere';
+    b2.addEventListener('click', () => { if (confirm(`¿Cancelar el pedido ${pw.numero} de ${pw.nombre}?`)) abrirPedidosWeb({cancelar: pw.numero}); });
+    bts.append(b1, b2); it.append(t, dd, bts); lista.appendChild(it);
+  });
+}
+function cargarPedidoWeb(pw){
+  if (Object.keys(carrito).length){
+    msg('Terminá la venta actual o dejala en espera («Atender a otro cliente») antes de cargar un pedido web.', true); return;
+  }
+  const faltan = [];
+  pw.lineas.forEach(l => {
+    const prod = porId[l.producto_id];
+    const hay = prod ? prod.stock_actual - enEspera(prod.id) : 0;
+    if (!prod || hay < 1){ faltan.push(l.nombre); return; }
+    if (hay < l.cantidad) faltan.push(`${l.nombre} (solo hay ${hay})`);
+    carrito[prod.id] = {cantidad: Math.min(l.cantidad, hay), descuento: 0, regalia: false};
+  });
+  pedidoWeb = {numero: pw.numero, nombre: pw.nombre, telefono: pw.telefono, entrega: pw.entrega,
+               entrega_texto: pw.entrega_texto, zona: pw.zona, envio_costo: 0};
+  if (pw.cliente){
+    cupon = null; clienteReconocido = Object.assign({}, pw.cliente, {aviso: ''});
+    elegirCliente(pw.cliente); pintarCupon();
+  }
+  document.getElementById('dlgPedWeb').close();
+  pintar(); pintarGrid(); consultarCamp(document.getElementById('cliente').value);
+  if (faltan.length) msg(`⚠️ Sin existencia suficiente: ${faltan.join(', ')}. Avisale al cliente antes de cobrar.`, true);
+  else msg(`Pedido ${pw.numero} cargado. Revisalo con el cliente y cobrá como siempre.`);
+}
+document.getElementById('btnPedidosWeb').addEventListener('click', e => { e.preventDefault(); abrirPedidosWeb(); });
 
 document.getElementById('buscar').focus();
 pintarChips();

@@ -1,0 +1,42 @@
+{% extends "admin/base_site.html" %}
+{% block title %}Campañas{% endblock %}
+{% block seccion %}Campañas{% endblock %}
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="/">Inicio</a> &rsaquo; Campañas</div>{% endblock %}
+{% block extrahead %}{{ block.super }}{% include "campanas/_estilos.html" %}{% endblock %}
+{% block content_title %}{% endblock %}
+{% block content %}
+<div class="mn">
+  <div class="cp-head">
+    <div><div class="mn-title">Campañas</div>
+      <div class="mn-sub" style="margin:0">Sorteos con inscripción gratuita. El ERP guarda quién participa, sus números y el resultado.</div></div>
+    <span class="sp"></span>
+    {% if not hay_navidad %}<a class="btn azul grande" href="{% url 'campanas:nueva' %}?plantilla=navidad">🎄 Preparar Navidad AllPet 2026</a>{% endif %}
+    <a class="btn gris grande" href="{% url 'campanas:nueva' %}">Nueva campaña</a>
+  </div>
+
+  <div class="card">
+    {% for c in campanas %}
+    <a href="{% url 'campanas:detalle' c.pk %}" style="display:flex;gap:14px;align-items:center;padding:12px 6px;border-bottom:1px solid #f0f0f3;color:#1d1d1f !important">
+      <span style="flex:1"><b style="font-size:16px">{{ c.nombre }}</b>
+        <span class="gris" style="display:block;font-size:13px">Del {{ c.inicio|date:"d/m/Y" }} al {{ c.cierre|date:"d/m/Y" }} · sorteo {{ c.sorteo_en|date:"d/m/Y h:i a" }}</span></span>
+      <span class="gris" style="font-size:13px">{{ c.n_participantes }} participante{{ c.n_participantes|pluralize }}</span>
+      <span class="est {{ c.estado }}">{{ c.get_estado_display }}</span>
+      <span style="color:#0B3161;font-size:18px">›</span>
+    </a>
+    {% empty %}
+    <div class="vacio">Todavía no hay campañas. Tocá «Preparar Navidad AllPet 2026»: llena el formulario con lo que ya definiste y queda apagada hasta que la actives.</div>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <h2>Demostración con datos ficticios</h2>
+    <div class="ex">Para ver las pantallas llenas antes de activar: 14 participantes inventados, sus números, la lista, el sorteo (se puede pulsar), el acta y la medición. No toca ventas, inventario, caja ni clientes reales.</div>
+    <form method="post" action="{% url 'campanas:demostracion' %}" class="enlinea">
+      {% csrf_token %}
+      {% if demo %}<a class="btn azul" href="{% url 'campanas:detalle' demo.pk %}">Abrir la demostración</a>{% endif %}
+      <button class="btn gris" type="submit" name="accion" value="crear">{% if demo %}Volver a crearla desde cero{% else %}Crear la demostración{% endif %}</button>
+      {% if demo %}<button class="btn gris" type="submit" name="accion" value="borrar" onclick="return confirm('¿Borrar la demostración?')">Borrarla</button>{% endif %}
+    </form>
+  </div>
+</div>
+{% endblock %}

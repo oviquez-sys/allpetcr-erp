@@ -248,6 +248,7 @@ def bytes_tiquete(factura, ancho: int = 48, pie: str = "", logo: bytes = b"") ->
     if factura.descuento > 0 and any(getattr(l, "promocion_id", None) for l in factura.lineas.all()):
         partes += [_texto(_dos_columnas("Usted ahorró", _monto(factura.descuento), ancho)), SALTO]
     partes += _condiciones(factura, ancho)
+    partes += _numeros_del_sorteo(factura, ancho)
 
     # Cómo pagó (26/09/2026, TIQ-04): cada medio de un pago mixto, y el
     # efectivo recibido con su vuelto. Es lo primero que se mira cuando un
@@ -271,6 +272,26 @@ def bytes_tiquete(factura, ancho: int = 48, pie: str = "", logo: bytes = b"") ->
             partes += [_texto(renglon), SALTO]
     partes += [SALTO, SALTO, CORTAR]
     return b"".join(partes)
+
+
+def _numeros_del_sorteo(factura, ancho) -> list:
+    """Campaña con sorteo (16/11/2026): cuántos números dio ESTA compra
+    —habituales y bono, por separado— y cuántos lleva el cliente. Es lo que
+    se lleva en la mano para saber con cuántas oportunidades entra."""
+    n = getattr(factura, "numeros_del_sorteo", None)
+    if not n:
+        return []
+    partes = [_texto("-" * ancho), SALTO, NEGRITA_ON, _texto(n["campana"].upper()[:ancho]), NEGRITA_OFF, SALTO,
+              _texto("Números para el sorteo por esta compra"[:ancho]), SALTO,
+              _texto(_dos_columnas("  Por la compra", str(n["habituales"]), ancho)), SALTO]
+    if n["bono"]:
+        partes += [_texto(_dos_columnas(f"  Bono (supera {_monto(n['umbral'])})", f"+{n['bono']}", ancho)), SALTO]
+    if n["revertidos"]:
+        partes += [_texto(_dos_columnas("  Quitados por devolución", f"-{n['revertidos']}", ancho)), SALTO]
+    partes += [NEGRITA_ON, _texto(_dos_columnas("  Total de esta compra", str(n["total"]), ancho)), NEGRITA_OFF, SALTO,
+               _texto(_dos_columnas("Lleva en total", str(n["lleva"]), ancho)), SALTO,
+               _texto(f"Sorteo: {n['sorteo']:%d/%m/%Y}"), SALTO]
+    return partes
 
 
 def _condiciones(factura, ancho) -> list:

@@ -1,0 +1,105 @@
+{% if sorteo and sorteo.realizado %}
+  {% if titular %}
+  <div class="ganador">
+    <div class="t">{% if titular.estado == 'ENT' %}Premio entregado a{% else %}{{ titular.lugar }} · tiene el premio{% endif %}</div>
+    <div class="n">{{ titular.participante.cliente.nombre }}</div>
+    <div class="d">Número {{ titular.numero }} de {{ sorteo.total_numeros }} · {{ titular.participante.cliente.telefono|default:titular.participante.cliente.email }}
+      {% if titular.estado == 'TIT' and titular.vence_en %} · reclama hasta el {{ titular.vence_en|date:"d/m/Y h:i a" }}{% endif %}</div>
+  </div>
+  {% else %}
+  <div class="nota roja"><b>Premio desierto.</b> Nadie lo reclamó a tiempo y no quedan suplentes. {{ campana.procedimiento_sin_respuesta }}</div>
+  {% endif %}
+  <div class="dos">
+    <div class="card">
+      <h2>Resultado guardado</h2>
+      <dl class="def">
+        <dt>Fecha y hora</dt><dd>{{ sorteo.realizado_en|date:"d/m/Y h:i:s a" }} (hora de Costa Rica)</dd>
+        <dt>Responsable</dt><dd>{{ sorteo.realizado_por.get_full_name|default:sorteo.realizado_por.username }}</dd>
+        <dt>Número que salió</dt><dd><b>{{ sorteo.numero_ganador }}</b> de {{ sorteo.total_numeros }}</dd>
+        <dt>Lista usada</dt><dd>{{ sorteo.total_participantes }} participantes · congelada el {{ sorteo.congelada_en|date:"d/m/Y h:i a" }}</dd>
+        <dt>Huella de la lista</dt><dd style="font-family:ui-monospace,monospace;font-size:11.5px;word-break:break-all">{{ sorteo.huella }}</dd>
+        <dt>Método</dt><dd style="font-size:13px">{{ sorteo.metodo }}</dd>
+      </dl>
+      <div class="enlinea" style="margin-top:14px">
+        <a class="btn azul" href="{% url 'campanas:acta' campana.pk %}" target="_blank">Acta para imprimir o guardar en PDF</a>
+        <a class="btn gris" href="{% url 'campanas:lista_csv' campana.pk %}">Lista usada (Excel)</a>
+      </div>
+      <form method="post" action="{% url 'campanas:accion' campana.pk %}" style="margin-top:14px">
+        {% csrf_token %}<input type="hidden" name="accion" value="sortear"><input type="hidden" name="t" value="sorteo">
+        <button class="btn gris" type="submit">Volver a pulsar «Sortear»</button>
+        <span class="gris" style="font-size:12.5px">No sortea de nuevo: muestra este mismo resultado.</span>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Ganador y suplentes</h2>
+      <table class="mt">
+        {% for a in adjudicaciones %}
+        <tr><td><b>{{ a.lugar }}</b><div class="prod">número {{ a.numero }}</div></td>
+            <td>{{ a.participante.cliente.nombre }}<div class="prod">{{ a.participante.cliente.telefono }}</div></td>
+            <td><span class="chip {% if a.estado == 'ENT' %}ok{% elif a.estado == 'TIT' %}oro{% else %}no{% endif %}">{{ a.get_estado_display }}</span>{% if a.nota %}<div class="prod">{{ a.nota }}</div>{% endif %}</td></tr>
+        {% endfor %}
+      </table>
+      {% if not campana.suplentes %}<div class="ex" style="margin:10px 0 0">Las bases no prevén suplentes: no se sorteó ninguno.</div>{% endif %}
+      {% if titular and titular.estado == 'TIT' %}
+      <form method="post" action="{% url 'campanas:accion' campana.pk %}" style="margin-top:14px" onsubmit="return confirm('¿Anotar que no respondió? Pierde el derecho al premio.')">
+        {% csrf_token %}<input type="hidden" name="accion" value="no_respondio"><input type="hidden" name="t" value="sorteo">
+        <div class="f"><label for="nr">Si no respondió en el plazo: qué se hizo para avisarle</label>
+          <input id="nr" type="text" name="nota" maxlength="180" placeholder="Ej.: 3 mensajes y 2 llamadas entre el 24 y el 29/12"></div>
+        <button class="btn gris" type="submit">No respondió: pasar al siguiente</button>
+        <div class="ex" style="margin:8px 0 0">Se puede anotar desde el {{ titular.vence_en|date:"d/m/Y h:i a" }} · la entrega se registra en <a href="?t=canasta">Canasta y entrega</a>.</div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+{% else %}
+  <div class="dos">
+    <div class="card">
+      <h2>{% if sorteo %}Lista congelada{% else %}Paso 1 · Congelar la lista{% endif %}</h2>
+      {% if sorteo %}
+        <div class="kpis"><div class="kpi">Participantes<b>{{ sorteo.total_participantes }}</b></div><div class="kpi">Números<b>{{ sorteo.total_numeros }}</b></div></div>
+        <div class="ex">Congelada el {{ sorteo.congelada_en|date:"d/m/Y h:i a" }} por {{ sorteo.congelada_por.get_full_name|default:sorteo.congelada_por.username }}. Huella: <span style="font-family:ui-monospace,monospace;font-size:11px;word-break:break-all">{{ sorteo.huella }}</span></div>
+        {% if cambio %}<div class="nota roja"><b>La lista cambió después de congelarla</b> (hubo una devolución o una anulación). Volvé a congelarla para sortear con la lista correcta; la versión anterior queda anotada.</div>{% endif %}
+        <div class="enlinea"><a class="btn gris" href="{% url 'campanas:lista_csv' campana.pk %}">Bajar la lista (Excel)</a>
+          <a class="btn gris" href="{% url 'campanas:acta' campana.pk %}" target="_blank">Constancia de la lista</a></div>
+      {% else %}
+        <div class="ex">Al cierre ({{ campana.cierre|date:"d/m/Y h:i a" }}) la lista se deja fija: cada participante con sus números seguidos. Lo que pase después ya no entra.</div>
+      {% endif %}
+      {% if puede_sortear %}
+      <form method="post" action="{% url 'campanas:accion' campana.pk %}" style="margin-top:12px">
+        {% csrf_token %}<input type="hidden" name="accion" value="congelar"><input type="hidden" name="t" value="sorteo">
+        <button class="btn {% if sorteo and not cambio %}gris{% else %}azul{% endif %} grande" type="submit" {% if ahora < campana.cierre %}disabled{% endif %}>{% if sorteo %}Volver a congelar{% else %}Congelar la lista{% endif %}</button>
+        {% if ahora < campana.cierre %}<div class="ex" style="margin:8px 0 0">Se habilita al cierre de inscripciones.</div>{% endif %}
+      </form>
+      {% else %}<div class="nota">Tu usuario no tiene el permiso «Puede congelar la lista y realizar el sorteo». Lo da un administrador en Usuarios.</div>{% endif %}
+    </div>
+    <div class="card">
+      <h2>Paso 2 · Sortear</h2>
+      <div class="ex">Se elige un número al azar entre 1 y el total. <b>Todos los números tienen la misma probabilidad</b>: quien tiene más números tiene más oportunidades, en proporción. {% if campana.suplentes %}Después se sortean {{ campana.suplentes }} suplente{{ campana.suplentes|pluralize }} entre las demás personas.{% else %}Las bases no prevén suplentes.{% endif %} Queda guardado quién lo hizo, cuándo, con qué lista y qué salió; pulsar otra vez solo muestra el resultado.</div>
+      {% if puede_sortear %}
+      <form method="post" action="{% url 'campanas:accion' campana.pk %}" onsubmit="return confirm('¿Realizar el sorteo ahora? No se puede repetir.')">
+        {% csrf_token %}<input type="hidden" name="accion" value="sortear"><input type="hidden" name="t" value="sorteo">
+        <button class="btn azul grande" type="submit" {% if ahora < campana.sorteo_en or cambio %}disabled{% endif %}>🎲 Sortear</button>
+        {% if ahora < campana.sorteo_en %}<div class="ex" style="margin:8px 0 0">Se habilita el {{ campana.sorteo_en|date:"d/m/Y" }} a las {{ campana.sorteo_en|date:"h:i a" }} (hora de Costa Rica).</div>{% endif %}
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% if lista_previa is not None %}
+  <div class="card">
+    <h2>Así va la lista hoy <span class="gris" style="font-weight:400;font-size:12.5px">({{ lista_previa|length }} participantes · {{ total_previo }} números; todavía puede cambiar)</span></h2>
+    <div class="tabla-scroll"><table class="mt">
+      <tr><th>Participante</th><th>Teléfono</th><th class="n">Números</th><th class="n">Del</th><th class="n">Al</th></tr>
+      {% for f in lista_previa %}<tr><td>{{ f.nombre }}</td><td class="gris">{{ f.telefono }}</td><td class="n"><b>{{ f.numeros }}</b></td><td class="n">{{ f.desde }}</td><td class="n">{{ f.hasta }}</td></tr>
+      {% empty %}<tr><td colspan="5" class="vacio">Nadie tiene números todavía.</td></tr>{% endfor %}
+    </table></div>
+  </div>
+  {% elif sorteo %}
+  <div class="card">
+    <h2>La lista congelada</h2>
+    <div class="tabla-scroll"><table class="mt">
+      <tr><th>Participante</th><th>Teléfono</th><th class="n">Números</th><th class="n">Del</th><th class="n">Al</th></tr>
+      {% for f in sorteo.lista %}<tr><td>{{ f.nombre }}</td><td class="gris">{{ f.telefono }}</td><td class="n"><b>{{ f.numeros }}</b></td><td class="n">{{ f.desde }}</td><td class="n">{{ f.hasta }}</td></tr>{% endfor %}
+    </table></div>
+  </div>
+  {% endif %}
+{% endif %}

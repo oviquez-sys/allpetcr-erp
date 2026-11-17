@@ -446,6 +446,20 @@ td.tot{font-weight:600}
         </div>
       </div>
 
+      {% with n=f.numeros_del_sorteo %}{% if n %}
+      <div class="panel-bloque">
+        <div class="panel-titulo">{{ n.campana }}</div>
+        <div class="resumen-panel">
+          <div class="fila"><span class="l">Números por la compra</span><span class="v">{{ n.habituales }}</span></div>
+          {% if n.bono %}<div class="fila"><span class="l">Bono (supera ₡{{ n.umbral|crc:0 }})</span><span class="v">+{{ n.bono }}</span></div>{% endif %}
+          {% if n.revertidos %}<div class="fila descuento"><span class="l">Quitados por devolución</span><span class="v">−{{ n.revertidos }}</span></div>{% endif %}
+          <hr>
+          <div class="fila"><span class="l">Total de esta compra</span><span class="v">{{ n.total }}</span></div>
+          <div class="fila"><span class="l">Lleva en total</span><span class="v">{{ n.lleva }} · sorteo {{ n.sorteo|date:"d/m/Y" }}</span></div>
+        </div>
+      </div>
+      {% endif %}{% endwith %}
+
       <div class="panel-bloque">
         <div class="panel-titulo">Pago</div>
         <div class="pago-panel">

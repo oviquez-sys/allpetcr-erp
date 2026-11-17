@@ -74,7 +74,31 @@ def pos(request):
         "como_nos_conocio": Cliente.ComoNosConocio.choices,
         "redondeo_maximo": int(services.REDONDEO_MAXIMO_GERENTE if es_gerente(request.user)
                                else services.REDONDEO_MAXIMO_CAJERO),
+        "campana": _campana_pos(empresa),
+        "pedidos_web_pendientes": _pedidos_web_pendientes(empresa).count(),
     })
+
+
+def _campana_pos(empresa):
+    """Lo que la caja necesita saber de la campaña vigente (16/11/2026), o
+    None. Las reglas siguen en campanas/reglas.py: esto es solo para pintar."""
+    from campanas import reglas
+    from manada.services import regalia_para_nuevos
+
+    c = reglas.vigente(empresa)
+    datos = {"bienvenida": regalia_para_nuevos(empresa) is not None}
+    if c is not None:
+        datos.update({
+            "nombre": c.nombre, "acepta": c.acepta(), "umbral": float(c.umbral_bono),
+            "minima": float(c.compra_minima), "por_compra": c.numeros_compra, "bono": c.numeros_bono,
+            "por_inscribirse": c.numeros_inscripcion, "sorteo": timezone.localtime(c.sorteo_en).strftime("%d/%m/%Y"),
+        })
+    return datos
+
+
+def _pedidos_web_pendientes(empresa):
+    from pedidos.por_confirmar import pendientes
+    return pendientes(empresa)
 
 
 def _filas_pos(queryset, con_tope=False):
@@ -310,11 +334,22 @@ def manada_rapido(request):
     if origen and not r.cliente.como_nos_conocio:
         r.cliente.como_nos_conocio = origen
         r.cliente.save(update_fields=["como_nos_conocio"])
+    # Campaña vigente (16/11/2026): si dijo que sí quiere participar, queda
+    # inscrito en este mismo paso; así la compra que está por cobrarse ya le
+    # da números. Es una casilla aparte de la de promociones.
+    if datos.get("campana") is True:
+        from campanas import reglas
+        from campanas.models import Participante
+        campana = reglas.que_acepta(sesion.sucursal.empresa)
+        if campana is not None:
+            reglas.inscribir(campana=campana, cliente=r.cliente, canal=Participante.Canal.TIENDA,
+                             usuario=request.user, cliente_nuevo=r.cliente_nuevo, miembro_nuevo=r.perfil_nuevo,
+                             origen_visita=r.cliente.get_como_nos_conocio_display() if r.cliente.como_nos_conocio else "")
     cupon = r.cupon
     return JsonResponse({
         "ok": True,
         "ya_era_miembro": not r.perfil_nuevo,
-        "cliente": _cliente_json(r.cliente),
+        "cliente": _cliente_json(r.cliente, con_historial=True),
         # En el mostrador sí se muestra el código aunque ya existiera: el
         # cliente está ahí en persona.
         "cupon": cupon.codigo if cupon is not None and cupon.estado == "DISPONIBLE" else "",
@@ -336,7 +371,92 @@ def _cliente_json(c, con_historial=False):
         from manada.historial import cantidad_de_compras
         datos["compras"] = cantidad_de_compras(c)
         datos["miembro"] = hasattr(c, "manada")
+        # Campaña vigente (16/11/2026): ¿ya participa? ¿cuántos números lleva?
+        from campanas.inscripcion import estado_de
+        datos["campana"] = estado_de(c)
     return datos
+
+
+@rol_requerido(CAJERO, GERENTE)
+def campana_cliente(request):
+    """¿El cliente elegido en la caja participa en la campaña vigente? Lo
+    pregunta el POS cada vez que cambia el cliente de la venta."""
+    from campanas.inscripcion import estado_de
+
+    sesion = sesion_abierta_de(request.user)
+    if sesion is None:
+        return JsonResponse({"ok": False, "error": "No tiene una caja abierta."}, status=400)
+    cliente = Cliente.objects.filter(pk=request.GET.get("cliente_id") or 0, activo=True,
+                                     empresa=sesion.sucursal.empresa).first()
+    if cliente is None:
+        return JsonResponse({"ok": False, "error": "Ese cliente no existe."}, status=404)
+    return JsonResponse({"ok": True, "id": cliente.pk, "nombre": cliente.nombre, **estado_de(cliente)})
+
+
+@rol_requerido(CAJERO, GERENTE)
+@require_POST
+def campana_inscribir(request):
+    """Inscribe en la campaña al cliente que ya está en la venta. Hace falta
+    que el cliente haya dicho que sí (`acepto`): el cajero se lo pregunta. El
+    permiso para publicidad viaja aparte (`promos`) y es opcional."""
+    from campanas.inscripcion import inscribir_cliente
+    from campanas.models import Participante
+
+    sesion = sesion_abierta_de(request.user)
+    if sesion is None:
+        return JsonResponse({"ok": False, "error": "No tiene una caja abierta."}, status=400)
+    try:
+        datos = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"ok": False, "error": "Datos inválidos."}, status=400)
+    if datos.get("acepto") is not True:
+        return JsonResponse({"ok": False, "error": "Pregúntele al cliente si quiere participar y marque la casilla."},
+                            status=400)
+    cliente = Cliente.objects.filter(pk=datos.get("cliente_id") or 0, activo=True,
+                                     empresa=sesion.sucursal.empresa).first()
+    if cliente is None:
+        return JsonResponse({"ok": False, "error": "Elija primero al cliente."}, status=400)
+    try:
+        r = inscribir_cliente(cliente=cliente, canal=Participante.Canal.TIENDA, usuario=request.user,
+                              acepta_promociones=datos.get("promos") is True)
+    except ValidationError as e:
+        return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)
+    return JsonResponse({"ok": True, "id": cliente.pk, "nombre": cliente.nombre, "participa": True,
+                         "numeros": r.numeros, "ya_participaba": not r.creada})
+
+
+@rol_requerido(CAJERO, GERENTE)
+def pedidos_web(request):
+    """Los pedidos del sitio que esperan cobro (WEB-12…), para cargarlos en
+    la venta con un toque. POST con `cancelar` descarta uno."""
+    from pedidos.models import PedidoPorConfirmar
+    from pedidos.por_confirmar import cancelar
+
+    sesion = sesion_abierta_de(request.user)
+    if sesion is None:
+        return JsonResponse({"ok": False, "error": "No tiene una caja abierta."}, status=400)
+    empresa = sesion.sucursal.empresa
+    if request.method == "POST":
+        try:
+            datos = json.loads(request.body)
+            pedido = PedidoPorConfirmar.objects.get(empresa=empresa, numero=str(datos.get("cancelar") or ""))
+            cancelar(pedido, motivo=str(datos.get("motivo") or "Cancelado en caja"))
+        except (json.JSONDecodeError, PedidoPorConfirmar.DoesNotExist):
+            return JsonResponse({"ok": False, "error": "Ese pedido no existe."}, status=400)
+        except ValidationError as e:
+            return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)
+    filas = []
+    for p in _pedidos_web_pendientes(empresa)[:40]:
+        filas.append({
+            "numero": p.numero, "nombre": p.cliente_nombre, "telefono": p.cliente_telefono,
+            "cliente": _cliente_json(p.cliente, con_historial=True) if p.cliente_id else None,
+            "entrega": p.entrega, "entrega_texto": p.get_entrega_display(),
+            "zona": ", ".join(x for x in (p.canton, p.distrito) if x), "senas": p.senas, "nota": p.nota,
+            "subtotal": float(p.subtotal_productos), "cuando": timezone.localtime(p.creado_en).strftime("%d/%m %I:%M %p"),
+            "lineas": [{"producto_id": l.get("producto_id"), "sku": l.get("sku"), "nombre": l.get("nombre"),
+                        "cantidad": l.get("cantidad")} for l in p.lineas],
+        })
+    return JsonResponse({"ok": True, "pedidos": filas})
 
 
 @rol_requerido(CAJERO, GERENTE)
@@ -412,6 +532,8 @@ def vender(request):
             cupon=(str(datos.get("cupon") or "").strip()[:30] or None),
             sin_cliente=str(datos.get("sin_cliente") or "")[:2],
             redondeo=datos.get("redondeo") or 0,
+            pedido_web=(str(datos.get("pedido_web") or "").strip()[:20] or None),
+            envio_costo=datos.get("envio_costo") or 0,
         )
     except ValidationError as e:
         return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)
@@ -492,7 +614,21 @@ def _respuesta_venta(factura, *, impreso=False, error_impresion="", trabajo=None
         "trabajo_url": reverse("impresion:estado_trabajo", args=[trabajo.pk]) if trabajo else "",
         "error_impresion": error_impresion,
         "agotados": [] if repetida else _agotados_en_la_venta(factura),
+        "campana": _numeros_de_la_venta(factura),
+        "pedido_web": getattr(factura, "pedido_web", None).numero if hasattr(factura, "pedido_web") else "",
     })
+
+
+def _numeros_de_la_venta(factura):
+    """El desglose que la caja muestra al terminar de cobrar: habituales,
+    bono, total y cuántos lleva el cliente. None si la venta no dio números."""
+    from campanas.reglas import saldo
+
+    n = getattr(factura, "numeros_campana", None) if hasattr(factura, "numeros_campana") else None
+    if n is None:
+        return None
+    return {"nombre": n.campana.nombre, "habituales": n.habituales, "bono": n.bono, "total": n.total,
+            "monto": float(n.monto_evaluado), "lleva": saldo(n.participante)}
 
 
 def _agotados_en_la_venta(factura):

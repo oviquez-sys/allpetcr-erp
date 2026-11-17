@@ -1,0 +1,63 @@
+<div class="kpis">
+  <div class="kpi">Participantes únicos<b>{{ m.participantes }}</b></div>
+  <div class="kpi">Nuevos miembros de La manada<b>{{ m.nuevos_miembros }}</b><small>{{ m.clientes_nuevos }} no existían como clientes</small></div>
+  <div class="kpi">Compraron<b>{{ m.con_compra }}</b><small>participantes con al menos una compra</small></div>
+  <div class="kpi">Primeras compras<b>{{ m.primeras_compras }}</b><small>nunca habían comprado</small></div>
+  {% for r in m.recompra %}
+  <div class="kpi">Recompra a {{ r.dias }} días<b>{% if r.pct is None %}—{% else %}{{ r.pct }} %{% endif %}</b><small>{{ r.volvieron }} de {{ r.evaluables }}{% if r.en_plazo %} · {{ r.en_plazo }} aún en plazo{% endif %}</small></div>
+  {% endfor %}
+</div>
+
+<div class="dos">
+  <div>
+    <div class="card">
+      <h2>Dónde se inscribieron</h2>
+      <table class="mt">{% for c in m.por_canal_inscripcion %}<tr><td>{{ c.nombre }}</td><td class="n"><b>{{ c.cantidad }}</b></td></tr>{% endfor %}</table>
+      <h2 style="margin-top:16px">De dónde llegó la visita</h2>
+      <div class="ex">Lo que se supo al inscribirse. Lo demás es «origen desconocido»: no se reparte ni se adivina.</div>
+      <table class="mt">{% for o in m.origenes %}<tr><td class="{% if o.nombre == 'origen desconocido' %}gris{% endif %}">{{ o.nombre }}</td><td class="n"><b>{{ o.cantidad }}</b></td></tr>{% empty %}<tr><td class="vacio">Sin inscritos.</td></tr>{% endfor %}</table>
+    </div>
+    <div class="card">
+      <h2>Números entregados</h2>
+      <table class="mt">
+        <tr><td>Por inscribirse</td><td class="n">{{ m.numeros.inscripcion }}</td></tr>
+        <tr><td>Habituales (1 por compra)</td><td class="n">{{ m.numeros.habituales }}</td></tr>
+        <tr><td>Promocionales (bono por superar ₡{{ campana.umbral_bono|crc:0 }})</td><td class="n">{{ m.numeros.bono }}</td></tr>
+        {% if m.numeros.revertidos %}<tr><td>Quitados por devoluciones o anulaciones</td><td class="n">− {{ m.numeros.revertidos }}</td></tr>{% endif %}
+        {% if m.numeros.ajustes %}<tr><td>Ajustes manuales</td><td class="n">{{ m.numeros.ajustes }}</td></tr>{% endif %}
+        <tr><td><b>Vigentes</b></td><td class="n"><b>{{ m.numeros.vigentes }}</b></td></tr>
+      </table>
+    </div>
+  </div>
+  <div>
+    <div class="card">
+      <h2>Compras de los participantes</h2>
+      <div class="ex">Las que dieron números (ya inscritos, dentro de la campaña), con lo devuelto restado.</div>
+      <table class="mt">
+        <tr><th>Canal de compra</th><th class="n">Ventas</th><th class="n">Monto</th><th class="n">Ganancia bruta</th></tr>
+        {% for c in m.por_canal_compra %}<tr><td>{{ c.nombre }}</td><td class="n">{{ c.cantidad }}</td><td class="n">₡{{ c.monto|crc:0 }}</td><td class="n">₡{{ c.margen|crc:0 }}</td></tr>{% endfor %}
+        <tr><td><b>Total</b></td><td></td><td class="n"><b>₡{{ m.ventas_monto|crc:0 }}</b></td><td class="n"><b>₡{{ m.ventas_margen|crc:0 }}</b></td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h2>Costo de la campaña</h2>
+      <table class="mt">
+        <tr><td>Impresión</td><td class="n">₡{{ m.costo_impresion|crc:0 }}</td></tr>
+        <tr><td>Reparto de tarjetas</td><td class="n">₡{{ m.costo_reparto|crc:0 }}</td></tr>
+        {% if m.otros_costos %}<tr><td>Otros</td><td class="n">₡{{ m.otros_costos|crc:0 }}</td></tr>{% endif %}
+        <tr><td>Envíos gratis ({{ m.envios_gratis }})</td><td class="n">₡{{ m.costo_envios|crc:0 }}</td></tr>
+        <tr><td>Canasta {% if m.costo_canasta_real %}(entregada){% else %}<span class="gris">(estimado: la versión más cara, al costo de hoy)</span>{% endif %}</td><td class="n">₡{{ m.costo_canasta|crc:0 }}</td></tr>
+        <tr><td><b>Total</b></td><td class="n"><b>₡{{ m.costo_total|crc:0 }}</b></td></tr>
+      </table>
+      <div class="kpis" style="margin:14px 0 0">
+        <div class="kpi">Costo por participante<b>{% if m.costo_por_participante is None %}—{% else %}₡{{ m.costo_por_participante|crc:0 }}{% endif %}</b></div>
+        <div class="kpi">Costo por cliente nuevo<b>{% if m.costo_por_cliente_nuevo is None %}—{% else %}₡{{ m.costo_por_cliente_nuevo|crc:0 }}{% endif %}</b><small>costo total / primeras compras</small></div>
+        <div class="kpi {% if m.margen_campana < 0 %}mal{% else %}bien{% endif %}">Margen de campaña<b>₡{{ m.margen_campana|crc:0 }}</b><small>ganancia bruta − costo total</small></div>
+      </div>
+      {% if not m.costo_impresion and not m.costo_reparto %}<div class="nota" style="margin:12px 0 0">Faltan los costos de impresión y reparto: anotalos en «{% if campana.estado == 'BOR' %}Editar{% else %}Costos y qué sigue{% endif %}» para que estos números sean reales.</div>{% endif %}
+    </div>
+    <div class="nota">
+      <b>Cómo leer esto.</b> La ganancia es de <i>todas</i> las compras de los participantes: parte de esa gente habría comprado igual sin la campaña, así que el margen de campaña es un techo, no la medición exacta de lo que la campaña trajo. La recompra solo se puede afirmar de quienes ya cumplieron el plazo.
+    </div>
+  </div>
+</div>
