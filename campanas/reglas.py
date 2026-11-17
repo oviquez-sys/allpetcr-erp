@@ -375,10 +375,16 @@ def activar(campana, usuario=None):
                               "Decidilas y corregí el texto antes de activar.")
     if Campana.objects.filter(empresa=campana.empresa, es_demo=False, estado=Campana.Estado.ACTIVA).exists():
         raise ValidationError("Ya hay otra campaña activa. Finalizala primero.")
+    ahora = timezone.now()
     campana.estado = Campana.Estado.ACTIVA
-    campana.activada_en = timezone.now()
+    campana.activada_en = ahora
     campana.activada_por = usuario
-    campana.save(update_fields=["estado", "activada_en", "activada_por"])
+    # Un borrador preparado días antes queda con un inicio ya pasado: la
+    # campaña empieza de verdad al activarla, y así lo dicen las bases
+    # («desde la fecha de inicio publicada») y la medición (primeras compras).
+    if campana.inicio < ahora:
+        campana.inicio = ahora
+    campana.save(update_fields=["estado", "activada_en", "activada_por", "inicio"])
     return campana
 
 

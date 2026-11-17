@@ -10,7 +10,7 @@ Usalo en tu primera compra: mostralo en la caja de la tienda, o escribilo en «C
 Tu peludo también es parte de la manada. Contanos quién es y subí su foto:
 {{ url_mascotas }}
 {% endif %}
-Te esperamos en la tienda: de la entrada principal de la UNA, 100 m oeste, Heredia.
+Te esperamos en la tienda: {{ direccion_tienda }}.
 WhatsApp: 8856-2992 · {{ url_sitio }}
 
 Recibiste este correo porque te registraste en la manada AllPetcr.com.

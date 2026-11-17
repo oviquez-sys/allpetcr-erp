@@ -1,13 +1,19 @@
 """Valores de partida para una campaña nueva y el borrador de sus bases.
 
-Nada de esto se guarda solo: llena el formulario para que Oscar lo revise,
-lo corrija y lo guarde. Lo que es decisión del negocio y nadie ha tomado va
-marcado «[POR DEFINIR]», y la campaña no se deja activar mientras quede uno:
-así no se publica una regla que nadie decidió.
+Llena el formulario de una campaña nueva para que Oscar lo revise. Lo que es
+decisión del negocio y nadie ha tomado va marcado «[POR DEFINIR]», y la
+campaña no se deja activar mientras quede uno: así no se publica una regla
+que nadie decidió.
+
+Navidad 2026: Oscar decidió los dos puntos abiertos el 17/11/2026 (quién no
+participa y que el nombre de quien gane se publica en redes) y la migración
+0002 deja la campaña creada en borrador con estas bases.
 """
 from datetime import datetime
 
 from django.utils import timezone
+
+from core.tienda import DIRECCION_TIENDA_COMPLETA
 
 POR_DEFINIR = "[POR DEFINIR"
 
@@ -38,11 +44,11 @@ def bases_borrador(empresa) -> str:
     cedula = getattr(empresa, "identificacion", "") or "[POR DEFINIR: cédula jurídica]"
     return f"""BASES DE LA CAMPAÑA «NAVIDAD ALLPET 2026»
 
-1. Organizador. AllPetcr.com (cédula jurídica {cedula}), tienda de Heredia centro.
+1. Organizador. AllPetcr.com (cédula jurídica {cedula}), tienda ubicada en {DIRECCION_TIENDA_COMPLETA}.
 
 2. Vigencia. Desde la fecha de inicio publicada hasta el 23 de diciembre de 2026 a las 11:59 p. m. (hora de Costa Rica). El sorteo es el 24 de diciembre de 2026 a las 12:00 m. d.
 
-3. Quién participa. Personas físicas mayores de edad [POR DEFINIR: ¿se excluye a dueños, personal y familiares directos?]. Una sola inscripción por persona.
+3. Quién participa. Personas físicas mayores de edad. No participan los dueños de AllPetcr.com (Oscar y Francisco); sus familiares sí pueden participar como cualquier cliente. Una sola inscripción por persona.
 
 4. Cómo participar. La inscripción es gratuita y no exige comprar: en www.allpetcr.com o en la tienda, con nombre y WhatsApp (o correo). Inscribirse no obliga a recibir publicidad: ese permiso se pide aparte.
 
@@ -59,13 +65,13 @@ def bases_borrador(empresa) -> str:
 
 7. Premio. Una canasta con 15 productos. Quien gane elige la versión para perro o para gato. No se cambia por dinero ni por otros productos.
 
-8. Aviso y reclamo. Se avisa a la persona ganadora por WhatsApp o correo [POR DEFINIR: ¿se publica el nombre en redes?]. Tiene 5 días naturales para reclamar el premio en la tienda con su cédula. Si no lo reclama, pierde el derecho y el premio pasa al suplente que sigue (se sortean 2 suplentes). Si no quedan suplentes, el premio se declara desierto.
+8. Aviso, publicación y reclamo. Se avisa a la persona ganadora por WhatsApp o correo, y su nombre se publica en las redes sociales de AllPetcr.com. Al participar, la persona autoriza que, si gana, su nombre se publique en esas redes. Tiene 5 días naturales para reclamar el premio en la tienda con su cédula. Si no lo reclama, pierde el derecho y el premio pasa al suplente que sigue (se sortean 2 suplentes). Si no quedan suplentes, el premio se declara desierto.
 
 9. Envío gratis. Durante la campaña y hasta el 24 de diciembre de 2026, los pedidos web que superen ₡20.000 en productos tienen envío gratis dentro de los distritos Heredia, Mercedes, San Francisco y Ulloa del cantón central de Heredia. Fuera de esa zona el envío se cotiza. El retiro en tienda no tiene costo y también gana números.
 
 10. Regalo de bienvenida. Mientras dure la campaña no se entregan cupones nuevos del 10 % de bienvenida de La manada. Los cupones entregados antes siguen valiendo en sus condiciones.
 
-11. Datos personales. Los datos se usan para administrar la campaña y la relación con el cliente, según la Ley 8968 y la política de privacidad de www.allpetcr.com/privacidad.
+11. Datos personales. Los datos se usan para administrar la campaña y la relación con el cliente, según la Ley 8968 y la política de privacidad de www.allpetcr.com/privacidad. Del ganador solo se publica el nombre: nunca su teléfono, correo ni cédula.
 
 12. Dudas y reclamos. servicioalcliente@allpetcr.com o WhatsApp 8856-2992.
 """

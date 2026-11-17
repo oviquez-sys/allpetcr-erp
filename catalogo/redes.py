@@ -47,6 +47,8 @@ from django.core.files import File
 from django.core.files.storage import default_storage
 from django.utils import timezone
 
+from core.tienda import DIRECCION_TIENDA_COMPLETA
+
 logger = logging.getLogger(__name__)
 
 RECURSOS = Path(__file__).resolve().parent / "redes_recursos"
@@ -58,7 +60,7 @@ GRIS = (91, 107, 128)
 LADO = 1080
 WHATSAPP = "8856-2992"
 WHATSAPP_URL = "https://wa.me/50688562992"
-DIRECCION = "Heredia, 100 m oeste de la entrada principal de la UNA"
+DIRECCION = DIRECCION_TIENDA_COMPLETA  # un solo lugar para la dirección (core/tienda.py, 17/11/2026)
 MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
          "septiembre", "octubre", "noviembre", "diciembre"]
 

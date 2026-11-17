@@ -752,6 +752,17 @@ es la fuente oficial de participantes, números y resultados.
 - Zonas: «cantón / distrito», sin tildes; «Heredia» sola incluye Varablanca,
   por eso la plantilla trae los 4 distritos cercanos.
 - Pruebas: `campanas/tests.py`, `campanas/test_integracion.py`.
+- **Bases decididas (17/11/2026)**: no participan los dueños (Oscar y
+  Francisco), sus familiares sí; el nombre de quien gane se publica en las redes
+  y al participar se autoriza. Migración `campanas/0002` deja la campaña
+  `navidad-2026` en BORRADOR con esas bases (o corrige un borrador con «[POR
+  DEFINIR]»); nunca la activa. `reglas.activar` mueve `inicio` al momento de
+  activar si el borrador traía uno pasado. Caja: el «sí» menciona la
+  publicación del nombre.
+- **Dirección pública** (17/11/2026): «25 m al norte, en diagonal a FarmaValue
+  Heredia», en `core/tienda.py` (catálogo PDF, correo de bienvenida, bases,
+  asistente). `core/test_direccion.py` falla si vuelve la vieja. La dirección
+  FISCAL de `Empresa` (factura electrónica) es otra y no se tocó.
 
 ## La manada AllPetcr.com — clientes por QR (13/10/2026)
 

@@ -428,3 +428,55 @@ class UnirClientes(ConCampana):
         unir_clientes(conservar=self.maria, absorber=otra, usuario=self.usuario)
         self.assertEqual(reglas.saldo(p1), 1 + 2)
         self.assertEqual(sum(f["numeros"] for f in sorteo.armar_lista(self.campana)), 3)
+
+
+class LaNavidadQuedaListaParaActivar(BaseVentas):
+    """17/11/2026: Oscar decidió los dos puntos abiertos de las bases y pidió
+    dejar la campaña lista para activar, sin activarla."""
+
+    def setUp(self):
+        super().setUp()
+        self.empresa.identificacion = "3-102-969361"
+        self.empresa.save()
+
+    def preparar(self):
+        import importlib
+        from django.apps import apps
+        importlib.import_module("campanas.migrations.0002_navidad_2026_en_borrador").preparar(apps, None)
+
+    def test_las_bases_ya_no_tienen_nada_por_definir(self):
+        from core.tienda import DIRECCION_TIENDA
+        from .plantillas import POR_DEFINIR, bases_borrador
+        bases = bases_borrador(self.empresa)
+        self.assertNotIn(POR_DEFINIR, bases)
+        self.assertIn("No participan los dueños de AllPetcr.com (Oscar y Francisco); sus familiares sí", bases)
+        self.assertIn("su nombre se publica en las redes sociales de AllPetcr.com", bases)
+        self.assertIn("Al participar, la persona autoriza", bases)
+        self.assertIn(DIRECCION_TIENDA, bases)
+
+    def test_la_migracion_la_deja_en_borrador_y_se_puede_activar(self):
+        self.preparar()
+        c = Campana.objects.get(slug="navidad-2026")
+        self.assertEqual(c.estado, Campana.Estado.BORRADOR)       # no la activa
+        self.assertIsNone(reglas.vigente(self.empresa))
+        Campana.objects.filter(pk=c.pk).update(inicio=timezone.now() - timedelta(days=3))
+        reglas.activar(c, self.usuario)
+        c.refresh_from_db()
+        self.assertEqual(c.estado, Campana.Estado.ACTIVA)
+        # El borrador se preparó días antes: empieza al activarse, no antes.
+        self.assertGreater(c.inicio, timezone.now() - timedelta(minutes=1))
+
+    def test_corrige_un_borrador_viejo_y_no_toca_una_ya_activa(self):
+        from .plantillas import bases_borrador
+        viejo = Campana.objects.create(
+            empresa=self.empresa, slug="navidad-2026", nombre="Navidad", inicio=timezone.now(),
+            cierre=timezone.now() + timedelta(days=30), sorteo_en=timezone.now() + timedelta(days=31),
+            bases="3. Quién participa [POR DEFINIR: algo]")
+        self.preparar()
+        viejo.refresh_from_db()
+        self.assertEqual(viejo.bases, bases_borrador(self.empresa))
+        Campana.objects.filter(pk=viejo.pk).update(estado=Campana.Estado.ACTIVA, bases="Lo que el cliente aceptó")
+        self.preparar()
+        viejo.refresh_from_db()
+        self.assertEqual(viejo.bases, "Lo que el cliente aceptó")
+        self.assertEqual(Campana.objects.count(), 1)

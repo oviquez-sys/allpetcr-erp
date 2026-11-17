@@ -483,7 +483,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
     <label for="manCorreo">Correo <span style="font-weight:400;color:var(--ink2)">(opcional)</span></label><input id="manCorreo" type="email" autocomplete="off">
     <label class="chk"><input type="checkbox" id="manAcepto"> El cliente aceptó que guardemos sus datos</label>
     <label class="chk"><input type="checkbox" id="manPromos"> Quiere recibir promociones por WhatsApp</label>
-    <label class="chk" id="manCampFila"{% if not campana.acepta %} hidden{% endif %}><input type="checkbox" id="manCamp"> 🎄 Quiere participar en el sorteo{% if campana.nombre %} de {{ campana.nombre }}{% endif %} (gratis)</label>
+    <label class="chk" id="manCampFila"{% if not campana.acepta %} hidden{% endif %}><input type="checkbox" id="manCamp"> 🎄 Quiere participar en el sorteo{% if campana.nombre %} de {{ campana.nombre }}{% endif %} (gratis; si gana, su nombre se publica en nuestras redes)</label>
     <label>¿Cómo nos conoció?</label>
     <div class="origen" data-origen="man">{% for v, e in como_nos_conocio %}<button type="button" data-v="{{ v }}">{{ e }}</button>{% endfor %}</div>
     <div class="err" id="manErr"></div>
@@ -511,7 +511,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
   <form method="dialog" id="frmCamp">
     <h2 id="tCamp">🎄 Inscribir en el sorteo</h2>
     <div class="sub" id="campSub"></div>
-    <label class="chk"><input type="checkbox" id="campAcepto"> El cliente dijo que sí quiere participar y acepta las bases</label>
+    <label class="chk"><input type="checkbox" id="campAcepto"> El cliente dijo que sí quiere participar y acepta las bases (si gana, su nombre se publica en nuestras redes)</label>
     <label class="chk"><input type="checkbox" id="campPromos"> Además quiere recibir promociones por WhatsApp <span style="font-weight:400;color:var(--ink2)">(aparte, opcional)</span></label>
     <div class="err" id="campErr"></div>
     <div class="acc"><button type="button" data-cerrar>No quiere: seguir la venta</button><button class="pri" id="campOk">Inscribir</button></div>
@@ -1684,7 +1684,7 @@ function abrirInscripcion(){
   const id = document.getElementById('cliente').value, e = campEstado[id];
   if (!id || !e) return;
   document.getElementById('campSub').textContent =
-    `Preguntale a ${e.nombre} si quiere participar en el sorteo de ${CAMP.nombre} (${CAMP.sorteo}). Es gratis y no lo obliga a recibir publicidad.`;
+    `Preguntale a ${e.nombre} si quiere participar en el sorteo de ${CAMP.nombre} (${CAMP.sorteo}). Es gratis y no lo obliga a recibir publicidad. Avisale que, si gana, su nombre se publica en las redes de AllPetcr.com.`;
   document.getElementById('campAcepto').checked = false;
   document.getElementById('campPromos').checked = false;
   document.getElementById('campErr').textContent = '';

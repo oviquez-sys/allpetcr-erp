@@ -10,6 +10,8 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 
+from core.tienda import DIRECCION_TIENDA_COMPLETA
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,6 +45,7 @@ def enviar_bienvenida(resultado) -> bool:
         "url_mascotas": (f"{url_sitio()}/manada/mascota?t={perfil.token_mascotas}"
                          if perfil.token_mascotas else ""),
         "url_sitio": url_sitio(),
+        "direccion_tienda": DIRECCION_TIENDA_COMPLETA,
     }
     asunto = ("Tu código de la manada AllPetcr.com" if contexto["cupon"]
               else "Bienvenido a la manada AllPetcr.com")
