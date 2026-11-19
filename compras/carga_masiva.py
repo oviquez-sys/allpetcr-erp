@@ -74,6 +74,15 @@ ganancia. Ahora:
   decida. El margen se calcula como en todo el ERP (`Producto.margen_pct`):
   sobre el precio SIN IVA y con el costo real (con el descuento y las
   unidades de regalo ya repartidos).
+
+COLUMNA «PUBLICAR EN WEB» (18/11/2026)
+-------------------------------------
+Pedido de Oscar: decidir al cargar la factura si el producto sale en la
+página web. Sí / No / vacío. Vacío: el nuevo se publica (salvo un NexGard,
+`catalogo.consultas.PREFIJOS_SIN_WEB`, que entra sin publicar y lo avisa) y
+el existente queda como está. A diferencia de marca o descripción, un «Sí» o
+«No» explícito SÍ cambia un producto existente: es la decisión que se vino a
+tomar, no un dato que se completa.
 """
 import csv
 import hashlib
@@ -94,6 +103,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from catalogo.completar import MASCOTAS, buscar_categoria, normalizar_mascota
+from catalogo.consultas import PREFIJOS_SIN_WEB
 from catalogo.models import TARIFA_GENERAL_IVA, Categoria, Producto
 from catalogo.services import cambiar_precio
 from core.imagenes import guardar_imagen_producto
@@ -122,6 +132,9 @@ COLUMNAS = [
                                    "En un producto existente solo se usa si no tenía descripción."),
     ("cabys", "CABYS", "Opcional. Código CABYS de Hacienda, 13 dígitos. "
                        "En un producto existente solo se usa si no tenía."),
+    ("publicar_web", "Publicar en web", "Opcional: Sí o No. «No» = se vende en caja y entra al inventario, "
+                                        "pero no aparece en la página web. Vacío: un producto nuevo se publica "
+                                        "(salvo los NexGard) y uno existente queda como está."),
 ]
 MAX_FILAS = 1000
 
@@ -156,6 +169,8 @@ _ALIAS.update({_plano(k): v for k, v in {
     "bonificacion": "bonificadas", "regalo": "bonificadas", "regalia": "bonificadas", "especie": "mascota",
     "sku": "sku", "codigo interno": "sku", "codigo (ref)": "sku", "ref": "sku",
     "descripcion publica": "descripcion", "descripcion web": "descripcion",
+    "publicar": "publicar_web", "publicar en la pagina web": "publicar_web", "web": "publicar_web",
+    "en la web": "publicar_web", "publicar en la web": "publicar_web",
 }.items()})
 # «Descripción» a secas siempre fue sinónimo de «Nombre» (mucha gente llama
 # así a la columna del producto en la factura). Con la columna nueva hay que
@@ -181,6 +196,9 @@ class Fila:
     sku: str = ""
     descripcion: str = ""
     cabys: str = ""
+    # «si» / «no» = lo que va a quedar; «» = un existente que no se toca.
+    publicar_web: str = ""
+    web_actual: str = ""      # cómo estaba el existente («si»/«no»)
     producto_id: int | None = None
     precio_actual: str = ""
     # Foto que llegó en el .zip: ruta en `cargas_pendientes/` y si se usa.
@@ -196,6 +214,17 @@ class Fila:
     @property
     def nuevo(self):
         return self.producto_id is None
+
+    @property
+    def nota_web(self):
+        """Lo que la vista previa dice de la web: solo cuando algo NO es lo
+        de siempre (un nuevo sin publicar, o un existente que cambia)."""
+        if self.nuevo:
+            return "No se publica en la página web" if self.publicar_web == "no" else ""
+        if self.publicar_web and self.publicar_web != self.web_actual:
+            return "Pasa a publicarse en la página web" if self.publicar_web == "si" else \
+                "Deja de publicarse en la página web"
+        return "No está publicado en la página web" if self.web_actual == "no" else ""
 
     @property
     def cambia_precio(self):
@@ -257,8 +286,8 @@ def plantilla_excel() -> bytes:
         celda.fill = PatternFill("solid", fgColor="0B3161")
     ws.append(["7501234567895", "Ejemplo: Arnés acolchado talla M (borre esta fila)", 12, 2500, 6900, 1,
                "Marca X", "Paseo › Arneses", "Talla M", "Perro", "",
-               "Arnés acolchado con cierre de clic y argolla metálica para la correa."])
-    for i, ancho in enumerate([18, 42, 10, 14, 15, 12, 16, 26, 16, 14, 14, 60, 16], start=1):
+               "Arnés acolchado con cierre de clic y argolla metálica para la correa.", "", "Sí"])
+    for i, ancho in enumerate([18, 42, 10, 14, 15, 12, 16, 26, 16, 14, 14, 60, 16, 16], start=1):
         ws.column_dimensions[chr(64 + i)].width = ancho
     ayuda = wb.create_sheet("Instrucciones")
     ayuda.append(["Columna", "Qué va"])
@@ -430,6 +459,19 @@ def _texto_con_renglones(valor) -> str:
     return "\n".join(r for r in renglones if r)
 
 
+def _si_no(texto):
+    """«Sí», «si», «S», «x», «1» → "si"; «No», «N», «0» → "no"; vacío → "";
+    cualquier otra cosa → None (error: mejor preguntar que adivinar)."""
+    plano = _plano(texto).strip(" .")
+    if not plano:
+        return ""
+    if plano in ("si", "s", "x", "1", "yes", "y", "verdadero", "true", "publicar"):
+        return "si"
+    if plano in ("no", "n", "0", "false", "falso"):
+        return "no"
+    return None
+
+
 def _numero(valor):
     """Número de lo que escriba la gente: «2.500», «2500,50», «₡2 500». None si no es número."""
     texto = _texto(valor).replace("₡", "").replace("¢", "").replace(" ", "")
@@ -517,6 +559,11 @@ def revisar(empresa, archivo, *, fotos=None, descuento=Decimal("0")) -> Revision
             continue   # la fila de ejemplo de la plantilla
         if f.cabys and not (f.cabys.isdigit() and len(f.cabys) == 13):
             f.errores.append(f"El CABYS «{f.cabys}» no es válido: son 13 dígitos.")
+        web = _si_no(celda("publicar_web"))
+        if web is None:
+            f.errores.append(f"«{celda('publicar_web')}» en «Publicar en web»: escriba Sí o No (o déjelo vacío).")
+            web = ""
+        f.publicar_web = web
 
         for clave in ("cantidad", "costo_unitario", "precio_venta", "bonificadas"):
             valor = _numero(celda(clave))
@@ -578,7 +625,17 @@ def revisar(empresa, archivo, *, fotos=None, descuento=Decimal("0")) -> Revision
             f.producto_id = producto.id
             f.nombre = producto.nombre
             f.precio_actual = str(producto.precio_venta)
+            f.web_actual = "si" if producto.publicar_web else "no"
         else:
+            if not f.publicar_web:
+                # Un NexGard nuevo (otra talla) no se publica solo: Oscar
+                # sacó todos de la web el 18/11/2026. Se dice en la fila.
+                if (f.sku or "").upper().startswith(PREFIJOS_SIN_WEB):
+                    f.publicar_web = "no"
+                    f.avisos.append("Es un NexGard: se carga SIN publicar en la página web, como los demás. "
+                                    "Para publicarlo ponga «Sí» en «Publicar en web».")
+                else:
+                    f.publicar_web = "si"
             if not f.nombre:
                 f.errores.append("No existe un producto con ese código: para crearlo escriba el nombre.")
             if not f.precio_venta:
@@ -699,6 +756,11 @@ def aplicar(*, empresa, filas: list[dict], proveedor, sucursal, forma_pago, fact
                 if getattr(f, campo) and not getattr(producto, campo):
                     setattr(producto, campo, getattr(f, campo))
                     campos.append(campo)
+            # «Publicar en web» SÍ cambia un existente: es una decisión que se
+            # toma al cargar la factura (vacío = no se toca).
+            if f.publicar_web and (f.publicar_web == "si") != producto.publicar_web:
+                producto.publicar_web = f.publicar_web == "si"
+                campos.append("publicar_web")
             if f.categoria_id and not producto.categoria_id:
                 producto.categoria_id = f.categoria_id
                 campos.append("categoria")
@@ -720,6 +782,7 @@ def aplicar(*, empresa, filas: list[dict], proveedor, sucursal, forma_pago, fact
                 empresa=empresa, sku=f.sku or _generar_sku(), nombre=f.nombre, codigo_barras=f.codigo_barras,
                 precio_venta=Decimal(f.precio_venta), marca=f.marca, presentacion=f.presentacion,
                 mascota=f.mascota, categoria_id=f.categoria_id, descripcion=f.descripcion, cabys=f.cabys,
+                publicar_web=f.publicar_web != "no",
             )
         if f.foto_se_pone and f.foto and not producto.imagen:
             con_foto.append((producto, f.foto))

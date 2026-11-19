@@ -45,6 +45,24 @@ def productos_visibles(empresa, *, incluir_agotados=False):
     return qs
 
 
+# NexGard y NexGard Spectra: Oscar los sacó del sitio el 18/11/2026 (se
+# venden solo en la tienda). La migración catalogo 0016 desmarcó los que
+# había; la carga desde Excel usa esto para que una talla nueva tampoco se
+# publique sola.
+PREFIJOS_SIN_WEB = ("VTM-NEXG", "VTM-NEXS")
+
+
+def publicados_en_web(empresa):
+    """Productos que el SITIO puede mostrar, vender o abrir (18/11/2026).
+
+    Activos, de la empresa y con «Publicar en la página web» marcado. Es la
+    única puerta: catálogo, búsqueda, vitrina, ficha, disponibilidad, carrito,
+    pedidos y beneficios de campaña de la API pasan por acá
+    (`api/test_publicar_web.py` lo verifica). La caja NO la usa: un producto
+    sin publicar se sigue vendiendo en la tienda."""
+    return Producto.objects.filter(activo=True, empresa=empresa, publicar_web=True)
+
+
 def pidio_agotados(request):
     """True si la pantalla debe mostrar también lo que no hay.
 

@@ -235,7 +235,9 @@ class AvisoDisponibilidadSerializer(serializers.ModelSerializer):
         fields = ["sku", "email"]
 
     def validate_sku(self, valor):
-        if not Producto.objects.filter(sku=valor, activo=True).exists():
+        from catalogo.consultas import publicados_en_web
+        from core.tenancy import empresa_actual
+        if not publicados_en_web(empresa_actual(self.context.get("request"))).filter(sku=valor).exists():
             raise serializers.ValidationError("No existe un producto activo con ese SKU.")
         return valor
 

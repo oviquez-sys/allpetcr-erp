@@ -144,6 +144,16 @@ class Producto(models.Model):
     stock_actual = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     stock_minimo = models.DecimalField(max_digits=12, decimal_places=2, default=2)
     activo = models.BooleanField(default=True)
+    # Publicar en la página web (18/11/2026, pedido de Oscar). Apagado, el
+    # producto se sigue vendiendo en caja y sigue en inventario, pero el
+    # sitio no lo ve: ni catálogo, ni búsqueda, ni vitrina, ni carrito, ni su
+    # página. El filtro vive en UN lugar, `catalogo.consultas.publicados_en_web`,
+    # y lo usan todas las puertas de la API al sitio. Primer uso: NexGard y
+    # NexGard Spectra (medicamentos que se venden con asesoría en la tienda).
+    publicar_web = models.BooleanField(
+        "publicar en la página web", default=True,
+        help_text="Desmarcado: se vende en caja y sigue en inventario, pero no aparece en el sitio web.",
+    )
     # Marcador de trabajo para la pantalla de Etiquetas (26/09/2026, a pedido
     # de Oscar): separar "ya tiene su etiqueta física puesta" de "todavía no",
     # mientras se pone al día con las cargas nuevas (ZeeDog, Gosbi). Se pone

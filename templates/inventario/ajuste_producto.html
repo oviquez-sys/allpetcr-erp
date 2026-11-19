@@ -61,7 +61,7 @@ body{background-color:#f5f5f7 !important}
   <div class="ap-card ap-head">
     {% foto_producto producto 96 %}
     <div class="info">
-      <div class="nombre">{{ producto.nombre }}{% if not producto.activo %} <span style="font-size:13px;color:#8a1f16">(inactivo)</span>{% endif %}</div>
+      <div class="nombre">{{ producto.nombre }}{% if not producto.activo %} <span style="font-size:13px;color:#8a1f16">(inactivo)</span>{% endif %}{% if not producto.publicar_web %} <span style="font-size:13px;color:#6e6e73">(no se publica en la web)</span>{% endif %}</div>
       <div class="cods">Código {{ producto.sku }}{% if producto.codigo_barras %} · Barras {{ producto.codigo_barras }}{% endif %}{% if producto.categoria %} · {{ producto.categoria.nombre }}{% endif %}
         · <a href="{% url 'inventario:abrir_producto' producto.pk %}">{% if producto.unidad_suelta_id %}📦 Abrir en {{ producto.unidades_por_empaque }} unidades ›{% else %}¿Viene en caja para vender suelto? ›{% endif %}</a></div>
       <div class="ap-kpis">
@@ -179,6 +179,7 @@ body{background-color:#f5f5f7 !important}
           <div class="ap-f"><label for="{{ f.cabys.id_for_label }}">{{ f.cabys.label }}</label>{{ f.cabys }}{% for e in f.cabys.errors %}<div class="err">{{ e }}</div>{% endfor %}<div class="help">13 dígitos. Si no estás seguro, dejalo como está.</div></div>
           <div class="ap-f check" style="align-self:center"><label>{{ f.activo }} {{ f.activo.label }}</label></div>
         </div>
+        <div class="ap-f check"><label>{{ f.publicar_web }} {{ f.publicar_web.label }}</label><div class="help">Desmarcado: se sigue vendiendo en caja y sigue en inventario, pero no aparece en www.allpetcr.com (ni en el catálogo, la búsqueda ni el carrito).</div></div>
         {% endwith %}
         <button class="ap-btn" type="submit">Guardar datos</button>
       </form>

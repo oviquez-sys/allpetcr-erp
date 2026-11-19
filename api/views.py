@@ -20,6 +20,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from catalogo.consultas import publicados_en_web
 from catalogo.models import Categoria, Producto
 from core.tenancy import empresa_actual
 from pedidos import services as pedidos_services
@@ -76,7 +77,9 @@ class CatalogoProductosView(generics.ListAPIView):
         empresa = empresa_actual(self.request)
         # categoria__padre y ficha_alimento: los usan las palabras de búsqueda
         # (`etiquetas`) sin una consulta extra por producto.
-        qs = (Producto.objects.filter(activo=True, empresa=empresa).exclude(precio_venta=0)
+        # Solo lo publicado en la web (18/11/2026): lo que no se publica no sale
+        # en el catálogo, la búsqueda ni la vitrina, que salen de esta lista.
+        qs = (publicados_en_web(empresa).exclude(precio_venta=0)
               .select_related("categoria__padre", "ficha_alimento"))
 
         parametros = self.request.query_params
@@ -112,7 +115,9 @@ class ProductoDetalleView(generics.RetrieveAPIView):
     lookup_field = "sku"
 
     def get_queryset(self):
-        return Producto.objects.filter(activo=True, empresa=empresa_actual(self.request)).select_related("ficha_alimento")
+        # Un producto sin publicar responde 404, igual que uno que no existe:
+        # el sitio no puede abrir su página.
+        return publicados_en_web(empresa_actual(self.request)).select_related("ficha_alimento")
 
 
 class DisponibilidadView(APIView):
@@ -122,7 +127,7 @@ class DisponibilidadView(APIView):
 
     def get(self, request, sku):
         try:
-            producto = Producto.objects.get(sku=sku, activo=True, empresa=empresa_actual(request))
+            producto = publicados_en_web(empresa_actual(request)).get(sku=sku)
         except Producto.DoesNotExist:
             raise NotFound("No existe un producto activo con ese SKU.")
         datos = DisponibilidadSerializer({"sku": producto.sku, "disponible": producto.stock_actual > 0}).data
@@ -140,7 +145,7 @@ class ReservarStockView(APIView):
         if not (sku and cantidad and token_carrito):
             raise ValidationError("Faltan sku, cantidad o token_carrito.")
         try:
-            producto = Producto.objects.get(sku=sku, activo=True, empresa=empresa_actual(request))
+            producto = publicados_en_web(empresa_actual(request)).get(sku=sku)
         except Producto.DoesNotExist:
             raise NotFound("No existe un producto activo con ese SKU.")
         try:
@@ -183,7 +188,7 @@ class PedidosView(APIView):
         lineas = []
         for linea in datos["lineas"]:
             try:
-                producto = Producto.objects.get(sku=linea["sku"], activo=True, empresa=empresa)
+                producto = publicados_en_web(empresa).get(sku=linea["sku"])
             except Producto.DoesNotExist:
                 raise ValidationError(f"No existe un producto activo con SKU {linea['sku']!r}.")
             lineas.append({"producto_id": producto.pk, "cantidad": linea["cantidad"]})

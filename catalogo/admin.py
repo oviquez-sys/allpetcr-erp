@@ -48,13 +48,13 @@ class ProductoForm(forms.ModelForm):
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
     form = ProductoForm
-    list_display = ("foto", "sku", "nombre", "categoria", "stock_fmt", "minimo_fmt", "costo_fmt", "precio_fmt", "margen_fmt", "markup_fmt", "activo", "destacado_home", "orden_home")
+    list_display = ("foto", "sku", "nombre", "categoria", "stock_fmt", "minimo_fmt", "costo_fmt", "precio_fmt", "margen_fmt", "markup_fmt", "activo", "publicar_web", "destacado_home", "orden_home")
     # "Destacado en home" y "Orden en home" (26/09/2026, a pedido de Oscar):
     # editables directo en la lista, sin entrar a cada ficha, porque armar la
     # vitrina de la portada es probar un orden, mirar el sitio, y ajustar —
     # entrar y salir del formulario de cada producto para eso sería
     # impracticable con más de dos o tres destacados.
-    list_editable = ("destacado_home", "orden_home")
+    list_editable = ("publicar_web", "destacado_home", "orden_home")
     # La ficha de alimento se elige buscando por nombre, no en un desplegable
     # de ~130 fórmulas.
     autocomplete_fields = ("ficha_alimento",)
@@ -88,7 +88,7 @@ class ProductoAdmin(admin.ModelAdmin):
         return f"{obj.markup_pct}%"
 
     list_display_links = ("sku", "nombre")
-    list_filter = ("categoria", "activo", "destacado_home", ("cabys", admin.EmptyFieldListFilter))
+    list_filter = ("categoria", "activo", "publicar_web", "destacado_home", ("cabys", admin.EmptyFieldListFilter))
     # CABYS en la búsqueda (21/09/2026): cuando el contador diga "cambien
     # todos los 3694000999900", se encuentran escribiendo el código.
     search_fields = ("sku", "nombre", "codigo_barras", "categoria_original", "cabys")

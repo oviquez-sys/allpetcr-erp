@@ -13,7 +13,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from catalogo.models import Producto
+from catalogo.consultas import publicados_en_web
 
 from .models import PedidoPorConfirmar
 
@@ -70,7 +70,8 @@ def lineas_con_precio(empresa, lineas):
             raise ValidationError(f"Cantidad inválida para {sku or 'un producto'}.")
         if cantidad <= 0 or cantidad != cantidad.to_integral_value() or cantidad > 999:
             raise ValidationError(f"Cantidad inválida para {sku or 'un producto'}.")
-        producto = Producto.objects.filter(empresa=empresa, sku=sku, activo=True).first()
+        # Solo lo publicado (18/11/2026): esto es el carrito del sitio.
+        producto = publicados_en_web(empresa).filter(sku=sku).first()
         if producto is None:
             raise ValidationError(f"No existe un producto activo con el código {sku!r}.")
         precio = precio_vigente(producto)

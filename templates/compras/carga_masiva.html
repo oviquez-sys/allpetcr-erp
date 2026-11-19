@@ -72,6 +72,7 @@ tr.ojo td{background:#fffbea}
             <td>{{ f.nombre|default:"—" }}{% if f.sku or f.codigo_barras %}<br><small>{% if f.sku %}Código {{ f.sku }}{% endif %}{% if f.sku and f.codigo_barras %} · {% endif %}{{ f.codigo_barras }}</small>{% endif %}
               {% if f.descripcion %}<br><small title="{{ f.descripcion }}">📝 {{ f.descripcion|truncatechars:70 }}</small>{% endif %}
               {% if f.cabys %}<br><small>CABYS {{ f.cabys }}</small>{% endif %}
+              {% if f.nota_web %}<br><small>🌐 {{ f.nota_web }}</small>{% endif %}
               {% for e in f.errores %}<div class="err">⛔ {{ e }}</div>{% endfor %}
               {% for a in f.avisos %}<div class="ojo-txt">⚠ {{ a }}</div>{% endfor %}</td>
             <td class="n">{{ f.cantidad|floatformat:"-2" }}</td>

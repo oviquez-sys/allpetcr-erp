@@ -43,7 +43,7 @@ body{background-color:#f5f5f7 !important}
          data-b="{{ p.nombre|lower }} {{ p.sku|lower }} {{ p.codigo_barras }} {{ p.marca|lower }} {{ p.descripcion|lower|truncatechars:400 }}"
          data-codigos="{{ p.sku|lower }} {{ p.codigo_barras }}">
         {% foto_producto p 44 %}
-        <span class="nm"><b>{{ p.nombre }}{% if not p.activo %}<span class="tag-in">inactivo</span>{% endif %}</b>
+        <span class="nm"><b>{{ p.nombre }}{% if not p.activo %}<span class="tag-in">inactivo</span>{% endif %}{% if not p.publicar_web %}<span class="tag-in">no en la web</span>{% endif %}</b>
           <small>{% if p.codigo_barras %}Barras {{ p.codigo_barras }} · {% endif %}{{ p.sku }}{% if p.marca %} · {{ p.marca }}{% endif %}{% if p.categoria %} · {{ p.categoria.nombre }}{% endif %}</small></span>
         <span class="st {% if p.stock_actual <= 0 %}cero{% endif %}"><small>hay</small> <b>{{ p.stock_actual|floatformat:"-2" }}</b></span>
         <span class="pr">₡{{ p.precio_venta|crc:0 }}</span>

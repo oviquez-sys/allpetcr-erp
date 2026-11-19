@@ -764,6 +764,28 @@ es la fuente oficial de participantes, números y resultados.
   asistente). `core/test_direccion.py` falla si vuelve la vieja. La dirección
   FISCAL de `Empresa` (factura electrónica) es otra y no se tocó.
 
+## Publicar en la página web (18/11/2026)
+
+Pedido de Oscar: casilla por producto «Publicar en la página web» (marcada por
+defecto). Desmarcada: se vende en caja y sigue en inventario, pero el sitio no
+la muestra, no la encuentra, no abre su página ni la deja en el carrito.
+- `Producto.publicar_web` (migración catalogo 0016, que desmarcó los NexGard y
+  NexGard Spectra: SKU `VTM-NEXG…` / `VTM-NEXS…`).
+- **Una sola puerta**: `catalogo.consultas.publicados_en_web(empresa)`. La usan
+  todas las vistas de la API (lista, ficha → 404, disponibilidad, reservar,
+  aviso, pedidos), `pedidos/por_confirmar.lineas_con_precio` (pedidos web y
+  beneficios de campaña), `exportar_catalogo_web` y el catálogo para redes
+  (`redes.productos`: el PDF y Facebook enlazan a la página del producto). La
+  caja NO la usa. Una puerta nueva del sitio tiene que pasar por ahí y sumarse
+  a `api/test_publicar_web.py`. El sitio (allpetcr-web) no cambió: el 404 de la
+  ficha ya da «no encontrado» y el checkout recalcula con la lista del ERP.
+- Se marca en Ajustes de inventario (y etiqueta «no en la web» en la lista) y
+  en el admin (columna editable y filtro).
+- Carga desde Excel: columna «Publicar en web» (Sí/No/vacío). Vacío = nuevo se
+  publica, salvo prefijo de `PREFIJOS_SIN_WEB` (entra sin publicar y se avisa);
+  existente queda igual. Sí/No explícito SÍ cambia un existente. Pruebas:
+  `compras/test_carga_publicar_web.py`.
+
 ## La manada AllPetcr.com — clientes por QR (13/10/2026)
 
 Pedido de Oscar: QR en la tienda → `www.allpetcr.com/manada?o=qr-tienda` →

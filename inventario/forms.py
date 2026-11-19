@@ -157,12 +157,13 @@ class DatosProductoForm(forms.ModelForm):
     class Meta:
         model = Producto
         fields = ["nombre", "codigo_barras", "marca", "categoria", "presentacion", "mascota",
-                  "descripcion", "peso_valor", "peso_unidad", "stock_minimo", "cabys", "activo"]
+                  "descripcion", "peso_valor", "peso_unidad", "stock_minimo", "cabys", "activo", "publicar_web"]
         labels = {
             "codigo_barras": "Código de barras", "presentacion": "Presentación",
             "descripcion": "Descripción (la ve el cliente en el sitio)", "peso_valor": "Contenido",
             "peso_unidad": "Unidad", "stock_minimo": "Existencia mínima", "cabys": "Código CABYS",
             "activo": "Activo (se vende y aparece en el sitio)", "categoria": "Categoría",
+            "publicar_web": "Publicar en la página web",
         }
         widgets = {"descripcion": forms.Textarea(attrs={"rows": 5})}
 

@@ -100,7 +100,9 @@ class Command(BaseCommand):
             )
         raiz_web = destino.parent
 
-        activos = Producto.objects.filter(empresa=empresa, activo=True)
+        # Lo mismo que publica la API (18/11/2026): sin «Publicar en la web», no sale.
+        from catalogo.consultas import publicados_en_web
+        activos = publicados_en_web(empresa)
         productos = activos.select_related("categoria")
         if not opciones["incluir_sin_precio"]:
             productos = productos.exclude(precio_venta=0)

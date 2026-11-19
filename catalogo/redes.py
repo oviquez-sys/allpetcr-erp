@@ -102,7 +102,9 @@ def productos(empresa, *, solo_existencia=True, categoria_id=None, solo_ofertas=
     from .models import Producto
     from .promociones import oferta_de, vigentes
 
-    qs = Producto.objects.filter(empresa=empresa, activo=True, precio_venta__gt=0) \
+    # Solo lo publicado en la web (18/11/2026): el PDF lleva un QR y Facebook
+    # un enlace a la página del producto, que para uno sin publicar da 404.
+    qs = Producto.objects.filter(empresa=empresa, activo=True, publicar_web=True, precio_venta__gt=0) \
         .select_related("categoria__padre", "empresa", "ficha_alimento")
     if solo_existencia:
         qs = qs.filter(stock_actual__gt=0)
