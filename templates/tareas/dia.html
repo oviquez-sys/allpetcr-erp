@@ -1,0 +1,167 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}Tareas{% endblock %}
+{% block seccion %}Tareas{% endblock %}
+{% block breadcrumbs %}<div class="ta-migas"><a href="/">Inicio</a> › Tareas</div>{% endblock %}
+
+{% block extrahead %}{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/tareas.css' %}">
+<script src="{% static 'js/tareas.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+{% comment %}
+Tareas del día (23/11/2026). Pensada primero para el celular: una columna,
+el círculo grande para marcar y el detalle a un toque. Lo que se cuenta
+(franja de días, semana) lo calcula tareas/servicios.py.
+{% endcomment %}
+<div class="ta">
+{% if sin_empresa %}
+  <h1>Tareas</h1>
+  <p class="ta-vacio">Todavía no hay empresa configurada.</p>
+{% else %}
+  <header class="ta-cab">
+    <div class="ta-cab-txt">
+      <p class="ta-ceja">{{ relativo }}</p>
+      <h1>{{ fecha|date:"l j \d\e F"|capfirst }}</h1>
+      {% if semana or dia_plan.etiqueta or dia_plan.tienda_cerrada %}
+      <p class="ta-semana">
+        {% if semana %}<span>{{ semana.nombre }} · {{ semana.titulo }}</span>{% endif %}
+        {% if dia_plan.etiqueta %}<span class="ta-pill">{{ dia_plan.etiqueta }}</span>{% endif %}
+        {% if dia_plan.tienda_cerrada %}<span class="ta-pill">Tienda cerrada</span>{% endif %}
+      </p>
+      {% endif %}
+    </div>
+    {% if cuenta_regresiva %}<span class="ta-cuenta">{{ cuenta_regresiva }}</span>{% endif %}
+  </header>
+
+  <nav class="ta-franja" aria-label="Días">
+    {% for d in franja %}
+      {% if d.nuevo_mes %}<span class="ta-mes" aria-hidden="true">{{ d.fecha|date:"M" }}</span>{% endif %}
+      <a class="ta-dia{% if d.elegida %} elegida{% endif %}{% if d.hoy %} es-hoy{% endif %}{% if d.cerrada %} cerrada{% endif %}"
+         href="?fecha={{ d.fecha|date:'Y-m-d' }}{% if persona %}&amp;quien={{ persona }}{% endif %}"
+         {% if d.elegida %}aria-current="page"{% endif %}
+         aria-label="{{ d.fecha|date:'l j \d\e F'|capfirst }}{% if d.total %}: {{ d.hechas }} de {{ d.total }} hechas{% endif %}">
+        <span class="ta-dia-d">{{ d.fecha|date:"D" }}</span>
+        <span class="ta-dia-n">{{ d.fecha|date:"j" }}</span>
+        <span class="ta-mini"><i style="width:{{ d.pct }}%"></i></span>
+      </a>
+    {% endfor %}
+  </nav>
+
+  <div class="ta-control">
+    <a class="ta-nav" href="?fecha={{ anterior|date:'Y-m-d' }}{% if persona %}&amp;quien={{ persona }}{% endif %}" aria-label="Día anterior">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <div class="ta-avance">
+      <p id="ta-avance-texto">{% if persona %}{% for v, n in personas %}{% if v == persona %}{{ n }}: {% endif %}{% endfor %}{% endif %}<b>{{ total.hechas }} de {{ total.total }}</b> hecha{{ total.total|pluralize }}{% if total.no %} · {{ total.no }} {% if total.no == 1 %}no se hizo{% else %}no se hicieron{% endif %}{% endif %}</p>
+      <div class="ta-barra" aria-hidden="true"><i id="ta-bar-ok" class="ok" style="width:{{ pct_hechas }}%"></i><i id="ta-bar-no" class="no" style="width:{{ pct_no }}%"></i></div>
+    </div>
+    <a class="ta-nav" href="?fecha={{ siguiente|date:'Y-m-d' }}{% if persona %}&amp;quien={{ persona }}{% endif %}" aria-label="Día siguiente">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></a>
+  </div>
+
+  <div class="ta-filtros">
+    <div class="ta-chips" role="group" aria-label="Ver las tareas de">
+      <a href="?fecha={{ fecha|date:'Y-m-d' }}" class="{% if not persona %}on{% endif %}"{% if not persona %} aria-current="true"{% endif %}>Todos</a>
+      {% for valor, nombre in personas %}
+      <a href="?fecha={{ fecha|date:'Y-m-d' }}&amp;quien={{ valor }}" class="{% if persona == valor %}on{% endif %}"{% if persona == valor %} aria-current="true"{% endif %}>{{ nombre }}</a>
+      {% endfor %}
+    </div>
+    {% if fecha != hoy %}<a class="ta-ir-hoy" href="?{% if persona %}quien={{ persona }}{% endif %}">Ir a hoy</a>{% endif %}
+  </div>
+
+  {% if dia_plan.nota %}<p class="ta-nota-dia">{{ dia_plan.nota }}</p>{% endif %}
+
+  {% if pendientes %}
+  <section class="ta-sec ta-sec-pend">
+    <div class="ta-sec-cab"><h2>Quedaron pendientes</h2><span>{{ pendientes|length }}</span></div>
+    <p class="ta-sec-nota">De días anteriores y nadie las marcó. Márquenlas como hechas o «No se hizo».</p>
+    <ul class="ta-lista">
+      {% for t in pendientes|slice:":3" %}{% include "tareas/_tarea.html" with mostrar_fecha=True %}{% endfor %}
+    </ul>
+    {% if pendientes|length > 3 %}
+    <details class="ta-mas">
+      <summary>Ver las otras {{ pendientes|length|add:"-3" }}</summary>
+      <ul class="ta-lista">
+        {% for t in pendientes|slice:"3:" %}{% include "tareas/_tarea.html" with mostrar_fecha=True %}{% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <section class="ta-sec">
+    <div class="ta-sec-cab"><h2>Tareas del día</h2>{% if del_dia %}<span>{{ del_dia|length }}</span>{% endif %}</div>
+    {% if dia_plan.claude %}<p class="ta-sec-nota"><b>Claude prepara:</b> {{ dia_plan.claude }}</p>{% endif %}
+    {% if del_dia %}
+    <ul class="ta-lista">
+      {% for t in del_dia %}{% include "tareas/_tarea.html" %}{% endfor %}
+    </ul>
+    {% else %}
+    <p class="ta-vacio">{% if persona %}Este día no hay tareas especiales para esta persona.{% else %}Este día no tiene tareas especiales.{% endif %}</p>
+    {% endif %}
+    <details class="ta-agregar">
+      <summary>Agregar una tarea a este día</summary>
+      <form method="post" action="{% url 'tareas:agregar' %}">
+        {% csrf_token %}
+        <input type="hidden" name="fecha" value="{{ fecha|date:'Y-m-d' }}">
+        <input type="hidden" name="quien" value="{{ persona }}">
+        <label for="nueva-titulo">Qué hay que hacer</label>
+        <input id="nueva-titulo" name="titulo" maxlength="200" required placeholder="Ej.: llamar al proveedor de arena">
+        <label for="nueva-responsable">Quién la hace</label>
+        <select id="nueva-responsable" name="responsable">
+          {% for valor, nombre in responsables %}<option value="{{ valor }}"{% if persona == valor or not persona and valor == 'AMB' %} selected{% endif %}>{{ nombre }}</option>{% endfor %}
+        </select>
+        <button type="submit" class="ta-btn">Agregar</button>
+      </form>
+    </details>
+  </section>
+
+  {% if rutina %}
+  <section class="ta-sec">
+    <div class="ta-sec-cab"><h2>Rutina diaria</h2><span>{{ rutina|length }}</span></div>
+    <p class="ta-sec-nota">Si el día se complica, al menos lo marcado «Mínimo».</p>
+    <ul class="ta-lista">
+      {% for t in rutina %}{% include "tareas/_tarea.html" %}{% endfor %}
+    </ul>
+  </section>
+  {% elif dia_plan.tienda_cerrada %}
+  <section class="ta-sec">
+    <div class="ta-sec-cab"><h2>Rutina diaria</h2></div>
+    <p class="ta-vacio">La tienda está cerrada este día: no hay rutina.</p>
+  </section>
+  {% endif %}
+
+  {% if semana %}
+  <section class="ta-semana-card">
+    <p class="ta-ceja">{{ semana.nombre }} · del {{ semana.inicio|date:"j" }}{% if semana.inicio.month != semana.fin.month %} de {{ semana.inicio|date:"F" }}{% endif %} al {{ semana.fin|date:"j \d\e F" }}</p>
+    <h2>{{ semana.titulo }}</h2>
+    <dl>
+      {% if semana.objetivo %}<dt>Objetivo</dt><dd>{{ semana.objetivo }}</dd>{% endif %}
+      {% if semana.meta %}<dt>Meta</dt><dd>{{ semana.meta }}</dd>{% endif %}
+      {% if semana.anuncios %}<dt>Anuncios</dt><dd>{{ semana.anuncios }}</dd>{% endif %}
+      {% if semana.nota %}<dt>Ojo</dt><dd>{{ semana.nota }}</dd>{% endif %}
+    </dl>
+    <div class="ta-barras" style="grid-template-columns:repeat({{ barras|length }},minmax(0,1fr))">
+      {% for b in barras %}
+      <a class="ta-b{% if b.futuro %} futuro{% endif %}{% if b.elegida %} elegida{% endif %}"
+         href="?fecha={{ b.fecha|date:'Y-m-d' }}{% if persona %}&amp;quien={{ persona }}{% endif %}"
+         aria-label="{{ b.fecha|date:'l j'|capfirst }}{% if b.futuro %}, todavía no llega{% else %}: {{ b.hechas }} de {{ b.total }} hechas{% endif %}">
+        <span class="ta-b-v">{% if b.futuro or not b.total %}—{% else %}{{ b.pct }} %{% endif %}</span>
+        <span class="ta-b-t"><i style="height:{% if b.futuro %}0{% else %}{{ b.pct }}{% endif %}%"></i></span>
+        <span class="ta-b-d">{{ b.fecha|date:"D j" }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    <p class="ta-totales"><b>{{ en_semana.hechas }}</b> hecha{{ en_semana.hechas|pluralize }} · <b>{{ en_semana.no }}</b> {% if en_semana.no == 1 %}no se hizo{% else %}no se hicieron{% endif %} · <b>{{ en_semana.sin_marcar }}</b> sin marcar <span>(cuenta hasta hoy{% if persona %}, solo {% for v, n in personas %}{% if v == persona %}{{ n }}{% endif %}{% endfor %}{% endif %})</span></p>
+  </section>
+  {% endif %}
+
+  <p class="ta-pie">
+    {% if plan.enlace %}<a href="{{ plan.enlace }}" target="_blank" rel="noopener">Abrir el plan con guiones y textos ›</a>{% endif %}
+    {% if es_gerente %}<a href="{% url 'core:tablero' %}">¿Cómo vamos? ›</a>{% endif %}
+  </p>
+{% endif %}
+</div>
+{% endblock %}

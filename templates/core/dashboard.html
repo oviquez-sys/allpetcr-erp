@@ -132,6 +132,7 @@ a{text-decoration:none;color:inherit}
    huella va rellena y no en trazo como los demás íconos: en trazo, cuatro
    deditos de 4 px quedan como círculos vacíos y no se reconoce. */
 .i-manada{background:linear-gradient(140deg,#d9a54a,#a87830)}
+.i-tareas{background:linear-gradient(140deg,#30b0c7,#1d8296)}
 .i-manada svg{fill:#fff;stroke:none}
 
 /* ===== ADVICE (una tarjeta, filas) ===== */
@@ -321,6 +322,8 @@ a{text-decoration:none;color:inherit}
         botón "Admin" que ya estaba en esta misma fila.
       {% endcomment %}
       <a class="qa-item" href="{% url 'ventas:historial' %}"><div class="qa-ic i-sell"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div><div class="lb">Historial</div></a>
+      {% comment %} Tareas del día (23/11/2026): el plan de mercadeo para marcar lo hecho. Lo ven gerente y cajero. {% endcomment %}
+      <a class="qa-item" href="{% url 'tareas:dia' %}"><div class="qa-ic i-tareas"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="lb">Tareas</div></a>
       {% if es_gerente %}
       {% comment %}
         "Cargar Excel" salió de acá (13/10/2026, pedido de Oscar): vive dentro

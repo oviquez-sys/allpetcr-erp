@@ -1,0 +1,154 @@
+/* ============================================================
+   Tareas del día (23/11/2026)
+   Usa las variables de allpetcr.css (colores, radios, sombra): si cambia
+   la marca, cambia acá también. Primero el celular: una columna y el
+   círculo de marcar grande para el dedo.
+   ============================================================ */
+
+body{background-color:var(--bg) !important}
+.ta-migas{max-width:860px;margin:0 auto;padding:0 4px;font-size:13px;color:var(--ink2)}
+.ta-migas a{color:var(--brand)}
+.ta{max-width:860px;margin:0 auto;color:var(--ink);padding-bottom:96px;display:flex;flex-direction:column;gap:18px}
+.ta h1{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin:0;padding:0;background:none;color:var(--ink)}
+.ta h2{background:none;padding:0;margin:0;color:var(--ink)}
+
+/* --- Encabezado --- */
+.ta-cab{display:flex;justify-content:space-between;align-items:flex-start;gap:10px 16px;flex-wrap:wrap}
+.ta-cab-txt{min-width:0;display:flex;flex-direction:column;gap:4px}
+.ta-ceja{margin:0;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3)}
+.ta-semana{margin:0;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:14px;color:var(--ink3)}
+.ta-pill{display:inline-block;background:#f6ecdc;color:#74500f;font-size:12px;font-weight:700;padding:3px 10px;border-radius:var(--radius-pill)}
+.ta-cuenta{background:var(--gold);color:#fff;font-size:13px;font-weight:700;padding:8px 14px;border-radius:var(--radius-pill);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* --- Franja de días: se desliza de lado, la página no --- */
+.ta-franja{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x proximity;scrollbar-width:thin}
+.ta-mes{flex:0 0 auto;align-self:center;writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink2)}
+.ta-dia{flex:0 0 auto;width:52px;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0 9px;border-radius:14px;background:var(--card);border:1px solid var(--line);color:var(--ink) !important;text-decoration:none}
+.ta-dia.cerrada{background:#f2f2f5}
+.ta-dia.es-hoy{box-shadow:inset 0 0 0 2px var(--gold)}
+.ta-dia.elegida{background:var(--brand);border-color:var(--brand);color:#fff !important;box-shadow:none}
+.ta-dia-d{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3)}
+.ta-dia.elegida .ta-dia-d{color:rgba(255,255,255,.8)}
+.ta-dia-n{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.ta-mini{width:26px;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.ta-mini i{display:block;height:100%;background:var(--green-d)}
+.ta-dia.elegida .ta-mini{background:rgba(255,255,255,.3)}
+.ta-dia.elegida .ta-mini i{background:#fff}
+
+/* --- Avance del día --- */
+.ta-control{display:flex;align-items:center;gap:10px}
+.ta-nav{flex:0 0 auto;width:44px;height:44px;border-radius:14px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink) !important}
+.ta-nav svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round}
+.ta-avance{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.ta-avance p{margin:0;font-size:14px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.ta-avance b{color:var(--ink)}
+.ta-barra{height:8px;border-radius:99px;background:#ececf0;overflow:hidden;display:flex}
+.ta-barra i{display:block;height:100%;transition:width .3s ease}
+.ta-barra .ok{background:var(--green-d)}
+.ta-barra .no{background:#b5231a}
+
+.ta-filtros{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.ta-chips{display:flex;gap:6px;flex-wrap:wrap}
+.ta-chips a,.ta-ir-hoy{padding:9px 15px;border-radius:var(--radius-pill);background:var(--card);border:1px solid var(--line);color:var(--ink) !important;font-size:14px;font-weight:500;text-decoration:none}
+.ta-chips a.on{background:var(--brand);border-color:var(--brand);color:#fff !important}
+.ta-ir-hoy{border:1.5px solid var(--gold);font-weight:600}
+
+.ta-nota-dia{margin:0;background:var(--card);border-radius:14px;padding:12px 14px;font-size:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+
+/* --- Secciones y lista --- */
+.ta-sec{display:flex;flex-direction:column;gap:8px}
+.ta-sec-cab{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ta-sec-cab h2{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3)}
+.ta-sec-cab span{font-size:13px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.ta-sec-nota{margin:0;font-size:13.5px;color:var(--ink3);line-height:1.45}
+.ta-sec-nota b{color:var(--ink)}
+.ta-sec-pend .ta-sec-cab h2{color:#b5231a}
+.ta-vacio{margin:0;color:var(--ink2);font-size:14px;background:var(--card);border-radius:16px;padding:14px}
+.ta-lista{list-style:none;margin:0;padding:0;background:var(--card);border-radius:18px;box-shadow:0 1px 2px rgba(0,0,0,.04);overflow:hidden}
+
+.ta-t{display:flex;gap:12px;padding:12px 12px 12px 14px;border-top:1px solid var(--line);scroll-margin-top:90px}
+.ta-t:first-child{border-top:0}
+.ta-t:target{background:#f7f9fc}
+.ta-check{flex:0 0 auto;margin:0}
+.ta-circ{width:34px;height:34px;border-radius:50%;border:2px solid #c3c9d6;background:#fff;padding:0;display:grid;place-items:center;cursor:pointer;color:#fff}
+.ta-circ svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;display:none}
+.ta-t[data-estado="HEC"] .ta-circ{background:var(--green-d);border-color:var(--green-d)}
+.ta-t[data-estado="HEC"] .ic-ok{display:block}
+.ta-t[data-estado="NOH"] .ta-circ{background:#b5231a;border-color:#b5231a}
+.ta-t[data-estado="NOH"] .ic-no{display:block}
+.ta-t.ta-enviando .ta-circ{opacity:.55}
+.ta-circ:focus-visible,.ta-det summary:focus-visible,.ta-estados button:focus-visible{outline:3px solid #2d6ceb;outline-offset:2px}
+
+.ta-det{flex:1;min-width:0}
+.ta-det summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) 22px;gap:5px 8px;border-radius:8px}
+.ta-det summary::-webkit-details-marker{display:none}
+.ta-det summary::after{content:"";grid-column:2;grid-row:1;width:9px;height:9px;margin-top:6px;border-right:2px solid var(--ink2);border-bottom:2px solid var(--ink2);transform:rotate(45deg);transition:transform .2s}
+.ta-det[open] summary::after{transform:rotate(-135deg);margin-top:10px}
+.ta-tit{grid-column:1;grid-row:1;font-size:15.5px;font-weight:500;line-height:1.35;overflow-wrap:anywhere}
+.ta-meta{grid-column:1;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;font-size:12.5px;color:var(--ink3)}
+.ta-hora{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.ta-fecha{font-weight:700;color:#b5231a}
+.ta-quien{border:1px solid var(--line);border-radius:var(--radius-pill);padding:1px 8px}
+.ta-min{background:#f6ecdc;color:#74500f;font-weight:700;border-radius:var(--radius-pill);padding:2px 8px}
+.ta-marca{grid-column:1;display:flex;flex-direction:column;gap:2px;font-size:12.5px}
+.ta-marca:has(.ta-m-est:empty):not(:has(.ta-m-nota)){display:none}
+.ta-m-est:empty{display:none}
+.ta-m-est{font-weight:600}
+.ta-t[data-estado="HEC"] .ta-m-est{color:var(--green-d)}
+.ta-t[data-estado="NOH"] .ta-m-est{color:#b5231a}
+.ta-m-nota{color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ta-t[data-estado="HEC"] .ta-tit{color:var(--ink2);text-decoration:line-through;text-decoration-thickness:1.5px}
+.ta-t[data-estado="NOH"] .ta-tit{color:var(--ink2)}
+
+.ta-panel{display:flex;flex-direction:column;gap:12px;padding-top:12px}
+.ta-detalle{margin:0;font-size:14px;line-height:1.55;overflow-wrap:anywhere}
+.ta-detalle a{color:var(--brand);text-decoration:underline;text-underline-offset:2px}
+.ta-copiar{margin-left:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:8px;border:1px solid var(--line);background:#f7f7fa;color:var(--ink);cursor:pointer}
+.ta-estados{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+.ta-estados button{font:inherit;font-size:14px;font-weight:500;padding:9px 13px;border-radius:12px;border:1px solid var(--line);background:#f7f7fa;color:var(--ink);cursor:pointer}
+.ta-estados button[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+.ta-estados .e-hec[aria-pressed="true"]{background:var(--green-d);border-color:var(--green-d)}
+.ta-estados .e-noh[aria-pressed="true"]{background:#b5231a;border-color:#b5231a}
+.ta-guardar{display:flex;flex-direction:column;gap:8px;margin:0}
+.ta-quien-la-hace{border:0;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center}
+.ta-quien-la-hace legend,.ta-etq-nota,.ta-agregar label{font-size:12.5px;font-weight:700;color:var(--ink3);padding:0;margin-bottom:4px;float:none;width:auto}
+.ta-quien-la-hace label{font-size:14px;display:inline-flex;gap:6px;align-items:center}
+.ta-guardar textarea{width:100%;min-height:60px;resize:vertical;font:inherit;font-size:14px}
+.ta-btn{align-self:flex-start;font:inherit;font-size:14px;font-weight:600;padding:9px 18px;border-radius:12px;border:0;background:var(--brand);color:#fff;cursor:pointer}
+.ta-btn-sec{background:#fff;color:#b5231a;border:1px solid #e9c4c0}
+.ta-borrar{margin:0}
+
+.ta-mas summary,.ta-agregar summary{cursor:pointer;list-style:none;padding:11px 14px;border-radius:14px;border:1.5px dashed #c3c9d6;font-size:14px;font-weight:600;text-align:center;color:var(--ink)}
+.ta-mas summary::-webkit-details-marker,.ta-agregar summary::-webkit-details-marker{display:none}
+.ta-mas[open] summary{margin-bottom:8px}
+.ta-agregar form{display:flex;flex-direction:column;gap:6px;background:var(--card);border-radius:16px;padding:14px;margin-top:8px}
+.ta-agregar input[type=text],.ta-agregar input:not([type]),.ta-agregar select{width:100%;font:inherit;font-size:15px}
+
+/* --- La semana --- */
+.ta-semana-card{background:var(--card);border-radius:18px;padding:18px;box-shadow:0 1px 2px rgba(0,0,0,.04);display:flex;flex-direction:column;gap:12px}
+.ta-semana-card h2{font-size:19px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+.ta-semana-card dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;font-size:14px}
+.ta-semana-card dt{color:var(--ink3);font-weight:700}
+.ta-semana-card dd{margin:0;overflow-wrap:anywhere}
+.ta-barras{display:grid;gap:6px;align-items:end}
+.ta-b{display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--ink) !important;text-decoration:none;min-width:0}
+.ta-b-v{font-size:12px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.ta-b-t{width:100%;max-width:40px;height:64px;border-radius:9px;background:#f7f7fa;border:1px solid var(--line);display:flex;align-items:flex-end;overflow:hidden}
+.ta-b-t i{display:block;width:100%;background:var(--green-d)}
+.ta-b.futuro .ta-b-t{border-style:dashed}
+.ta-b.elegida .ta-b-t{border-color:var(--brand)}
+.ta-b-d{font-size:11.5px;color:var(--ink3);white-space:nowrap}
+.ta-b.elegida .ta-b-d{color:var(--ink);font-weight:700}
+.ta-totales{margin:0;font-size:13.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
+.ta-totales b{color:var(--ink)}
+
+.ta-pie{margin:0;display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px}
+.ta-pie a{color:var(--brand);font-weight:600}
+
+@media (max-width:560px){
+  .ta h1{font-size:24px}
+  .ta-t{gap:10px;padding:12px 10px 12px 12px}
+}
+@media (prefers-reduced-motion:reduce){
+  .ta *{transition:none !important}
+}

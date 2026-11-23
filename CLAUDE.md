@@ -1108,6 +1108,40 @@ poner "lo dejo en ₡2.000" en vez de adivinar el %.
 - Cupón vs. precio final: gana el que dé más descuento; no se suman.
 - Pruebas: `ventas/test_precio_final.py`.
 
+## Tareas del día (23/11/2026)
+
+Pedido de Oscar: la lista de tareas del plan de mercadeo de Navidad (antes en
+una página de Claude que solo él podía marcar) vive en el ERP, porque él y
+Francisco usan computadoras distintas y los dos entran con su usuario.
+- App `tareas`, pantalla `tareas:dia` (/tareas/, botón «Tareas» en el Inicio).
+  La ven gerente y cajero (`rol_requerido(GERENTE, CAJERO)`).
+- Modelos: `Tarea` (lo que se marca: puntual del plan, agregada a mano o
+  ejemplar de una rutina; guarda `marcada_por`/`marcada_en`, que pone el
+  sistema), `Rutina` (plantilla de lunes a sábado), `Plan` + `Semana` + `Dia`
+  (contexto: meta de la semana, tema de historias, lo que prepara Claude,
+  cuenta regresiva del sorteo). `Responsable` = Oscar / Francisco / Los dos
+  (texto fijo, no usuario: la tarea es de una persona del negocio aunque la
+  marque otra).
+- Reglas SOLO en `tareas/servicios.py` (docstring = definiciones).
+  `asegurar_rutinas` crea la tarea de rutina de cada día la primera vez que se
+  mira ese día o un resumen que lo incluye (una por día: restricción única
+  rutina+fecha y `ignore_conflicts`); nada en tienda cerrada, fuera de la
+  vigencia de la rutina ni a más de 45 días. «Quedaron pendientes» = lo
+  puntual sin marcar de los últimos 30 días; la rutina no entra.
+- Solo se borra lo agregado a mano (`a_mano`); lo del plan se marca «No se
+  hizo». Cambiar una rutina en el admin actualiza sus tareas de hoy en
+  adelante que nadie marcó (`refrescar_rutina`); lo pasado no se toca.
+- Marcar funciona sin JavaScript (formulario que vuelve a `#t-<id>`);
+  `static/js/tareas.js` lo manda en segundo plano (cabecera
+  `X-Requested-With: fetch` → JSON) y, si falla, manda el formulario normal.
+  Sin `onclick=` ni `<script>` en la plantilla (CSP estricta pendiente).
+- El plan se cargó con la migración `tareas/0002` desde
+  `tareas/plan_navidad_2026.py` (foto del 23/11): 32 días, 99 tareas, 8
+  rutinas vigentes del 23/11 al 24/12. Correcciones del plan: desde el admin.
+- **Enero:** las rutinas vencen el 24/12 (hablan del sorteo). Para seguir con
+  una rutina de tienda hay que crear las nuevas en el admin (o un plan nuevo).
+- Pruebas: `tareas/tests.py`; `tareas` está en `core/test_arquitectura.APPS`.
+
 ## Reglas del proyecto
 
 **Los comentarios explican el *porqué*, no el *qué*.** Es la característica

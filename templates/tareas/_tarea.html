@@ -1,0 +1,64 @@
+{% comment %}
+Una tarea. El círculo es un formulario: sin JavaScript manda y vuelve a esta
+misma tarea; con JavaScript (static/js/tareas.js) se manda en segundo plano.
+El detalle se abre con <details>, que funciona sin JavaScript y con teclado.
+{% endcomment %}
+<li class="ta-t" id="t-{{ t.pk }}" data-estado="{{ t.estado }}">
+  <form class="ta-check" method="post" action="{% url 'tareas:marcar' t.pk %}" data-marcar>
+    {% csrf_token %}
+    <input type="hidden" name="estado" value="{% if t.estado == 'HEC' %}PEN{% else %}HEC{% endif %}">
+    <input type="hidden" name="quien" value="{{ persona }}">
+    <button type="submit" class="ta-circ" aria-pressed="{% if t.estado == 'HEC' %}true{% else %}false{% endif %}"
+            aria-label="{% if t.estado == 'HEC' %}Quitar la marca de hecha{% else %}Marcar como hecha{% endif %}: {{ t.titulo }}"
+            data-titulo="{{ t.titulo }}">
+      <svg class="ic-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+      <svg class="ic-no" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>
+    </button>
+  </form>
+  <details class="ta-det"{% if abierta == t.pk %} open{% endif %}>
+    <summary>
+      <span class="ta-tit">{{ t.titulo }}</span>
+      <span class="ta-meta">
+        {% if mostrar_fecha %}<span class="ta-fecha">{{ t.fecha|date:"D j/n" }}</span>{% endif %}
+        {% if t.hora %}<span class="ta-hora">{{ t.hora }}</span>{% endif %}
+        {% if t.tipo != 'RUT' %}<span>{{ t.get_tipo_display }}</span>{% endif %}
+        <span class="ta-quien">{{ t.get_responsable_display }}</span>
+        {% if t.minimo %}<span class="ta-min">Mínimo</span>{% endif %}
+      </span>
+      <span class="ta-marca">
+        <span class="ta-m-est">{% if t.estado != 'PEN' %}{{ t.get_estado_display }}{% if t.quien_marco %} por {{ t.quien_marco }}{% endif %}{% if t.cuando %} · {{ t.cuando }}{% endif %}{% endif %}</span>
+        {% if t.nota %}<span class="ta-m-nota">Nota: {{ t.nota }}</span>{% endif %}
+      </span>
+    </summary>
+    <div class="ta-panel">
+      {% if t.detalle %}<p class="ta-detalle">{{ t.detalle|urlize }}</p>{% endif %}
+      <form class="ta-estados" method="post" action="{% url 'tareas:marcar' t.pk %}" data-marcar>
+        {% csrf_token %}
+        <input type="hidden" name="quien" value="{{ persona }}">
+        <button type="submit" name="estado" value="PEN" aria-pressed="{% if t.estado == 'PEN' %}true{% else %}false{% endif %}">Pendiente</button>
+        <button type="submit" name="estado" value="HEC" class="e-hec" aria-pressed="{% if t.estado == 'HEC' %}true{% else %}false{% endif %}">Hecha</button>
+        <button type="submit" name="estado" value="NOH" class="e-noh" aria-pressed="{% if t.estado == 'NOH' %}true{% else %}false{% endif %}">No se hizo</button>
+      </form>
+      <form class="ta-guardar" method="post" action="{% url 'tareas:guardar' t.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="quien" value="{{ persona }}">
+        <fieldset class="ta-quien-la-hace">
+          <legend>Quién la hace</legend>
+          {% for valor, nombre in responsables %}
+          <label><input type="radio" name="responsable" value="{{ valor }}"{% if t.responsable == valor %} checked{% endif %}> {{ nombre }}</label>
+          {% endfor %}
+        </fieldset>
+        <label class="ta-etq-nota" for="nota-{{ t.pk }}">Nota</label>
+        <textarea id="nota-{{ t.pk }}" name="nota" rows="2" maxlength="1000" placeholder="Ej.: se pasó al martes, o cómo le fue al anuncio">{{ t.nota }}</textarea>
+        <button type="submit" class="ta-btn">Guardar</button>
+      </form>
+      {% if t.a_mano %}
+      <form class="ta-borrar" method="post" action="{% url 'tareas:borrar' t.pk %}" data-borrar>
+        {% csrf_token %}
+        <input type="hidden" name="quien" value="{{ persona }}">
+        <button type="submit" class="ta-btn ta-btn-sec">Borrar esta tarea</button>
+      </form>
+      {% endif %}
+    </div>
+  </details>
+</li>
