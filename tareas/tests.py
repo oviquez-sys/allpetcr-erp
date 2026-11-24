@@ -207,9 +207,13 @@ class Pantalla(Base):
         t.refresh_from_db()
         self.assertEqual(t.estado, Tarea.Estado.PENDIENTE)
 
-    def test_marcar_solo_por_post(self):
+    def test_marcar_por_get_vuelve_a_la_pantalla_sin_marcar(self):
+        """Pasa al volver del login con la sesión vencida a mitad de una marca."""
         t = self.tarea()
-        self.assertEqual(self.client.get(reverse("tareas:marcar", args=[t.pk])).status_code, 405)
+        r = self.client.get(reverse("tareas:marcar", args=[t.pk]))
+        self.assertRedirects(r, reverse("tareas:dia"), fetch_redirect_response=False)
+        t.refresh_from_db()
+        self.assertEqual(t.estado, Tarea.Estado.PENDIENTE)
 
     def test_guardar_nota_y_quien_la_hace(self):
         t = self.tarea()

@@ -1142,6 +1142,39 @@ Francisco usan computadoras distintas y los dos entran con su usuario.
   una rutina de tienda hay que crear las nuevas en el admin (o un plan nuevo).
 - Pruebas: `tareas/tests.py`; `tareas` está en `core/test_arquitectura.APPS`.
 
+## Catálogo de WhatsApp por Meta (24/11/2026)
+
+Pedido de Oscar: todo el catálogo en WhatsApp Business, no solo 20 productos.
+A mano no da (~850 productos, ~30 h, y cada precio a corregir uno por uno), así
+que WhatsApp muestra un catálogo de Meta «conectado» (función oficial de la
+app: Herramientas → Catálogo → Ajustes del catálogo → Conectar catálogo; pide
+la página de Facebook vinculada al WhatsApp; Meta actualiza en ≤ 24 h).
+- `CatalogoMeta` (uno por empresa): la clave del enlace, `activo`, la línea
+  de entrega editable, `ultima_lectura`/`lecturas` (solo cuentan las
+  anónimas, o sea las de Meta).
+- `catalogo:feed_meta` (/precios/meta/<clave>.csv): PÚBLICO a propósito
+  (Meta no inicia sesión); la clave es la protección. Solo GET/HEAD.
+- `catalogo:redes_whatsapp` (/precios/catalogo-redes/whatsapp/, gerente):
+  copiar el enlace, ver si Meta ya leyó, cuántos entran, los primeros 6 como
+  quedan, editar la línea de entrega y cambiar la clave si se filtra.
+- `catalogo/meta.py`: entra lo mismo que en `redes.productos` (publicado, con
+  precio y foto) INCLUIDOS los agotados como «out of stock» (si salieran del
+  archivo, Meta los borra y los vuelve a revisar al regresar). Fuera: raíz
+  «Salud y cuidado», «Dietas veterinarias» y nombres de antiparasitarios o
+  medicamentos (`PATRON_FUERA`, «pulgas?\b» para no sacar «30 pulgadas»):
+  la política de comercio de WhatsApp no permite medicamentos.
+- La descripción = la de la ficha + el cierre de la muestra que aprobó Oscar:
+  línea de entrega, envío gratis y números del sorteo SACADOS DE LA CAMPAÑA
+  VIGENTE (`campanas/reglas.vigente`, `da_envio_gratis`, `acepta`, umbral
+  «más de», zonas, fechas), fecha de fin de la oferta y «Precio con IVA».
+  Cuando la campaña deja de darlos, las líneas desaparecen solas.
+- Decisión de Oscar (24/11/2026): el envío gratis de más de ₡20.000 vale
+  también para pedidos por WhatsApp (la campaña dice «pedidos web»).
+- Título = nombre de la web + « · especie» si el nombre no la dice. Enlace
+  con `?o=whatsapp-catalogo`: desde el 24/11/2026 la web lee `?o=` en todas
+  las páginas (antes solo en /navidad; ver allpetcr-web/lib/origenCampana.ts)
+  y el pedido llega al ERP con ese `origen_visita`, igual que la inscripción.
+
 ## Reglas del proyecto
 
 **Los comentarios explican el *porqué*, no el *qué*.** Es la característica

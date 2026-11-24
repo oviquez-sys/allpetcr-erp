@@ -38,7 +38,7 @@ body{background-color:#f5f5f7 !important}
 <div class="cr">
   <div style="font-size:13px;color:#86868b"><a href="/admin/" style="color:#0b3161">Administración</a> › Catálogo para redes</div>
   <h1>Catálogo para redes</h1>
-  <div class="seg"><a class="on" href="{% url 'catalogo:redes' %}">Paquete del catálogo</a><a href="{% url 'catalogo:redes_alimentos' %}">Publicaciones de alimentos</a></div>
+  <div class="seg"><a class="on" href="{% url 'catalogo:redes' %}">Paquete del catálogo</a><a href="{% url 'catalogo:redes_alimentos' %}">Publicaciones de alimentos</a><a href="{% url 'catalogo:redes_whatsapp' %}">Catálogo de WhatsApp</a></div>
   <p class="sub">Arma un .zip con el catálogo en PDF, las fotos para WhatsApp y Facebook, publicaciones con precio y los archivos para cargar el catálogo. Todo sale de las fotos, nombres, precios y promociones de hoy del sistema.</p>
 
   {% for m in messages %}<div class="cr-msg">{{ m }}</div>{% endfor %}

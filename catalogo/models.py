@@ -577,3 +577,43 @@ class PaqueteRedes(models.Model):
 
     def __str__(self):
         return f"Catálogo {self.creado_en:%d/%m/%Y %H:%M} ({self.get_estado_display()})"
+
+
+def _clave_catalogo_meta():
+    import secrets
+    return secrets.token_urlsafe(24)
+
+
+class CatalogoMeta(models.Model):
+    """El enlace que Meta lee cada día para armar el catálogo de WhatsApp
+    (24/11/2026, ver catalogo/meta.py). Uno por empresa.
+
+    Meta (Administrador de ventas) descarga el CSV de ese enlace y WhatsApp
+    Business muestra ese catálogo «conectado». Así entran todos los productos
+    y un cambio de precio en el ERP llega solo a WhatsApp.
+
+    La clave va en la dirección porque Meta no inicia sesión: es lo que impide
+    que cualquiera descargue la lista. Los datos son los mismos que ya publica
+    el sitio web, pero si la clave se filtra se cambia desde la pantalla y se
+    pega la dirección nueva en Meta.
+    """
+    LINEA_ENTREGA = ("🚚 Pedí antes de las 4 p.m. y te llega hoy en Heredia (lunes a sábado). "
+                     "También lo retirás en la tienda, con parqueo.")
+
+    empresa = models.OneToOneField("core.Empresa", on_delete=models.CASCADE, related_name="catalogo_meta")
+    clave = models.CharField(max_length=64, unique=True, default=_clave_catalogo_meta, editable=False)
+    activo = models.BooleanField(default=True, help_text="Apagado, el enlace responde «no existe» y Meta deja de actualizar.")
+    linea_entrega = models.TextField(
+        "línea de entrega", default=LINEA_ENTREGA, blank=True,
+        help_text="Va al final de la descripción de todos los productos. Vacía, no se pone.",
+    )
+    ultima_lectura = models.DateTimeField(null=True, blank=True, editable=False)
+    lecturas = models.PositiveIntegerField(default=0, editable=False)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "catálogo de WhatsApp (Meta)"
+        verbose_name_plural = "catálogo de WhatsApp (Meta)"
+
+    def __str__(self):
+        return f"Catálogo de WhatsApp de {self.empresa}"

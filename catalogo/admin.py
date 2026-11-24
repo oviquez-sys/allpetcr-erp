@@ -10,7 +10,7 @@ from core.admin_fotos import columna_foto
 from core.templatetags.fotos import foto_producto
 from core.templatetags.formato import crc as _crc  # formato CR (miles con punto)
 
-from .models import CambioPrecio, Categoria, FichaAlimento, Impuesto, Producto, Promocion, PromocionProducto
+from .models import CambioPrecio, CatalogoMeta, Categoria, FichaAlimento, Impuesto, Producto, Promocion, PromocionProducto
 
 
 @admin.register(Categoria)
@@ -272,3 +272,11 @@ class PromocionAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(CatalogoMeta)
+class CatalogoMetaAdmin(admin.ModelAdmin):
+    """El enlace del catálogo de WhatsApp (catalogo/meta.py). Se crea solo al
+    abrir la pantalla; acá se puede apagar o ver cuándo lo leyó Meta."""
+    list_display = ("empresa", "activo", "ultima_lectura", "lecturas")
+    readonly_fields = ("clave", "ultima_lectura", "lecturas", "creado_en")

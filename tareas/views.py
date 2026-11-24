@@ -8,13 +8,13 @@ no recargar la página en cada toque. Si ese envío falla, el formulario se
 manda igual de la forma normal, así nunca se pierde una marca.
 """
 from datetime import date, timedelta
+from functools import wraps
 
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import dateformat, timezone
-from django.views.decorators.http import require_POST
 
 from core.roles import CAJERO, GERENTE, es_gerente, rol_requerido
 from core.tenancy import documento_de_empresa, empresa_actual
@@ -23,6 +23,20 @@ from . import servicios
 from .models import Responsable, Tarea
 
 ROLES = (GERENTE, CAJERO)
+
+
+def _solo_post(vista):
+    """Las acciones solo se hacen por POST. Un GET no da error: vuelve a la
+    pantalla. Pasa cuando la sesión venció a mitad de una marca (el celular
+    quedó abierto de un día para otro): el login devuelve a la dirección de
+    la acción, y en vez de una página de error la persona ve sus tareas y
+    vuelve a marcar."""
+    @wraps(vista)
+    def envuelta(request, *args, **kwargs):
+        if request.method != "POST":
+            return redirect("tareas:dia")
+        return vista(request, *args, **kwargs)
+    return envuelta
 
 
 def _fecha(texto):
@@ -168,7 +182,7 @@ def dia(request):
     })
 
 
-@require_POST
+@_solo_post
 @rol_requerido(*ROLES)
 def marcar(request, pk):
     tarea = documento_de_empresa(Tarea, request, pk=pk)
@@ -192,7 +206,7 @@ def marcar(request, pk):
     return redirect(_volver(tarea.fecha, persona, tarea))
 
 
-@require_POST
+@_solo_post
 @rol_requerido(*ROLES)
 def guardar(request, pk):
     """La nota y quién la hace. Quién la hace se puede cambiar porque el plan
@@ -212,7 +226,7 @@ def guardar(request, pk):
     return redirect(_volver(tarea.fecha, persona, tarea, abierta=True))
 
 
-@require_POST
+@_solo_post
 @rol_requerido(*ROLES)
 def agregar(request):
     empresa = empresa_actual(request)
@@ -232,7 +246,7 @@ def agregar(request):
     return redirect(_volver(fecha, persona, tarea))
 
 
-@require_POST
+@_solo_post
 @rol_requerido(*ROLES)
 def borrar(request, pk):
     """Solo lo agregado a mano: lo del plan y la rutina se marca «No se hizo»,

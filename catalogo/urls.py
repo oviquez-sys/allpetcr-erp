@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views, views_promociones, views_redes
+from . import views, views_meta, views_promociones, views_redes
 
 app_name = "catalogo"
 
@@ -21,6 +21,9 @@ urlpatterns = [
     path("catalogo-redes/<int:pk>/descargar/", views_redes.catalogo_redes_descargar, name="redes_descargar"),
     path("catalogo-redes/<int:pk>/borrar/", views_redes.catalogo_redes_borrar, name="redes_borrar"),
     path("catalogo-redes/alimentos/", views_redes.publicaciones_alimentos, name="redes_alimentos"),
+    path("catalogo-redes/whatsapp/", views_meta.pantalla, name="redes_whatsapp"),
+    # Pública a propósito: la lee Meta, que no inicia sesión (ver catalogo/views_meta.py).
+    path("meta/<str:clave>.csv", views_meta.feed, name="feed_meta"),
     path("catalogo-redes/alimentos/<int:pk>.jpg", views_redes.publicacion_imagen,
          name="redes_alimentos_imagen"),
 ]
