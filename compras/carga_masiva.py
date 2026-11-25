@@ -72,8 +72,10 @@ ganancia. Ahora:
   igualar el precio regular más bajo de la competencia, pero sin bajar del
   mínimo. Una fila por debajo NO bloquea: se pinta en amarillo para que él
   decida. El margen se calcula como en todo el ERP (`Producto.margen_pct`):
-  sobre el precio SIN IVA y con el costo real (con el descuento y las
-  unidades de regalo ya repartidos).
+  sobre el precio SIN IVA. Desde el 25/11/2026 con el costo de REPOSICIÓN:
+  lo que cuesta una unidad pagada, con el descuento de la factura pero SIN
+  repartir las unidades de regalo (un saco regalado hacía ver un margen que
+  la próxima compra no tiene; ver catalogo/costos.py).
 
 COLUMNA «PUBLICAR EN WEB» (18/11/2026)
 -------------------------------------
@@ -712,12 +714,31 @@ def costo_real(f, rev) -> Decimal:
     return total / unidades
 
 
+def costo_reposicion_fila(f, rev):
+    """Lo que cuesta UNA unidad pagada de esta fila (con su parte del
+    descuento de la factura, SIN repartir las bonificadas). Es con lo que se
+    juzga el margen desde el 25/11/2026 (catalogo/costos.py): las unidades de
+    regalo son una vez; la próxima compra se paga completa. Una fila solo de
+    regalo usa la reposición que el producto ya tenía, o ninguna."""
+    if Decimal(f.cantidad) <= 0:
+        if not f.producto_id:
+            return None
+        from catalogo.costos import costo_reposicion
+        return costo_reposicion(Producto.objects.get(pk=f.producto_id))
+    total = f.total
+    if rev.descuento and rev.total:
+        total -= rev.descuento * total / rev.total
+    return total / Decimal(f.cantidad)
+
+
 def _calcular_margen(f, rev, tarifa, alimento):
     precio = Decimal(f.precio_venta or f.precio_actual or "0")
     if precio <= 0 or f.errores:
         return
     sin_iva = precio / (1 + tarifa / 100)
-    costo = costo_real(f, rev)
+    costo = costo_reposicion_fila(f, rev)
+    if not costo:
+        return
     margen = (sin_iva - costo) / sin_iva * 100
     minimo = MARGEN_MINIMO_ALIMENTO if alimento else MARGEN_MINIMO_OTROS
     f.margen = str(margen.quantize(Decimal("0.1"), ROUND_HALF_UP))

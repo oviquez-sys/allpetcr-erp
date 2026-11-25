@@ -211,6 +211,10 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     from catalogo.promociones import oferta_de, vigentes as promos_vigentes
     from manada.exclusiones import cupon_aplica
     promos = promos_vigentes(empresa, productos=[l["producto_id"] for l in lineas])
+    # Costo de reposición (25/11/2026, catalogo/costos.py): el piso de un
+    # descuento puesto en caja no puede salir del costo rebajado por un regalo
+    # del proveedor. Se consulta solo para las líneas con descuento.
+    from catalogo.costos import costo_para_decidir
 
     subtotal = impuesto = total = descuento_total = Decimal("0")
     creadas = []
@@ -301,14 +305,21 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
             # ventas que perdían plata (20/09/2026).
             # Una promoción que un gerente marcó "vender bajo costo" ya está
             # autorizada; cualquier otra sigue frenada por el piso de costo.
-            if (not permitir_bajo_costo and producto.costo_promedio > 0
+            # Con un descuento de caja (o cupón) el piso es el costo de
+            # reposición si es mayor (25/11/2026). Sin descuento, o con una
+            # promoción que ya decidió el gerente, sigue el costo promedio:
+            # el precio de lista y la promo no se frenan por esto.
+            costo_piso = producto.costo_promedio
+            if desc_l > 0 and promo_linea is None:
+                costo_piso = costo_para_decidir(producto)
+            if (not permitir_bajo_costo and costo_piso > 0
                     and not (promo_linea is not None and promo_linea.permitir_bajo_costo)):
                 precio_efectivo = sub_l / cantidad
-                if precio_efectivo < producto.costo_promedio:
+                if precio_efectivo < costo_piso:
                     por_cupon = " (por el cupón)" if pct_cupon_l and desc_pct == pct_cupon_l else ""
                     raise ValidationError(
                         f"{producto.nombre}: el precio con descuento{por_cupon}, sin IVA (₡{precio_efectivo:.2f}), "
-                        f"queda por debajo del costo (₡{producto.costo_promedio}). "
+                        f"queda por debajo de lo que cuesta reponerlo (₡{costo_piso:.2f}). "
                         "Un gerente debe autorizar la venta bajo costo."
                     )
             # Techo de descuento sin autorización (SEC-001): independiente del
@@ -480,7 +491,8 @@ def _aplicar_redondeo(empresa, lineas, redondeo, total, permitir_bajo_costo, max
         linea.subtotal, linea.impuesto = _desglose_fiscal(empresa, linea.producto, linea.total)
         # El piso de costo manda también acá: redondear no puede servir para
         # vender bajo costo sin que un gerente lo autorice.
-        costo = linea.producto.costo_promedio
+        from catalogo.costos import costo_para_decidir
+        costo = costo_para_decidir(linea.producto)   # el redondeo es un descuento (25/11/2026)
         if not permitir_bajo_costo and costo > 0 and linea.subtotal / linea.cantidad < costo:
             raise ValidationError(
                 f"{linea.producto.nombre}: con el redondeo queda por debajo del costo. "

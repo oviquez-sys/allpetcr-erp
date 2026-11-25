@@ -195,12 +195,17 @@ class CargaConPaquete(BaseCompras):
         self.assertEqual(b.margen_minimo, "30")
         self.assertTrue(b.avisos)
 
-    def test_el_margen_cuenta_regalias_y_descuento(self):
-        # 10 facturadas + 2 de regalo, ₡1.000 c/u, descuento ₡1.000 → costo real 9.000/12 = ₡750.
+    def test_el_margen_cuenta_el_descuento_pero_no_las_regalias(self):
+        # 10 facturadas + 2 de regalo, ₡1.000 c/u, descuento ₡1.000. El costo
+        # contable es 9.000/12 = ₡750, pero el margen se juzga con lo que
+        # cuesta reponer una unidad pagada: 9.000/10 = ₡900 (25/11/2026).
         r = self.subir(_zip([["J-1", "", "Pelota", 10, 1000, 1130, 2, "Juguetes", ""]]), descuento="1000")
-        self.assertEqual(cm.costo_real(r.context["revision"].filas[0], r.context["revision"]), Decimal("750"))
-        # 1.130 con IVA = 1.000 sin IVA → (1.000 − 750) / 1.000 = 25 %.
-        self.assertEqual(r.context["revision"].filas[0].margen, "25.0")
+        fila, rev = r.context["revision"].filas[0], r.context["revision"]
+        self.assertEqual(cm.costo_real(fila, rev), Decimal("750"))
+        self.assertEqual(cm.costo_reposicion_fila(fila, rev), Decimal("900"))
+        # 1.130 con IVA = 1.000 sin IVA → (1.000 − 900) / 1.000 = 10 % < 30 %: aviso.
+        self.assertEqual(fila.margen, "10.0")
+        self.assertTrue(fila.avisos)
 
 
 class PaqueteSeguro(BaseCompras):

@@ -475,6 +475,18 @@ def vendido(request):
 
 
 @rol_requerido(GERENTE)
+def costos_regalias(request):
+    """Productos cuyo costo quedó rebajado por un regalo del proveedor, y los
+    que se venden por debajo de lo que cuesta reponerlos (25/11/2026, caso
+    NutriSource Cat-Kitten). Solo lee. Ver catalogo/costos.py."""
+    from catalogo.costos import DIFERENCIA_MINIMA_PCT, revision
+    datos = revision(empresa_actual(request))
+    return render(request, "inventario/costos_regalias.html", {
+        "title": "Costos rebajados por regalías", **datos, "diferencia_minima": DIFERENCIA_MINIMA_PCT,
+    })
+
+
+@rol_requerido(GERENTE)
 def vendido_excel(request):
     empresa = empresa_actual(request)
     desde, hasta, _ = _rango_vendido(request)

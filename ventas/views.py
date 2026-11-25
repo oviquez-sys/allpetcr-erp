@@ -159,15 +159,15 @@ def _filas_pos(queryset, con_tope=False):
         p["oferta"] = ({"precio": float(oferta), "pct": item.pct, "nombre": item.promocion.texto}
                        if oferta is not None and oferta < p["precio_venta"] else None)
     if con_tope:
-        # El margen sale del modelo (una sola fórmula para todo el ERP), no
-        # se recalcula acá con los campos de .values().
-        margenes = {
-            prod.pk: prod.margen_pct
-            for prod in queryset.select_related("empresa", "impuesto")
-        }
+        # Con el costo de reposición si es mayor que el promedio (25/11/2026,
+        # catalogo/costos.py): un saco regalado por el proveedor bajaba el
+        # promedio a la mitad y el tope decía 54 % donde había ~8 %.
+        from catalogo.costos import costo_para_decidir, reposiciones, tope
+        productos = list(queryset.select_related("empresa", "impuesto"))
+        repos = reposiciones(productos)
+        topes = {prod.pk: tope(prod, costo_para_decidir(prod, repos[prod.pk])) for prod in productos}
         for p in filas:
-            margen = margenes.get(p["id"])
-            p["tope"] = max(0, int(margen // 1)) if margen is not None else None
+            p["tope"] = topes.get(p["id"])
     return filas
 
 

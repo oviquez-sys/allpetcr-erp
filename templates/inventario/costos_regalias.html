@@ -1,0 +1,84 @@
+{% extends "admin/base_site.html" %}
+{% load static formato %}
+
+{% block title %}Costos rebajados por regalías{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+/* Revisión de costos (25/11/2026). Ver catalogo/costos.py. */
+body{background-color:#f5f5f7 !important}
+.cr-wrap{max-width:1100px;margin:0 auto}
+.cr-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.cr-sub{font-size:14px;color:#6e6e73;margin-bottom:16px;line-height:1.5;max-width:820px}
+.cr-card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:18px}
+.cr-card h2{font-size:18px;font-weight:700;margin:0 0 4px}
+.cr-card .d{font-size:13.5px;color:#6e6e73;margin-bottom:12px;line-height:1.5}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;color:#6e6e73;padding:8px 10px;border-bottom:1px solid #eee;white-space:nowrap}
+td{padding:10px;border-bottom:1px solid #f4f4f6;vertical-align:middle}
+th.n,td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.prod{display:flex;gap:10px;align-items:center}
+.prod small{color:#6e6e73}
+.antes{color:#8e8e93;text-decoration:line-through}
+.ahora{font-weight:800;color:#b5231a}
+.neg{font-weight:800;color:#b5231a}
+.vacio{padding:24px;text-align:center;color:#1a7f42;font-weight:600}
+.tabla-scroll{overflow-x:auto}
+@media(max-width:600px){.c-foto,.c-compra{display:none}td,th{padding:9px 6px}}
+@media print{#header,.breadcrumbs,#footer{display:none !important}.cr-card{box-shadow:none}}
+</style>{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="cr-wrap">
+  <div class="cr-title">Costos rebajados por regalías</div>
+  <div class="cr-sub">Cuando el proveedor regala unidades, el costo contable baja (pagaste 1 y entraron 2). Eso está bien para la contabilidad,
+    pero el próximo se paga completo. Desde el 25/11/2026 el descuento máximo del POS y el freno de «no vender bajo costo» usan
+    <b>lo que cuesta reponerlo</b> (una unidad pagada en la última compra) cuando es mayor. Esta lista es la revisión: no cambia nada.</div>
+
+  <div class="cr-card">
+    <h2>Costo rebajado por regalos ({{ rebajados|length }})</h2>
+    <div class="d">El costo promedio está al menos {{ diferencia_minima|floatformat:0 }} % por debajo de lo que cuesta reponerlo. La cifra gris del POS ya muestra el descuento máximo real.</div>
+    {% if rebajados %}
+    <div class="tabla-scroll"><table>
+      <thead><tr><th>Producto</th><th class="n">Precio</th><th class="n">Costo promedio</th><th class="n">Costo de reponer</th>
+        <th class="n">Descuento máximo</th><th class="c-compra">Compra con regalo</th></tr></thead>
+      <tbody>
+      {% for f in rebajados %}
+        <tr>
+          <td><div class="prod"><span class="c-foto">{% foto_producto f.producto 40 "clickable-product-img" %}</span>
+            <div>{{ f.producto.nombre }}<br><small>SKU {{ f.producto.sku }} · quedan {{ f.producto.stock_actual|floatformat:"-2" }}</small></div></div></td>
+          <td class="n">₡{{ f.producto.precio_venta|crc:0 }}</td>
+          <td class="n">₡{{ f.promedio|crc:0 }}</td>
+          <td class="n">₡{{ f.reposicion|crc:0 }}</td>
+          <td class="n"><span class="antes">{{ f.tope_antes }} %</span> → <span class="ahora">{{ f.tope_ahora }} %</span></td>
+          <td class="c-compra">{% if f.regalo %}{{ f.regalo.compra.numero }} · {{ f.regalo.compra.recibida_en|date:"d/m/Y" }}<br><small>{{ f.regalo.compra.proveedor }} · {{ f.regalo.cantidad|floatformat:"-2" }} + {{ f.regalo.cantidad_bonificada|floatformat:"-2" }} de regalo</small>{% else %}<small>—</small>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<div class="vacio">Ningún producto tiene el costo rebajado por regalos.</div>{% endif %}
+  </div>
+
+  <div class="cr-card">
+    <h2>Se venden perdiendo ({{ perdiendo|length }})</h2>
+    <div class="d">El precio de lista, sin IVA, no alcanza para volver a comprarlo. Se pierde aunque no se dé descuento: revisá el precio en «Ajustes de inventario».</div>
+    {% if perdiendo %}
+    <div class="tabla-scroll"><table>
+      <thead><tr><th>Producto</th><th class="n">Precio</th><th class="n">Costo de reponer</th><th class="n">Margen</th></tr></thead>
+      <tbody>
+      {% for f in perdiendo %}
+        <tr>
+          <td><div class="prod"><span class="c-foto">{% foto_producto f.producto 40 "clickable-product-img" %}</span>
+            <div><a href="{% url 'inventario:ajuste_producto' f.producto.pk %}">{{ f.producto.nombre }}</a><br><small>SKU {{ f.producto.sku }} · quedan {{ f.producto.stock_actual|floatformat:"-2" }}</small></div></div></td>
+          <td class="n">₡{{ f.producto.precio_venta|crc:0 }}</td>
+          <td class="n">₡{{ f.reposicion|crc:0 }}</td>
+          <td class="n"><span class="neg">{{ f.margen|floatformat:1 }} %</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<div class="vacio">Ningún producto se vende por debajo de lo que cuesta reponerlo.</div>{% endif %}
+  </div>
+</div>
+{% endblock %}

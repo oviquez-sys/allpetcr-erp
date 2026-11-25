@@ -88,6 +88,10 @@ body::before{content:'';position:fixed;inset:0;background-image:url('{% static "
       <div class="rc-ic i-vault"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M12 8.5V6M12 18v-2.5"/></svg></div>
       <div class="rc-tx"><div class="h">Valor de inventario</div><div class="d">Cuánto capital tenés dormido en bodega, a costo, agrupado por categoría.</div></div>
     </a>
+    <a class="rc-card" href="{% url 'inventario:costos_regalias' %}">
+      <div class="rc-ic i-price"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><path d="M12 7v6M12 16h.01"/></svg></div>
+      <div class="rc-tx"><div class="h">Costos rebajados por regalías</div><div class="d">Productos cuyo costo bajó por unidades regaladas del proveedor (el descuento máximo real es menor) y los que se venden por debajo de lo que cuesta reponerlos.</div></div>
+    </a>
     <a class="rc-card" href="{% url 'catalogo:precios' %}">
       <div class="rc-ic i-price"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 12 22l-9-9V3h10z"/><circle cx="7.5" cy="7.5" r="1.5"/><path d="M9.5 9.5l5 5"/></svg></div>
       <div class="rc-tx"><div class="h">Precios y márgenes</div><div class="d">Precio, costo promedio y margen de cada producto, con su historial de cambios.</div></div>

@@ -99,13 +99,17 @@ def _sin_iva(producto, precio):
     return (Decimal(precio) / (1 + producto.tarifa_iva / 100)).quantize(Decimal("0.01"))
 
 
-def max_pct_sin_perder(producto):
+def max_pct_sin_perder(producto, costo=None):
     """El mayor % entero que no deja el precio de oferta (sin IVA) bajo el
-    costo. None si no hay costo cargado (no se puede saber)."""
-    if producto.costo_promedio <= 0 or producto.precio_venta <= 0:
+    costo. None si no hay costo cargado (no se puede saber). El costo es el
+    de reposición si es mayor que el promedio (25/11/2026, catalogo/costos.py):
+    un regalo del proveedor no puede hacer ver una promo como segura."""
+    from .costos import costo_para_decidir
+    costo = costo_para_decidir(producto) if costo is None else costo
+    if costo <= 0 or producto.precio_venta <= 0:
         return None
     for pct in range(90, 0, -1):
-        if _sin_iva(producto, precio_oferta(producto.precio_venta, pct)) >= producto.costo_promedio:
+        if _sin_iva(producto, precio_oferta(producto.precio_venta, pct)) >= costo:
             return pct
     return 0
 
@@ -123,13 +127,15 @@ def fila(item) -> dict:
     pct = item.pct
     oferta = precio_oferta(p.precio_venta, pct)
     sin_iva = _sin_iva(p, oferta)
-    margen = ((sin_iva - p.costo_promedio) / sin_iva * CIEN).quantize(Decimal("1"), ROUND_FLOOR) \
-        if sin_iva > 0 and p.costo_promedio > 0 else None
-    bajo_costo = p.costo_promedio > 0 and sin_iva < p.costo_promedio
+    from .costos import costo_para_decidir
+    costo = costo_para_decidir(p)
+    margen = ((sin_iva - costo) / sin_iva * CIEN).quantize(Decimal("1"), ROUND_FLOOR) \
+        if sin_iva > 0 and costo > 0 else None
+    bajo_costo = costo > 0 and sin_iva < costo
     real = ((p.precio_venta - oferta) / p.precio_venta * CIEN).quantize(Decimal("0.1")) if p.precio_venta else 0
     return {"item": item, "producto": p, "pct": pct, "pct_propio": item.descuento_pct is not None,
             "precio": p.precio_venta, "oferta": oferta, "ahorro": p.precio_venta - oferta, "pct_real": real,
-            "margen": margen, "bajo_costo": bajo_costo, "max_pct": max_pct_sin_perder(p) if bajo_costo else None,
+            "margen": margen, "bajo_costo": bajo_costo, "max_pct": max_pct_sin_perder(p, costo) if bajo_costo else None,
             "subio": subio_precio(p), "stock": p.stock_actual,
             "ganancia": ((sin_iva - p.costo_promedio) * p.stock_actual) if p.costo_promedio > 0 else None,
             "choca": chocan_con(item)}

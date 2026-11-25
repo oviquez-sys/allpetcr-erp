@@ -379,7 +379,8 @@ la suya por `ficha_alimento`. El sitio la recibe en el detalle de la API.
 Pedido de Oscar: al negociar un descuento frente al cliente, saber hasta dónde
 ceder sin que se note. En el POS, solo para gerentes, cada tarjeta y cada línea
 del carrito llevan dos dígitos gris claro sin rótulo (p. ej. `38`): el descuento
-máximo en % sin vender bajo costo = margen sin IVA redondeado hacia abajo. En la
+máximo en % sin vender bajo costo = margen sin IVA redondeado hacia abajo (desde
+el 25/11/2026 con el costo de reposición si es mayor; ver más abajo). En la
 línea del carrito se tiñe rosado si el descuento escrito lo pasa. **Es a
 propósito casi invisible y sin explicación: no "mejorarlo" poniéndole rótulo.**
 Lógica en `ventas.views._filas_pos(con_tope=...)`; pruebas en
@@ -763,6 +764,31 @@ es la fuente oficial de participantes, números y resultados.
   Heredia», en `core/tienda.py` (catálogo PDF, correo de bienvenida, bases,
   asistente). `core/test_direccion.py` falla si vuelve la vieja. La dirección
   FISCAL de `Empresa` (factura electrónica) es otra y no se tocó.
+
+## Costo de reposición: el regalo del proveedor no infla el margen (25/11/2026)
+
+Caso real: NutriSource Cat-Kitten 12 lb de la compra del 26/09, pagado 1 + 1 de
+regalo. El costo promedio quedó a la mitad (correcto para la contabilidad) y la
+cifra gris del POS decía 54 % de descuento máximo donde, contra lo que cuesta
+volver a comprar el saco, había ~8 %. En caja se dio un descuento de más.
+- `catalogo/costos.py` (docstring = reglas). **Costo de reposición** = lo que
+  costó UNA unidad FACTURADA en la última compra recibida ((total − descuento
+  de la factura) ÷ facturadas, sin repartir bonificadas; líneas solo de regalo
+  no cuentan; unidad suelta = caja ÷ N). `costo_para_decidir` = el MAYOR entre
+  promedio y reposición. Decisión de Oscar: «Reposición».
+- Se usa en: tope del POS (`_filas_pos`), piso de caja SOLO cuando la línea
+  lleva descuento de caja, cupón o redondeo (sin descuento o con una promo ya
+  decidida por el gerente sigue el promedio: no frenar el precio de lista ni
+  las promos activas), máximo sin perder y bloqueo al activar promociones, y
+  el margen de la carga desde Excel (`costo_reposicion_fila`).
+- NO cambia: `costo_promedio`, kardex, asientos, costo de ventas, ganancias,
+  Precios (margen contable). Tampoco el cálculo de precio con «Ganancia %» de
+  Recibir mercadería, que reparte la bonificación a propósito (decisión del
+  16/10); queda pendiente si Oscar lo quiere con reposición.
+- Revisión: `inventario:costos_regalias` (gerente, tarjeta en Reportes →
+  Inventario): «Costo rebajado por regalos» (promedio ≥ 3 % bajo reposición,
+  tope antes → ahora, compra con regalo) y «Se venden perdiendo» (precio sin
+  IVA < reposición). Solo lee. Pruebas: `catalogo/test_costos.py`.
 
 ## Cambios y devoluciones desde la caja (24/11/2026)
 
