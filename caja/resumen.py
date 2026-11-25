@@ -22,6 +22,11 @@ MEDIOS = [("EFE", "Efectivo"), ("TAR", "Tarjeta"), ("SIN", "SINPE Móvil"),
           ("TRA", "Transferencia"), ("CRE", "Crédito (fiado)")]
 
 
+def devoluciones_de(sesion: SesionCaja) -> list:
+    return list(sesion.devoluciones.select_related("factura", "usuario", "venta_cambio")
+                .prefetch_related("lineas__linea_venta__producto").order_by("creado_en"))
+
+
 def resumen_cierre(sesion: SesionCaja) -> dict:
     from ventas.models import CambioMedioPago, FacturaVenta, LineaVenta
     from ventas.pagos import por_medio
@@ -86,6 +91,11 @@ def resumen_cierre(sesion: SesionCaja) -> dict:
         "retiros": list(sesion.retiros.select_related("usuario").order_by("creado_en")),
         "cambios_medio": list(CambioMedioPago.objects.filter(factura__sesion_caja=sesion)
                               .select_related("factura", "usuario").order_by("fecha")),
+        # Control de las devoluciones (24/11/2026): cualquiera puede devolver
+        # dinero, así que cada una sale acá —en pantalla, tiquete y correo—
+        # con quién la hizo, de qué venta y cuánto salió por dónde.
+        "devoluciones": devoluciones_de(sesion),
+        "devoluciones_con_plata": [d for d in devoluciones_de(sesion) if d.sale_plata > 0],
         "arqueo": arqueo,
         "diferencias": diferencias,
         "cuadra": not diferencias,

@@ -90,6 +90,23 @@ def bytes_cierre(datos: dict, ancho: int = 48, logo: bytes = b"", impreso_en=Non
                 linea(f"  {renglon}")
         raya()
 
+    if datos.get("devoluciones"):
+        # Control (24/11/2026): cualquiera puede devolver; cada devolución
+        # sale en el papel con quién la hizo y cuánta plata salió.
+        titulo("DEVOLUCIONES Y CAMBIOS")
+        for d in datos["devoluciones"]:
+            fila(f"{d.numero} de {d.factura.numero}", _monto(d.total))
+            linea(f"  {_usuario(d.usuario)} · {d.get_tipo_motivo_display()}"[:ancho])
+            for l in d.lineas.all():
+                linea(f"  {l.cantidad:g} x {l.linea_venta.producto.nombre}"[:ancho])
+            if d.aplicado_cambio:
+                fila("  A cambio de otro producto", _monto(d.aplicado_cambio))
+            if d.reembolso_efectivo:
+                fila("  Efectivo devuelto", _monto(d.reembolso_efectivo))
+            if d.reembolso_bancos:
+                fila("  SINPE/tarjeta devuelto", _monto(d.reembolso_bancos))
+        raya()
+
     titulo("ARQUEO POR MEDIO")
     col = (ancho - 12) // 3
     linea(f"{'':12}{'Esperado':>{col}}{'Contado':>{col}}{'Diferencia':>{col}}"[:ancho])

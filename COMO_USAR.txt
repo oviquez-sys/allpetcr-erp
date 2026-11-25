@@ -178,35 +178,42 @@ con su firma. Así siempre hay rastro de lo que pasó.
 
 
 -------------------------------------------------
-DEVOLUCIÓN DE UN CLIENTE (días después, solo parte de lo comprado)
+CAMBIO O DEVOLUCIÓN DE UN CLIENTE (desde el 24/11/2026)
 -------------------------------------------------
 
 "Anular" (arriba) es para corregir un error tuyo: revierte TODO el tiquete.
-Para cuando un CLIENTE devuelve un producto días después —y no
-necesariamente todo lo que compró— usá "Devolver" en su lugar:
+Cuando un CLIENTE trae un producto para cambiarlo o devolverlo, se hace
+desde Vender, en una sola operación:
 
-1. Entrá a 127.0.0.1:8000/actividad/, pestaña Ventas.
-2. Buscá el tiquete de esa venta y tocá "Devolver".
-3. Vas a ver cada producto de esa venta, con lo comprado, lo ya devuelto
-   (si aplica) y lo disponible para devolver. Escribí cuántas unidades
-   devuelve el cliente (podés dejar en blanco lo que no se devuelve).
-4. Escribí el motivo (obligatorio) y tocá "Registrar devolución".
+1. Tocá "↩ Cambio / devolución" (arriba de la venta).
+2. Escaneá el producto que trae. También sirve el número del tiquete o
+   su WhatsApp o cédula.
+3. Elegí la compra y tocá "Devuelve este". El producto entra a la venta
+   en negativo, al precio que PAGÓ (con su descuento).
+4. Tocá el motivo: Talla · No le gustó · Defectuoso · Otro (con "Otro",
+   escribí qué pasó). "Defectuoso" NO vuelve a la estantería.
+5. Si se lleva otra cosa: escaneala como siempre. El total es la
+   DIFERENCIA y se cobra con Efectivo, Tarjeta, SINPE o Mixto.
+   Si lo nuevo vale lo mismo: "Confirmar cambio".
+   Si vale menos, o no se lleva nada: el sistema dice cuánto devolverle y
+   por dónde (como pagó: efectivo de la gaveta, SINPE o datáfono).
 
-El sistema hace todo solo:
-- El producto vuelve al inventario.
-- Si pagó en EFECTIVO: el reembolso sale de la caja abierta de HOY (no de
-  la sesión vieja, que ya puede estar cerrada). Necesitás tener la caja
-  abierta ese día.
-- Si pagó con TARJETA o SINPE: no se toca la caja física (ese reembolso
-  se hace aparte, por el datáfono); solo se ajusta la contabilidad.
-- Si fue FIADO (crédito): primero se reduce lo que el cliente debía. Si ya
-  había pagado más de lo que ahora debe, el resto se le devuelve en
-  efectivo de la caja de hoy.
+El sistema hace todo solo: el producto devuelto vuelve al inventario y el
+nuevo sale; la caja y el SINPE solo ven lo que de verdad entró o salió; la
+contabilidad cuadra; sale un solo tiquete (Devuelve · Lleva · Diferencia).
 
-El sistema no te deja devolver más de lo que se compró (ni sumando varias
-devoluciones de la misma venta), ni devolver sobre una venta ya anulada.
-Cada devolución queda registrada en el Historial con quién, cuándo,
-cuánto y por qué — igual que las anulaciones.
+Reglas:
+- Plazo: 15 días desde la compra. Después, solo el gerente.
+- Lo hace cualquiera (cajero o gerente). Control: el cierre de caja (en
+  pantalla, en el tiquete y por correo) lista cada devolución con quién la
+  hizo y cuánta plata salió. Si salió plata, el correo llega aunque la
+  caja haya calzado.
+- La diferencia de un cambio no se fía.
+- Una compra fiada: lo devuelto baja primero lo que debe.
+- Un cambio no da números del sorteo.
+
+También se puede devolver desde el Historial de ventas ("Devolver"), sin
+llevarse otro producto.
 
 
 -------------------------------------------------
@@ -219,8 +226,9 @@ El sistema tiene tres roles. Cada empleado se asigna a UNO:
   contabilidad y la bitácora de reversas, y autoriza ventas bajo costo.
   (Tu usuario ALLPETCR ya es gerente.)
 
-- CAJERO: solo vende en el POS, maneja su caja e imprime etiquetas. NO puede
-  anular ni devolver ventas, NO puede recibir mercadería, NO ve la
+- CAJERO: vende en el POS, maneja su caja, imprime etiquetas y hace cambios
+  y devoluciones dentro del plazo. NO puede anular ventas, NO puede
+  recibir mercadería, NO ve la
   contabilidad ni las ganancias. Este límite es la defensa contra el robo:
   el truco típico (hacer una venta, cobrar y después anularla para quedarse
   el efectivo) le queda cerrado — solo un gerente puede anular.

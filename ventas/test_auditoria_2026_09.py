@@ -264,7 +264,10 @@ class ClienteRapidoEHistorial(Base):
         html = self.client.get(reverse("ventas:historial"), {"q": numero}).content.decode()
         self.assertIn(f.numero, html)
         self.assertIn(reverse("impresion:tiquete", args=[f.pk]), html)   # reimprimir
-        self.assertNotIn(reverse("ventas:devolver", args=[f.pk]), html)  # devolver es del gerente
+        # Devolver: desde el 24/11/2026 también el cajero (decisión de Oscar);
+        # anular sigue siendo del gerente.
+        self.assertIn(reverse("ventas:devolver", args=[f.pk]), html)
+        self.assertNotIn(reverse("ventas:anular", args=[f.pk]), html)
 
 
 class CorreoDelRecibo(Base):

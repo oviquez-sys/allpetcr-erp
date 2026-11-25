@@ -92,7 +92,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
                     permitir_bajo_costo=False, permitir_descuento_alto=False,
                     permitir_regalia_alta=False, pagos=None, clave_pos=None,
                     monto_recibido=None, cupon=None, redondeo=0, sin_cliente="",
-                    pedido_web=None, envio_costo=None) -> FacturaVenta:
+                    pedido_web=None, envio_costo=None, credito_cambio=0) -> FacturaVenta:
     """lineas: iterable de dicts {"producto_id": int, "cantidad": Decimal}.
 
     permitir_bajo_costo: por defecto NO se puede vender un producto por debajo
@@ -135,7 +135,13 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     pedido_web: número de un pedido web por confirmar (WEB-12) que se está
     cobrando en caja. La venta queda ligada a él en ESTA transacción: así se
     sabe que nació en el sitio aunque se pague en el mostrador. `envio_costo`
-    es lo que la tienda le paga al mensajero por ese pedido (para medir)."""
+    es lo que la tienda le paga al mensajero por ese pedido (para medir).
+
+    credito_cambio: solo lo usa `ventas.cambios.registrar_cambio` (24/11/2026).
+    Es el valor de lo que el cliente devolvió en ese momento: paga la venta
+    hasta ese monto (medio CAM) y el resto se cobra por `medio_pago` /
+    `pagos`. Si alcanza para todo, la venta queda pagada con CAM. La parte
+    usada queda en `factura.credito_cambio_usado`."""
     if clave_pos:
         ya_hecha = FacturaVenta.objects.filter(clave_pos=clave_pos).first()
         if ya_hecha is not None:
@@ -352,7 +358,34 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     factura.descuento = descuento_total
 
     # Cuánto de este cobro es efectivo que entra al cajón.
-    if medio_pago == FacturaVenta.MedioPago.MIXTO:
+    credito_cambio = Decimal(str(credito_cambio or 0)).quantize(Decimal("0.01"))
+    usado_cambio = min(credito_cambio, total) if credito_cambio > 0 else Decimal("0")
+    factura.credito_cambio_usado = usado_cambio
+    if medio_pago == FacturaVenta.MedioPago.CAMBIO and usado_cambio < total:
+        raise ValidationError(f"Falta cobrar la diferencia del cambio: ₡{total - usado_cambio:,.0f}.")
+    if usado_cambio > 0:
+        resto = total - usado_cambio
+        if medio_pago == FacturaVenta.MedioPago.CREDITO:
+            raise ValidationError("En un cambio, la diferencia no se puede fiar: cóbrela por otro medio.")
+        if resto == 0:
+            factura.medio_pago = FacturaVenta.MedioPago.CAMBIO
+            efectivo = Decimal("0")
+        else:
+            if medio_pago == FacturaVenta.MedioPago.MIXTO:
+                otros = _validar_pagos(pagos or [], resto)
+            elif medio_pago in MEDIOS_MIXTOS:
+                otros = [{"medio": medio_pago, "monto": resto}]
+            else:
+                raise ValidationError(f"Falta cobrar la diferencia del cambio: ₡{resto:,.0f}.")
+            # Siempre mixta: una parte la pagó el producto devuelto (CAM) y
+            # la otra entró de verdad (efectivo, tarjeta o SINPE).
+            factura.medio_pago = FacturaVenta.MedioPago.MIXTO
+            for p in [{"medio": FacturaVenta.MedioPago.CAMBIO, "monto": usado_cambio}] + otros:
+                PagoVenta.objects.create(factura=factura, medio=p["medio"], monto=p["monto"])
+            efectivo = sum((p["monto"] for p in otros if p["medio"] == "EFE"), Decimal("0"))
+    elif medio_pago == FacturaVenta.MedioPago.CAMBIO:
+        raise ValidationError("Medio de pago inválido.")
+    elif medio_pago == FacturaVenta.MedioPago.MIXTO:
         pagos = _validar_pagos(pagos or [], total)
         if len(pagos) < 2:
             raise ValidationError("Un pago mixto necesita al menos dos medios con monto.")
@@ -364,7 +397,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     else:
         efectivo = Decimal("0")
 
-    campos = ["subtotal", "descuento", "impuesto", "total", "redondeo"]
+    campos = ["subtotal", "descuento", "impuesto", "total", "redondeo", "medio_pago"]
     if monto_recibido not in (None, "") and efectivo > 0:
         recibido = Decimal(str(monto_recibido)).quantize(Decimal("0.01"))
         if recibido < efectivo:
@@ -413,8 +446,10 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     if pedido_web:
         from pedidos.por_confirmar import concretar
         es_web = concretar(pedido_web, factura, envio_costo=envio_costo) is not None
-    from campanas.reglas import acreditar_venta
-    acreditar_venta(factura, es_web=es_web, usuario=usuario)
+    # Un cambio no es una compra nueva: no da números del sorteo (24/11/2026).
+    if not usado_cambio:
+        from campanas.reglas import acreditar_venta
+        acreditar_venta(factura, es_web=es_web, usuario=usuario)
     return factura
 
 
@@ -473,6 +508,14 @@ def anular_factura(*, factura, motivo, usuario) -> FacturaVenta:
         raise ValidationError(
             "Esta venta ya tiene devoluciones, así que no se puede anular completa. "
             "Use «Devolver» para lo que falta devolver."
+        )
+    # Pagada (en parte) con un producto devuelto (24/11/2026): anularla
+    # dejaría al cliente sin el producto nuevo y sin el devuelto. Lo que se
+    # hace es devolver el producto nuevo.
+    if factura.devoluciones_aplicadas.exists():
+        raise ValidationError(
+            "Esta venta salió de un cambio de producto, así que no se anula: use «Devolver» "
+            "con el producto que se llevó."
         )
 
     # Se reversa contra la MISMA bodega de la que salió (BE-09).

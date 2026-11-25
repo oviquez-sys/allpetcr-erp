@@ -109,11 +109,11 @@ main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,31%);g
 .li-prod{display:flex;align-items:center;gap:10px;min-width:0}
 .linea .nm{font-weight:600;font-size:14.5px;line-height:1.3;min-width:0}
 .linea .nm small{display:block;font-size:12px;color:var(--ink2);font-weight:500}
-.linea .qtn{display:flex;align-items:center;gap:6px}
-.linea .qtn button{width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;font-size:19px;
+.linea .qtn,.dev-linea .qtn{display:flex;align-items:center;gap:6px}
+.linea .qtn button,.dev-linea .qtn button{width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:9px;cursor:pointer;font-size:19px;
   transition:background .15s;line-height:1}
-.linea .qtn button:hover{background:var(--bg)}
-.linea .qtn b{font-size:16px;min-width:24px;text-align:center;font-variant-numeric:tabular-nums}
+.linea .qtn button:hover,.dev-linea .qtn button:hover{background:var(--bg)}
+.linea .qtn b,.dev-linea .qtn b{font-size:16px;min-width:24px;text-align:center;font-variant-numeric:tabular-nums}
 .linea .mt{text-align:right;font-weight:700}
 .linea .mt .now{display:block;font-size:16px;font-weight:800;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
 .linea .mt .orig{display:block;font-size:12px;color:#8e8e93;text-decoration:line-through;font-weight:500}
@@ -179,7 +179,10 @@ main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,31%);g
 
 #msg{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);
   background:rgba(29,29,31,.92);color:#fff;padding:14px 22px;border-radius:14px;font-size:14px;
-  opacity:0;transition:.3s cubic-bezier(.22,1,.36,1);max-width:440px;z-index:50;backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  opacity:0;transition:.3s cubic-bezier(.22,1,.36,1);max-width:440px;z-index:50;backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,.25);
+  /* Solo se lee: los clics pasan a los botones de cobro que quedan debajo
+     (24/11/2026; aun invisible, el aviso tapaba Tarjeta y SINPE). */
+  pointer-events:none}
 #msg.err{background:rgba(211,51,42,.95)}
 #msg.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -280,6 +283,43 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
 .pedweb-fila input{width:96px;padding:6px 8px;border:1px solid #c9b6e6;border-radius:8px;font-size:14px}
 .pedweb-fila .x{margin-left:auto;border:0;background:none;color:#4a2378;font-size:13px;cursor:pointer;text-decoration:underline}
 #ultima .camp{margin-top:8px;padding:8px 10px;border-radius:10px;background:#eef8f0;color:#14532d;font-weight:600}
+/* Cambio / devolución (24/11/2026): lo que vuelve va arriba de la venta, en
+   naranja y en negativo; el total pasa a ser la diferencia. */
+.btn-dev{border:1px solid #f0c48a;background:#fff8ef;color:#8a4b00;border-radius:10px;padding:7px 12px;font-size:13.5px;
+  font-weight:600;cursor:pointer;margin-right:8px}
+.dev-bloque{border:1.5px solid #f0c48a;background:#fffaf3;border-radius:14px;padding:10px 12px;margin:0 0 10px}
+.dev-tit{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:#8a4b00}
+.dev-tit .x{margin-left:auto;border:0;background:none;color:#8a4b00;font-size:13px;cursor:pointer;text-decoration:underline}
+.dev-linea{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px dashed #f0d6b0;margin-top:8px}
+.dev-linea .nm{flex:1;min-width:0;font-size:14.5px;font-weight:600}
+.dev-linea .nm small{display:block;font-weight:400;color:var(--ink2);font-size:12.5px}
+.dev-linea .mt{font-weight:800;color:#a05a00;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dev-mot{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;font-size:13px;color:var(--ink2)}
+.dev-mot button{border:1px solid #f0c48a;background:#fff;color:#8a4b00;border-radius:980px;padding:5px 11px;font-size:13px;cursor:pointer}
+.dev-mot button.on{background:#a05a00;border-color:#a05a00;color:#fff}
+.dev-mot input{flex:1;min-width:160px;padding:6px 9px;border:1px solid #f0c48a;border-radius:8px;font-size:13.5px}
+.tot.dv{display:flex;justify-content:space-between;font-size:16px;color:#a05a00;margin-bottom:6px}
+.tot.dv.lleva{color:var(--ink2)}
+.sobra{font-size:14px;color:#a05a00;font-weight:600;text-align:right;margin-top:4px}
+.btn-cambio{margin-top:12px;width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(135deg,#c26a00,#a05a00);
+  color:#fff;font-size:17px;font-weight:700;cursor:pointer}
+.btn-cambio:disabled{opacity:.5;cursor:not-allowed}
+dialog.dlg.ancho{max-width:640px}
+.cb-venta{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;text-align:left}
+.cb-venta .t{font-weight:700;font-size:14.5px}
+.cb-venta .d{font-size:13px;color:var(--ink2);margin-top:2px}
+.cb-venta .plazo{color:var(--red);font-weight:600}
+.cb-lin{display:flex;align-items:center;gap:10px;margin-top:8px}
+.cb-lin .nm{flex:1;min-width:0;font-size:14px}
+.cb-lin .nm small{display:block;color:var(--ink2);font-size:12.5px}
+.cb-lin button{padding:7px 12px;border-radius:10px;border:1px solid var(--brand);background:var(--brand);color:#fff;font-size:13.5px;
+  font-weight:600;cursor:pointer;white-space:nowrap}
+.cb-lin button:disabled{opacity:.4;cursor:not-allowed}
+.cb-lin.otro{opacity:.75}
+.cb-busca{display:flex;gap:8px}
+.cb-busca input{flex:1}
+.cb-busca button{border:0;border-radius:12px;background:var(--brand);color:#fff;font-weight:700;padding:0 16px;cursor:pointer}
+#cbLista{max-height:52vh;overflow:auto;margin-top:12px}
 .pw-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px;text-align:left}
 .pw-item .t{font-weight:700}.pw-item .d{font-size:13px;color:var(--ink2);margin-top:2px}
 .pw-item .bts{display:flex;gap:8px;margin-top:8px}
@@ -373,6 +413,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
       <div id="ventasTabs"><h2>Venta actual</h2></div>
       <span id="cuentaVenta"></span>
       <span class="sp"></span>
+      <button type="button" class="btn-dev" id="btnCambio" title="El cliente trae un producto para cambiarlo o devolverlo">↩ Cambio / devolución</button>
       <button type="button" class="btn-otra" id="btnOtraVenta" title="Deja esta venta guardada y empieza otra para el siguiente cliente"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="vertical-align:-2px;margin-right:4px"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>Atender a otro cliente</button>
     </div>
     <div class="cli-cupon">
@@ -413,6 +454,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
             <svg viewBox="0 0 24 24"><path d="M4 7h11M4 12h16M4 17h8"/><circle cx="18" cy="7" r="2"/><circle cx="14" cy="17" r="2"/></svg>
             <span>Mixto</span><span class="tecla">F4</span></button>
         </div>
+        <button type="button" class="btn-cambio" id="btnCambioOk" style="display:none" onclick="cobrar('CAM')"></button>
         <button class="btn-cred" id="btnCredito" onclick="cobrar('CRE')">
           <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
           <span>Fiado (venta a crédito)</span></button>
@@ -518,6 +560,17 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
   </form>
 </dialog>
 
+<dialog class="dlg ancho" id="dlgCambio" aria-labelledby="tCambio">
+  <h2 id="tCambio">↩ Cambio o devolución</h2>
+  <div class="sub">Escaneá el producto que trae el cliente. También sirve el número del tiquete o su WhatsApp o cédula.</div>
+  <form class="cb-busca" id="frmCambio">
+    <input id="cbQ" autocomplete="off" spellcheck="false" maxlength="80" placeholder="Código, n.º de tiquete o WhatsApp" aria-label="Qué trae el cliente">
+    <button type="submit">Buscar</button>
+  </form>
+  <div id="cbLista"></div>
+  <div class="acc"><button type="button" data-cerrar>Cerrar</button></div>
+</dialog>
+
 <dialog class="dlg" id="dlgPedWeb" aria-labelledby="tPedWeb">
   <h2 id="tPedWeb">🌐 Pedidos web por cobrar</h2>
   <div class="sub">Los que llegaron del sitio por WhatsApp. El número (WEB-12) viene en el mensaje del cliente. Tocá uno para cargarlo en la venta.</div>
@@ -545,6 +598,7 @@ dialog.dlg::backdrop{background:rgba(0,0,0,.35)}
     <div class="step2"><div class="n">6</div><div class="st"><b>🎟 Casilla dorada.</b> En <b>cada compra</b> preguntale al cliente su WhatsApp o su cédula y escribilo ahí + Enter: la venta queda a su nombre (así se arma su historial y los recordatorios de comida). Si tiene su regalo de bienvenida pendiente, se aplica solo. También acepta el código del cupón (ALP-22 o solo 22; los viejos empiezan con AP-). Si cobrás sin cliente, la caja te pregunta «¿A nombre de quién?»: si no quiere dar datos, tocá «No quiso dar datos» y queda anotado. Si no pudo escanear el QR, tocá <b>🐾 Unir</b>: lo registrás ahí mismo y el regalo se aplica en esta compra. El descuento se aplica a toda la venta <b>menos los alimentos</b> y el cupón queda usado al cobrar: no sirve dos veces. Si el cliente solo lleva alimento, el cupón no se gasta y le queda para otra compra.</div></div>
     {% if campana.nombre %}<div class="step2"><div class="n">🎄</div><div class="st"><b>{{ campana.nombre }}.</b> Al poner al cliente en la venta, una franja verde dice si ya participa en el sorteo y cuántos números lleva. Si no participa, preguntale y tocá <b>Inscribir</b> (o marcá la casilla 🎄 en <b>🐾 Unir</b> si es nuevo): si se inscribe antes de cobrar, esa misma compra ya le da números. Cada compra da 1 número y, si supera ₡{{ campana.umbral|crc:0 }}, 1 más. Recibir promociones es otra casilla, aparte. Si no quiere participar, la venta sigue igual.</div></div>{% endif %}
     <div class="step2"><div class="n">🌐</div><div class="st"><b>Pedidos web.</b> Cuando un cliente manda su pedido del sitio por WhatsApp, el mensaje trae un número (WEB-12). Tocá <b>🌐 Pedidos web</b> arriba, elegí ese pedido y se carga en la venta con su cliente. Cobrá como siempre: la venta queda anotada como nacida en la web. Si es con envío, escribí cuánto le pagó la tienda al mensajero.</div></div>
+    <div class="step2"><div class="n">↩</div><div class="st"><b>Cambio o devolución.</b> Tocá <b>↩ Cambio / devolución</b> y escaneá lo que trae el cliente (o el número del tiquete, o su WhatsApp). Elegí la compra: el producto entra a la venta en negativo, al precio que pagó. Si se lleva otra cosa, escaneala como siempre y cobrá solo la diferencia. Si no se lleva nada, tocá <b>Registrar devolución</b> y devolvele el dinero como pagó. «Defectuoso» no vuelve a la estantería. Plazo: {{ plazo_cambios }} días; después, solo el gerente.</div></div>
     <div class="step2"><div class="n">+</div><div class="st"><b>Atender a otro cliente.</b> Si un cliente se va a buscar algo más con su venta a medio armar y llega otro a pagar, tocá <b>Atender a otro cliente</b>: la primera venta queda guardada en una pestaña arriba (con su cliente y su total) y empezás una nueva. Cuando vuelva, tocá su pestaña y seguís donde quedaste. Lo que está apartado en una venta en espera no se le puede vender a otro.</div></div>
     <div class="step2"><div class="n">+</div><div class="st"><b>Redondear.</b> Si son ₡13.554 y el cliente no tiene para el vuelto exacto, tocá <b>Redondear el total</b> debajo del total (o el atajo que aparece al cobrar en efectivo) y dejalo en ₡13.500. La diferencia queda registrada como redondeo y el cierre de caja cuadra. Máximo ₡{{ redondeo_maximo }}; para más, poné un descuento en el producto.</div></div>
     <div class="step2"><div class="n">7</div><div class="st"><b>Con el teclado es más rápido.</b> <b>F1</b> cobra en efectivo (escribí con cuánto paga y Enter; Enter solo = pagó exacto), <b>F2</b> con tarjeta, <b>F3</b> por SINPE y <b>F4</b> pago mixto. <b>Esc</b> limpia la búsqueda y devuelve el cursor al escáner.</div></div>
@@ -587,6 +641,11 @@ const campEstado = {};            // por id de cliente: {nombre, participa, nume
 // Pedido web que se está cobrando en esta venta: {numero, nombre, telefono,
 // entrega, entrega_texto, zona, envio_costo} o null.
 let pedidoWeb = null;
+// Lo que el cliente devuelve en esta venta (cambio, 24/11/2026): {factura_id,
+// numero, fecha, medio, cliente_id, lineas: {id: {nombre, precio, max,
+// cantidad, …foto}}, tipo, motivo} o null. Ver ventas/cambios.py.
+let devuelve = null;
+const MOTIVOS_DEV = [['TAL','Talla'], ['GUS','No le gustó'], ['DEF','Defectuoso'], ['OTR','Otro']];
 
 const selCli = document.getElementById('cliente');
 clientes.forEach(c => {
@@ -868,7 +927,9 @@ function pintar(){
       <span class="qtn"><button onclick="quitar(${id})">−</button><b>${it.cantidad}</b><button onclick="agregar(${id})">＋</button></span>
       <div class="linea-x">${ctrl}</div>
       <span class="mt">${mt}</span></div>`;
-  }).join('') : '<div class="empty"><span class="big">🛒</span>Escaneá o tocá un producto<br>para empezar la venta</div>';
+  }).join('') : (devuelve ? '<div class="empty">Escaneá lo que se lleva a cambio.<br>Si no se lleva nada, tocá «Registrar devolución» abajo.</div>'
+                          : '<div class="empty"><span class="big">🛒</span>Escaneá o tocá un producto<br>para empezar la venta</div>');
+  document.getElementById('lineas').insertAdjacentHTML('afterbegin', bloqueDevuelve());
   const total = ids.reduce((a,id)=>a + totalLinea(id), 0);
   // Corrección 2026-08-03: esta suma leía `carrito[id].descuento`, un campo
   // que quedó huérfano cuando el descuento pasó a ser porcentual
@@ -885,9 +946,20 @@ function pintar(){
   if (redondeo && redondeo.base !== total){ redondeo = null; msg("Se quitó el redondeo porque la venta cambió."); }
   const red = redondeo ? redondeo.base - redondeo.dejarEn : 0;
   if (red > 0) html += `<div class="tot r"><span>Redondeo</span><span>− ${fmt(red)} <button type="button" class="lnk" onclick="quitarRedondeo()">quitar</button></span></div>`;
-  html += `<div class="tot g"><span>Total</span><span>${fmt(total - red)}</span></div>`;
-  if (!red && total > 0) html += `<div class="redondear" id="redondearFila"><button type="button" class="lnk" onclick="abrirRedondeo()">Redondear el total</button></div>`;
+  if (devuelve){
+    // Cambio: el total es la diferencia. Si lo nuevo vale menos, se dice
+    // cuánto se le devuelve y por dónde (el mismo medio con que pagó).
+    const fav = aFavor(), dif = total - red - fav;
+    if (ids.length) html += `<div class="tot dv lleva"><span>Lo que se lleva</span><span>${fmt(total - red)}</span></div>`;
+    html += `<div class="tot dv"><span>Lo que devuelve</span><span>− ${fmt(fav)}</span></div>`;
+    html += `<div class="tot g"><span>${dif > 0 ? 'Diferencia a pagar' : 'A pagar'}</span><span>${fmt(Math.max(0, dif))}</span></div>`;
+    if (dif < 0) html += `<div class="sobra">Se le devuelven ${fmt(-dif)} ${comoSeDevuelve()}</div>`;
+  } else {
+    html += `<div class="tot g"><span>Total</span><span>${fmt(total - red)}</span></div>`;
+    if (!red && total > 0) html += `<div class="redondear" id="redondearFila"><button type="button" class="lnk" onclick="abrirRedondeo()">Redondear el total</button></div>`;
+  }
   document.getElementById('totales').innerHTML = html;
+  pintarBotonesCobro(total - red);
   const unidades = ids.reduce((a,id)=>a + carrito[id].cantidad, 0);
   document.getElementById('cuentaVenta').textContent = ids.length
     ? `${ids.length} producto${ids.length === 1 ? '' : 's'} · ${unidades} unidad${unidades === 1 ? '' : 'es'}` : '';
@@ -914,7 +986,9 @@ function nuevaClave(){
 function totalCarrito(){ return Object.keys(carrito).reduce((a,id)=>a + totalLinea(id), 0); }
 // Lo que de verdad se cobra: el total con el redondeo, si hay.
 function montoRedondeo(){ return (redondeo && redondeo.base === totalCarrito()) ? redondeo.base - redondeo.dejarEn : 0; }
-function totalCobrar(){ return totalCarrito() - montoRedondeo(); }
+// En un cambio, lo que de verdad se cobra es la diferencia (nunca negativa:
+// si sobra, se devuelve por el medio original y no pasa por estos botones).
+function totalCobrar(){ return Math.max(0, totalCarrito() - montoRedondeo() - aFavor()); }
 // Sugerencia: la centena de abajo (₡13.554 → ₡13.500).
 function sugerenciaRedondeo(t){ const s = Math.floor(t / 100) * 100; return (s < t && t - s <= REDONDEO_MAX) ? s : null; }
 function abrirRedondeo(){
@@ -952,7 +1026,10 @@ function lineasCarrito(){
 }
 function listoParaCobrar(){
   const lineas = lineasCarrito();
-  if (!lineas.length){ msg("Todavía no agregaste productos.", true); return false; }
+  if (devuelve){
+    if (!Object.values(devuelve.lineas).some(l => l.cantidad > 0)){ msg("Marcá qué devuelve el cliente.", true); return false; }
+    if (devuelve.tipo === 'OTR' && !(devuelve.motivo || '').trim()){ msg("Con «Otro», escribí el motivo de la devolución.", true); return false; }
+  } else if (!lineas.length){ msg("Todavía no agregaste productos.", true); return false; }
   // Chequeo local (SEC-006): evita el viaje al servidor por un motivo vacío;
   // el servidor lo exige igual, esto es solo para no hacer esperar al cajero.
   if (lineas.some(l => l.es_regalia && !l.motivo)){ msg("Toda regalía necesita un motivo.", true); return false; }
@@ -973,7 +1050,7 @@ function pedirEfectivo(){
   // Atajo en el cobro en efectivo: si el cliente no tiene para el vuelto
   // exacto, redondear a la centena sin salir de esta ventana.
   const redo = document.getElementById('efeRedo'); redo.textContent = '';
-  const sug = !montoRedondeo() ? sugerenciaRedondeo(total) : null;
+  const sug = !montoRedondeo() && !devuelve ? sugerenciaRedondeo(total) : null;
   if (sug !== null){
     const b = document.createElement('button'); b.type = 'button'; b.className = 'lnk';
     b.textContent = `Dejar en ${fmt(sug)} (redondeo de ${fmt(total - sug)})`;
@@ -1048,7 +1125,7 @@ async function cobrar(medio, extra = {}){
   if (faltaCliente()){ pedirCliente(() => cobrar(medio, extra)); return; }
   cobrando = true;
   if (!clave) clave = nuevaClave();
-  document.querySelectorAll('.pagos button, #btnCredito').forEach(b=>b.disabled=true);
+  document.querySelectorAll('.pagos button, #btnCredito, #btnCambioOk').forEach(b=>b.disabled=true);
   try {
     const r = await fetch("{% url 'ventas:vender' %}", {
       method:'POST',
@@ -1058,11 +1135,16 @@ async function cobrar(medio, extra = {}){
                             cupon: cupon ? cupon.codigo : null, redondeo: montoRedondeo(),
                             sin_cliente: clienteId ? '' : (sinClienteMotivo || ''),
                             pedido_web: pedidoWeb ? pedidoWeb.numero : null,
-                            envio_costo: pedidoWeb ? (pedidoWeb.envio_costo || 0) : 0})
+                            envio_costo: pedidoWeb ? (pedidoWeb.envio_costo || 0) : 0,
+                            devolucion: devolucionParaEnviar()})
     });
     const d = await r.json();
     if (d.ok){
       if (!d.repetida) Object.entries(carrito).forEach(([id,c])=>{ porId[id].stock_actual -= c.cantidad; });
+      const cambio = devuelve;
+      if (cambio && !d.repetida && cambio.tipo !== 'DEF')   // lo devuelto vuelve a la estantería (salvo defectuoso)
+        Object.values(cambio.lineas).forEach(l => { if (porId[l.producto_id]) porId[l.producto_id].stock_actual += l.cantidad; });
+      devuelve = null;
       carrito = {};
       redondeo = null;
       quitarCupon(false);             // el cupón ya quedó usado en esta venta
@@ -1076,6 +1158,7 @@ async function cobrar(medio, extra = {}){
       ventas[activa] = nuevaVenta();  // las otras ventas en espera siguen ahí
       pintar();
       pintarGrid();                   // acá sí toca rearmar el catálogo: bajó el stock de varios productos
+      if (d.devolucion){ mostrarDevolucion(d); return terminarCobro(); }
       mostrarUltima(d);
       if (!d.impreso){
         // La venta YA quedó registrada: si la térmica falló se abre el tiquete
@@ -1091,8 +1174,11 @@ async function cobrar(medio, extra = {}){
     // que volver a cobrar NO la duplique.
     msg("⛔ No se pudo conectar con el servidor. Vuelva a tocar el medio de pago: no se va a cobrar dos veces.", true);
   }
+  terminarCobro();
+}
+function terminarCobro(){
   cobrando = false;
-  document.querySelectorAll('.pagos button, #btnCredito').forEach(b=>b.disabled=false);
+  document.querySelectorAll('.pagos button, #btnCredito, #btnCambioOk').forEach(b=>b.disabled=false);
   volverAlEscaner();
 }
 
@@ -1105,6 +1191,15 @@ function mostrarUltima(d){
   const t = document.createElement('div'); t.className = 't';
   t.textContent = `✅ Venta ${d.numero} por ${fmt(d.total)}` + (d.repetida ? ' (ya estaba registrada)' : '');
   u.appendChild(t);
+  if (d.cambio){
+    const c = d.cambio, cb = document.createElement('div'); cb.className = 'imp';
+    cb.textContent = `↩ Cambio: lo devuelto pagó ${fmt(c.aplicado)}; diferencia cobrada ${fmt(c.diferencia)}.`;
+    u.appendChild(cb);
+    [[c.efectivo, `Sacá ${fmt(c.efectivo)} de la gaveta: es lo que sobró del cambio.`],
+     [c.bancos, `Devolvele ${fmt(c.bancos)} por SINPE o por el datáfono: es lo que sobró del cambio.`]].forEach(([m, x]) => {
+      if (m > 0){ const v = document.createElement('div'); v.className = 'vuelto'; v.textContent = x; u.appendChild(v); }
+    });
+  }
   if (d.vuelto !== null && d.vuelto !== undefined){
     const v = document.createElement('div'); v.className = 'vuelto';
     v.textContent = `Vuelto: ${fmt(d.vuelto)}`; u.appendChild(v);
@@ -1348,7 +1443,7 @@ async function aplicarCupon(dato, alError){
 // «No quiso dar datos» (queda anotado en la venta). Fiado ya exige cliente.
 let sinClienteMotivo = '';
 let cobroPendiente = null;
-function faltaCliente(){ return !document.getElementById('cliente').value && !cupon && !sinClienteMotivo; }
+function faltaCliente(){ return !devuelve && !document.getElementById('cliente').value && !cupon && !sinClienteMotivo; }
 function pedirCliente(seguir){
   cobroPendiente = seguir;
   document.getElementById('quienDato').value = pedidoWeb ? (pedidoWeb.telefono || '') : '';
@@ -1516,9 +1611,9 @@ let activa = 0;
 const CLAVE_LOCAL = 'allpetcr.pos.ventas';
 function nuevaVenta(){
   return {carrito:{}, cupon:null, clienteReconocido:null, clientePorCasilla:false, cliente:'', clave:null, redondeo:null,
-          pedidoWeb:null};
+          pedidoWeb:null, devuelve:null};
 }
-function ventaVacia(v){ return !Object.keys(v.carrito).length && !v.cupon && !v.clienteReconocido && !v.cliente; }
+function ventaVacia(v){ return !Object.keys(v.carrito).length && !v.cupon && !v.clienteReconocido && !v.cliente && !v.devuelve; }
 // Unidades de un producto apartadas en las OTRAS ventas: no se pueden vender
 // dos veces, aunque el servidor igual lo frenaría al cobrar.
 function enEspera(id){
@@ -1526,13 +1621,13 @@ function enEspera(id){
 }
 function guardarActiva(){
   Object.assign(ventas[activa], {carrito, cupon, clienteReconocido, clientePorCasilla,
-                                 cliente: document.getElementById('cliente').value, clave, redondeo, pedidoWeb});
+                                 cliente: document.getElementById('cliente').value, clave, redondeo, pedidoWeb, devuelve});
 }
 function totalDeVenta(v){
-  const antes = [carrito, cupon, redondeo];
-  carrito = v.carrito; cupon = v.cupon; redondeo = v.redondeo || null; sinClienteMotivo = '';
+  const antes = [carrito, cupon, redondeo, devuelve];
+  carrito = v.carrito; cupon = v.cupon; redondeo = v.redondeo || null; devuelve = v.devuelve || null; sinClienteMotivo = '';
   const t = totalCobrar();
-  [carrito, cupon, redondeo] = antes;
+  [carrito, cupon, redondeo, devuelve] = antes;
   return t;
 }
 function nombreDeVenta(v){
@@ -1576,6 +1671,7 @@ function cargarVenta(i, enfocar = true){
   carrito = v.carrito; cupon = v.cupon; clienteReconocido = v.clienteReconocido; sinClienteMotivo = '';
   clientePorCasilla = v.clientePorCasilla; clave = v.clave; redondeo = v.redondeo || null;
   pedidoWeb = v.pedidoWeb || null;
+  devuelve = v.devuelve || null;
   document.getElementById('cliente').value = v.cliente || '';
   consultarCamp(v.cliente);
   document.getElementById('cuponCodigo').value = '';
@@ -1707,6 +1803,147 @@ document.getElementById('frmCamp').addEventListener('submit', async ev => {
     msg(d.ya_participaba ? `${d.nombre} ya estaba participando.` : `🎄 ${d.nombre} quedó inscrito en el sorteo.`);
   } catch(_){ err.textContent = 'No se pudo conectar con el ERP.'; }
 });
+
+// --- Cambio o devolución (24/11/2026, ventas/cambios.py) ----------------------
+// Lo que el cliente trae entra a la venta en negativo, al precio que pagó; lo
+// que se lleva se escanea como siempre y se cobra solo la diferencia.
+function aFavorBruto(){ return devuelve ? Object.values(devuelve.lineas).reduce((a, l) => a + l.precio * l.cantidad, 0) : 0; }
+// Compra fiada: lo devuelto baja primero lo que debe; solo lo ya pagado
+// paga lo nuevo (misma regla que devoluciones.valor_a_favor).
+function aFavor(){ return Math.max(0, aFavorBruto() - (devuelve ? (devuelve.debe || 0) : 0)); }
+function comoSeDevuelve(){
+  const m = devuelve ? devuelve.medio_codigo : '';
+  return {EFE: 'en efectivo (de la gaveta)', SIN: 'por SINPE, como pagó', TAR: 'por el datáfono, como pagó',
+          CRE: 'en efectivo (de la gaveta)'}[m] || 'como pagó (efectivo, SINPE o tarjeta)';
+}
+function bloqueDevuelve(){
+  if (!devuelve) return '';
+  const filas = Object.entries(devuelve.lineas).map(([id, l]) => `<div class="dev-linea">
+      ${fotoHTML(l, 40, 'clickable-product-img')}
+      <span class="nm">${esc(l.nombre)}<small>Pagó ${fmt(l.precio)} c/u${l.max > 1 ? ` · puede devolver hasta ${l.max}` : ''}${l.regalia ? ' · fue regalía' : ''}</small></span>
+      <span class="qtn"><button onclick="cantDev(${+id}, -1)">−</button><b>${l.cantidad}</b><button onclick="cantDev(${+id}, 1)">＋</button></span>
+      <span class="mt">− ${fmt(l.precio * l.cantidad)}</span></div>`).join('');
+  const mot = MOTIVOS_DEV.map(([c, n]) => `<button type="button" class="${devuelve.tipo === c ? 'on' : ''}" onclick="tipoDev('${c}')">${n}</button>`).join('');
+  return `<div class="dev-bloque">
+    <div class="dev-tit">↩ <b>Devuelve</b> · compra ${esc(devuelve.numero)} del ${esc(devuelve.fecha)} · pagó con ${esc(devuelve.medio)}${devuelve.cliente ? ' · ' + esc(devuelve.cliente) : ''}
+      <button type="button" class="x" onclick="quitarDevuelve()">Quitar</button></div>
+    ${filas}
+    <div class="dev-mot">Motivo: ${mot}
+      ${devuelve.tipo === 'OTR' ? `<input type="text" maxlength="200" placeholder="¿Qué pasó? (obligatorio)" value="${esc(devuelve.motivo || '')}" onchange="devuelve.motivo = this.value; guardarLocal();">` : ''}
+      ${devuelve.tipo === 'DEF' ? '<span>No vuelve a la estantería.</span>' : ''}</div>
+    ${devuelve.debe > 0 ? `<div class="dev-mot">Compra fiada: lo devuelto baja primero lo que debe (${fmt(devuelve.debe)}).</div>` : ''}
+  </div>`;
+}
+function pintarBotonesCobro(totalVenta){
+  const pagos = document.querySelector('.pagos'), cred = document.getElementById('btnCredito');
+  const ok = document.getElementById('btnCambioOk');
+  const dif = devuelve ? totalVenta - aFavor() : 1;
+  const sinCobro = !!devuelve && dif <= 0;
+  pagos.style.display = sinCobro ? 'none' : '';
+  cred.style.display = devuelve ? 'none' : '';     // la diferencia de un cambio no se fía
+  ok.style.display = sinCobro ? '' : 'none';
+  if (sinCobro) ok.textContent = Object.keys(carrito).length
+    ? (dif < 0 ? `Confirmar cambio y devolver ${fmt(-dif)}` : 'Confirmar cambio')
+    : `Registrar devolución · ${fmt(aFavorBruto())}`;
+}
+function cantDev(id, delta){
+  const l = devuelve && devuelve.lineas[id];
+  if (!l) return;
+  if (l.cantidad + delta > l.max){ msg(`De esa compra solo quedan ${l.max} por devolver.`, true); return; }
+  l.cantidad += delta;
+  if (l.cantidad <= 0) delete devuelve.lineas[id];
+  if (!Object.keys(devuelve.lineas).length) devuelve = null;
+  pintar(); volverAlEscaner();
+}
+function tipoDev(t){ if (devuelve){ devuelve.tipo = t; pintar(); } }
+function quitarDevuelve(){ devuelve = null; pintar(); volverAlEscaner(); }
+function devolucionParaEnviar(){
+  if (!devuelve) return null;
+  return {factura_id: devuelve.factura_id, tipo_motivo: devuelve.tipo, motivo: (devuelve.motivo || '').trim(),
+          lineas: Object.entries(devuelve.lineas).map(([id, l]) => ({linea_venta_id: +id, cantidad: l.cantidad}))};
+}
+function abrirCambio(){
+  if (cobrando) return;
+  document.getElementById('cbLista').textContent = '';
+  const q = document.getElementById('cbQ'); q.value = '';
+  document.getElementById('dlgCambio').showModal();
+  q.focus();
+}
+async function buscarCambio(){
+  const q = document.getElementById('cbQ').value.trim(), lista = document.getElementById('cbLista');
+  if (!q) return;
+  lista.textContent = 'Buscando…';
+  let d;
+  try { d = await (await fetch("{% url 'ventas:cambio_buscar' %}?q=" + encodeURIComponent(q))).json(); }
+  catch(_){ lista.textContent = 'No se pudo conectar con el ERP.'; return; }
+  if (!d.ok){ lista.textContent = d.error; return; }
+  lista.textContent = '';
+  if (!d.ventas.length){
+    lista.textContent = d.como === 'cliente' ? 'Ese cliente no tiene compras recientes con algo por devolver.'
+      : 'No encontré ninguna compra reciente con eso. Probá con el número del tiquete o el WhatsApp del cliente.';
+    return;
+  }
+  d.ventas.forEach(v => {
+    const card = document.createElement('div'); card.className = 'cb-venta';
+    const t = document.createElement('div'); t.className = 't'; t.textContent = `${v.numero} · ${v.fecha}`;
+    const dd = document.createElement('div'); dd.className = 'd';
+    dd.textContent = `${v.cliente || 'Sin cliente'} · ${v.medio} · ${fmt(v.total)} · hace ${v.dias} día${v.dias === 1 ? '' : 's'}`;
+    card.append(t, dd);
+    const bloqueada = v.fuera_de_plazo && !d.es_gerente;
+    if (v.fuera_de_plazo){
+      const pl = document.createElement('div'); pl.className = 'd plazo';
+      pl.textContent = `Fuera de plazo (más de ${d.plazo} días): ` + (d.es_gerente ? 'como gerente podés aceptarlo.' : 'solo el gerente puede hacerlo.');
+      card.appendChild(pl);
+    }
+    v.lineas.forEach(l => {
+      const fila = document.createElement('div'); fila.className = 'cb-lin' + (l.buscado ? '' : ' otro');
+      fila.insertAdjacentHTML('afterbegin', fotoHTML(l, 40, 'clickable-product-img'));
+      const nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = l.nombre;
+      const sm = document.createElement('small');
+      sm.textContent = `Pagó ${fmt(l.precio)} c/u · compró ${l.cantidad} · quedan ${l.disponible} por devolver${l.regalia ? ' · fue regalía' : ''}`;
+      nm.appendChild(sm);
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Devuelve este'; b.disabled = bloqueada;
+      b.addEventListener('click', () => elegirDevuelve(v, l));
+      fila.append(nm, b); card.appendChild(fila);
+    });
+    lista.appendChild(card);
+  });
+}
+function elegirDevuelve(v, l){
+  if (devuelve && devuelve.factura_id !== v.id){
+    if (!confirm(`Ya estás devolviendo algo de ${devuelve.numero}. Cada operación es de una sola compra. ¿Cambiarla por ${v.numero}?`)) return;
+    devuelve = null;
+  }
+  if (!devuelve) devuelve = {factura_id: v.id, numero: v.numero, fecha: v.fecha.split(' ')[0], medio: v.medio,
+                             medio_codigo: v.medio_codigo, cliente: v.cliente, debe: v.debe || 0,
+                             lineas: {}, tipo: 'TAL', motivo: ''};
+  const ya = devuelve.lineas[l.id];
+  if (ya){ if (ya.cantidad < ya.max) ya.cantidad += 1; }
+  else devuelve.lineas[l.id] = {producto_id: l.producto_id, nombre: l.nombre, precio: l.precio, max: l.disponible,
+                                cantidad: 1, regalia: l.regalia, miniatura: l.miniatura, imagen: l.imagen, respaldo: l.respaldo};
+  document.getElementById('dlgCambio').close();
+  pintar();
+  msg(Object.keys(carrito).length ? 'Listo. Revisá el total: es la diferencia.' : 'Listo. Ahora escaneá lo que se lleva a cambio (o registrá la devolución).');
+}
+function mostrarDevolucion(d){
+  const u = document.getElementById('ultima');
+  u.textContent = '';
+  const t = document.createElement('div'); t.className = 't';
+  t.textContent = `↩ Devolución ${d.numero} de ${d.venta} por ${fmt(d.total)}`;
+  u.appendChild(t);
+  [[d.efectivo, `Sacá ${fmt(d.efectivo)} de la gaveta y entregáselos.`],
+   [d.bancos, `Devolvele ${fmt(d.bancos)} por SINPE o por el datáfono, como pagó.`],
+   [d.cxc, `Se rebajaron ${fmt(d.cxc)} de lo que debía.`]].forEach(([monto, texto]) => {
+    if (monto > 0){ const v = document.createElement('div'); v.className = 'vuelto'; v.textContent = texto; u.appendChild(v); }
+  });
+  const imp = document.createElement('div'); imp.className = 'imp' + (d.impreso ? '' : ' mal');
+  imp.textContent = d.impreso ? (d.encolado ? 'Comprobante enviado a la impresora…' : 'Comprobante impreso.')
+                              : `No salió el comprobante. ${d.error_impresion || ''}`;
+  u.appendChild(imp);
+  u.classList.add('on');
+}
+document.getElementById('btnCambio').addEventListener('click', abrirCambio);
+document.getElementById('frmCambio').addEventListener('submit', e => { e.preventDefault(); buscarCambio(); });
 
 // --- Pedidos web por cobrar (16/11/2026) -------------------------------------
 // El pedido del sitio llega por WhatsApp con su número (WEB-12). Se carga acá

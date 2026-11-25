@@ -16,6 +16,7 @@ PLANTILLA = [
     ("1301", "Inventario de mercadería", "A", True),
     ("2", "PASIVO", "P", False),
     ("2401", "IVA por pagar", "P", True),
+    ("2402", "Cambios de producto por aplicar", "P", True),
     ("3", "PATRIMONIO", "Q", False),
     ("4", "INGRESOS", "I", False),
     ("4101", "Ventas de mercadería", "I", True),
@@ -36,6 +37,11 @@ CODIGOS = {
     # IVA cobrado en ventas al declarar. Por eso es un activo y no costo.
     "iva_acreditable": "1104",
     "iva_por_pagar": "2401",
+    # Cambio de producto (24/11/2026): lo devuelto se le debe al cliente un
+    # instante, hasta que paga con eso lo que se lleva. La devolución le pone
+    # el saldo y la venta nueva se lo quita en la misma operación: siempre
+    # queda en cero. Si un día no queda en cero, hay un cambio a medias.
+    "cambios": "2402",
     "ventas": "4101",
     "descuentos": "4102",
     "costo_ventas": "5101",

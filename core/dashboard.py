@@ -102,7 +102,11 @@ def _calcular_indicadores(empresa):
          if m["codigo"] == FacturaVenta.MedioPago.CREDITO),
         Decimal("0"),
     )
-    ventas_hoy_contado = ventas_hoy - ventas_hoy_credito
+    # Lo pagado con un producto devuelto (cambio, 24/11/2026) tampoco es
+    # plata que entró: ya había entrado el día de la compra original.
+    ventas_hoy_cambio = next((m["total"] for m in ventas_hoy_por_medio
+                              if m["codigo"] == FacturaVenta.MedioPago.CAMBIO), Decimal("0"))
+    ventas_hoy_contado = ventas_hoy - ventas_hoy_credito - ventas_hoy_cambio
     # Resultado del mes (20/09/2026). Tres correcciones respecto de antes:
     #  1. Ventas SIN IVA (subtotal): en régimen tradicional el IVA cobrado es
     #     de Hacienda. Contarlo inflaba ventas, ganancia y margen en ~11,5 %.

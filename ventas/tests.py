@@ -605,11 +605,17 @@ class RolesYPermisos(BaseVentas):
         factura.refresh_from_db()
         self.assertEqual(factura.estado, FacturaVenta.Estado.EMITIDA)  # NO se anuló
 
-    def test_cajero_no_puede_devolver(self):
+    def test_cajero_devuelve_dentro_del_plazo_y_no_fuera(self):
+        # Decisión de Oscar (24/11/2026): cualquiera devuelve dentro de los
+        # 15 días; pasado el plazo, solo el gerente. Antes: solo el gerente.
+        from datetime import timedelta
         factura = self.vender(cantidad=2, medio="EFE")
         self.client.force_login(self.cajero)
-        r = self.client.get(reverse("ventas:devolver", args=[factura.pk]))
-        self.assertRedirects(r, reverse("core:dashboard"))
+        self.assertEqual(self.client.get(reverse("ventas:devolver", args=[factura.pk])).status_code, 200)
+        FacturaVenta.objects.filter(pk=factura.pk).update(creado_en=factura.creado_en - timedelta(days=16))
+        linea = factura.lineas.get()
+        self.client.post(reverse("ventas:devolver", args=[factura.pk]), {f"cant_{linea.pk}": "1", "tipo_motivo": "TAL"})
+        self.assertFalse(DevolucionVenta.objects.filter(factura=factura).exists())
 
     def test_cajero_no_puede_ver_actividad(self):
         self.client.force_login(self.cajero)

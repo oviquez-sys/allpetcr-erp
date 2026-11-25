@@ -18,6 +18,7 @@ import logging
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import EmailMultiAlternatives
+from django.db.models import Q
 from django.template.loader import render_to_string
 
 from .models import SesionCaja
@@ -37,8 +38,19 @@ def destinatarios() -> list[str]:
 
 def asunto(datos) -> str:
     s = datos["sesion"]
+    n = len(datos.get("devoluciones_con_plata") or [])
+    devs = f"{n} devolución{'es' if n != 1 else ''} con dinero" if n else ""
+    if not datos["diferencias"]:
+        return f"Cierre de caja #{s.pk}: calzó, con {devs}"
     partes = [f"{d.get_medio_display()}: {texto_diferencia(d.diferencia).lower()}" for d in datos["diferencias"]]
-    return f"Cierre de caja #{s.pk} no calzó — " + "; ".join(partes)
+    return f"Cierre de caja #{s.pk} no calzó — " + "; ".join(partes) + (f" ({devs})" if devs else "")
+
+
+def hay_que_avisar(sesion) -> bool:
+    """Un cierre se avisa si no calzó o si se devolvió dinero (24/11/2026:
+    el control de que cualquiera pueda devolver)."""
+    return sesion.diferencias.exists() or sesion.devoluciones.filter(
+        Q(reembolso_efectivo__gt=0) | Q(reembolso_bancos__gt=0)).exists()
 
 
 def avisar_diferencia(sesion_id: int) -> str:
@@ -47,7 +59,7 @@ def avisar_diferencia(sesion_id: int) -> str:
     sesion = (SesionCaja.objects.select_related("usuario", "cerrada_por", "sucursal__empresa")
               .get(pk=sesion_id))
     datos = resumen_cierre(sesion)
-    if not datos["diferencias"]:
+    if not datos["diferencias"] and not datos["devoluciones_con_plata"]:
         return ""
     para = destinatarios()
     if not para:

@@ -102,6 +102,11 @@ class FacturaVenta(models.Model):
         # detalle de cuánto entró por cada uno vive en PagoVenta; solo las
         # ventas mixtas tienen filas ahí, las de un solo medio siguen igual.
         MIXTO = "MIX", "Pago mixto"
+        # Cambio de producto (24/11/2026): la parte de una venta que se pagó
+        # con lo que el cliente devolvió en ese mismo momento (la pechera XL
+        # que vuelve paga parte de la XXL). No es plata: no entra a la caja
+        # ni al banco. Ver ventas/cambios.py.
+        CAMBIO = "CAM", "Producto devuelto (cambio)"
 
     class SinCliente(models.TextChoices):
         # Encargo v3 (05/11/2026): ninguna venta sin cliente queda sin razón.
@@ -327,13 +332,40 @@ class DevolucionVenta(models.Model):
     el estado de la factura — puede devolverse días después, y solo algunos
     productos o algunas unidades, no necesariamente el tiquete completo."""
 
+    class TipoMotivo(models.TextChoices):
+        # Un toque en la caja en vez de escribir (24/11/2026). «Defectuoso»
+        # cambia lo que pasa con el producto: no vuelve a la estantería.
+        TALLA = "TAL", "Talla o tamaño"
+        NO_GUSTO = "GUS", "No le gustó o no le sirvió"
+        DEFECTUOSO = "DEF", "Defectuoso o dañado"
+        OTRO = "OTR", "Otro"
+
     factura = models.ForeignKey(FacturaVenta, on_delete=models.PROTECT, related_name="devoluciones")
     numero = models.CharField(max_length=20, unique=True)
     motivo = models.CharField(max_length=200)
+    tipo_motivo = models.CharField(max_length=3, choices=TipoMotivo.choices, default=TipoMotivo.OTRO)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0,
-                                help_text="Monto reembolsado (no incluye líneas de regalía)")
+                                help_text="Valor de lo devuelto (no incluye líneas de regalía)")
+    # Adónde fue ese valor (24/11/2026). Suman `total`. Se guardan para que el
+    # cierre de caja diga, sin recalcular, cuánta plata salió en cada
+    # devolución y quién la hizo (control pedido al dejar que cualquiera devuelva).
+    reembolso_efectivo = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    reembolso_bancos = models.DecimalField(max_digits=12, decimal_places=2, default=0,
+                                           help_text="Tarjeta o SINPE: se devuelve por el datáfono o el teléfono")
+    rebajado_cxc = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    aplicado_cambio = models.DecimalField(max_digits=12, decimal_places=2, default=0,
+                                          help_text="Lo que pagó el producto que se llevó a cambio")
+    venta_cambio = models.ForeignKey(FacturaVenta, null=True, blank=True, on_delete=models.PROTECT,
+                                     related_name="devoluciones_aplicadas",
+                                     help_text="La venta que se pagó con esta devolución (cambio)")
+    sesion_caja = models.ForeignKey("caja.SesionCaja", null=True, blank=True, on_delete=models.PROTECT,
+                                    related_name="devoluciones")
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
     creado_en = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def sale_plata(self):
+        return self.reembolso_efectivo + self.reembolso_bancos
 
     class Meta:
         verbose_name = "devolución de venta"
@@ -349,6 +381,8 @@ class LineaDevolucion(models.Model):
     linea_venta = models.ForeignKey(LineaVenta, on_delete=models.PROTECT, related_name="devoluciones")
     cantidad = models.DecimalField(max_digits=12, decimal_places=2)
     monto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    # False = defectuoso: no volvió al inventario vendible (24/11/2026).
+    a_inventario = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "línea de devolución"

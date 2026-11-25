@@ -31,7 +31,7 @@ from core.tenancy import documento_de_empresa
 from impresion import servicio as impresion
 from impresion.servicio import ErrorDeImpresion
 
-from . import services
+from . import cambios, services
 from .cxc import registrar_abono
 from .devoluciones import registrar_devolucion
 from .models import Cliente, DocumentoCxC, FacturaVenta
@@ -70,6 +70,7 @@ def pos(request):
         "productos": productos,
         "clientes": clientes,
         "es_gerente": es_gerente(request.user),
+        "plazo_cambios": cambios.PLAZO_CAMBIOS_DIAS,
         "tipos_identificacion": Cliente.TipoIdentificacion.choices,
         "como_nos_conocio": Cliente.ComoNosConocio.choices,
         "redondeo_maximo": int(services.REDONDEO_MAXIMO_GERENTE if es_gerente(request.user)
@@ -517,12 +518,7 @@ def vender(request):
         cliente = None
         if datos.get("cliente_id"):
             cliente = Cliente.objects.get(pk=datos["cliente_id"], activo=True, empresa=sesion.sucursal.empresa)
-        factura = services.registrar_venta(
-            sesion_caja=sesion,
-            lineas=datos.get("lineas", []),
-            medio_pago=datos.get("medio_pago", ""),
-            cliente=cliente,
-            usuario=request.user,
+        comun = dict(
             permitir_bajo_costo=es_gerente(request.user),  # el gerente puede vender bajo costo
             permitir_descuento_alto=es_gerente(request.user),  # el gerente puede autorizar descuentos > 15% (SEC-001)
             permitir_regalia_alta=es_gerente(request.user),  # el gerente puede autorizar regalías > ₡5000 (SEC-006)
@@ -535,6 +531,29 @@ def vender(request):
             pedido_web=(str(datos.get("pedido_web") or "").strip()[:20] or None),
             envio_costo=datos.get("envio_costo") or 0,
         )
+        dev = datos.get("devolucion")
+        if dev:
+            # Cambio o devolución desde la caja (24/11/2026, ventas/cambios.py).
+            original = FacturaVenta.objects.get(pk=int(dev["factura_id"]), empresa=sesion.sucursal.empresa)
+            devolucion, factura = cambios.registrar_cambio(
+                sesion_caja=sesion, factura_original=original, devolver=dev.get("lineas") or [],
+                tipo_motivo=str(dev.get("tipo_motivo") or "")[:3], motivo=str(dev.get("motivo") or "")[:200],
+                lineas_nuevas=datos.get("lineas") or [], medio_pago=datos.get("medio_pago", ""),
+                usuario=request.user, es_gerente=es_gerente(request.user), cliente=cliente, **comun,
+            )
+            if factura is None:
+                return _respuesta_devolucion(devolucion)
+        else:
+            factura = services.registrar_venta(
+                sesion_caja=sesion,
+                lineas=datos.get("lineas", []),
+                medio_pago=datos.get("medio_pago", ""),
+                cliente=cliente,
+                usuario=request.user,
+                **comun,
+            )
+    except FacturaVenta.DoesNotExist:
+        return JsonResponse({"ok": False, "error": "No encontré la venta original del cambio."}, status=400)
     except ValidationError as e:
         return JsonResponse({"ok": False, "error": " ".join(e.messages)}, status=400)
     except IntegrityError:
@@ -579,6 +598,39 @@ def vender(request):
     return _respuesta_venta(factura, impreso=impreso, error_impresion=error_impresion, trabajo=trabajo)
 
 
+def _respuesta_devolucion(devolucion):
+    """Devolución sin producto a cambio: el POS dice cuánto devolver y por
+    dónde, y sale el comprobante (abre la gaveta si es efectivo)."""
+    impreso, error_impresion, trabajo = False, "", None
+    if settings.TIQUETE_AUTOMATICO:
+        try:
+            trabajo = impresion.imprimir_devolucion(devolucion)
+            impreso = True
+        except ErrorDeImpresion as e:
+            error_impresion = str(e)
+            logger.warning("Devolución %s registrada pero sin comprobante: %s", devolucion.numero, e)
+    return JsonResponse({
+        "ok": True, "devolucion": True, "numero": devolucion.numero, "total": float(devolucion.total),
+        "efectivo": float(devolucion.reembolso_efectivo), "bancos": float(devolucion.reembolso_bancos),
+        "cxc": float(devolucion.rebajado_cxc), "medio_original": devolucion.factura.get_medio_pago_display(),
+        "venta": devolucion.factura.numero, "impreso": impreso, "encolado": trabajo is not None,
+        "error_impresion": error_impresion,
+        "trabajo_url": reverse("impresion:estado_trabajo", args=[trabajo.pk]) if trabajo else "",
+    })
+
+
+@rol_requerido(CAJERO, GERENTE)
+def cambio_buscar(request):
+    """La caja busca la compra de lo que el cliente trae (24/11/2026): por el
+    código del producto, el número del tiquete o el WhatsApp / cédula."""
+    sesion = sesion_abierta_de(request.user)
+    if sesion is None:
+        return JsonResponse({"ok": False, "error": "No tiene una caja abierta."}, status=400)
+    ventas, como = cambios.buscar(sesion.sucursal.empresa, request.GET.get("q"))
+    return JsonResponse({"ok": True, "ventas": ventas, "como": como, "plazo": cambios.PLAZO_CAMBIOS_DIAS,
+                         "es_gerente": es_gerente(request.user)})
+
+
 def _entra_efectivo(factura):
     """¿Esta venta mete plata a la gaveta? (19/10/2026, pedido de Oscar: que
     se abra sola SOLO con efectivo). Efectivo, o un pago mixto con una parte
@@ -616,7 +668,19 @@ def _respuesta_venta(factura, *, impreso=False, error_impresion="", trabajo=None
         "agotados": [] if repetida else _agotados_en_la_venta(factura),
         "campana": _numeros_de_la_venta(factura),
         "pedido_web": getattr(factura, "pedido_web", None).numero if hasattr(factura, "pedido_web") else "",
+        "cambio": _cambio_de_la_venta(factura),
     })
+
+
+def _cambio_de_la_venta(factura):
+    """Si la venta salió de un cambio: cuánto pagó lo devuelto y cuánto se
+    le devolvió de más (lo nuevo valía menos)."""
+    d = factura.devoluciones_aplicadas.first()
+    if d is None:
+        return None
+    return {"numero": d.numero, "venta": d.factura.numero, "aplicado": float(d.aplicado_cambio),
+            "diferencia": float(factura.total - d.aplicado_cambio),
+            "efectivo": float(d.reembolso_efectivo), "bancos": float(d.reembolso_bancos)}
 
 
 def _numeros_de_la_venta(factura):
@@ -833,12 +897,17 @@ def anular(request, factura_id):
     return redirect("core:actividad")
 
 
-@rol_requerido(GERENTE)
+@rol_requerido(CAJERO, GERENTE)
 def devolver(request, factura_id):
     """Formulario para devolver solo algunos productos (o algunas unidades)
     de una venta, aunque sea días después. Distinto de anular: la factura
     sigue vigente, solo se reversan las líneas y cantidades que el cajero
-    marque."""
+    marque.
+
+    Desde el 24/11/2026 lo normal es hacerlo desde Vender («↩ Cambio /
+    devolución»), que además deja llevarse otro producto. Esta pantalla
+    queda para devolver desde el Historial. Cajero también (decisión de
+    Oscar), dentro del plazo; fuera de plazo, solo el gerente."""
     factura = documento_de_empresa(
         FacturaVenta.objects.select_related("cliente").prefetch_related("lineas__producto", "lineas__devoluciones"),
         request,
@@ -854,12 +923,14 @@ def devolver(request, factura_id):
             dev = registrar_devolucion(
                 factura=factura, lineas=lineas,
                 motivo=request.POST.get("motivo", ""), usuario=request.user,
+                tipo_motivo=request.POST.get("tipo_motivo") or "OTR",
+                permitir_fuera_de_plazo=es_gerente(request.user),
             )
             messages.success(
                 request,
                 f"Devolución {dev.numero} registrada por ₡{dev.total:.0f} sobre la venta {factura.numero}."
             )
-            return redirect("core:actividad")
+            return redirect("core:actividad" if es_gerente(request.user) else "ventas:historial")
         except ValidationError as e:
             messages.error(request, " ".join(e.messages))
 
@@ -872,7 +943,13 @@ def devolver(request, factura_id):
             "ya_devuelta": ya_devuelta,
             "disponible": disponible,
         })
-    return render(request, "ventas/devolver.html", {"factura": factura, "filas": filas})
+    from .devoluciones import PLAZO_CAMBIOS_DIAS, dias_desde
+    from .models import DevolucionVenta
+    return render(request, "ventas/devolver.html", {
+        "factura": factura, "filas": filas, "motivos": DevolucionVenta.TipoMotivo.choices,
+        "dias": dias_desde(factura), "plazo": PLAZO_CAMBIOS_DIAS,
+        "fuera_de_plazo": dias_desde(factura) > PLAZO_CAMBIOS_DIAS, "es_gerente": es_gerente(request.user),
+    })
 
 
 @rol_requerido(CAJERO, GERENTE)

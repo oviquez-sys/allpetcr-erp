@@ -1,5 +1,5 @@
 {% load formato %}<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:560px;color:#1d1d1f">
-  <h2 style="margin:0 0 4px;font-size:20px">El cierre de caja #{{ sesion.pk }} no calzó</h2>
+  <h2 style="margin:0 0 4px;font-size:20px">El cierre de caja #{{ sesion.pk }} {% if diferencias %}no calzó{% else %}calzó, con devoluciones de dinero{% endif %}</h2>
   <p style="margin:0 0 16px;color:#6e6e73;font-size:14px">
     Abrió {{ sesion.usuario.username }} ({{ sesion.abierta_en|date:"d/m g:i a" }}) ·
     cerró {{ sesion.cerrada_por.username|default:"—" }} ({{ sesion.cerrada_en|date:"d/m g:i a" }})
@@ -30,6 +30,10 @@
     {% if anuladas_n %}<br>Anuladas: {{ anuladas_n }} por ₡{{ anuladas_total|crc }}{% endif %}
     {% for c in cambios_medio %}<br>Cobrada con otro medio: {{ c.factura.numero }} {{ c.get_anterior_display }} → {{ c.get_nuevo_display }} ₡{{ c.monto|crc }} ({{ c.motivo }}){% endfor %}
     {% for r in retiros %}<br>Retiro para depositar {{ r.referencia }}: ₡{{ r.monto|crc }} ({{ r.usuario.username|default:"—" }}){% endfor %}</p>
+  {% if devoluciones %}<p style="font-size:14px;margin-top:18px"><b>Devoluciones y cambios</b>
+    {% for d in devoluciones %}<br>{{ d.numero }} de {{ d.factura.numero }} · {{ d.usuario.username|default:"—" }} · {{ d.get_tipo_motivo_display }}{% if d.motivo != d.get_tipo_motivo_display %} («{{ d.motivo }}»){% endif %}:
+      {% for l in d.lineas.all %}{{ l.cantidad|floatformat:"-2" }} × {{ l.linea_venta.producto.nombre }}{% if not l.a_inventario %} (defectuoso){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}
+      — ₡{{ d.total|crc }}{% if d.aplicado_cambio %} · a cambio ₡{{ d.aplicado_cambio|crc }} ({{ d.venta_cambio.numero }}){% endif %}{% if d.reembolso_efectivo %} · <b>efectivo ₡{{ d.reembolso_efectivo|crc }}</b>{% endif %}{% if d.reembolso_bancos %} · <b>SINPE/tarjeta ₡{{ d.reembolso_bancos|crc }}</b>{% endif %}{% if d.rebajado_cxc %} · rebajado del fiado ₡{{ d.rebajado_cxc|crc }}{% endif %}{% endfor %}</p>{% endif %}
   {% if apertura_vs_anterior %}<p style="font-size:13px;color:#6e6e73">La caja abrió con ₡{{ sesion.monto_apertura|crc }} y el cierre anterior había contado ₡{{ anterior.monto_contado|crc }}. Puede ser un depósito.</p>{% endif %}
   <p><a href="{{ admin_url }}" style="color:#0b3161">Ver el cierre en el ERP</a></p>
 </div>

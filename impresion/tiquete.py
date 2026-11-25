@@ -118,7 +118,8 @@ def _dos_columnas(izquierda: str, derecha: str, ancho: int) -> str:
     return f"{izquierda[:espacio - 1]:<{espacio}}{derecha}"
 
 
-_MEDIOS = [("EFE", "Efectivo"), ("TAR", "Tarjeta"), ("SIN", "SINPE Movil"), ("CRE", "Credito")]
+_MEDIOS = [("EFE", "Efectivo"), ("TAR", "Tarjeta"), ("SIN", "SINPE Movil"), ("CRE", "Credito"),
+           ("CAM", "Producto devuelto")]
 
 
 def _hora_local(momento):
@@ -247,6 +248,7 @@ def bytes_tiquete(factura, ancho: int = 48, pie: str = "", logo: bytes = b"") ->
     # cliente ve en el papel cuánto se ahorró (descuentos + redondeo).
     if factura.descuento > 0 and any(getattr(l, "promocion_id", None) for l in factura.lineas.all()):
         partes += [_texto(_dos_columnas("Usted ahorró", _monto(factura.descuento), ancho)), SALTO]
+    partes += _devuelve(factura, ancho)
     partes += _condiciones(factura, ancho)
     partes += _numeros_del_sorteo(factura, ancho)
 
@@ -272,6 +274,81 @@ def bytes_tiquete(factura, ancho: int = 48, pie: str = "", logo: bytes = b"") ->
             partes += [_texto(renglon), SALTO]
     partes += [SALTO, SALTO, CORTAR]
     return b"".join(partes)
+
+
+def _lineas_devueltas(devolucion, ancho) -> list:
+    partes = []
+    for ld in devolucion.lineas.select_related("linea_venta__producto"):
+        for renglon in _envolver(ld.linea_venta.producto.nombre, ancho):
+            partes += [_texto(renglon), SALTO]
+        partes += [_texto(_dos_columnas(f"  {ld.cantidad:g} x {_monto(ld.monto / ld.cantidad)}",
+                                        f"-{_monto(ld.monto)}", ancho)), SALTO]
+        if not ld.a_inventario:
+            partes += [_texto("  (defectuoso)"), SALTO]
+    return partes
+
+
+def _devuelve(factura, ancho) -> list:
+    """Cambio de producto (24/11/2026): lo que el cliente devolvió y con qué
+    pagó lo que se lleva. Un solo papel dice las dos cosas: «Devuelve XL ·
+    Lleva XXL · Diferencia pagada»."""
+    devoluciones = list(factura.devoluciones_aplicadas.select_related("factura").all()) \
+        if hasattr(factura, "devoluciones_aplicadas") else []
+    if not devoluciones:
+        return []
+    partes = [_texto("-" * ancho), SALTO]
+    devuelto = Decimal("0")
+    for d in devoluciones:
+        partes += [NEGRITA_ON, _texto(f"DEVUELVE ({d.numero})"[:ancho]), NEGRITA_OFF, SALTO,
+                   _texto(f"De la compra {d.factura.numero} del {_hora_local(d.factura.creado_en):%d/%m/%Y}"[:ancho]),
+                   SALTO]
+        partes += _lineas_devueltas(d, ancho)
+        devuelto += d.total
+    usado = sum((m for medio, m in factura.desglose_pagos() if medio == "CAM"), Decimal("0"))
+    partes += [_texto(_dos_columnas("Valor devuelto", f"-{_monto(devuelto)}", ancho)), SALTO]
+    diferencia = factura.total - usado
+    partes += [NEGRITA_ON, _texto(_dos_columnas("DIFERENCIA PAGADA", _monto(diferencia), ancho)), NEGRITA_OFF, SALTO]
+    sobra = devuelto - usado
+    if sobra > 0:
+        partes += [_texto(_dos_columnas("Se le devolvió", _monto(sobra), ancho)), SALTO]
+    return partes
+
+
+def bytes_devolucion(devolucion, ancho: int = 48, logo: bytes = b"", abrir_gaveta: bool = False) -> bytes:
+    """Comprobante de una devolución sin producto a cambio (24/11/2026). Dice
+    qué volvió, de qué compra y cuánto se le devolvió y por dónde. La gaveta
+    se abre solo si sale efectivo."""
+    factura = devolucion.factura
+    p: list[bytes] = [ABRIR_GAVETA] if abrir_gaveta else []
+    p += [INICIALIZAR, CODIGOS_CP850, CENTRO]
+    if logo:
+        p += [logo, SALTO]
+    p += [NEGRITA_ON, DOBLE, _texto("DEVOLUCION"), NORMAL, NEGRITA_OFF, SALTO,
+          _texto(factura.empresa.nombre), SALTO]
+    if getattr(factura.empresa, "identificacion", ""):
+        p += [_texto(f"Cedula: {factura.empresa.identificacion}"), SALTO]
+    p += [_texto(f"{_hora_local(devolucion.creado_en):%d/%m/%Y %I:%M %p}"), SALTO,
+          NEGRITA_ON, _texto(devolucion.numero), NEGRITA_OFF, SALTO, IZQUIERDA,
+          _texto(f"De la compra {factura.numero} del {_hora_local(factura.creado_en):%d/%m/%Y}"[:ancho]), SALTO]
+    if factura.cliente_id:
+        p += [_texto(str(factura.cliente)[:ancho]), SALTO]
+    u = devolucion.usuario
+    if u:
+        p += [_texto(f"Atendió: {u.get_full_name() or u.get_username()}"[:ancho]), SALTO]
+    for renglon in _envolver(f"Motivo: {devolucion.motivo}", ancho):
+        p += [_texto(renglon), SALTO]
+    p += [_texto("-" * ancho), SALTO]
+    p += _lineas_devueltas(devolucion, ancho)
+    p += [_texto("-" * ancho), SALTO, NEGRITA_ON, DOBLE,
+          _texto(_dos_columnas("TOTAL", _monto(devolucion.total), ancho // 2)), NORMAL, NEGRITA_OFF, SALTO]
+    for etiqueta, monto in (("Devuelto en efectivo", devolucion.reembolso_efectivo),
+                            ("Por devolver por SINPE o tarjeta", devolucion.reembolso_bancos),
+                            ("Rebajado de lo que debía", devolucion.rebajado_cxc)):
+        if monto > 0:
+            p += [_texto(_dos_columnas(etiqueta, _monto(monto), ancho)), SALTO]
+    p += [SALTO, _texto("Firma del cliente:"), SALTO, SALTO, _texto("_" * (ancho * 2 // 3)), SALTO,
+          SALTO, SALTO, CORTAR]
+    return b"".join(p)
 
 
 def _numeros_del_sorteo(factura, ancho) -> list:

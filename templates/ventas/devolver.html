@@ -45,6 +45,10 @@ textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius
 .btn:hover{filter:brightness(1.08)}
 .nota{font-size:12.5px;color:var(--ink2);margin-top:10px;line-height:1.5}
 .regtag{font-size:11px;color:#8a5cf6;font-weight:600}
+.motivos{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.motivos label{border:1px solid var(--line);border-radius:980px;padding:7px 13px;font-size:13.5px;cursor:pointer}
+.motivos label:has(input:checked){background:var(--brand);color:#fff;border-color:var(--brand)}
+.motivos input{display:none}
 .img-modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:100;align-items:center;justify-content:center;padding:20px}
 .img-modal.open{display:flex}
 .img-modal img{max-width:96vw;max-height:92vh;min-width:min(480px,90vw);border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.3)}
@@ -99,13 +103,23 @@ textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius
         </tbody>
       </table>
 
+      {% if fuera_de_plazo %}
+        <div class="msg err" style="margin-top:14px">Esta compra es de hace {{ dias }} días y el plazo es de {{ plazo }}.{% if not es_gerente %} Solo el gerente puede hacer esta devolución.{% endif %}</div>
+      {% endif %}
       <div style="margin-top:18px">
-        <label style="font-size:13px;color:var(--ink2);display:block;margin-bottom:6px">Motivo de la devolución (obligatorio)</label>
-        <textarea name="motivo" placeholder="Ej. el cliente no lo necesitaba, venía dañado, talla incorrecta…" required></textarea>
+        <label style="font-size:13px;color:var(--ink2);display:block;margin-bottom:6px">Motivo</label>
+        <div class="motivos">
+          {% for valor, nombre in motivos %}
+            <label><input type="radio" name="tipo_motivo" value="{{ valor }}" {% if forloop.first %}checked{% endif %}> {{ nombre }}</label>
+          {% endfor %}
+        </div>
+        <textarea name="motivo" placeholder="Detalle (obligatorio solo con «Otro»)"></textarea>
+        <p class="nota">«Defectuoso»: el producto no vuelve a la estantería (no se vuelve a vender).</p>
       </div>
 
       <button class="btn" type="submit">Registrar devolución</button>
       <p class="nota">
+        Para cambiar el producto por otro, hacelo desde Vender → «↩ Cambio / devolución»: ahí se cobra solo la diferencia.
         Se devuelve solo lo que marqués arriba (podés dejar en blanco lo que no se devuelve).
         El inventario sube automáticamente. Si pagó en efectivo, el reembolso sale de la caja
         abierta de HOY (necesitás tenerla abierta). Si fue tarjeta o SINPE, solo se ajusta la

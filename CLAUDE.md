@@ -764,6 +764,45 @@ es la fuente oficial de participantes, números y resultados.
   asistente). `core/test_direccion.py` falla si vuelve la vieja. La dirección
   FISCAL de `Empresa` (factura electrónica) es otra y no se tocó.
 
+## Cambios y devoluciones desde la caja (24/11/2026)
+
+Caso real: pechera XL comprada por SINPE, cambiada por una XXL pagando la
+diferencia por SINPE. No se pudo registrar (solo existía «Devolver» del
+gerente, que reembolsa todo, + una venta nueva por el total). Ahora, en Vender:
+«↩ Cambio / devolución» → escanear lo que trae (o n.º de tiquete, WhatsApp,
+cédula) → elegir la compra → entra en negativo al precio PAGADO → escanear lo
+que se lleva → se cobra la diferencia. Docstring de `ventas/cambios.py`.
+- Medio de pago nuevo **CAM** «Producto devuelto (cambio)»: la parte de la
+  venta nueva pagada con lo devuelto. No es plata: no entra al arqueo
+  (`esperado_por_medio` solo toma TAR/SIN), el Inicio la resta de «contado».
+  Cuenta contable `cambios` (2402, pasivo puente): la devolución la acredita
+  (`aplicado_cambio`) y la venta la debita; siempre queda en cero.
+- `registrar_venta(credito_cambio=)`: paga hasta ese monto con CAM; el resto
+  por el medio elegido (la venta queda MIX, o CAM si alcanzó). No se fía.
+  Un cambio no da números del sorteo. La venta de un cambio no se anula
+  (se devuelve).
+- `registrar_devolucion`: `tipo_motivo` (TAL/GUS/DEF/OTR; «Otro» exige
+  texto), `aplicar_a_cambio`, plazo `PLAZO_CAMBIOS_DIAS`=15 (fuera de plazo
+  solo gerente), guarda `reembolso_efectivo`/`_bancos`/`rebajado_cxc`/
+  `aplicado_cambio` y la `sesion_caja`. **Defectuoso**: no entra al kardex
+  (`LineaDevolucion.a_inventario=False`) y su costo queda como costo de
+  ventas (la pérdida). Fiado: primero baja la CxC (`valor_a_favor`). Una
+  venta pagada con CAM que se devuelve por plata: la parte CAM sale por el
+  medio de la compra ORIGINAL (efectivo/fiado → caja; lo demás → banco).
+- Decisiones de Oscar: lo hace **cualquiera** (cajero también; «Devolver» del
+  Historial también quedó para cajero); dinero de vuelta por el mismo medio;
+  plazo 15 días. Control: `resumen_cierre` trae `devoluciones` (pantalla,
+  tiquete de cierre, correo) y el correo del cierre sale también si se
+  devolvió plata aunque calce (`caja.avisos.hay_que_avisar`).
+- Comprobantes: el tiquete de la venta del cambio trae «DEVUELVE … ·
+  DIFERENCIA PAGADA»; la devolución sola imprime `bytes_devolucion` (abre la
+  gaveta si sale efectivo).
+- API interna: `ventas:cambio_buscar` (GET ?q=) y `ventas:vender` con
+  `devolucion: {factura_id, tipo_motivo, motivo, lineas}`; sin `lineas` es
+  devolución sola. Pruebas: `ventas/test_cambios.py`.
+- De paso: `#msg` del POS con `pointer-events:none` (aun invisible tapaba los
+  botones Tarjeta/SINPE).
+
 ## Publicar en la página web (18/11/2026)
 
 Pedido de Oscar: casilla por producto «Publicar en la página web» (marcada por

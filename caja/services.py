@@ -227,11 +227,12 @@ def cerrar_caja(*, sesion, monto_contado=None, usuario=None, tarjeta_contado=Non
                                     diferencia=cont - esp, motivo=motivo, explicacion=explicacion[:300]))
     sesion.save()
     DiferenciaCaja.objects.bulk_create(filas)
-    if filas:
+    from .avisos import avisar_diferencia, hay_que_avisar
+    if filas or hay_que_avisar(sesion):
         # El correo sale DESPUÉS de confirmar el cierre: si la base revierte,
         # no se avisa de un cierre que no existe; si el correo falla, el
-        # cierre igual queda hecho (ver avisos.py).
-        from .avisos import avisar_diferencia
+        # cierre igual queda hecho (ver avisos.py). También sale si se
+        # devolvió dinero (24/11/2026), aunque haya calzado.
         transaction.on_commit(lambda: avisar_diferencia(sesion.pk))
     return sesion
 

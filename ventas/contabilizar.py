@@ -30,7 +30,9 @@ from django.utils import timezone
 from contabilidad.services import cuenta, registrar_asiento
 
 # Efectivo entra a Caja; tarjeta y SINPE se liquidan en Bancos.
-_CUENTA_PAGO = {"EFE": "caja", "TAR": "bancos", "SIN": "bancos", "CRE": "cxc", "TRA": "bancos"}
+# La parte pagada con un producto devuelto (cambio, 24/11/2026) va contra
+# «Cambios por aplicar», la misma cuenta que acredita la devolución: se anulan.
+_CUENTA_PAGO = {"EFE": "caja", "TAR": "bancos", "SIN": "bancos", "CRE": "cxc", "TRA": "bancos", "CAM": "cambios"}
 
 
 def _cargos(empresa, factura):
@@ -106,6 +108,7 @@ def asentar_venta(factura, usuario=None):
 def asentar_devolucion(
     *, devolucion, factura, bruto, descuento, impuesto,
     costo_vendido, costo_regalado, reducir_cxc, reembolso_efectivo, reembolso_bancos, usuario=None,
+    reembolso_cambio=Decimal("0"),
 ):
     """Reversa contable de una devolución PARCIAL. Espeja asentar_venta pero
     solo por los montos devueltos, y el 'reembolso' puede repartirse entre
@@ -126,6 +129,8 @@ def asentar_devolucion(
         lineas.append({"cuenta": cuenta(empresa, "caja"), "haber": reembolso_efectivo, "detalle": devolucion.numero})
     if reembolso_bancos > 0:
         lineas.append({"cuenta": cuenta(empresa, "bancos"), "haber": reembolso_bancos, "detalle": devolucion.numero})
+    if reembolso_cambio > 0:
+        lineas.append({"cuenta": cuenta(empresa, "cambios"), "haber": reembolso_cambio, "detalle": devolucion.numero})
     if descuento > 0:
         lineas.append({"cuenta": cuenta(empresa, "descuentos"), "haber": descuento})
     if ventas_ledger > 0:

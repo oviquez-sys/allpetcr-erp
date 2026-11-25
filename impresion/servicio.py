@@ -106,6 +106,21 @@ def imprimir_tiquete(factura, abrir_gaveta=False):
     return None
 
 
+def imprimir_devolucion(devolucion):
+    """Comprobante de una devolución sin cambio (24/11/2026). Abre la gaveta
+    si se devolvió efectivo: hay que sacarlo."""
+    datos = _tiquete.bytes_devolucion(
+        devolucion, ancho=settings.ANCHO_TIQUETE,
+        logo=_tiquete.bytes_logo(settings.TIQUETE_LOGO_PUNTOS, settings.TIQUETE_PAPEL_PUNTOS),
+        abrir_gaveta=devolucion.reembolso_efectivo > 0 and getattr(settings, "GAVETA_AUTOMATICA", True),
+    )
+    titulo = f"Devolución {devolucion.numero}"
+    if por_agente():
+        return cola.encolar_crudo(settings.IMPRESORA_RECIBOS, datos, titulo, TrabajoImpresion.TIQUETE)
+    windows.enviar_crudo(settings.IMPRESORA_RECIBOS, datos, titulo=titulo)
+    return None
+
+
 def imprimir_cierre(sesion):
     """Saca por la térmica de recibos el resumen del cierre de caja
     (02/11/2026). Mismo camino que el tiquete de venta; nunca abre la gaveta.

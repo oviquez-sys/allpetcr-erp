@@ -14,6 +14,7 @@ urlpatterns = [
     path("campana/cliente/", views.campana_cliente, name="campana_cliente"),
     path("campana/inscribir/", views.campana_inscribir, name="campana_inscribir"),
     path("pedidos-web/", views.pedidos_web, name="pedidos_web"),
+    path("cambio/buscar/", views.cambio_buscar, name="cambio_buscar"),
     path("historial/", views.historial, name="historial"),
     path("tiquete/<int:factura_id>/", views.tiquete, name="tiquete"),
     path("factura/<int:factura_id>/", views.factura, name="factura"),

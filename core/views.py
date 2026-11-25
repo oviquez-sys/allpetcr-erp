@@ -292,6 +292,12 @@ Cada tarjeta de alimento muestra el precio por kilo ("₡3.993 el kg").
 - "Atender a otro cliente": deja la venta actual en espera (pestaña arriba) y \
 abre otra; se vuelve a la primera tocando su pestaña. Lo que está en una venta \
 en espera se descuenta de lo disponible.
+- "↩ Cambio / devolución" (desde el 24/11/2026): se escanea lo que trae el \
+cliente (o el n.º de tiquete o su WhatsApp), se elige la compra y el producto \
+entra en negativo al precio que pagó. Lo que se lleva se escanea normal y se \
+cobra solo la diferencia; si no se lleva nada o vale menos, se le devuelve \
+como pagó. Motivo de un toque; "Defectuoso" no vuelve al inventario. Plazo 15 \
+días (después solo el gerente); lo puede hacer el cajero.
 - Descuento por línea (% o precio final) y "🎁 Regalía" para dar unidades sin \
 cobro. El número gris al lado es el descuento máximo sin vender bajo costo \
 (solo lo ven los gerentes).
