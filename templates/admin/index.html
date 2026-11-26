@@ -246,9 +246,13 @@ body.dashboard #content-main{display:block}
       <div class="ti i-rep"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 9l-5 5-3-3-4 4"/></svg></div>
       <div><div class="th">Centro de reportes</div><div class="td">Más vendidos, stock, valor de inventario, estado de resultados, IVA, libro diario y cierres.</div></div>
     </a>
-    <a class="ax-tool" href="/reportes/reposicion/">
+    <a class="ax-tool" href="{% url 'inventario:reponer' %}">
       <div class="ti i-repo"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.3 7 12 12l8.7-5M12 22V12"/></svg></div>
-      <div><div class="th">Qué reponer</div><div class="td">Cuánto pedir de cada producto según lo que vende de verdad, no según un mínimo fijo.</div></div>
+      <div><div class="th">Reponer</div><div class="td">Qué se vendió, qué se agotó y cuánto pedir, por fechas. Excel por proveedor.</div></div>
+    </a>
+    <a class="ax-tool" href="{% url 'compras:proveedores' %}">
+      <div class="ti i-repo"><svg viewBox="0 0 24 24"><path d="M1 3h15v13H1zM16 8h4l3 3v5h-7z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+      <div><div class="th">Proveedores y entregas</div><div class="td">Contacto, qué días se les pide y cuándo llega un pedido.</div></div>
     </a>
     {% comment %} Ajustes de inventario (12/10/2026): antes vivía escondido detrás de
        Etiquetas. Va primero porque es lo que se busca cuando algo no calza. {% endcomment %}

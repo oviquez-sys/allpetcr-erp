@@ -315,27 +315,56 @@ class Producto(models.Model):
 
     @property
     def ganancia_unitaria(self):
-        """Ganancia bruta por unidad: precio sin IVA − costo promedio."""
-        return self.precio_sin_iva - self.costo_promedio
+        """Ganancia bruta por unidad: precio sin IVA − costo de decisión (el
+        mayor entre promedio y reposición; ver `margen_pct`)."""
+        return self.precio_sin_iva - self.costo_decision
+
+    @property
+    def costo_reposicion(self):
+        """Lo que costó una unidad PAGADA en la última compra (25/11/2026,
+        catalogo/costos.py). En listas, `costos.anotar(productos)` lo trae de
+        una vez para no hacer una consulta por producto."""
+        if not hasattr(self, "_reposicion"):
+            from .costos import costo_reposicion
+            self._reposicion = costo_reposicion(self)
+        return self._reposicion
+
+    @property
+    def costo_decision(self):
+        """El costo con que se deciden precio, margen y descuento: el mayor
+        entre el promedio (contable) y el de reposición. Un regalo del
+        proveedor baja el promedio, pero el próximo se paga completo."""
+        return max(self.costo_promedio or Decimal("0"), self.costo_reposicion or Decimal("0"))
+
+    @property
+    def costo_rebajado(self):
+        """True si el promedio quedó por debajo de lo que cuesta reponerlo
+        (casi siempre por unidades regaladas): las pantallas lo avisan."""
+        return self.costo_decision > (self.costo_promedio or 0)
 
     @property
     def margen_pct(self):
-        """Margen de ganancia (%) sobre el precio sin IVA.
+        """Margen de ganancia (%) sobre el precio sin IVA, con el costo de
+        DECISIÓN (25/11/2026): el mayor entre el promedio y el de reposición.
+        Antes era con el promedio y un saco regalado mostraba 54 % donde había
+        8 %. Para el margen contable (lo que de verdad ganó lo vendido) están
+        los reportes de ventas, que usan el costo de cada venta.
         Fórmula: ((PrecioSinIVA - Costo) / PrecioSinIVA) * 100
         Retorna Decimal con 2 decimales, o None si el precio es 0."""
         base = self.precio_sin_iva
         if base == 0:
             return None
-        return round((base - self.costo_promedio) / base * Decimal("100"), 2)
+        return round((base - self.costo_decision) / base * Decimal("100"), 2)
 
     @property
     def markup_pct(self):
         """Markup o recargo (%) sobre el costo, con el precio sin IVA.
-        Fórmula: ((PrecioSinIVA - Costo) / Costo) * 100
+        Fórmula: ((PrecioSinIVA - Costo) / Costo) * 100, con el costo de
+        decisión (ver `margen_pct`).
         Retorna Decimal con 2 decimales, o None si el costo es 0."""
-        if self.costo_promedio == 0:
+        if self.costo_decision == 0:
             return None
-        return round((self.precio_sin_iva - self.costo_promedio) / self.costo_promedio * Decimal("100"), 2)
+        return round((self.precio_sin_iva - self.costo_decision) / self.costo_decision * Decimal("100"), 2)
 
 
 class CambioPrecio(models.Model):

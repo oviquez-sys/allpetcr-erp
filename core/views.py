@@ -6,7 +6,7 @@ import anthropic
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Count
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
@@ -16,7 +16,6 @@ from ventas.models import DevolucionVenta, FacturaVenta
 from . import arqueo as arq
 from . import evidencia as ev
 from . import reportes as rep
-from . import reposicion as repos
 from .chat_tools import ejecutar_herramienta, herramientas_para, skus_mencionados, tarjetas_de_productos
 from .dashboard import indicadores
 from .models import ChatMensaje
@@ -153,14 +152,10 @@ def reporte_inventario(request):
 
 @rol_requerido(GERENTE)
 def reporte_reposicion(request):
-    """Qué reponer y cuánto, según la velocidad de venta real."""
-    empresa = empresa_actual(request)
-    if empresa is None:
-        return render(request, "core/reporte_reposicion.html", {"sin_empresa": True})
-    solo_urgentes = request.GET.get("filtro") != "todos"
-    ctx = repos.sugerencias(empresa, solo_urgentes=solo_urgentes)
-    ctx["solo_urgentes"] = solo_urgentes
-    return render(request, "core/reporte_reposicion.html", ctx)
+    """«Qué reponer» se juntó con «Lo vendido» y «Agotados» en
+    `inventario:reponer` (26/11/2026). La dirección vieja lleva ahí."""
+    from django.urls import reverse
+    return redirect(reverse("inventario:reponer") + "?ver=pedir&atajo=30")
 
 
 @rol_requerido(GERENTE)
@@ -257,7 +252,7 @@ el puente hacia el dinero realmente recibido (resta el crédito, suma los abonos
 el contraste entre los documentos y el saldo guardado en la ficha del cliente.
 
 Si hay productos agotados por decidir, el Inicio muestra un aviso rojo que \
-lleva a "Agotados" (/inventario/agotados/).
+lleva a "Reponer", pestaña Agotados (/inventario/reponer/?ver=agotados).
 
 Acceso Rápido desde Inicio:
 - "Vender" → /pos/ — Punto de venta (POS). Todos los cajeros pueden vender acá.
@@ -368,21 +363,22 @@ lo hace un gerente.
 - Las compras también se pueden anular.
 
 Reportes (/reportes/, solo gerentes — se llega desde /admin/):
-- Lo vendido, para reponer (/inventario/vendido/) — lo que se vendió en las \
-fechas que se elijan (Hoy, Ayer, 7 o 15 días, Este mes, o desde/hasta) y \
-cuánto queda hoy, con proveedor y código del proveedor; primero lo agotado y \
-lo que quedó con pocas. Filtro por proveedor y "Excel para el pedido". Es el \
-reporte para armar el pedido de reposición.
-- Agotados (/inventario/agotados/) — lo que tuvo existencia y llegó a cero; \
-ahí se decide si se vuelve a pedir. Se descarga en Excel.
+- Reponer (/inventario/reponer/) — UNA pantalla para el pedido (desde el \
+26/11/2026 junta lo que antes eran "Lo vendido", "Qué reponer" y "Agotados"; \
+las direcciones viejas llevan ahí). Se eligen fechas (Hoy, Ayer, Esta semana, \
+Semana pasada, 7, 15 o 30 días, Este mes, Mes pasado, o desde/hasta) y para \
+cuántos días se quiere tener (15, 30 o 45). Pestañas: "Para pedir" (lo \
+agotado, lo que quedan pocas y lo que hay que pedir), "Todo lo vendido", \
+"Agotados" (ahí se decide si se vuelve a pedir o no se compra más) y "Ya \
+repuestos". Cada fila: código del proveedor, proveedor, vendidas, quedan hoy, \
+para cuántos días alcanza, cuánto pedir y lo que cuesta. "Pedir" usa la venta \
+por día contando solo los días que hubo existencia; con un rango de menos de \
+7 días se calcula con los últimos 30. El Excel trae una hoja por proveedor con \
+la columna Pedir editable y los totales en fórmula.
 - Ventas por período y categoría, Excel para el contador, Historial de ventas.
 - Más vendidos.
 - Stock (niveles bajos de inventario, contra el mínimo fijo del producto).
 - Valor de inventario.
-- Qué reponer (/reportes/reposicion/) — cuánto pedir de cada producto según lo \
-que vende de verdad: mide la venta diaria promedio de los últimos 60 días, \
-calcula cuántos días de stock quedan y sugiere la cantidad a pedir. Es distinto \
-del reporte de Stock, que sólo compara contra un mínimo fijo igual para todos.
 - Arqueo de caja (/reportes/arqueo/) — diferencias de cierre por cajero en los \
 últimos 30 días. Sirve para ver si a alguien le falta plata siempre del mismo \
 lado, que es distinto de un error de conteo ocasional.

@@ -1,0 +1,63 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Cargar proveedores desde Excel{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+body{background-color:#f5f5f7 !important}
+.pi-wrap{max-width:1100px;margin:0 auto}
+.pi-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.pi-sub{font-size:14px;color:#6e6e73;margin-bottom:16px;line-height:1.5;max-width:860px}
+.pi-card{background:#fff;border-radius:18px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:12px;display:grid;grid-template-columns:240px 1fr;gap:16px}
+.pi-card h2{font-size:17px;margin:0 0 8px}
+.pi-card select{width:100%;padding:8px 10px;border:1px solid #d9d9de;border-radius:9px;font-size:14px;background:#fbfbfd}
+.pi-card dl{display:grid;grid-template-columns:150px 1fr;gap:4px 10px;margin:0;font-size:13.5px}
+.pi-card dt{color:#6e6e73}
+.pi-card dd{margin:0;white-space:pre-line;word-break:break-word}
+.pi-ent{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(11,49,97,.07);font-size:13.5px}
+.pi-omit{margin-top:6px;font-size:12.5px;color:#a35c00}
+.pi-btn{display:inline-flex;align-items:center;padding:12px 18px;border:none;border-radius:12px;background:#0B3161;color:#fff !important;font-size:15px;font-weight:600;cursor:pointer;text-decoration:none}
+.pi-btn.sec{background:#fff;color:#0B3161 !important;border:1px solid #0B3161}
+@media(max-width:700px){.pi-card{grid-template-columns:1fr}.pi-card dl{grid-template-columns:1fr}}
+</style>{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="pi-wrap">
+  <div class="pi-title">Cargar proveedores desde Excel</div>
+  <div class="pi-sub">Revisá a qué proveedor va cada hoja. Solo se llenan los datos que trae el Excel: lo que ya estaba y el Excel deja vacío no se borra.
+    Los días se sacaron del horario escrito; lo que no se entendió (por ejemplo «M y J») queda para marcarlo con «Editar».
+    Nada se guarda hasta tocar «Cargar».</div>
+  <form method="post" action="{% url 'compras:proveedores_importar' %}">
+    {% csrf_token %}<input type="hidden" name="accion" value="confirmar"><input type="hidden" name="firma" value="{{ firma }}">
+    {% for f in filas %}
+    <div class="pi-card">
+      <div>
+        <h2>Hoja «{{ f.hoja }}»</h2>
+        <label for="destino_{{ f.i }}" style="font-size:12px;color:#6e6e73">Va a</label>
+        <select id="destino_{{ f.i }}" name="destino_{{ f.i }}">
+          <option value="no">— No cargar esta hoja —</option>
+          <option value="nuevo">Proveedor nuevo: «{{ f.hoja }}»</option>
+          {% for p in proveedores %}<option value="{{ p.pk }}" {% if p.pk == f.sugerido %}selected{% endif %}>{{ p.nombre }}</option>{% endfor %}
+        </select>
+        {% if not f.sugerido %}<div class="pi-omit">No encontré un proveedor con ese nombre: elegí a cuál va o «Proveedor nuevo».</div>{% endif %}
+      </div>
+      <div>
+        {% if f.datos %}<dl>{% for etiqueta, valor in f.datos %}<dt>{{ etiqueta }}</dt><dd>{{ valor }}</dd>{% endfor %}</dl>
+        {% else %}<div style="color:#6e6e73">La hoja no trae datos.</div>{% endif %}
+        <div class="pi-ent">
+          {% if f.entrega or f.minimos is not None or f.pide %}
+            Entendí: {% if f.pide %}se le pide {{ f.pide }} · {% endif %}{% if f.entrega %}entrega {{ f.entrega }}{% endif %}{% if f.minimos is not None %}{% if f.entrega %} · {% endif %}tarda al menos {{ f.minimos }} día{{ f.minimos|pluralize }}{% endif %}{% if f.hora %} · pedir antes de las {{ f.hora }}{% endif %}
+          {% else %}Sin días de entrega: hay que marcarlos con «Editar».{% endif %}
+        </div>
+        {% if f.omitidos %}<div class="pi-omit">No se cargan: {{ f.omitidos|join:", " }} (claves de otros sistemas).</div>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="pi-btn" type="submit">Cargar</button>
+      <a class="pi-btn sec" href="{% url 'compras:proveedores' %}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

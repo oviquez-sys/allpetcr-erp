@@ -95,9 +95,10 @@ TOOLS_SCHEMA = [
         "description": (
             "Lo que se vendió en un rango de fechas y cuánto queda hoy de cada "
             "producto, con su proveedor (última compra) y estado: Agotado, Quedan "
-            "pocas o Hay. Usar para '¿qué se vendió esta semana?', '¿qué tengo que "
+            "pocas o Hay, para cuántos días alcanza y cuánto pedir para tener 30 "
+            "días. Usar para '¿qué se vendió esta semana?', '¿qué tengo que "
             "reponer?', '¿qué le pido a Belina?'. Es lo mismo que la pantalla "
-            "'Lo vendido, para reponer' (/inventario/vendido/)."
+            "'Reponer' (/inventario/reponer/)."
         ),
         "input_schema": {
             "type": "object",
@@ -307,12 +308,13 @@ def ejecutar_herramienta(nombre, entrada, usuario=None):
                 "desde": desde.isoformat(), "hasta": hasta.isoformat(),
                 "productos_vendidos": r["productos"], "unidades": _num(r["unidades"]),
                 "agotados": r["agotados"], "quedan_pocas": r["pocas"],
-                "pantalla": "/inventario/vendido/",
+                "pantalla": "/inventario/reponer/?ver=vendido",
                 "productos": [
                     {
                         "nombre": f["producto"].nombre, "sku": f["producto"].sku,
                         "vendidas": _num(f["vendidas"]), "quedan": _num(f["quedan"]),
                         "estado": f["estado_texto"], "proveedor": f["proveedor"],
+                        "alcanza_dias": f["alcanza"], "pedir_para_30_dias": f["pedir"],
                         "codigo_proveedor": f["codigo_proveedor"],
                     }
                     for f in filas[:40]
@@ -356,6 +358,9 @@ def ejecutar_herramienta(nombre, entrada, usuario=None):
             limite = min(int(entrada.get("limite", 5) or 5), 20)
             # select_related: el margen usa empresa (régimen) e impuesto (tarifa).
             productos = Producto.objects.filter(empresa=empresa, activo=True).select_related("empresa", "impuesto")
+            # Margen con lo que cuesta reponer (25/11/2026, catalogo/costos.py).
+            from catalogo.costos import anotar
+            productos = anotar(productos)
             con_margen = [(p, m) for p in productos if (m := p.margen_pct) is not None]
             con_margen.sort(key=lambda t: t[1])
             return {
@@ -366,6 +371,7 @@ def ejecutar_herramienta(nombre, entrada, usuario=None):
                         "margen_pct": _num(m),
                         "precio_venta": _num(p.precio_venta),
                         "costo_promedio": _num(p.costo_promedio),
+                        "costo_reponer": _num(p.costo_decision),
                     }
                     for p, m in con_margen[:limite]
                 ],

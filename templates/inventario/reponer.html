@@ -1,0 +1,240 @@
+{% extends "admin/base_site.html" %}
+{% load static formato %}
+
+{% block title %}Reponer{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+/* Reponer (26/11/2026): junta Lo vendido, Qué reponer y Agotados. Ver inventario/reponer.py. */
+body{background-color:#f5f5f7 !important}
+.rp-wrap{max-width:1200px;margin:0 auto}
+.rp-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.rp-sub{font-size:14px;color:#6e6e73;margin-bottom:16px;line-height:1.5;max-width:860px}
+.rp-card{background:#fff;border-radius:18px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);margin-bottom:16px}
+.rp-atajos{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.rp-chip{padding:7px 13px;border-radius:980px;border:1px solid #d9d9de;background:#fff;color:#0B3161 !important;font-size:13.5px;text-decoration:none;white-space:nowrap}
+.rp-chip.on{background:#0B3161;color:#fff !important;border-color:#0B3161}
+.rp-form{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.rp-f label{display:block;font-size:12px;color:#6e6e73;margin-bottom:4px}
+.rp-f input,.rp-f select{padding:9px 11px;border:1px solid #d9d9de;border-radius:10px;font-size:14px;background:#fbfbfd;min-height:40px;box-sizing:border-box}
+.rp-btn{display:inline-flex;align-items:center;padding:10px 16px;border:none;border-radius:12px;background:#0B3161;color:#fff !important;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;min-height:40px;box-sizing:border-box;white-space:nowrap}
+.rp-btn.sec{background:#fff;color:#0B3161 !important;border:1px solid #0B3161}
+.rp-acciones{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.rp-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid #e5e5ea}
+.rp-tab{padding:10px 14px;font-size:15px;font-weight:600;color:#6e6e73 !important;text-decoration:none;border-bottom:3px solid transparent;margin-bottom:-1px}
+.rp-tab.on{color:#0B3161 !important;border-bottom-color:#0B3161}
+.rp-tab .n{display:inline-block;min-width:20px;padding:1px 7px;margin-left:4px;border-radius:980px;background:#b5231a;color:#fff;font-size:12px;text-align:center}
+.rp-res{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.rp-kpi{background:#fff;border-radius:14px;padding:12px 16px;box-shadow:0 1px 3px rgba(0,0,0,.04);min-width:110px}
+.rp-kpi b{display:block;font-size:22px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.rp-kpi span{font-size:12.5px;color:#6e6e73}
+.rp-kpi.rojo b{color:#b5231a}.rp-kpi.ambar b{color:#a35c00}.rp-kpi.azul b{color:#0B3161}
+.rp-nota{font-size:13px;color:#6e6e73;margin-bottom:10px;line-height:1.5}
+.rp-nota b{color:#3a3a3c}
+.rp-prov{background:#fff;border-radius:14px;padding:12px 16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);font-size:14px;line-height:1.7;border-left:4px solid #0B3161}
+.rp-prov a{color:#0B3161}
+small.llega{color:#0B3161;font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;color:#6e6e73;padding:8px 10px;border-bottom:1px solid #eee;white-space:nowrap}
+td{padding:10px;border-bottom:1px solid #f4f4f6;vertical-align:middle}
+th.n,td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.pedir b{font-size:18px;color:#0B3161}
+.prod{display:flex;gap:10px;align-items:center}
+.prod small{color:#6e6e73}
+.cod{font-weight:700}
+.tag{display:inline-block;padding:3px 10px;border-radius:980px;font-size:12px;font-weight:600;white-space:nowrap}
+.tag.agotado{background:#fff0ee;color:#b5231a}
+.tag.pocas{background:#fff6e5;color:#a35c00}
+.tag.hay{background:#efeff1;color:#3a3a3c}
+.tag.PEN{background:#b5231a;color:#fff}
+.tag.PED{background:rgba(11,49,97,.1);color:#0B3161}
+.tag.NO{background:#efeff1;color:#3a3a3c}
+.estado{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.dec{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.dec select,.dec input{padding:7px 9px;border:1px solid #d9d9de;border-radius:9px;font-size:13px;background:#fbfbfd}
+.dec input{width:140px}
+.dec button{padding:7px 12px;border-radius:9px;border:1px solid #0B3161;background:#0B3161;color:#fff;font-size:13px;cursor:pointer}
+.quien{font-size:11.5px;color:#6e6e73}
+.vacio{padding:30px;text-align:center;color:#6e6e73}
+.total td{font-weight:800;border-top:2px solid #0B3161;border-bottom:none}
+.solo-movil{display:none}
+.solo-movil .tag{margin-top:4px}
+.tabla-scroll{overflow-x:auto}
+@media(max-width:800px){.rp-acciones{margin-left:0}.c-costo{display:none}}
+@media(max-width:600px){.c-prov,.c-foto,.c-alc,.c-barras{display:none}.sin-dec .c-est{display:none}.solo-movil{display:block}td,th{padding:9px 6px}
+  .tag{white-space:normal;text-align:center;padding:3px 7px}.rp-tab{padding:9px 10px;font-size:14px}.dec input{width:100%}}
+@media print{.rp-card.filtros,.rp-tabs,.dec,#header,.breadcrumbs,#footer{display:none !important}.rp-card{box-shadow:none;padding:0}}
+</style>{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="rp-wrap">
+  <div class="rp-title">Reponer</div>
+  <div class="rp-sub">Qué se vendió en las fechas que elijás, qué se agotó y cuánto pedir de cada producto, con el proveedor y su código.
+    El Excel trae una hoja por proveedor, lista para mandar el pedido.</div>
+
+  <div class="rp-card filtros">
+    <div class="rp-atajos">
+      {% for clave, etiqueta in atajos %}
+        <a class="rp-chip {% if clave == atajo %}on{% endif %}" href="?atajo={{ clave }}{% if qs_sin_rango %}&{{ qs_sin_rango }}{% endif %}">{{ etiqueta }}</a>
+      {% endfor %}
+    </div>
+    <form method="get" class="rp-form">
+      <input type="hidden" name="ver" value="{{ ver }}">
+      <div class="rp-f"><label for="desde">Desde</label><input type="date" id="desde" name="desde" value="{{ desde|date:'Y-m-d' }}" max="{{ hoy|date:'Y-m-d' }}"></div>
+      <div class="rp-f"><label for="hasta">Hasta</label><input type="date" id="hasta" name="hasta" value="{{ hasta|date:'Y-m-d' }}" max="{{ hoy|date:'Y-m-d' }}"></div>
+      <div class="rp-f"><label for="proveedor">Proveedor</label>
+        <select id="proveedor" name="proveedor">
+          <option value="">Todos</option>
+          {% for p in proveedores %}<option value="{{ p }}" {% if p == proveedor %}selected{% endif %}>{{ p }}</option>{% endfor %}
+        </select></div>
+      <div class="rp-f"><label for="cubrir">Pedir para</label>
+        <select id="cubrir" name="cubrir">
+          {% for n in coberturas %}<option value="{{ n }}" {% if n == cubrir %}selected{% endif %}>{{ n }} días</option>{% endfor %}
+        </select></div>
+      <button class="rp-btn" type="submit">Ver</button>
+      <div class="rp-acciones">
+        <a class="rp-btn sec" href="{% url 'inventario:reponer_excel' %}?{{ qs }}">⬇ Excel{% if ver != "dormido" %} del pedido{% endif %}</a>
+        <a class="rp-btn sec" href="{% url 'compras:proveedores' %}">Proveedores y entregas</a>
+        <button class="rp-btn sec" type="button" onclick="window.print()">Imprimir</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="rp-tabs">
+    {% for clave, etiqueta in vistas.items %}
+      <a class="rp-tab {% if clave == ver %}on{% endif %}" href="?{{ qs_sin_ver }}&ver={{ clave }}">{{ etiqueta }}{% if clave == "agotados" and por_decidir %}<span class="n" title="Por decidir">{{ por_decidir }}</span>{% endif %}</a>
+    {% endfor %}
+  </div>
+
+  {% if proveedor_ficha %}{% with p=proveedor_ficha %}
+  <div class="rp-prov">
+    <div><b>{{ p.nombre }}</b>{% if p.contacto %} · {{ p.contacto }}{% endif %}{% if p.telefono %} · <a href="tel:{{ p.telefono }}">{{ p.telefono }}</a>{% endif %}{% if p.email %} · <a href="mailto:{{ p.email }}">{{ p.email }}</a>{% endif %}{% if p.pedidos_en_linea %} · <a href="{% if '://' not in p.pedidos_en_linea %}https://{% endif %}{{ p.pedidos_en_linea }}" target="_blank" rel="noopener">Pedir en línea</a>{% endif %}</div>
+    <div>{% if proveedor_llega %}Si se le pide hoy, llega el <b>{{ proveedor_llega|date:"l j/m" }}</b>.{% else %}Falta anotar qué días entrega.{% endif %}{% if p.horario_entrega %} <i>«{{ p.horario_entrega }}»</i>{% endif %}
+      <a href="{% url 'compras:proveedores' %}#prov-{{ p.pk }}">Editar</a></div>
+  </div>
+  {% endwith %}{% endif %}
+
+  {% if ver == "dormido" %}
+  <div class="rp-res">
+    <div class="rp-kpi"><b>{{ resumen.productos }}</b><span>productos sin vender</span></div>
+    <div class="rp-kpi"><b>{{ resumen.unidades|floatformat:"-2" }}</b><span>unidades en bodega</span></div>
+    <div class="rp-kpi rojo"><b>₡{{ resumen.valor|crc:0 }}</b><span>plata parada (a costo)</span></div>
+    <div class="rp-kpi ambar"><b>{{ resumen.nunca }}</b><span>nunca se han vendido</span></div>
+  </div>
+  <div class="rp-card">
+    <div class="rp-nota"><b>Sin una sola venta del {{ desde|date:"d/m/Y" }} al {{ hasta|date:"d/m/Y" }}</b>{% if proveedor %} · {{ proveedor }}{% endif %}.
+      Tienen existencia y ya estaban antes de esas fechas (lo que acaba de llegar no cuenta). Primero lo que más plata tiene parada.
+      Sirve para decidir qué poner en promoción, qué no volver a pedir o qué devolver al proveedor.</div>
+    {% if filas %}
+    <div class="tabla-scroll">
+    <table>
+      <thead><tr><th>Producto</th><th class="c-prov">Proveedor</th><th class="n">Quedan</th><th class="n c-costo">Costo</th>
+        <th class="n">Valor</th><th class="n c-alc">Última venta</th><th class="n">Sin vender</th></tr></thead>
+      <tbody>
+      {% for f in filas %}
+        <tr>
+          <td><div class="prod"><span class="c-foto">{% foto_producto f.producto 40 "clickable-product-img" %}</span>
+            <div><a href="{% url 'inventario:ajuste_producto' f.producto.pk %}">{{ f.producto.nombre }}</a><br>
+              <small>{% if f.codigo_proveedor %}<span class="cod">Cód. {{ f.codigo_proveedor }}</span>{% endif %}<span class="c-barras">{% if f.codigo_proveedor %} · {% endif %}{% if f.producto.codigo_barras %}Barras {{ f.producto.codigo_barras }}{% else %}SKU {{ f.producto.sku }}{% endif %}</span></small>
+              {% if f.proveedor %}<small class="solo-movil">{{ f.proveedor }}</small>{% endif %}
+              {% if f.ultima_compra %}<br><small>Última compra {{ f.ultima_compra|date:"d/m/Y" }}</small>{% endif %}
+            </div></div></td>
+          <td class="c-prov">{{ f.proveedor|default:"—" }}</td>
+          <td class="n">{{ f.quedan|floatformat:"-2" }}</td>
+          <td class="n c-costo">₡{{ f.costo|crc:0 }}</td>
+          <td class="n"><b>₡{{ f.valor|crc:0 }}</b></td>
+          <td class="n c-alc">{% if f.ultima_venta %}{{ f.ultima_venta|date:"d/m/Y" }}{% else %}Nunca{% endif %}</td>
+          <td class="n">{{ f.dias_sin_vender }} día{{ f.dias_sin_vender|pluralize }}</td>
+        </tr>
+      {% endfor %}
+        <tr class="total"><td>Total</td><td class="c-prov"></td><td class="n">{{ resumen.unidades|floatformat:"-2" }}</td><td class="c-costo"></td>
+          <td class="n">₡{{ resumen.valor|crc:0 }}</td><td class="c-alc"></td><td></td></tr>
+      </tbody>
+    </table>
+    </div>
+    {% else %}<div class="vacio">Todo lo que tiene existencia se vendió al menos una vez en esas fechas.</div>{% endif %}
+  </div>
+  {% else %}
+  <div class="rp-res">
+    <div class="rp-kpi"><b>{{ resumen.productos }}</b><span>productos</span></div>
+    <div class="rp-kpi"><b>{{ resumen.vendidas|floatformat:"-2" }}</b><span>unidades vendidas</span></div>
+    <div class="rp-kpi rojo"><b>{{ resumen.agotados }}</b><span>agotados</span></div>
+    <div class="rp-kpi ambar"><b>{{ resumen.pocas }}</b><span>quedan pocas</span></div>
+    {% if ver != "historial" %}
+    <div class="rp-kpi azul"><b>{{ resumen.unidades_pedir }}</b><span>unidades a pedir</span></div>
+    <div class="rp-kpi azul"><b>₡{{ resumen.total|crc:0 }}</b><span>costo del pedido</span></div>
+    {% endif %}
+  </div>
+
+  <div class="rp-card">
+    <div class="rp-nota">
+      <b>Vendido del {{ desde|date:"d/m/Y" }} al {{ hasta|date:"d/m/Y" }}</b>{% if proveedor %} · {{ proveedor }}{% endif %}.
+      «Pedir» es lo que falta para tener <b>{{ cubrir }} días</b> de venta después de que llegue el pedido{% if base_distinta %}, calculado con lo vendido del {{ base_desde|date:"d/m" }} al {{ base_hasta|date:"d/m" }} (con menos de una semana no alcanza para saber cuánto se vende){% endif %}.
+      Los días que estuvo agotado no cuentan. «Quedan pocas»: en o bajo el mínimo, o se acaba antes de que llegue lo que se pida hoy (si no se sabe cuándo entrega el proveedor, {{ pocos_dias }} días).
+      {% if ver == "agotados" %}<br>Todos los agotados, se hayan vendido o no en estas fechas. Decidan si se vuelve a pedir; cuando entra mercadería sale solo de la lista.{% endif %}
+      {% if ver == "historial" %}<br>Lo que se agotó y volvió a entrar entre esas fechas.{% endif %}
+    </div>
+    {% if filas %}
+    <div class="tabla-scroll">
+    <table class="{% if ver != 'agotados' %}sin-dec{% endif %}">
+      <thead><tr>
+        <th>Producto</th><th class="c-prov">Proveedor</th>
+        <th class="n">Vendidas</th><th class="n">Quedan</th><th class="n c-alc">Alcanza</th>
+        {% if ver != "historial" %}<th class="n">Pedir</th>{% endif %}
+        <th class="n c-costo">Costo</th><th class="c-est">Estado</th>
+      </tr></thead>
+      <tbody>
+      {% for f in filas %}
+        <tr>
+          <td><div class="prod"><span class="c-foto">{% foto_producto f.producto 40 "clickable-product-img" %}</span>
+            <div>{{ f.producto.nombre }}<br>
+              <small>{% if f.codigo_proveedor %}<span class="cod">Cód. {{ f.codigo_proveedor }}</span>{% endif %}<span class="c-barras">{% if f.codigo_proveedor %} · {% endif %}{% if f.producto.codigo_barras %}Barras {{ f.producto.codigo_barras }}{% else %}SKU {{ f.producto.sku }}{% endif %}{% if f.producto.marca %} · {{ f.producto.marca }}{% endif %}</span></small>
+              {% if f.proveedor %}<small class="solo-movil">{{ f.proveedor }}</small>{% endif %}
+              {% if ver != "agotados" %}<span class="solo-movil"><span class="tag {{ f.estado }}">{{ f.estado_texto }}</span>{% if f.aviso.decision == "PEN" and not f.aviso.repuesto_en %} <a class="tag PEN" href="?{{ qs_sin_ver }}&ver=agotados">Por decidir →</a>{% endif %}</span>{% endif %}
+              {% if f.aviso %}<br><small>Se agotó el {{ f.aviso.fecha|date:"d/m/Y" }}{% if f.dias_agotado %} (hace {{ f.dias_agotado }} día{{ f.dias_agotado|pluralize }}){% endif %}{% if f.aviso.repuesto_en %} · volvió el {{ f.aviso.repuesto_en|date:"d/m/Y" }}{% endif %}{% if f.veces > 1 %} · {{ f.veces }} veces{% endif %}</small>{% endif %}
+              {% if f.caja %}<br><small>Se pide por caja de {{ f.caja.unidades_por_empaque }}{% if f.cajas %}: {{ f.cajas }} caja{{ f.cajas|pluralize }}{% endif %}</small>{% endif %}
+            </div></div></td>
+          <td class="c-prov">{% if f.proveedor_id %}<a href="?{{ qs_sin_prov }}&proveedor={{ f.proveedor|urlencode }}">{{ f.proveedor }}</a>{% else %}—{% endif %}{% if f.llega %}<br><small class="llega">Llega {{ f.llega|date:"D j/m" }}</small>{% endif %}{% if f.ultima_factura %}<br><small style="color:#6e6e73">Fact. {{ f.ultima_factura }}</small>{% endif %}</td>
+          <td class="n">{{ f.vendidas|floatformat:"-2" }}</td>
+          <td class="n">{{ f.quedan|floatformat:"-2" }}</td>
+          <td class="n c-alc">{% if f.alcanza is None %}—{% else %}{{ f.alcanza }} día{{ f.alcanza|pluralize }}{% endif %}</td>
+          {% if ver != "historial" %}<td class="n pedir">{% if f.pedir %}<b>{{ f.pedir }}</b>{% else %}—{% endif %}</td>{% endif %}
+          <td class="n c-costo">{% if f.costo %}₡{{ f.costo|crc:0 }}{% if f.pedir %}<br><small style="color:#6e6e73">₡{{ f.subtotal|crc:0 }}</small>{% endif %}{% else %}—{% endif %}</td>
+          <td class="c-est"><div class="estado">
+            <span class="tag {{ f.estado }}">{{ f.estado_texto }}</span>
+            {% if f.aviso %}
+              {% if ver == "agotados" and not f.aviso.repuesto_en %}
+              <form method="post" class="dec">
+                {% csrf_token %}<input type="hidden" name="aviso" value="{{ f.aviso.pk }}">
+                <select name="decision" aria-label="Decisión">
+                  {% for valor, etiqueta in decisiones %}<option value="{{ valor }}" {% if valor == f.aviso.decision %}selected{% endif %}>{{ etiqueta }}</option>{% endfor %}
+                </select>
+                <input name="nota" value="{{ f.aviso.nota }}" placeholder="Nota (opcional)" maxlength="200">
+                <button>Guardar</button>
+              </form>
+              {% elif f.aviso.decision == "PEN" and not f.aviso.repuesto_en %}
+                <a class="tag PEN" href="?{{ qs_sin_ver }}&ver=agotados">Por decidir →</a>
+              {% else %}
+                <span class="tag {{ f.aviso.decision }}">{{ f.aviso.get_decision_display }}</span>
+              {% endif %}
+              {% if f.aviso.nota and ver != "agotados" %}<span class="quien">{{ f.aviso.nota }}</span>{% endif %}
+              {% if f.aviso.decidido_por %}<span class="quien">{{ f.aviso.decidido_por.get_full_name|default:f.aviso.decidido_por.username }} · {{ f.aviso.decidido_en|date:"d/m/Y" }}</span>{% endif %}
+            {% endif %}
+          </div></td>
+        </tr>
+      {% endfor %}
+      {% if ver != "historial" and resumen.total %}
+        <tr class="total"><td>Total del pedido</td><td class="c-prov"></td><td></td><td></td><td class="c-alc"></td>
+          <td class="n">{{ resumen.unidades_pedir }}</td><td class="n c-costo">₡{{ resumen.total|crc:0 }}</td><td class="c-est"></td></tr>
+      {% endif %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+      <div class="vacio">{% if ver == "pedir" %}Con estas fechas no hay nada que pedir.{% elif ver == "vendido" %}No hubo ventas en esas fechas.{% elif ver == "agotados" %}No hay productos agotados.{% else %}Nada volvió a entrar en esas fechas.{% endif %}</div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

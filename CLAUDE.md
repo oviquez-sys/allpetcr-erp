@@ -420,8 +420,7 @@ pedir. La decisión es del negocio.
   deja stock 0 → abre; cualquier entrada → cierra (`repuesto_en`). La
   anulación de una compra (DEV negativo) no avisa. Uno abierto por producto
   (restricción en la base).
-- Pantalla `inventario:agotados` (gerente) y Excel `inventario:agotados_excel`,
-  ambos de `inventario/agotados.filas`. Código del proveedor = SKU sin BEL-/
+- Lista: pestaña «Agotados» de `inventario:reponer` (26/11). Código del proveedor = SKU sin BEL-/
   GOS-/ZDG-/SPC-; los NP… no se muestran.
 - Alarma: banner rojo en el Inicio (sin caché) y aviso en el POS
   (`agotados` en la respuesta de la venta). El cajero no ve costos.
@@ -444,10 +443,8 @@ La tarjeta del catálogo dice "15 kg · ₡3.993 el kg" y la línea de la venta
 ## Lo vendido, para reponer (20/10/2026)
 
 Pedido de Oscar: "encuentro que se agotó y que quedan pocas, pero no sé qué se
-vendió para reponer… con un rango de fechas". Pantalla `inventario:vendido`
-(gerente; tarjeta primera de Inventario en el Centro de reportes) y Excel
-`inventario:vendido_excel` (con columna "A pedir" vacía), ambos de
-`inventario/vendido.filas`.
+vendió para reponer… con un rango de fechas". Desde el 26/11 es la pestaña
+«Todo lo vendido» de `inventario:reponer` (ver «Reponer» más abajo).
 - Rango: atajos Hoy · Ayer · 7 · 15 días · Este mes, o fechas a mano
   (`normalizar`: en orden, sin futuro, máx. 366 días). Por defecto 7 días.
 - Facturas EMITIDAS; regalías cuentan; lo devuelto de esas ventas se resta.
@@ -599,8 +596,9 @@ El chat volvió a la derecha (ahora cae sobre el buscador, no sobre la factura).
   `services.repartir_descuento` (proporcional, céntimos exactos, el sobrante a
   la línea más grande). `costo_real_unitario` = (total − descuento) / recibidas,
   así kardex y asiento cuadran con lo pagado.
-- El descuento SÍ llega al precio calculado con "Ganancia %" (mismo criterio
-  que la bonificación: el descuento conseguido tiene que llegar al precio).
+- El descuento SÍ llega al precio calculado con "Ganancia %". La bonificación
+  ya NO (25/11/2026): el precio sale del costo de una unidad pagada, porque el
+  regalo no se repite (ver «Costo de reposición»).
 - Bajo el IVA se muestra "13 % de ₡neto = ₡X" para comparar con el papel.
 - Excel contable: columna "Descuento de la factura". La carga masiva desde
   Excel también lo tiene desde el 27/10/2026. Pruebas: `compras/test_descuento_factura.py`.
@@ -781,14 +779,78 @@ volver a comprar el saco, había ~8 %. En caja se dio un descuento de más.
   decidida por el gerente sigue el promedio: no frenar el precio de lista ni
   las promos activas), máximo sin perder y bloqueo al activar promociones, y
   el margen de la carga desde Excel (`costo_reposicion_fila`).
-- NO cambia: `costo_promedio`, kardex, asientos, costo de ventas, ganancias,
-  Precios (margen contable). Tampoco el cálculo de precio con «Ganancia %» de
-  Recibir mercadería, que reparte la bonificación a propósito (decisión del
-  16/10); queda pendiente si Oscar lo quiere con reposición.
+- **Todo lo que muestra margen o propone costo** (Oscar, 25/11: «que no
+  induzca a ningún error»): `Producto.costo_decision` / `costo_rebajado` y
+  `margen_pct`, `markup_pct`, `ganancia_unitaria` ya usan el costo de
+  decisión → Precios (columna «Costo» + «prom. ₡X por regalo»), ficha de
+  precio, Ajustes de inventario («Cuesta reponerlo»), admin (changelist
+  anotado sin N+1, `costos.anotar`) y el chat (`productos_menor_margen`).
+  Recibir mercadería: el costo propuesto al agregar es el de la última unidad
+  PAGADA (antes el promedio, que con un regalo viene a la mitad), y el precio
+  con «Ganancia %» y la «ganancia de hoy» salen de `costoParaPrecio` (sin
+  repartir el regalo; reemplaza la decisión del 16/10). El aviso dice los dos
+  costos: el de inventario y el del precio.
+- NO cambia: `costo_promedio`, kardex, asientos, costo de ventas, ganancia
+  del mes y reportes de ventas (usan el costo de cada venta), valor de
+  inventario.
 - Revisión: `inventario:costos_regalias` (gerente, tarjeta en Reportes →
   Inventario): «Costo rebajado por regalos» (promedio ≥ 3 % bajo reposición,
   tope antes → ahora, compra con regalo) y «Se venden perdiendo» (precio sin
   IVA < reposición). Solo lee. Pruebas: `catalogo/test_costos.py`.
+
+## Reponer: una sola pantalla para el pedido (26/11/2026)
+
+Oscar: «revisá muy bien los reportes de agotados y qué reponer… unificarlos,
+que sean más fáciles de entender y usar, y el Excel… poder ponerle fechas
+(saber qué se vendió esta semana)». Antes había tres: Lo vendido (20/10),
+Qué reponer (05/11) y Agotados (02/10), con criterios distintos de «pocas».
+- Pantalla `inventario:reponer` (gerente) y Excel `inventario:reponer_excel`,
+  ambos de `inventario/reponer.datos` (docstring = reglas). Las direcciones
+  viejas (`inventario:agotados`, `inventario:vendido`, sus Excel y
+  `core:reporte_reposicion`) REDIRIGEN con lo equivalente. `core/reposicion.py`
+  y las plantillas viejas se borraron.
+- Fechas: Hoy · Ayer · Esta semana (lunes a hoy) · Semana pasada · 7 · 15 ·
+  30 días · Este mes · Mes pasado, o a mano (`vendido.rango_de_atajo` /
+  `normalizar`). Por defecto 30 días. «Pedir para» 15/30/45 días.
+- Pestañas: Para pedir (agotados, pocas o Pedir > 0; más agotados abiertos
+  que no se descartaron) · Todo lo vendido · Agotados (decisión en línea,
+  POST a la misma URL) · Ya repuestos.
+- Venta por día = vendidas netas ÷ días CON existencia (resta los tramos de
+  `Agotamiento` y los días antes de `creado_en`; piso 7 días). Rango < 7 días
+  → el Pedir usa los últimos 30. Pedir = ceil(diaria × días − stock), 0 sin
+  ventas o con «No comprar más». Pocas = ≤ mínimo o alcanza ≤ 7 días.
+  Costo = reposición (`catalogo.costos`), si no el promedio. Proveedor = el de
+  la última compra con unidades pagadas. Unidad suelta: «se pide por caja».
+- Excel: hoja Resumen + una por proveedor; «Pedir» amarillo editable,
+  Subtotal y totales en fórmula.
+- Chat `lo_vendido` = `vendido.filas` = pestaña «Todo lo vendido» (mismo
+  estado y Pedir). KPI «Stock bajo» del Inicio → `core:reporte_stock` (es lo
+  que cuenta). Pruebas: `inventario/test_reponer.py`, `test_agotados.py`,
+  `test_vendido.py`.
+
+- **Proveedores y entregas (26/11, segunda parte)**: `compras:proveedores`
+  (gerente; botón en Reponer y tarjeta en Administración → Herramientas):
+  ficha editable de cada proveedor (contacto, celular con WhatsApp, correo,
+  razón social, cuenta, bodega, catálogo, pedidos en línea, horario en
+  palabras) y los datos que usa el cálculo: días de pedido, hora límite, días
+  de entrega y días mínimos (migración compras 0008). `compras/entregas.py`
+  (docstring = reglas): `llegada()` = si se pide ahora, qué día llega (sin
+  días de entrega = lunes a sábado). Carga desde el Excel de Oscar
+  (ENTREGAS_PROVEDORES.xlsx, una hoja por proveedor): vista previa firmada,
+  cada hoja se asigna a un proveedor (sin coincidencia = «no cargar» hasta
+  que elija), solo llena lo que trae, **usuario y contraseña NO se importan**.
+  Del horario solo se leen días con nombre completo, «un/dos días», «72 h» y
+  «antes de las 5pm» («M y J» es ambiguo y queda para marcar a mano). El
+  Excel real tiene teléfonos, cuentas y claves: NUNCA al repo.
+- En Reponer: «Quedan pocas» = se acaba antes de que llegue un pedido de hoy
+  (7 días si no se sabe); Pedir = diaria × (días elegidos + días hasta que
+  llega) − stock. Columna proveedor con «Llega vie 27/11»; filtrando por
+  proveedor sale su ficha arriba; el Excel pone contacto y llegada en cada hoja.
+- **No se vende** (pestaña `ver=dormido`, `reponer.dormidos`): con existencia
+  y sin una venta en el rango, que ya estaban antes del rango (ni creados ni
+  comprados dentro); valor = existencia × costo PROMEDIO (lo que costó lo que
+  hay); de más a menos plata parada; Excel propio. Pruebas:
+  `compras/test_entregas.py`, `inventario/test_reponer.py`.
 
 ## Cambios y devoluciones desde la caja (24/11/2026)
 
@@ -1084,8 +1146,8 @@ margen ni inmovilizar plata. Una fase a la vez; esta es la 1.
 - **Control antes de comprar** `compras/control.py`: aviso (no bloqueo) en
   Recibir mercadería y en la carga desde Excel si nunca se vendió (con
   historia), no se vende hace 30 días o hay > 3 meses de inventario.
-- **Reposición** (`core/reposicion.py`): ventana 30 días (antes 60) y sin
-  ventas NO se sugiere comprar (antes caía al mínimo de estante).
+- **Reposición**: ventana 30 días (antes 60) y sin ventas NO se sugiere
+  comprar. Desde el 26/11 vive en `inventario/reponer.py`.
 - Tiquete: vigencia + «o hasta agotar existencias» de cada promo y «No aplica
   a alimentos» del cupón (Ley 7472). Pruebas: `core/test_tablero.py`.
 

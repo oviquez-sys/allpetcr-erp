@@ -75,7 +75,23 @@ class ProductoAdmin(admin.ModelAdmin):
     def precio_fmt(self, obj):
         return f"₡{_crc(obj.precio_venta, 2)}"
 
-    @admin.display(description="Margen %")
+    def get_changelist(self, request, **kwargs):
+        # El margen usa el costo de reposición (25/11/2026): se trae para toda
+        # la página de una vez en vez de una consulta por fila.
+        from django.contrib.admin.views.main import ChangeList
+
+        from .costos import anotar
+
+        class _ConReposicion(ChangeList):
+            def get_results(self, request):
+                super().get_results(request)
+                # Se anota sobre los mismos objetos que el queryset ya trajo
+                # (su caché): el admin necesita que siga siendo un queryset.
+                anotar(self.result_list)
+
+        return _ConReposicion
+
+    @admin.display(description="Margen % (con costo de reponer)")
     def margen_fmt(self, obj):
         if obj.margen_pct is None:
             return "—"

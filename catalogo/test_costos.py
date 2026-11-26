@@ -99,3 +99,33 @@ class CostoDeReposicion(BaseVentas):
         r = self.client.get(reverse("inventario:costos_regalias"))
         self.assertContains(r, "NutriSource Cat-Kitten")
         self.assertContains(r, "Arena")
+
+
+class PantallasNoInducenAError(CostoDeReposicion):
+    """Oscar (25/11/2026): «todo debe estar corregido de forma que no induzca
+    a ningún error». Cada pantalla que muestra margen o propone un costo usa
+    lo que cuesta reponer y avisa cuando el promedio vino rebajado."""
+
+    def test_el_margen_del_producto_es_con_lo_que_cuesta_reponer(self):
+        self.assertTrue(self.saco.costo_rebajado)
+        self.assertEqual(self.saco.costo_decision, Decimal("22000"))
+        self.assertEqual(self.saco.margen_pct, Decimal("9.74"))
+        self.assertEqual(self.saco.ganancia_unitaria, Decimal("2375"))
+
+    def test_precios_ajustes_y_admin_lo_muestran(self):
+        self.client.force_login(self.usuario)
+        r = self.client.get(reverse("catalogo:precios"), {"q": "NutriSource"})
+        self.assertContains(r, "por regalo")
+        self.assertContains(r, "9,7%")
+        r = self.client.get(reverse("catalogo:precio_producto", args=[self.saco.pk]))
+        self.assertContains(r, "Rebajado por unidades regaladas")
+        r = self.client.get(reverse("inventario:ajuste_producto", args=[self.saco.pk]))
+        self.assertContains(r, "Cuesta reponerlo")
+        r = self.client.get(reverse("admin:catalogo_producto_changelist"))
+        self.assertContains(r, "9.74%")
+
+    def test_recibir_mercaderia_propone_lo_que_costo_una_unidad_pagada(self):
+        self.client.force_login(self.usuario)
+        r = self.client.get(reverse("compras:nueva"))
+        p = next(x for x in r.context["productos"] if x["id"] == self.saco.pk)
+        self.assertEqual((p["costo_promedio"], p["costo_reposicion"], p["costo_decidir"]), (11000, 22000, 22000))

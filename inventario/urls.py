@@ -13,6 +13,9 @@ urlpatterns = [
     path("etiquetas/", views.etiquetas, name="etiquetas"),
     path("etiquetas/<int:producto_id>/marcar/", views.marcar_etiqueta, name="marcar_etiqueta"),
     path("etiquetas/marcar-lote/", views.marcar_etiquetas_lote, name="marcar_etiquetas_lote"),
+    path("reponer/", views.reponer, name="reponer"),
+    path("reponer/excel/", views.reponer_excel, name="reponer_excel"),
+    # Las tres pantallas viejas llevan a «Reponer» (26/11/2026).
     path("agotados/", views.agotados, name="agotados"),
     path("agotados/excel/", views.agotados_excel, name="agotados_excel"),
     path("vendido/", views.vendido, name="vendido"),

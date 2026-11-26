@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.http import require_http_methods, require_POST
@@ -19,7 +20,7 @@ from core.roles import CAJERO, GERENTE, rol_requerido
 from core.tenancy import empresa_actual
 
 from . import agotados as ag
-from . import vendido as vend
+from . import reponer as rp
 from .etiquetas import TOPE_ETIQUETAS, seleccionar_para_etiquetas, svg_barcode
 from .forms import AjusteInventarioForm, DatosProductoForm, ExistenciaRealForm
 from .models import Agotamiento
@@ -371,18 +372,27 @@ def codigos_barras(request):
     })
 
 
+def _filtros_reponer(request):
+    desde, hasta, atajo = rp.leer_rango(request.GET)
+    return {
+        "desde": desde, "hasta": hasta, "atajo": atajo,
+        "ver": request.GET.get("ver", "pedir") if request.GET.get("ver") in rp.VISTAS else "pedir",
+        "proveedor": (request.GET.get("proveedor") or "").strip(),
+        "cubrir": rp.leer_cubrir(request.GET),
+    }
+
+
 @rol_requerido(GERENTE)
 @require_http_methods(["GET", "POST"])
-def agotados(request):
-    """Productos que se agotaron y la decisión de qué hacer con cada uno.
+def reponer(request):
+    """Qué se vendió, qué se agotó y cuánto pedir: una sola pantalla
+    (26/11/2026). Junta «Lo vendido», «Qué reponer» y «Agotados». Ver
+    inventario/reponer.py.
 
-    Solo gerente: la lista lleva el último costo de compra. El cajero se
-    entera de que algo se agotó en el POS y en el Inicio, sin costos.
+    Solo gerente: lleva costos. El cajero se entera de los agotados en el POS
+    y en el Inicio, sin costos.
     """
     empresa = empresa_actual(request)
-    vista = request.GET.get("ver", "pendientes")
-    if vista not in ag.VISTAS:
-        vista = "pendientes"
     if request.method == "POST":
         aviso = get_object_or_404(
             Agotamiento, pk=request.POST.get("aviso"), producto__empresa=empresa
@@ -400,78 +410,73 @@ def agotados(request):
             aviso.decidido_en = None if pendiente else timezone.now()
             aviso.save(update_fields=["decision", "nota", "decidido_por", "decidido_en"])
             messages.success(request, f"{aviso.producto.nombre}: {aviso.get_decision_display()}.")
-        return redirect(f"{request.path}?ver={vista}")
-    return render(request, "inventario/agotados.html", {
-        "title": "Productos agotados",
-        "filas": ag.filas(empresa, vista),
-        "vista": vista,
-        "vistas": ag.VISTAS,
+        return redirect(request.get_full_path())
+    f = _filtros_reponer(request)
+    d = rp.datos(empresa, f["desde"], f["hasta"], f["ver"], f["proveedor"], f["cubrir"])
+    filtros = {k: v for k, v in {
+        "ver": f["ver"], "proveedor": f["proveedor"], "cubrir": f["cubrir"] if f["cubrir"] != rp.COBERTURA else "",
+    }.items() if v}
+    rango = {"atajo": f["atajo"]} if f["atajo"] else {"desde": f["desde"].isoformat(), "hasta": f["hasta"].isoformat()}
+    from urllib.parse import urlencode
+    return render(request, "inventario/reponer.html", {
+        "title": "Reponer",
+        **d,
+        "atajo": f["atajo"], "atajos": rp.ATAJOS, "vistas": rp.VISTAS, "coberturas": rp.COBERTURAS,
         "por_decidir": ag.por_decidir(empresa),
         "decisiones": Agotamiento.Decision.choices,
-        "dias": ag.DIAS_VENTANA,
+        "hoy": timezone.localdate(),
+        # Para armar los enlaces sin perder lo demás que se eligió.
+        "qs_sin_ver": urlencode({**rango, **{k: v for k, v in filtros.items() if k != "ver"}}),
+        "qs_sin_rango": urlencode(filtros),
+        "qs": urlencode({**rango, **filtros}),
+        "qs_sin_prov": urlencode({**rango, **{k: v for k, v in filtros.items() if k != "proveedor"}}),
+        "pocos_dias": rp.POCOS_DIAS,
     })
 
 
 @rol_requerido(GERENTE)
-def agotados_excel(request):
+def reponer_excel(request):
     empresa = empresa_actual(request)
-    vista = request.GET.get("ver", "pendientes")
-    if vista not in ag.VISTAS:
-        vista = "pendientes"
+    f = _filtros_reponer(request)
     r = HttpResponse(
-        ag.excel(empresa, vista),
+        rp.excel(empresa, f["desde"], f["hasta"], f["ver"], f["proveedor"], f["cubrir"]),
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    nombre = f"agotados_{timezone.localdate():%Y-%m-%d}.xlsx"
+    nombre = f"pedido_{f['desde']:%Y-%m-%d}_al_{f['hasta']:%Y-%m-%d}.xlsx"
     r["Content-Disposition"] = f'attachment; filename="{nombre}"'
     return r
 
 
-def _rango_vendido(request):
-    """Desde/hasta de la pantalla "Lo vendido": atajo o fechas escritas."""
-    from datetime import datetime
+def _a_reponer(request, nombre, **fijos):
+    """Las pantallas viejas («Agotados», «Lo vendido», «Qué reponer») llevan a
+    «Reponer» con lo equivalente, para que ningún enlace guardado se rompa."""
+    from urllib.parse import urlencode
+    q = {k: v for k, v in request.GET.items() if k in ("atajo", "desde", "hasta", "proveedor")}
+    q.update(fijos)
+    return redirect(f"{reverse(nombre)}?{urlencode(q)}" if q else reverse(nombre))
 
-    atajo = request.GET.get("atajo", "")
-    rango = vend.rango_de_atajo(atajo)
-    if rango:
-        return rango[0], rango[1], atajo
 
-    def fecha(valor):
-        try:
-            return datetime.strptime(valor or "", "%Y-%m-%d").date()
-        except ValueError:
-            return None
+@rol_requerido(GERENTE)
+def agotados(request):
+    ver = "historial" if request.GET.get("ver") == "historial" else "agotados"
+    return _a_reponer(request, "inventario:reponer", ver=ver)
 
-    desde, hasta = fecha(request.GET.get("desde")), fecha(request.GET.get("hasta"))
-    if desde is None and hasta is None:
-        d, h = vend.rango_de_atajo("7")
-        return d, h, "7"
-    desde, hasta = vend.normalizar(desde, hasta)
-    return desde, hasta, ""
+
+@rol_requerido(GERENTE)
+def agotados_excel(request):
+    return _a_reponer(request, "inventario:reponer_excel", ver="agotados")
 
 
 @rol_requerido(GERENTE)
 def vendido(request):
-    """Qué se vendió en un rango de fechas y cuánto queda (pedido de Oscar,
-    20/10/2026). Ver inventario/vendido.py."""
-    empresa = empresa_actual(request)
-    desde, hasta, atajo = _rango_vendido(request)
-    proveedor = (request.GET.get("proveedor") or "").strip()
-    solo = request.GET.get("solo") == "reponer"
-    todas = vend.filas(empresa, desde, hasta)
-    proveedores = sorted({f["proveedor"] for f in todas if f["proveedor"]})
-    filas = [f for f in todas if not proveedor or f["proveedor"] == proveedor]
-    if solo:
-        filas = [f for f in filas if f["estado"] != vend.HAY]
-    return render(request, "inventario/vendido.html", {
-        "title": "Lo vendido",
-        "filas": filas,
-        "resumen": vend.resumen(filas),
-        "desde": desde, "hasta": hasta, "atajo": atajo, "atajos": vend.ATAJOS,
-        "proveedor": proveedor, "proveedores": proveedores,
-        "solo": solo,
-        "hoy": timezone.localdate(),
-    })
+    return _a_reponer(request, "inventario:reponer",
+                      ver="pedir" if request.GET.get("solo") == "reponer" else "vendido")
+
+
+@rol_requerido(GERENTE)
+def vendido_excel(request):
+    return _a_reponer(request, "inventario:reponer_excel",
+                      ver="pedir" if request.GET.get("solo") == "reponer" else "vendido")
 
 
 @rol_requerido(GERENTE)
@@ -484,19 +489,6 @@ def costos_regalias(request):
     return render(request, "inventario/costos_regalias.html", {
         "title": "Costos rebajados por regalías", **datos, "diferencia_minima": DIFERENCIA_MINIMA_PCT,
     })
-
-
-@rol_requerido(GERENTE)
-def vendido_excel(request):
-    empresa = empresa_actual(request)
-    desde, hasta, _ = _rango_vendido(request)
-    proveedor = (request.GET.get("proveedor") or "").strip()
-    r = HttpResponse(
-        vend.excel(empresa, desde, hasta, proveedor, request.GET.get("solo") == "reponer"),
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    )
-    r["Content-Disposition"] = f'attachment; filename="vendido_{desde:%Y-%m-%d}_al_{hasta:%Y-%m-%d}.xlsx"'
-    return r
 
 
 @rol_requerido(CAJERO, GERENTE)

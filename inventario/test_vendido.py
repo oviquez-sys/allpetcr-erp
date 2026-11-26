@@ -100,6 +100,11 @@ class LoVendidoTests(TestCase):
         self.assertEqual(vendido.rango_de_atajo("ayer", hoy), (date(2026, 10, 19),) * 2)
         self.assertEqual(vendido.rango_de_atajo("7", hoy), (date(2026, 10, 14), hoy))
         self.assertEqual(vendido.rango_de_atajo("mes", hoy), (date(2026, 10, 1), hoy))
+        # 20/10/2026 fue martes.
+        self.assertEqual(vendido.rango_de_atajo("semana", hoy), (date(2026, 10, 19), hoy))
+        self.assertEqual(vendido.rango_de_atajo("semana_pasada", hoy), (date(2026, 10, 12), date(2026, 10, 18)))
+        self.assertEqual(vendido.rango_de_atajo("mes_pasado", hoy), (date(2026, 9, 1), date(2026, 9, 30)))
+        self.assertEqual(vendido.rango_de_atajo("30", hoy), (date(2026, 9, 21), hoy))
         # Al revés se acomoda; el futuro se corta en hoy; más de un año se recorta.
         self.assertEqual(vendido.normalizar(hoy, date(2026, 10, 1), hoy), (date(2026, 10, 1), hoy))
         self.assertEqual(vendido.normalizar(date(2026, 10, 1), date(2026, 12, 1), hoy), (date(2026, 10, 1), hoy))
@@ -110,15 +115,18 @@ class LoVendidoTests(TestCase):
         p = self._producto("PANT", 3)
         self._vender(p, 2)
         self.client.force_login(self.usuario)
-        r = self.client.get(reverse("inventario:vendido"))
+        r = self.client.get(reverse("inventario:reponer"), {"ver": "vendido", "atajo": "semana"})
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "Producto PANT")
         self.assertContains(r, "Quedan pocas")
-        r = self.client.get(reverse("inventario:vendido"), {"desde": "2020-01-01", "hasta": "2020-01-02"})
+        r = self.client.get(reverse("inventario:reponer"), {"ver": "vendido", "desde": "2020-01-01", "hasta": "2020-01-02"})
         self.assertContains(r, "No hubo ventas en esas fechas")
-        r = self.client.get(reverse("inventario:vendido_excel"), {"atajo": "hoy"})
+        r = self.client.get(reverse("inventario:reponer_excel"), {"atajo": "hoy"})
         self.assertEqual(r.status_code, 200)
         self.assertIn("spreadsheetml", r["Content-Type"])
+        # La dirección vieja lleva a la pestaña equivalente, con las fechas.
+        r = self.client.get(reverse("inventario:vendido"), {"atajo": "hoy", "solo": "reponer"})
+        self.assertRedirects(r, reverse("inventario:reponer") + "?atajo=hoy&ver=pedir", fetch_redirect_response=False)
 
     def test_el_cajero_no_entra(self):
         cajero = User.objects.create_user("c", password="x", is_staff=True)

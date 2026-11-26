@@ -132,8 +132,18 @@ def nueva(request):
     # Palabras de búsqueda (20/10/2026, catalogo/palabras_clave.py).
     from catalogo.palabras_clave import etiquetas_por_id
     etq = etiquetas_por_id(Producto.objects.filter(activo=True, empresa=empresa))
+    # Costo de reposición (25/11/2026, catalogo/costos.py): lo que costó una
+    # unidad pagada en la última compra. Es el costo que se propone al
+    # agregar el producto (el promedio puede venir rebajado por un regalo y
+    # registrar la factura a ese costo la falsearía) y con el que se calcula
+    # el precio y la ganancia.
+    from catalogo.costos import reposiciones
+    repos = reposiciones(Producto.objects.filter(activo=True, empresa=empresa).only("id", "empresa_id"))
     for p in productos:
         p["etiquetas"] = etq.get(p["id"], "")
+        rep_ = repos.get(p["id"])
+        p["costo_reposicion"] = float(rep_) if rep_ else None
+        p["costo_decidir"] = max(float(p["costo_promedio"]), p["costo_reposicion"] or 0)
         p["costo_promedio"] = float(p["costo_promedio"])
         p["precio_venta"] = float(p["precio_venta"])
         p["stock_actual"] = float(p["stock_actual"])
@@ -368,6 +378,7 @@ def producto_nuevo(request):
         "producto": {
             "id": producto.id, "sku": producto.sku, "nombre": producto.nombre,
             "codigo_barras": producto.codigo_barras, "costo_promedio": 0.0,
+            "costo_reposicion": None, "costo_decidir": 0.0,
             # El precio viaja de vuelta (12/10/2026): sin él, la tarjeta y la
             # línea de la compra mostraban "₡" vacío para el producto recién creado.
             "precio_venta": float(producto.precio_venta), "marca": producto.marca,
@@ -504,3 +515,132 @@ def carga_masiva_confirmar(request):
         return redirect("compras:carga_masiva")
     cm.borrar_pendientes(datos["filas"])
     return render(request, "compras/carga_masiva_listo.html", {"compra": compra, "lineas": compra.lineas.select_related("producto")})
+
+
+# --------------------------------------------------------------------------
+# Proveedores: contacto y entregas (26/11/2026). Ver compras/entregas.py.
+# --------------------------------------------------------------------------
+_SAL_PROVEEDORES = "compras.proveedores_excel"
+
+
+def _ficha_proveedores(empresa, ahora):
+    from .entregas import llegada, nombres_de_dias
+    from .forms import ProveedorForm
+
+    fichas = []
+    for p in Proveedor.objects.filter(empresa=empresa).order_by("-activo", "nombre"):
+        fichas.append({
+            "p": p,
+            "form": ProveedorForm(instance=p, prefix=f"p{p.pk}"),
+            "llega": llegada(p, ahora),
+            "pide": nombres_de_dias(p.dias_pedido),
+            "entrega": nombres_de_dias(p.dias_entrega, "Lun a Sáb"),
+            "whatsapp": "".join(c for c in p.telefono if c.isdigit())[-8:],
+        })
+    return fichas
+
+
+@rol_requerido(GERENTE)
+def proveedores(request):
+    """Contacto, horario de entrega y cuándo llega un pedido de cada
+    proveedor. Todo editable (pedido de Oscar, 26/11/2026)."""
+    from .forms import ProveedorForm
+
+    empresa = empresa_actual(request)
+    abierto = None
+    if request.method == "POST":
+        pk = request.POST.get("proveedor")
+        if pk == "nuevo":
+            proveedor, prefijo = Proveedor(empresa=empresa), "nuevo"
+        else:
+            proveedor = Proveedor.objects.filter(pk=pk, empresa=empresa).first()
+            if proveedor is None:
+                messages.error(request, "Ese proveedor no existe.")
+                return redirect("compras:proveedores")
+            prefijo = f"p{proveedor.pk}"
+        form = ProveedorForm(request.POST, instance=proveedor, prefix=prefijo)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"{form.instance.nombre}: guardado.")
+            return redirect(f"{reverse('compras:proveedores')}#prov-{form.instance.pk}")
+        messages.error(request, "Revisá lo marcado en rojo.")
+        abierto = form
+    fichas = _ficha_proveedores(empresa, timezone.localtime())
+    nuevo = ProveedorForm(prefix="nuevo", initial={"activo": True})
+    if abierto is not None:
+        if abierto.prefix == "nuevo":
+            nuevo = abierto
+        else:
+            for f in fichas:
+                if f["form"].prefix == abierto.prefix:
+                    f["form"], f["abierto"] = abierto, True
+    return render(request, "compras/proveedores.html", {
+        "title": "Proveedores y entregas", "fichas": fichas, "nuevo": nuevo,
+        "nuevo_abierto": abierto is not None and abierto.prefix == "nuevo",
+    })
+
+
+@rol_requerido(GERENTE)
+@require_POST
+def proveedores_importar(request):
+    """Excel con una hoja por proveedor → vista previa → confirmar.
+    Ver compras/entregas.py (usuario y contraseña no se importan)."""
+    from . import entregas
+
+    empresa = empresa_actual(request)
+    lista = list(Proveedor.objects.filter(empresa=empresa).order_by("nombre"))
+    if request.POST.get("accion") == "confirmar":
+        try:
+            hojas = signing.loads(request.POST.get("firma") or "", salt=_SAL_PROVEEDORES, max_age=3600)
+        except signing.BadSignature:
+            messages.error(request, "La vista previa venció. Subí el Excel de nuevo.")
+            return redirect("compras:proveedores")
+        por_id = {str(p.pk): p for p in lista}
+        hechos = []
+        for i, hoja in enumerate(hojas):
+            destino = request.POST.get(f"destino_{i}", "no")
+            if destino == "nuevo":
+                proveedor = Proveedor(empresa=empresa, nombre=hoja["hoja"][:150])
+            elif destino in por_id:
+                proveedor = por_id[destino]
+            else:
+                continue
+            cambios = entregas.aplicar(proveedor, hoja)
+            if proveedor.pk is None:
+                proveedor.save()
+            hechos.append(f"{proveedor.nombre} ({len(cambios)} dato{'s' if len(cambios) != 1 else ''})")
+        if hechos:
+            messages.success(request, "Listo: " + ", ".join(hechos) + ".")
+        else:
+            messages.warning(request, "No se cargó nada: ninguna hoja tenía proveedor elegido.")
+        return redirect("compras:proveedores")
+
+    archivo = request.FILES.get("archivo")
+    if archivo is None or not archivo.name.lower().endswith(".xlsx"):
+        messages.error(request, "Elegí el Excel (.xlsx) con una hoja por proveedor.")
+        return redirect("compras:proveedores")
+    if archivo.size > 5 * 1024 * 1024:
+        messages.error(request, "El archivo pesa más de 5 MB.")
+        return redirect("compras:proveedores")
+    try:
+        hojas = entregas.leer_excel(archivo)
+    except Exception:
+        logger.exception("No se pudo leer el Excel de proveedores")
+        messages.error(request, "No se pudo leer ese Excel.")
+        return redirect("compras:proveedores")
+    filas = []
+    for i, h in enumerate(hojas):
+        sugerido = entregas.adivinar_proveedor(h["hoja"], lista)
+        e = h["entregas"]
+        filas.append({
+            "i": i, "hoja": h["hoja"], "sugerido": sugerido.pk if sugerido else None,
+            "datos": [(entregas.ETIQUETAS.get(k, k), v) for k, v in h["datos"].items()],
+            "pide": entregas.nombres_de_dias(e["dias_pedido"]) if e["dias_pedido"] else "",
+            "entrega": entregas.nombres_de_dias(e["dias_entrega"]) if e["dias_entrega"] else "",
+            "minimos": e["dias_minimos"], "hora": e["hora_limite"],
+            "omitidos": h["omitidos"],
+        })
+    return render(request, "compras/proveedores_importar.html", {
+        "title": "Cargar proveedores desde Excel", "filas": filas, "proveedores": lista,
+        "firma": signing.dumps(hojas, salt=_SAL_PROVEEDORES, compress=True),
+    })

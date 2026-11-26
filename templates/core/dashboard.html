@@ -257,7 +257,7 @@ a{text-decoration:none;color:inherit}
     agotado tiene decisión o vuelve a entrar mercadería.
   {% endcomment %}
   {% if agotados_por_decidir %}
-  {% if es_gerente %}<a class="agotados" href="{% url 'inventario:agotados' %}">{% else %}<div class="agotados">{% endif %}
+  {% if es_gerente %}<a class="agotados" href="{% url 'inventario:reponer' %}?ver=agotados">{% else %}<div class="agotados">{% endif %}
     <div class="ic"><svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></div>
     <div><div class="t">{{ agotados_por_decidir }} producto{{ agotados_por_decidir|pluralize }} se agot{{ agotados_por_decidir|pluralize:"ó,aron" }}</div>
       <div class="d">{% if es_gerente %}Decidan si se vuelve{{ agotados_por_decidir|pluralize:",n" }} a pedir o no se compra{{ agotados_por_decidir|pluralize:",n" }} más.{% else %}Avísele al encargado para que decida si se vuelve a pedir.{% endif %}</div></div>
@@ -296,7 +296,7 @@ a{text-decoration:none;color:inherit}
       <div class="v">₡{{ cxc_total|crc:0 }}</div>
       <div class="s">{{ cxc_clientes }} cliente{{ cxc_clientes|pluralize }} con saldo</div>
     </a>
-    <a class="kpi" href="{% url 'core:reporte_reposicion' %}">
+    <a class="kpi" href="{% url 'core:reporte_stock' %}">
       <div class="l">Stock bajo <span class="ver">Ver origen →</span></div>
       <div class="v">{{ num_stock_bajo }}</div>
       <div class="s">Producto{{ num_stock_bajo|pluralize }} en o bajo el mínimo</div>

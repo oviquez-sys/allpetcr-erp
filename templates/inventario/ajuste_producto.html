@@ -68,6 +68,7 @@ body{background-color:#f5f5f7 !important}
         <div class="ap-kpi stock {% if producto.stock_actual <= 0 %}cero{% endif %}">El sistema dice<b>{{ producto.stock_actual|floatformat:"-2" }}</b></div>
         <div class="ap-kpi">Precio de venta<b>₡{{ producto.precio_venta|crc:0 }}</b></div>
         <div class="ap-kpi">Costo promedio<b>₡{{ producto.costo_promedio|crc:0 }}</b></div>
+        {% if producto.costo_rebajado %}<div class="ap-kpi" title="El promedio bajó por unidades regaladas del proveedor; el próximo se paga completo.">Cuesta reponerlo<b>₡{{ producto.costo_decision|crc:0 }}</b></div>{% endif %}
         {% if producto.costo_promedio > 0 and producto.margen_pct is not None %}<div class="ap-kpi">Margen sin IVA<b>{{ producto.margen_pct|floatformat:0 }}%</b></div>{% endif %}
       </div>
     </div>

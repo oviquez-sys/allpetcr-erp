@@ -1,0 +1,15 @@
+<form method="post" class="pv-form">
+  {% csrf_token %}<input type="hidden" name="proveedor" value="{{ clave }}">
+  {% for campo in form %}
+    <div class="{% if campo.name == 'notas' or campo.name == 'horario_entrega' or campo.name == 'cuenta_bancaria' or campo.name == 'pedidos_en_linea' %}ancho{% endif %}{% if campo.name == 'dias_pedido' or campo.name == 'dias_entrega' %} dias ancho{% endif %}">
+      {% if campo.name == "activo" %}
+        <label style="display:flex;gap:6px;align-items:center;font-size:14px;color:#1d1d1f">{{ campo }} {{ campo.label }}</label>
+      {% else %}
+        <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>{{ campo }}
+      {% endif %}
+      {% if campo.help_text and campo.name != "horario_entrega" %}<div class="ayuda">{{ campo.help_text }}</div>{% endif %}
+      {% for e in campo.errors %}<div class="err">{{ e }}</div>{% endfor %}
+    </div>
+  {% endfor %}
+  <div class="ancho"><button class="pv-btn" type="submit">Guardar</button></div>
+</form>

@@ -16,7 +16,8 @@ from compras.models import Compra, LineaCompra, Proveedor
 from core.models import Empresa, Sucursal
 from ventas.tests import BaseVentas
 
-from .agotados import codigo_proveedor, filas, por_decidir
+from . import reponer
+from .agotados import codigo_proveedor, por_decidir
 from .models import Agotamiento, Bodega
 from .services import registrar_movimiento
 
@@ -113,64 +114,80 @@ class ListaYDocumento(BaseAgotados):
         self.mover("VEN", -3)
         self.client.login(username="oscar", password="x")
 
+    def fila(self, ver="agotados"):
+        hoy = reponer.timezone.localdate()
+        return reponer.datos(self.empresa, hoy - reponer.timedelta(days=29), hoy, ver)["filas"]
+
     def test_la_fila_trae_lo_necesario_para_pedir(self):
-        f = filas(self.empresa)[0]
+        f = self.fila()[0]
         self.assertEqual(f["codigo_proveedor"], "1234")
         self.assertEqual(f["proveedor"], "Distribuidora Belina")
         self.assertEqual(f["ultima_factura"], "F-777")
-        self.assertEqual(f["ultimo_costo"], Decimal("2100"))
-        self.assertEqual(f["salida"], "Venta")
+        self.assertEqual(f["costo"], Decimal("2100"))
+        self.assertEqual(f["estado"], "agotado")
+        self.assertEqual(f["aviso"].get_tipo_salida_display(), "Venta")
 
     def test_pantalla_muestra_el_agotado(self):
-        r = self.client.get(reverse("inventario:agotados"))
+        r = self.client.get(reverse("inventario:reponer"), {"ver": "agotados"})
         self.assertContains(r, "Belina Adulto 2 kg")
         self.assertContains(r, "1234")
 
+    def test_las_direcciones_viejas_llevan_a_reponer(self):
+        r = self.client.get(reverse("inventario:agotados"))
+        self.assertRedirects(r, reverse("inventario:reponer") + "?ver=agotados")
+        r = self.client.get(reverse("inventario:agotados"), {"ver": "historial"})
+        self.assertRedirects(r, reverse("inventario:reponer") + "?ver=historial")
+        r = self.client.get(reverse("core:reporte_reposicion"))
+        self.assertRedirects(r, reverse("inventario:reponer") + "?ver=pedir&atajo=30")
+
     def test_decidir_lo_saca_de_por_decidir(self):
         aviso = Agotamiento.objects.get()
-        r = self.client.post(reverse("inventario:agotados") + "?ver=pendientes",
-                             {"aviso": aviso.pk, "decision": "NO", "nota": "Se vende poco"})
-        self.assertEqual(r.status_code, 302)
+        url = reverse("inventario:reponer") + "?ver=agotados&atajo=semana"
+        r = self.client.post(url, {"aviso": aviso.pk, "decision": "NO", "nota": "Se vende poco"})
+        self.assertRedirects(r, url, fetch_redirect_response=False)
         aviso.refresh_from_db()
         self.assertEqual(aviso.decision, "NO")
         self.assertEqual(aviso.nota, "Se vende poco")
         self.assertEqual(aviso.decidido_por, self.gerente)
         self.assertEqual(por_decidir(self.empresa), 0)
-        r = self.client.get(reverse("inventario:agotados") + "?ver=abiertos")
-        self.assertContains(r, "Belina Adulto 2 kg", msg_prefix="Sigue agotado: aparece en 'Todos'")
+        r = self.client.get(url)
+        self.assertContains(r, "Belina Adulto 2 kg", msg_prefix="Sigue agotado: aparece en Agotados")
+        # «No comprar más» lo saca de lo que hay que pedir.
+        self.assertEqual(self.fila("pedir"), [])
 
     def test_decision_invalida_no_se_guarda(self):
         aviso = Agotamiento.objects.get()
-        self.client.post(reverse("inventario:agotados"), {"aviso": aviso.pk, "decision": "XX"})
+        self.client.post(reverse("inventario:reponer"), {"aviso": aviso.pk, "decision": "XX"})
         aviso.refresh_from_db()
         self.assertEqual(aviso.decision, "PEN")
 
     def test_excel_con_codigo_del_proveedor(self):
         from openpyxl import load_workbook
 
-        r = self.client.get(reverse("inventario:agotados_excel"))
+        r = self.client.get(reverse("inventario:reponer_excel"), {"ver": "agotados"})
         self.assertEqual(r.status_code, 200)
-        ws = load_workbook(BytesIO(r.content)).active
-        self.assertEqual(ws.cell(row=3, column=1).value, "Código proveedor")
-        fila = [c.value for c in ws[4]]
+        wb = load_workbook(BytesIO(r.content))
+        self.assertEqual(wb.sheetnames, ["Resumen", "Distribuidora Belina"])
+        ws = wb["Distribuidora Belina"]
+        self.assertEqual(ws.cell(row=4, column=1).value, "Código proveedor")
+        fila = [c.value for c in ws[5]]
         self.assertEqual(fila[0], "1234")
-        self.assertEqual(fila[3], "Belina Adulto 2 kg")
-        self.assertEqual(fila[6], "Distribuidora Belina")
-        self.assertEqual(fila[14], "Por decidir")
+        self.assertEqual(fila[2], "Belina Adulto 2 kg")
+        self.assertEqual(fila[7], "Agotado")
+        self.assertEqual(fila[9], 2100)
 
     def test_el_cajero_no_entra_a_la_lista(self):
         cajero = User.objects.create_user("caja", password="x", is_staff=True)
         cajero.groups.add(Group.objects.get_or_create(name="Cajero")[0])
         self.client.login(username="caja", password="x")
-        r = self.client.get(reverse("inventario:agotados"))
-        self.assertNotEqual(r.status_code, 200)
-        r = self.client.get(reverse("inventario:agotados_excel"))
-        self.assertNotEqual(r.status_code, 200)
+        for nombre in ("inventario:reponer", "inventario:reponer_excel", "inventario:agotados"):
+            r = self.client.get(reverse(nombre))
+            self.assertNotEqual(r.status_code, 200, nombre)
 
     def test_alarma_en_el_inicio(self):
         r = self.client.get("/")
         self.assertContains(r, "1 producto se agotó")
-        self.assertContains(r, reverse("inventario:agotados"))
+        self.assertContains(r, reverse("inventario:reponer") + "?ver=agotados")
 
 
 class AlarmaEnElPOS(BaseVentas):

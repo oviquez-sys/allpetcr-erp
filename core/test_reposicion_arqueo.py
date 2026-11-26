@@ -1,4 +1,5 @@
-"""Pruebas de reposición por velocidad y de diferencias de arqueo.
+"""Pruebas de diferencias de arqueo. (Las de reposición por velocidad se
+mudaron a inventario/test_reponer.py el 26/11/2026.)
 
 Las dos funciones existen para corregir un punto ciego, y lo que se prueba acá
 es justamente que el punto ciego quede cubierto:
@@ -19,125 +20,12 @@ from django.utils import timezone
 from caja.models import SesionCaja
 from caja.services import abrir_caja, cerrar_caja
 from catalogo.models import Categoria, Producto
-from core import arqueo, reposicion
+from core import arqueo
 from core.models import Empresa, Sucursal
 from inventario.models import Bodega
 from inventario.services import registrar_movimiento
 from ventas.models import FacturaVenta
 from ventas.services import registrar_venta
-
-
-class ReposicionPorVelocidad(TestCase):
-
-    def setUp(self):
-        self.empresa = Empresa.objects.create(nombre="AllPet Test", regimen="RTS")
-        self.sucursal = Sucursal.objects.create(empresa=self.empresa, nombre="Principal")
-        self.bodega = Bodega.objects.create(sucursal=self.sucursal, nombre="Bodega")
-        self.usuario = User.objects.create_user("g", password="x", is_staff=True, is_superuser=True)
-        self.categoria = Categoria.objects.create(nombre="Test")
-        self.sesion = abrir_caja(sucursal=self.sucursal, usuario=self.usuario,
-                                 monto_apertura=Decimal("0"))
-
-    def _producto(self, sku, stock, minimo=2):
-        p = Producto.objects.create(
-            empresa=self.empresa, sku=sku, nombre=f"Producto {sku}",
-            categoria=self.categoria, precio_venta=Decimal("1000"),
-            costo_promedio=Decimal("500"), stock_minimo=Decimal(minimo),
-        )
-        if stock:
-            registrar_movimiento(
-                producto=p, bodega=self.bodega, tipo="ENT", cantidad=Decimal(stock),
-                costo_unitario=Decimal("500"), referencia="carga", usuario=self.usuario,
-            )
-        p.refresh_from_db()
-        return p
-
-    def _vender(self, producto, cantidad):
-        return registrar_venta(
-            sesion_caja=self.sesion, medio_pago=FacturaVenta.MedioPago.EFECTIVO,
-            usuario=self.usuario,
-            lineas=[{"producto_id": producto.pk, "cantidad": Decimal(cantidad)}],
-        )
-
-    def test_el_que_rota_rapido_avisa_antes_con_el_mismo_minimo(self):
-        """El defecto que se vino a corregir.
-
-        Los dos productos quedan con stock por encima de su mínimo, así que
-        con el criterio viejo ninguno aparece. Con velocidad la foto cambia:
-        el que vendió 60 unidades en la ventana promedia 1 por día y le
-        quedan 20 de stock (20 días de cobertura); el que vendió 2 promedia
-        0,03 por día y le quedan 18 (más de un año). Hay que comprar el
-        primero y no tocar el segundo, y eso el mínimo fijo no lo distingue.
-
-        Ojo con el matiz: la cobertura se calcula sobre el promedio de la
-        VENTANA (30 días), no sobre lo que se vendió hoy. Una venta grande de
-        un día no vuelve crítico a un producto — y eso es deseable, porque si
-        no, cada venta mayorista dispararía una orden de compra.
-        """
-        rapido = self._producto("RAPIDO", stock=80, minimo=2)
-        lento = self._producto("LENTO", stock=20, minimo=2)
-        self._vender(rapido, 60)
-        self._vender(lento, 2)
-        # Queda stock suficiente para que NINGUNO esté bajo el mínimo viejo.
-        rapido.refresh_from_db(); lento.refresh_from_db()
-        self.assertGreater(rapido.stock_actual, rapido.stock_minimo)
-        self.assertGreater(lento.stock_actual, lento.stock_minimo)
-
-        datos = reposicion.sugerencias(self.empresa)
-        por_sku = {f["producto"].sku: f for f in datos["filas"]}
-
-        self.assertLess(por_sku["RAPIDO"]["cobertura"], por_sku["LENTO"]["cobertura"],
-                        "el producto que más rota debería tener menos cobertura")
-        self.assertGreater(por_sku["RAPIDO"]["sugerido"], por_sku["LENTO"]["sugerido"],
-                           "habría que pedir más del que más se vende")
-        # 20 días de cobertura: por debajo del objetivo de 30, por encima de
-        # los 7 que marcan lo crítico.
-        self.assertEqual(por_sku["RAPIDO"]["urgencia"], "reponer")
-        self.assertEqual(por_sku["LENTO"]["urgencia"], "ok")
-
-    def test_marca_como_critico_lo_que_no_llega_a_la_semana(self):
-        """La banda que de verdad urge: menos de una semana de stock, que es
-        lo que tarda en llegar un pedido al proveedor."""
-        p = self._producto("URGENTE", stock=125, minimo=2)
-        self._vender(p, 120)  # 2 por día en la ventana; quedan 5 → 2,5 días
-        datos = reposicion.sugerencias(self.empresa)
-        fila = next(f for f in datos["filas"] if f["producto"].sku == "URGENTE")
-        self.assertEqual(fila["urgencia"], "critico")
-        self.assertLess(fila["cobertura"], datos["dias_criticos"])
-
-    def test_sin_ventas_no_sugiere_comprar(self):
-        """Encargo v3 (05/11/2026): la reposición sale de lo vendido en 30
-        días, no del mínimo de estante. Lo que no se vende no se repone."""
-        p = self._producto("QUIETO", stock=1, minimo=5)
-        datos = reposicion.sugerencias(self.empresa, solo_urgentes=False)
-        fila = next(f for f in datos["filas"] if f["producto"].sku == "QUIETO")
-
-        self.assertIsNone(fila["cobertura"], "sin ventas no hay cobertura que calcular")
-        self.assertEqual(fila["urgencia"], "sin_rotacion")
-        self.assertEqual(fila["sugerido"], Decimal("0"))
-        self.assertEqual(datos["dias_ventana"], 30)
-
-    def test_marca_el_producto_que_estuvo_agotado(self):
-        """El sesgo conocido del cálculo: si no había, no se vendió, y el
-        promedio subestima justo donde más faltó. Se marca, no se corrige."""
-        p = self._producto("AGOTADO", stock=10, minimo=2)
-        self._vender(p, 10)
-        p.refresh_from_db()
-        self.assertEqual(p.stock_actual, Decimal("0"))
-
-        datos = reposicion.sugerencias(self.empresa)
-        fila = next(f for f in datos["filas"] if f["producto"].sku == "AGOTADO")
-        self.assertTrue(fila["hubo_quiebre"])
-        self.assertEqual(fila["urgencia"], "agotado")
-
-    def test_nunca_sugiere_cantidades_negativas(self):
-        """Un producto con stock de sobra no genera una orden negativa."""
-        p = self._producto("SOBRA", stock=1000, minimo=2)
-        self._vender(p, 1)
-        datos = reposicion.sugerencias(self.empresa)
-        fila = next(f for f in datos["filas"] if f["producto"].sku == "SOBRA")
-        self.assertEqual(fila["sugerido"], Decimal("0"))
-        self.assertEqual(fila["urgencia"], "ok")
 
 
 class ArqueoPorCajero(TestCase):

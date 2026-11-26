@@ -1,0 +1,95 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Proveedores y entregas{% endblock %}
+
+{% block extrahead %}{{ block.super }}<style>
+/* Proveedores y entregas (26/11/2026). Ver compras/entregas.py. */
+body{background-color:#f5f5f7 !important}
+.pv-wrap{max-width:1200px;margin:0 auto}
+.pv-title{font-size:26px;font-weight:700;letter-spacing:-.02em;margin-bottom:4px}
+.pv-sub{font-size:14px;color:#6e6e73;margin-bottom:16px;line-height:1.5;max-width:860px}
+.pv-barra{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.pv-btn{display:inline-flex;align-items:center;padding:10px 16px;border:none;border-radius:12px;background:#0B3161;color:#fff !important;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none;min-height:40px;box-sizing:border-box}
+.pv-btn.sec{background:#fff;color:#0B3161 !important;border:1px solid #0B3161}
+.pv-subir{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#fff;border-radius:14px;padding:8px 12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.pv-subir span{font-size:13px;color:#6e6e73}
+.pv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.pv-card{background:#fff;border-radius:18px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);scroll-margin-top:80px}
+.pv-card.inactivo{opacity:.6}
+.pv-card h2{font-size:18px;font-weight:700;margin:0 0 2px}
+.pv-card .rs{font-size:12.5px;color:#6e6e73;margin-bottom:8px}
+.pv-con{font-size:14px;line-height:1.7}
+.pv-con a{color:#0B3161}
+.pv-llega{margin:10px 0 6px;padding:10px 12px;border-radius:12px;background:rgba(11,49,97,.07);font-size:14.5px}
+.pv-llega b{color:#0B3161}
+.pv-llega.no{background:#fff6e5;color:#7a4a00}
+.pv-reglas{font-size:12.5px;color:#6e6e73;line-height:1.5}
+.pv-hor{font-size:12.5px;color:#3a3a3c;font-style:italic;margin-top:4px}
+details.pv-ed{margin-top:10px}
+details.pv-ed summary{cursor:pointer;color:#0B3161;font-weight:600;font-size:14px}
+.pv-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.pv-form .ancho{grid-column:1/-1}
+.pv-form label{display:block;font-size:12px;color:#6e6e73;margin-bottom:3px}
+.pv-form input[type=text],.pv-form input[type=email],.pv-form input[type=time],.pv-form input[type=number],.pv-form textarea{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #d9d9de;border-radius:9px;font-size:14px;background:#fbfbfd}
+.pv-form .dias ul,.pv-form .dias div{display:flex;flex-wrap:wrap;gap:4px;list-style:none;margin:0;padding:0}
+.pv-form .dias li,.pv-form .dias div>div{margin:0}
+.pv-form .dias label{display:inline-flex;align-items:center;gap:3px;padding:5px 8px;border:1px solid #d9d9de;border-radius:980px;font-size:13px;color:#1d1d1f;cursor:pointer;margin:0}
+.pv-form .ayuda{font-size:11.5px;color:#8e8e93}
+.pv-form .err{color:#b5231a;font-size:12px}
+.vacio{padding:30px;text-align:center;color:#6e6e73}
+@media(max-width:600px){.pv-grid{grid-template-columns:1fr}.pv-form{grid-template-columns:1fr}}
+</style>{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div class="pv-wrap">
+  <div class="pv-title">Proveedores y entregas</div>
+  <div class="pv-sub">Con quién se habla, cuándo se le pide y qué día llega. «Reponer» usa estos días para saber qué se acaba
+    antes de que llegue el pedido. Todo se puede cambiar con «Editar». Los usuarios y contraseñas de los portales no se guardan aquí.</div>
+
+  <div class="pv-barra">
+    <a class="pv-btn sec" href="{% url 'inventario:reponer' %}">← Reponer</a>
+    <form class="pv-subir" method="post" action="{% url 'compras:proveedores_importar' %}" enctype="multipart/form-data">
+      {% csrf_token %}<span>Cargar desde Excel (una hoja por proveedor):</span>
+      <input type="file" name="archivo" accept=".xlsx" required>
+      <button class="pv-btn" type="submit">Ver qué se carga</button>
+    </form>
+  </div>
+
+  <div class="pv-grid">
+  {% for f in fichas %}
+    <div class="pv-card {% if not f.p.activo %}inactivo{% endif %}" id="prov-{{ f.p.pk }}">
+      <h2>{{ f.p.nombre }}{% if not f.p.activo %} <small style="font-weight:400">(inactivo)</small>{% endif %}</h2>
+      {% if f.p.razon_social %}<div class="rs">{{ f.p.razon_social }}{% if f.p.identificacion %} · {{ f.p.identificacion }}{% endif %}</div>{% endif %}
+      <div class="pv-con">
+        {% if f.p.contacto %}{{ f.p.contacto }}{% endif %}
+        {% if f.p.telefono %}{% if f.p.contacto %} · {% endif %}<a href="tel:{{ f.p.telefono }}">{{ f.p.telefono }}</a>{% if f.whatsapp|length == 8 %} · <a href="https://wa.me/506{{ f.whatsapp }}" target="_blank" rel="noopener">WhatsApp</a>{% endif %}{% endif %}
+        {% if f.p.email %}<br><a href="mailto:{{ f.p.email }}">{{ f.p.email }}</a>{% endif %}
+        {% if f.p.pedidos_en_linea %}<br><a href="{% if '://' not in f.p.pedidos_en_linea %}https://{% endif %}{{ f.p.pedidos_en_linea }}" target="_blank" rel="noopener">Pedir en línea</a>{% endif %}
+        {% if f.p.catalogo %}{% if '.' in f.p.catalogo %} · <a href="{% if '://' not in f.p.catalogo %}https://{% endif %}{{ f.p.catalogo }}" target="_blank" rel="noopener">Catálogo</a>{% else %}<br>Catálogo: {{ f.p.catalogo }}{% endif %}{% endif %}
+      </div>
+      {% if f.llega %}
+        <div class="pv-llega">Si se le pide hoy, llega el <b>{{ f.llega|date:"l j/m" }}</b></div>
+      {% else %}
+        <div class="pv-llega no">Falta decir qué días entrega o cuánto tarda.</div>
+      {% endif %}
+      <div class="pv-reglas">Se le pide: {{ f.pide }}{% if f.p.hora_limite %} antes de las {{ f.p.hora_limite|time:"g:i a" }}{% endif %} · Entrega: {{ f.entrega }}{% if f.p.dias_minimos is not None %} · tarda al menos {{ f.p.dias_minimos }} día{{ f.p.dias_minimos|pluralize }}{% endif %}</div>
+      {% if f.p.horario_entrega %}<div class="pv-hor">«{{ f.p.horario_entrega }}»</div>{% endif %}
+      {% if f.p.cuenta_bancaria %}<div class="pv-reglas" style="margin-top:4px">Cuenta: {{ f.p.cuenta_bancaria }}</div>{% endif %}
+      {% if f.p.notas %}<div class="pv-reglas" style="margin-top:4px;white-space:pre-line">{{ f.p.notas }}</div>{% endif %}
+      <details class="pv-ed" {% if f.abierto %}open{% endif %}><summary>Editar</summary>
+        {% include "compras/_form_proveedor.html" with form=f.form clave=f.p.pk %}
+      </details>
+    </div>
+  {% empty %}
+    <div class="vacio">Todavía no hay proveedores.</div>
+  {% endfor %}
+    <div class="pv-card">
+      <details class="pv-ed" {% if nuevo_abierto %}open{% endif %}><summary>＋ Proveedor nuevo</summary>
+        {% include "compras/_form_proveedor.html" with form=nuevo clave="nuevo" %}
+      </details>
+    </div>
+  </div>
+</div>
+{% endblock %}

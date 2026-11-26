@@ -704,13 +704,16 @@ function pintarGrid(){
       ${foto}
       <div class="n">${esc(p.nombre)}</div>
       <div class="cat">${esc(p.categoria)}</div>${pres}
-      <div class="p">costo prom. ${fmt(p.costo_promedio)}</div>
+      <div class="p">${p.costo_reposicion ? 'último costo ' + fmt(p.costo_reposicion) : 'costo prom. ' + fmt(p.costo_promedio)}</div>
       <div class="s">hay ${p.stock_actual}</div></div>`;
   }).join('') || '<p class="empty">No hay productos con ese filtro. Probá otra categoría o borrá la búsqueda.</p>';
 }
 function agregar(id){
   const p = porId[id];
-  if (!carrito[id]) carrito[id] = { cantidad: 1, bonif: 0, gan: null, costo: p.costo_promedio || 0 };
+  // Costo propuesto = lo que costó una unidad PAGADA la última vez (25/11/2026):
+  // el promedio puede venir a la mitad por un regalo del proveedor y anotar la
+  // factura a ese costo la falsearía.
+  if (!carrito[id]) carrito[id] = { cantidad: 1, bonif: 0, gan: null, costo: p.costo_reposicion || p.costo_promedio || 0 };
   else carrito[id].cantidad += 1;
   pintarLineas();
   resaltarLinea(id);
@@ -757,6 +760,14 @@ function cambiarGanancia(id, v){
 // Es la misma regla que usa el ERP para calcular precios (catalogo/precios.py)
 // y la que ya seguía el Excel de AllPetCR en sus 532 filas.
 function redondear100(x){ return Math.round(x/100)*100; }
+// Lo que cuesta UNA unidad pagada de esta línea (con su parte del descuento
+// de la factura). Una línea solo de regalo usa lo que el producto costó la
+// última vez que se pagó (25/11/2026, catalogo/costos.py).
+function costoParaPrecio(l, parte, p){
+  const pagadas = +l.cantidad || 0;
+  if (pagadas > 0) return (pagadas*l.costo - parte)/pagadas;
+  return (p && (p.costo_reposicion || p.costo_decidir)) || 0;
+}
 function pintarLineas(){
   const ids = Object.keys(carrito);
   const partes = partesDescuento();
@@ -765,30 +776,34 @@ function pintarLineas(){
     const bonif = +l.bonif || 0;
     const recibidas = (+l.cantidad || 0) + bonif;
     const parte = partes[id] || 0;
-    // El costo que importa no es el facturado: es lo que de verdad se pagó
-    // (con el descuento de la factura restado) repartido entre todo lo que
-    // llegó (con las de regalo). Con ese costo se pone el precio: el descuento
-    // que consiguió quien compró tiene que llegar al precio.
+    // Dos costos, cada uno para lo suyo (25/11/2026, catalogo/costos.py):
+    // - costoReal: lo pagado repartido entre TODO lo que llegó (con las de
+    //   regalo). Es el costo contable; el servidor lo calcula solo.
+    // - costoPrecio: lo que cuesta UNA unidad pagada (con el descuento de la
+    //   factura, SIN repartir el regalo). Con este se pone el precio y se mide
+    //   la ganancia: el regalo es una vez y la próxima compra se paga completa.
+    //   Antes el precio salía del costoReal y un 1+1 dejaba el margen a la mitad.
     const costoReal = recibidas > 0 ? (l.cantidad*l.costo - parte)/recibidas : 0;
-    const dtoPct = recibidas > 0 ? bonif/recibidas*100 : 0;
+    const costoPrecio = costoParaPrecio(l, parte, p);
     // Un solo renglón de ayuda por producto (los montos van sin céntimos:
     // es para mirar, el servidor guarda la cifra exacta).
     const real = fmt(Math.round(costoReal));
     let aviso = '';
     if (bonif > 0)
-      aviso = `<div class="real">Entran <b>${recibidas}</b> a <b>${real}</b> c/u${parte > 0 ? ' (con la regalía y el descuento)' : ` · equivale a <b>${dtoPct.toFixed(1)}%</b> de descuento`}</div>`;
-    const conDto = (parte > 0 && bonif === 0) ? ` · con descuento cuesta <b>${real}</b>` : '';
+      aviso = `<div class="real">Entran <b>${recibidas}</b> (${bonif} de regalo): en inventario quedan a <b>${real}</b> c/u, pero el precio y la ganancia se calculan con <b>${fmt(Math.round(costoPrecio))}</b>, lo que cuesta reponerlo (el regalo no se repite).</div>`;
+    const conDto = (parte > 0 && bonif === 0) ? ` · con descuento cuesta <b>${fmt(Math.round(costoPrecio))}</b>` : '';
 
     const gan = (l.gan === null || l.gan === undefined) ? null : +l.gan;
     let precioNuevo = null, margen = 0;
-    if (gan !== null && costoReal > 0){
-      precioNuevo = redondear100(costoReal * (1 + gan/100) * FACTOR_IVA);
+    if (gan !== null && costoPrecio > 0){
+      precioNuevo = redondear100(costoPrecio * (1 + gan/100) * FACTOR_IVA);
       const neto = precioNuevo / FACTOR_IVA;
-      margen = neto > 0 ? (neto - costoReal)/neto*100 : 0;
+      margen = neto > 0 ? (neto - costoPrecio)/neto*100 : 0;
     }
-    // Ganancia que tiene HOY el producto, para que se vea con qué se compara.
-    const ganActual = (p.costo_promedio > 0 && p.precio_venta > 0)
-      ? ((p.precio_venta/FACTOR_IVA/p.costo_promedio - 1) * 100) : null;
+    // Ganancia que tiene HOY el producto, con lo que cuesta reponerlo.
+    const costoHoy = Math.max(p.costo_decidir || 0, costoPrecio || 0);
+    const ganActual = (costoHoy > 0 && p.precio_venta > 0)
+      ? ((p.precio_venta/FACTOR_IVA/costoHoy - 1) * 100) : null;
     const precioInfo = precioNuevo !== null
       ? `<div class="precio-linea">Precio <b>${fmt(p.precio_venta)}</b> → <span class="nuevo">${fmt(precioNuevo)}</span> · margen <b>${margen.toFixed(0)}%</b>${conDto}</div>`
       : `<div class="precio-linea">Precio actual <b>${fmt(p.precio_venta)}</b>${ganActual !== null ? ` · ganancia de hoy <b>${ganActual.toFixed(0)}%</b>` : ''}${conDto}</div>`;
@@ -838,14 +853,13 @@ async function registrar(){
   const partes = partesDescuento();
   const lineas = Object.entries(carrito).map(([id,l])=>{
     const bonif = +l.bonif || 0;
-    const recibidas = (+l.cantidad || 0) + bonif;
-    const costoReal = recibidas > 0 ? (l.cantidad*l.costo - (partes[id] || 0))/recibidas : 0;
+    const costoPrecio = costoParaPrecio(l, partes[id] || 0, porId[id]);
     const gan = (l.gan === null || l.gan === undefined) ? null : +l.gan;
     return {
       producto_id:+id, cantidad:l.cantidad, cantidad_bonificada:bonif, costo_unitario:l.costo,
       // Solo viaja si el usuario escribió una ganancia. Sin eso, el precio del
-      // producto no se toca.
-      precio_venta: (gan !== null && costoReal > 0) ? redondear100(costoReal * (1 + gan/100) * FACTOR_IVA) : null,
+      // producto no se toca. Mismo costo que se ve en pantalla (costoParaPrecio).
+      precio_venta: (gan !== null && costoPrecio > 0) ? redondear100(costoPrecio * (1 + gan/100) * FACTOR_IVA) : null,
     };
   });
   if (!lineas.length){ msg("Todavía no agregaste productos.", true); return; }

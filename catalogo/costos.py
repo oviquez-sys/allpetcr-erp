@@ -76,6 +76,17 @@ def reposiciones(productos) -> dict:
     return {p.pk: salida.get(p.pk) for p in productos}
 
 
+def anotar(productos):
+    """Deja el costo de reposición guardado en cada producto (lo lee
+    `Producto.costo_reposicion`) con dos consultas para toda la lista."""
+    productos = list(productos)
+    if productos:
+        valores = reposiciones(productos)
+        for p in productos:
+            p._reposicion = valores[p.pk]
+    return productos
+
+
 def costo_reposicion(producto):
     return reposiciones([producto])[producto.pk]
 
@@ -84,7 +95,7 @@ def costo_para_decidir(producto, reposicion=None) -> Decimal:
     """El mayor entre el costo promedio y el de reposición. Pasar
     `reposicion` evita la consulta cuando ya se tiene (listas)."""
     if reposicion is None:
-        reposicion = costo_reposicion(producto)
+        reposicion = producto.costo_reposicion   # se guarda en el producto
     return max(producto.costo_promedio or Decimal("0"), reposicion or Decimal("0"))
 
 

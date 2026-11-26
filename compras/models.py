@@ -14,6 +14,23 @@ class Proveedor(models.Model):
     telefono = models.CharField(max_length=30, blank=True)
     email = models.EmailField(blank=True)
     notas = models.TextField(blank=True)
+    # Contacto y entregas (26/11/2026, Excel ENTREGAS_PROVEDORES de Oscar).
+    # Se editan en compras:proveedores. Usuarios y contraseñas de los
+    # portales NO se guardan aquí a propósito.
+    contacto = models.CharField(max_length=100, blank=True, help_text="Con quién se habla")
+    razon_social = models.CharField(max_length=150, blank=True, help_text="Nombre de la empresa en la factura")
+    cuenta_bancaria = models.CharField(max_length=120, blank=True, help_text="Banco y cuenta IBAN para pagarle")
+    direccion_bodega = models.CharField(max_length=250, blank=True)
+    catalogo = models.CharField(max_length=300, blank=True, help_text="Enlace o dónde está el catálogo")
+    pedidos_en_linea = models.CharField(max_length=300, blank=True, help_text="Enlace para pedir en línea")
+    horario_entrega = models.CharField(max_length=300, blank=True, help_text="Lo que dice el proveedor, en palabras")
+    # Lo que usa «Reponer» para saber cuándo llega un pedido. Días como en
+    # core.MetaNegocio.dias_abiertos: "0" lunes … "6" domingo. Vacío = cualquier día.
+    dias_pedido = models.CharField(max_length=7, blank=True, help_text="Días en que se le puede pedir")
+    hora_limite = models.TimeField(null=True, blank=True, help_text="Pedir antes de esta hora")
+    dias_entrega = models.CharField(max_length=7, blank=True, help_text="Días en que entrega")
+    dias_minimos = models.PositiveSmallIntegerField(
+        null=True, blank=True, help_text="Días mínimos entre el pedido y la entrega")
     saldo = models.DecimalField(max_digits=12, decimal_places=2, default=0,
                                 help_text="Deuda con el proveedor (CxP, denormalizado)")
     activo = models.BooleanField(default=True)
