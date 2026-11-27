@@ -41,6 +41,10 @@ def se_puede_cambiar(factura) -> str:
         return "La venta no cobró nada."
     if factura.devoluciones.exists():
         return "La venta tiene devoluciones."
+    if factura.envio > 0:
+        # El envío (26/11/2026) entró por el mismo medio y quizá salió de la
+        # gaveta: moverlo a medias descuadra el cierre. Mejor anular y repetir.
+        return "La venta trae envío: anulala y volvé a registrarla con el medio correcto."
     if hasattr(factura, "factura_electronica") or hasattr(factura, "tiquete_electronico"):
         return "La venta ya tiene comprobante electrónico de Hacienda."
     return ""

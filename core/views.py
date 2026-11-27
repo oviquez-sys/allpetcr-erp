@@ -298,6 +298,12 @@ cobro. El número gris al lado es el descuento máximo sin vender bajo costo \
 (solo lo ven los gerentes).
 - "Redondear el total" (también en la ventana de efectivo): baja el total, por \
 ejemplo de ₡13.554 a ₡13.500. Hasta ₡500 el cajero y ₡1.000 el gerente.
+- "🛵 Agregar envío" (bajo el total): cuando el cliente paga el Uber junto con \
+la compra. Se escribe el monto y cómo se le paga al mensajero (tarjeta o app \
+de la tienda, efectivo de la caja, o tarjeta personal de un socio). No es \
+venta: se cobra aparte por el mismo medio y el cierre lo cuenta, así el SINPE \
+ya no sale con sobrante. Si el cliente le paga directo al mensajero, no se anota. \
+No se puede fiar.
 - La gaveta de dinero se abre sola solo en ventas con efectivo.
 - Se puede anular una venta completa, o hacer una devolución parcial de \
 algunos productos/cantidades.

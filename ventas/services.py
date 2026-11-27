@@ -92,7 +92,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
                     permitir_bajo_costo=False, permitir_descuento_alto=False,
                     permitir_regalia_alta=False, pagos=None, clave_pos=None,
                     monto_recibido=None, cupon=None, redondeo=0, sin_cliente="",
-                    pedido_web=None, envio_costo=None, credito_cambio=0) -> FacturaVenta:
+                    pedido_web=None, envio_costo=None, credito_cambio=0, envio=None) -> FacturaVenta:
     """lineas: iterable de dicts {"producto_id": int, "cantidad": Decimal}.
 
     permitir_bajo_costo: por defecto NO se puede vender un producto por debajo
@@ -136,6 +136,10 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     cobrando en caja. La venta queda ligada a él en ESTA transacción: así se
     sabe que nació en el sitio aunque se pague en el mostrador. `envio_costo`
     es lo que la tienda le paga al mensajero por ese pedido (para medir).
+
+    envio: {"monto", "pago"} del Uber que el cliente paga junto con la compra
+    (26/11/2026). No es venta: queda en `factura.envio`, se cobra por el mismo
+    medio y entra al cierre. Reglas en ventas/envios.py.
 
     credito_cambio: solo lo usa `ventas.cambios.registrar_cambio` (24/11/2026).
     Es el valor de lo que el cliente devolvió en ese momento: paga la venta
@@ -374,6 +378,28 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     factura.credito_cambio_usado = usado_cambio
     if medio_pago == FacturaVenta.MedioPago.CAMBIO and usado_cambio < total:
         raise ValidationError(f"Falta cobrar la diferencia del cambio: ₡{total - usado_cambio:,.0f}.")
+    from . import envios
+    envio_monto, envio_pago = envios.leer(envio)
+    envio_medio = ""
+    if envio_monto:
+        if usado_cambio > 0 or medio_pago in (FacturaVenta.MedioPago.CREDITO, FacturaVenta.MedioPago.CAMBIO):
+            raise ValidationError("El envío no se puede fiar ni pagar con un cambio: cobralo en una venta aparte.")
+        if medio_pago == FacturaVenta.MedioPago.MIXTO:
+            pagos = [{"medio": str(p.get("medio")), "monto": Decimal(str(p.get("monto") or 0)).quantize(Decimal("0.01"))}
+                     for p in (pagos or [])]
+            suma = sum((p["monto"] for p in pagos), Decimal("0"))
+            if suma != total + envio_monto:
+                raise ValidationError(f"Los pagos suman ₡{suma:,.2f} y la venta con envío es de "
+                                      f"₡{total + envio_monto:,.2f}: tienen que coincidir.")
+            envio_medio, pagos = envios.repartir_mixto(pagos, envio_monto)
+            if len(pagos) == 1:          # sin el envío, la venta quedó de un solo medio
+                medio_pago, pagos = pagos[0]["medio"], None
+                factura.medio_pago = medio_pago
+        elif medio_pago in MEDIOS_MIXTOS:
+            envio_medio = medio_pago
+        else:
+            raise ValidationError("Medio de pago inválido para el envío.")
+        factura.envio, factura.envio_medio, factura.envio_pago = envio_monto, envio_medio, envio_pago
     if usado_cambio > 0:
         resto = total - usado_cambio
         if medio_pago == FacturaVenta.MedioPago.CREDITO:
@@ -408,14 +434,17 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     else:
         efectivo = Decimal("0")
 
-    campos = ["subtotal", "descuento", "impuesto", "total", "redondeo", "medio_pago"]
-    if monto_recibido not in (None, "") and efectivo > 0:
+    campos = ["subtotal", "descuento", "impuesto", "total", "redondeo", "medio_pago",
+              "envio", "envio_medio", "envio_pago"]
+    # El vuelto se calcula sobre todo lo que se paga en efectivo, envío incluido.
+    a_recibir = efectivo + (envio_monto if envio_medio == "EFE" else Decimal("0"))
+    if monto_recibido not in (None, "") and a_recibir > 0:
         recibido = Decimal(str(monto_recibido)).quantize(Decimal("0.01"))
-        if recibido < efectivo:
+        if recibido < a_recibir:
             raise ValidationError(
-                f"El cliente entregó ₡{recibido:,.0f} y en efectivo son ₡{efectivo:,.0f}: falta plata."
+                f"El cliente entregó ₡{recibido:,.0f} y en efectivo son ₡{a_recibir:,.0f}: falta plata."
             )
-        factura.monto_recibido, factura.vuelto = recibido, recibido - efectivo
+        factura.monto_recibido, factura.vuelto = recibido, recibido - a_recibir
         campos += ["monto_recibido", "vuelto"]
     factura.save(update_fields=campos)
 
@@ -449,6 +478,7 @@ def registrar_venta(*, sesion_caja, lineas, medio_pago, usuario, cliente=None,
     # asiento no cuadra, la venta entera se revierte. Nadie digita contabilidad.
     from .contabilizar import asentar_venta
     asentar_venta(factura, usuario=usuario)
+    envios.registrar(factura, sesion_caja, usuario)
 
     # Pedido web que se cobra en caja y campaña vigente (16/11/2026). Van al
     # final: con la venta ya completa, y sin poder tumbarla (ver los
@@ -557,6 +587,11 @@ def anular_factura(*, factura, motivo, usuario) -> FacturaVenta:
         # Cancela la CxC y libera el crédito (bloquea si ya tiene abonos).
         from .cxc import cancelar_cxc_por_anulacion
         cancelar_cxc_por_anulacion(factura=factura, usuario=usuario)
+    if factura.envio > 0:
+        from caja.services import sesion_abierta_de
+
+        from .envios import anular as anular_envio
+        anular_envio(factura, sesion_abierta_de(usuario), usuario)
     # El cupón de la manada vuelve a quedar disponible: una venta anulada no
     # fue la "primera compra" de nadie.
     from manada.services import liberar_por_anulacion

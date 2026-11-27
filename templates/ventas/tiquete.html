@@ -45,6 +45,8 @@ td{padding:2px 0;vertical-align:top}
   {% if f.descuento_sin_redondeo > 0 %}<tr><td>Descuentos</td><td class="n">− ₡{{ f.descuento_sin_redondeo|crc:0 }}</td></tr>{% endif %}
   {% if f.redondeo > 0 %}<tr><td>Redondeo</td><td class="n">− ₡{{ f.redondeo|crc:0 }}</td></tr>{% endif %}
   <tr class="tot"><td>TOTAL</td><td class="n">₡{{ f.total|crc:0 }}</td></tr>
+  {% if f.envio > 0 %}<tr><td>Envío (mensajero)</td><td class="n">₡{{ f.envio|crc:0 }}</td></tr>
+  <tr><td><b>Total pagado</b></td><td class="n"><b>₡{{ f.total_pagado|crc:0 }}</b></td></tr>{% endif %}
   {% if f.medio_pago == "MIX" %}{% for p in f.pagos.all %}<tr><td style="padding-left:8px">{{ p.get_medio_display }}</td><td class="n">₡{{ p.monto|crc:0 }}</td></tr>{% endfor %}{% endif %}
   {% if f.monto_recibido is not None %}
   <tr><td>Efectivo recibido</td><td class="n">₡{{ f.monto_recibido|crc:0 }}</td></tr>

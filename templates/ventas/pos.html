@@ -146,6 +146,11 @@ main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,31%);g
 .linea-x .ref.pasado{color:#e3a29b}
 .tot.d{display:flex;justify-content:space-between;font-size:16px;color:var(--ink2);margin-bottom:9px}
 /* Redondeo del total (17/10/2026): un enlace discreto bajo el total. */
+.tot.env{display:flex;justify-content:space-between;align-items:center;font-size:15px;color:#0B3161;margin-bottom:6px}
+.dlg .opc{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.dlg .opc label{display:flex;align-items:center;gap:10px;margin:0;padding:11px 12px;border:1px solid var(--line);border-radius:12px;font-size:15px;font-weight:500;color:var(--ink);cursor:pointer}
+.dlg .opc input{width:auto;padding:0}
+.dlg .opc label:has(input:checked){border-color:var(--brand);background:rgba(11,49,97,.06)}
 .tot.r{display:flex;justify-content:space-between;align-items:center;font-size:15px;color:#a05a00;margin-bottom:6px}
 .lnk{border:0;background:none;color:var(--brand);font-size:13.5px;cursor:pointer;padding:2px 0;font-family:inherit;text-decoration:underline}
 .redondear{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:2px;font-size:13.5px;color:var(--ink2)}
@@ -486,6 +491,26 @@ dialog.dlg.ancho{max-width:640px}
   </form>
 </dialog>
 
+<dialog class="dlg" id="dlgEnvio" aria-labelledby="tEnv">
+  {% comment %} Envío (26/11/2026, ventas/envios.py): el Uber que el cliente paga
+     junto con la compra. No es venta: se suma al cobro y el cierre lo espera. {% endcomment %}
+  <form method="dialog" id="frmEnvio">
+    <h2 id="tEnv">🛵 Envío del mensajero</h2>
+    <div class="sub">Lo que el cliente paga por el Uber junto con la compra. No es venta: se cobra aparte y el cierre lo cuenta.
+      Si el cliente le paga directo al mensajero, no lo anotés aquí.</div>
+    <label for="envMonto">Monto del envío</label>
+    <input id="envMonto" inputmode="numeric" autocomplete="off" placeholder="₡ 2.500">
+    <label>¿Cómo se le paga al mensajero?</label>
+    <div class="opc">
+      <label><input type="radio" name="envPago" value="TIE" checked> Tarjeta o app de la tienda</label>
+      <label><input type="radio" name="envPago" value="CAJ"> Efectivo de la caja</label>
+      <label><input type="radio" name="envPago" value="SOC"> Tarjeta o plata personal de un socio</label>
+    </div>
+    <div class="err" id="envErr"></div>
+    <div class="acc"><button type="button" data-cerrar>Cancelar</button><button class="pri" id="envOk">Agregar al cobro</button></div>
+  </form>
+</dialog>
+
 <dialog class="dlg" id="dlgMixto" aria-labelledby="tMix">
   <form method="dialog" id="frmMixto">
     <h2 id="tMix">Pago mixto</h2>
@@ -631,6 +656,7 @@ let clientePorCasilla = false;   // el selector de cliente lo puso la casilla, n
 // el total para el que se calculó: si la venta cambia, el redondeo ya no
 // aplica y se quita solo (no vaya a quedar un −₡54 sobre otra venta).
 let redondeo = null;
+let envio = null;      // {monto, pago}: el Uber pagado junto con la compra (26/11/2026)
 const REDONDEO_MAX = {{ redondeo_maximo }};
 // Campaña con sorteo vigente (16/11/2026): {nombre, acepta, umbral, minima,
 // por_compra, bono, sorteo} o solo {bienvenida} si no hay ninguna. Las reglas
@@ -955,8 +981,11 @@ function pintar(){
     html += `<div class="tot g"><span>${dif > 0 ? 'Diferencia a pagar' : 'A pagar'}</span><span>${fmt(Math.max(0, dif))}</span></div>`;
     if (dif < 0) html += `<div class="sobra">Se le devuelven ${fmt(-dif)} ${comoSeDevuelve()}</div>`;
   } else {
-    html += `<div class="tot g"><span>Total</span><span>${fmt(total - red)}</span></div>`;
+    const env = envio ? envio.monto : 0;
+    if (env) html += `<div class="tot env"><span>🛵 Envío (no es venta)</span><span>+ ${fmt(env)} <button type="button" class="lnk" onclick="quitarEnvio()">quitar</button></span></div>`;
+    html += `<div class="tot g"><span>${env ? 'Total a cobrar' : 'Total'}</span><span>${fmt(total - red + env)}</span></div>`;
     if (!red && total > 0) html += `<div class="redondear" id="redondearFila"><button type="button" class="lnk" onclick="abrirRedondeo()">Redondear el total</button></div>`;
+    if (!env && total > 0) html += `<div class="redondear"><button type="button" class="lnk" onclick="pedirEnvio()">🛵 Agregar envío</button></div>`;
   }
   document.getElementById('totales').innerHTML = html;
   pintarBotonesCobro(total - red);
@@ -988,7 +1017,25 @@ function totalCarrito(){ return Object.keys(carrito).reduce((a,id)=>a + totalLin
 function montoRedondeo(){ return (redondeo && redondeo.base === totalCarrito()) ? redondeo.base - redondeo.dejarEn : 0; }
 // En un cambio, lo que de verdad se cobra es la diferencia (nunca negativa:
 // si sobra, se devuelve por el medio original y no pasa por estos botones).
-function totalCobrar(){ return Math.max(0, totalCarrito() - montoRedondeo() - aFavor()); }
+function totalCobrar(){ return Math.max(0, totalCarrito() - montoRedondeo() - aFavor()) + (envio && !devuelve ? envio.monto : 0); }
+// Envío (26/11/2026): se suma al cobro; el servidor lo guarda aparte de la venta.
+function pedirEnvio(){
+  document.getElementById('envMonto').value = envio ? envio.monto : '';
+  document.querySelectorAll('input[name=envPago]').forEach(r => r.checked = r.value === (envio ? envio.pago : 'TIE'));
+  document.getElementById('envErr').textContent = '';
+  document.getElementById('dlgEnvio').showModal();
+  document.getElementById('envMonto').focus();
+}
+document.getElementById('frmEnvio').addEventListener('submit', e => {
+  e.preventDefault();
+  const monto = Math.round(montoDe(document.getElementById('envMonto').value));
+  if (!(monto > 0)){ document.getElementById('envErr').textContent = 'Escribí cuánto cobra el Uber.'; return; }
+  if (monto > 100000){ document.getElementById('envErr').textContent = 'Ese monto es muy alto para un envío. Revisalo.'; return; }
+  envio = {monto, pago: document.querySelector('input[name=envPago]:checked').value};
+  document.getElementById('dlgEnvio').close();
+  pintar(); volverAlEscaner();
+});
+function quitarEnvio(){ envio = null; pintar(); volverAlEscaner(); }
 // Sugerencia: la centena de abajo (₡13.554 → ₡13.500).
 function sugerenciaRedondeo(t){ const s = Math.floor(t / 100) * 100; return (s < t && t - s <= REDONDEO_MAX) ? s : null; }
 function abrirRedondeo(){
@@ -1050,10 +1097,12 @@ function pedirEfectivo(){
   // Atajo en el cobro en efectivo: si el cliente no tiene para el vuelto
   // exacto, redondear a la centena sin salir de esta ventana.
   const redo = document.getElementById('efeRedo'); redo.textContent = '';
-  const sug = !montoRedondeo() && !devuelve ? sugerenciaRedondeo(total) : null;
+  // El redondeo es de la venta, no del envío: se calcula sin él.
+  const env = envio && !devuelve ? envio.monto : 0;
+  const sug = !montoRedondeo() && !devuelve ? sugerenciaRedondeo(total - env) : null;
   if (sug !== null){
     const b = document.createElement('button'); b.type = 'button'; b.className = 'lnk';
-    b.textContent = `Dejar en ${fmt(sug)} (redondeo de ${fmt(total - sug)})`;
+    b.textContent = `Dejar en ${fmt(sug + env)} (redondeo de ${fmt(total - env - sug)})`;
     b.addEventListener('click', () => { document.getElementById('dlgEfectivo').close(); if (aplicarRedondeo(sug)) pedirEfectivo(); });
     redo.appendChild(b);
   }
@@ -1122,6 +1171,7 @@ async function cobrar(medio, extra = {}){
   if (!listoParaCobrar()) return;
   const clienteId = document.getElementById('cliente').value;
   if (medio === 'CRE' && !clienteId){ msg("Para fiar, elegí primero el cliente arriba.", true); return; }
+  if (medio === 'CRE' && envio){ msg("El envío no se puede fiar: quitalo o cobrá la venta con otro medio.", true); return; }
   if (faltaCliente()){ pedirCliente(() => cobrar(medio, extra)); return; }
   cobrando = true;
   if (!clave) clave = nuevaClave();
@@ -1136,6 +1186,7 @@ async function cobrar(medio, extra = {}){
                             sin_cliente: clienteId ? '' : (sinClienteMotivo || ''),
                             pedido_web: pedidoWeb ? pedidoWeb.numero : null,
                             envio_costo: pedidoWeb ? (pedidoWeb.envio_costo || 0) : 0,
+                            envio: (envio && !devuelve) ? envio : null,
                             devolucion: devolucionParaEnviar()})
     });
     const d = await r.json();
@@ -1147,6 +1198,7 @@ async function cobrar(medio, extra = {}){
       devuelve = null;
       carrito = {};
       redondeo = null;
+      envio = null;
       quitarCupon(false);             // el cupón ya quedó usado en esta venta
       sinClienteMotivo = '';          // la próxima venta se vuelve a preguntar
       if (clienteId) delete campEstado[clienteId];   // sus números cambiaron: se vuelven a consultar
@@ -1199,6 +1251,15 @@ function mostrarUltima(d){
      [c.bancos, `Devolvele ${fmt(c.bancos)} por SINPE o por el datáfono: es lo que sobró del cambio.`]].forEach(([m, x]) => {
       if (m > 0){ const v = document.createElement('div'); v.className = 'vuelto'; v.textContent = x; u.appendChild(v); }
     });
+  }
+  if (d.envio > 0){
+    const en = document.createElement('div'); en.className = 'imp';
+    en.textContent = `🛵 Envío ${fmt(d.envio)} cobrado aparte (total pagado ${fmt(d.total + d.envio)}).`;
+    u.appendChild(en);
+    if (d.envio_pago === 'CAJ'){
+      const g = document.createElement('div'); g.className = 'vuelto';
+      g.textContent = `Sacá ${fmt(d.envio)} de la gaveta para el mensajero.`; u.appendChild(g);
+    }
   }
   if (d.vuelto !== null && d.vuelto !== undefined){
     const v = document.createElement('div'); v.className = 'vuelto';
@@ -1611,7 +1672,7 @@ let activa = 0;
 const CLAVE_LOCAL = 'allpetcr.pos.ventas';
 function nuevaVenta(){
   return {carrito:{}, cupon:null, clienteReconocido:null, clientePorCasilla:false, cliente:'', clave:null, redondeo:null,
-          pedidoWeb:null, devuelve:null};
+          pedidoWeb:null, devuelve:null, envio:null};
 }
 function ventaVacia(v){ return !Object.keys(v.carrito).length && !v.cupon && !v.clienteReconocido && !v.cliente && !v.devuelve; }
 // Unidades de un producto apartadas en las OTRAS ventas: no se pueden vender
@@ -1621,13 +1682,13 @@ function enEspera(id){
 }
 function guardarActiva(){
   Object.assign(ventas[activa], {carrito, cupon, clienteReconocido, clientePorCasilla,
-                                 cliente: document.getElementById('cliente').value, clave, redondeo, pedidoWeb, devuelve});
+                                 cliente: document.getElementById('cliente').value, clave, redondeo, pedidoWeb, devuelve, envio});
 }
 function totalDeVenta(v){
-  const antes = [carrito, cupon, redondeo, devuelve];
-  carrito = v.carrito; cupon = v.cupon; redondeo = v.redondeo || null; devuelve = v.devuelve || null; sinClienteMotivo = '';
+  const antes = [carrito, cupon, redondeo, devuelve, envio];
+  carrito = v.carrito; cupon = v.cupon; redondeo = v.redondeo || null; devuelve = v.devuelve || null; envio = v.envio || null; sinClienteMotivo = '';
   const t = totalCobrar();
-  [carrito, cupon, redondeo, devuelve] = antes;
+  [carrito, cupon, redondeo, devuelve, envio] = antes;
   return t;
 }
 function nombreDeVenta(v){
@@ -1670,6 +1731,7 @@ function cargarVenta(i, enfocar = true){
   const v = ventas[i];
   carrito = v.carrito; cupon = v.cupon; clienteReconocido = v.clienteReconocido; sinClienteMotivo = '';
   clientePorCasilla = v.clientePorCasilla; clave = v.clave; redondeo = v.redondeo || null;
+  envio = v.envio || null;
   pedidoWeb = v.pedidoWeb || null;
   devuelve = v.devuelve || null;
   document.getElementById('cliente').value = v.cliente || '';

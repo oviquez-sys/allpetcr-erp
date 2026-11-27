@@ -248,6 +248,14 @@ def bytes_tiquete(factura, ancho: int = 48, pie: str = "", logo: bytes = b"") ->
     # cliente ve en el papel cuánto se ahorró (descuentos + redondeo).
     if factura.descuento > 0 and any(getattr(l, "promocion_id", None) for l in factura.lineas.all()):
         partes += [_texto(_dos_columnas("Usted ahorró", _monto(factura.descuento), ancho)), SALTO]
+    # Envío (26/11/2026): el Uber que el cliente pagó junto con la compra.
+    # No es parte de la venta; se suma aparte para que el papel diga lo que
+    # de verdad pagó.
+    envio = getattr(factura, "envio", 0) or 0
+    if envio > 0:
+        partes += [_texto(_dos_columnas("Envío (mensajero)", _monto(envio), ancho)), SALTO,
+                   NEGRITA_ON, _texto(_dos_columnas("TOTAL PAGADO", _monto(factura.total + envio), ancho)),
+                   NEGRITA_OFF, SALTO]
     partes += _devuelve(factura, ancho)
     partes += _condiciones(factura, ancho)
     partes += _numeros_del_sorteo(factura, ancho)

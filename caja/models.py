@@ -77,6 +77,9 @@ class MovimientoCaja(models.Model):
         # Una venta registrada con un medio que se cobró con otro (iba con
         # efectivo y pagó con tarjeta, o al revés): ver ventas/medio_pago.py.
         CORRECCION = "COR", "Corrección de medio de pago"
+        # 26/11/2026: el envío que el cliente pagó en efectivo junto con la
+        # compra (+) y el pago al mensajero con plata de la gaveta (−).
+        ENVIO = "ENV", "Envío (mensajero)"
 
     sesion = models.ForeignKey(SesionCaja, on_delete=models.PROTECT, related_name="movimientos")
     tipo = models.CharField(max_length=3, choices=Tipo.choices)

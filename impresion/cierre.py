@@ -69,6 +69,18 @@ def bytes_cierre(datos: dict, ancho: int = 48, logo: bytes = b"", impreso_en=Non
         fila(f"Anuladas ({datos['anuladas_n']})", _monto(datos["anuladas_total"]))
     raya()
 
+    env = datos.get("envios") or {}
+    if env.get("n"):
+        # 26/11/2026: el Uber que pagaron los clientes junto con la compra.
+        # No es venta; entró por estos medios y explica el SINPE de más.
+        titulo("ENVIOS COBRADOS (NO SON VENTA)")
+        fila(f"Envíos ({env['n']})", _monto(env["total"]))
+        for nombre, total in env["por_medio"]:
+            fila(f"  Entró por {nombre}", _monto(total))
+        for nombre, total in env["por_pago"]:
+            linea(f"  Mensajero: {nombre} {_monto(total)}"[:ancho])
+        raya()
+
     titulo("EFECTIVO EN LA GAVETA")
     for concepto, monto in datos["efectivo"]:
         if monto or concepto == "Apertura":

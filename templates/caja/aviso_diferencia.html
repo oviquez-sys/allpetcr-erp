@@ -27,6 +27,7 @@
     {% for c in sesion.conteos_previos %}efectivo ₡{{ c.efectivo|crc }}{% if c.tarjeta is not None %} · datáfono ₡{{ c.tarjeta|crc }}{% endif %}{% if c.sinpe is not None %} · SINPE ₡{{ c.sinpe|crc }}{% endif %}{% if not forloop.last %}; {% endif %}{% endfor %}</p>{% endif %}
   <p style="font-size:14px;margin-top:18px"><b>Ventas:</b> {{ ventas_n }} por ₡{{ ventas_total|crc }}<br>
     {% for nombre, n, t in ventas_por_medio %}{{ nombre }} ₡{{ t|crc }}{% if not forloop.last %} · {% endif %}{% endfor %}
+    {% if envios.n %}<br>Envíos cobrados (no son venta): ₡{{ envios.total|crc }}{% for nombre, t in envios.por_medio %} · {{ nombre }} ₡{{ t|crc }}{% endfor %}{% endif %}
     {% if anuladas_n %}<br>Anuladas: {{ anuladas_n }} por ₡{{ anuladas_total|crc }}{% endif %}
     {% for c in cambios_medio %}<br>Cobrada con otro medio: {{ c.factura.numero }} {{ c.get_anterior_display }} → {{ c.get_nuevo_display }} ₡{{ c.monto|crc }} ({{ c.motivo }}){% endfor %}
     {% for r in retiros %}<br>Retiro para depositar {{ r.referencia }}: ₡{{ r.monto|crc }} ({{ r.usuario.username|default:"—" }}){% endfor %}</p>

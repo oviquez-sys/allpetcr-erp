@@ -17,6 +17,8 @@ PLANTILLA = [
     ("2", "PASIVO", "P", False),
     ("2401", "IVA por pagar", "P", True),
     ("2402", "Cambios de producto por aplicar", "P", True),
+    ("2403", "Envíos cobrados por pagar al mensajero", "P", True),
+    ("2404", "Por reembolsar a socios", "P", True),
     ("3", "PATRIMONIO", "Q", False),
     ("4", "INGRESOS", "I", False),
     ("4101", "Ventas de mercadería", "I", True),
@@ -42,6 +44,11 @@ CODIGOS = {
     # el saldo y la venta nueva se lo quita en la misma operación: siempre
     # queda en cero. Si un día no queda en cero, hay un cambio a medias.
     "cambios": "2402",
+    # Envío (26/11/2026): lo que el cliente paga por el Uber no es de la
+    # tienda; entra y sale el mismo día y la cuenta queda en cero. Si un socio
+    # lo pagó con su tarjeta, la tienda le queda debiendo (2404).
+    "envios": "2403",
+    "socios": "2404",
     "ventas": "4101",
     "descuentos": "4102",
     "costo_ventas": "5101",

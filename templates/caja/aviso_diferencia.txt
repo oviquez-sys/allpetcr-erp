@@ -16,7 +16,8 @@ Antes del conteo definitivo se contó {{ sesion.conteos_previos|length }} vez/ve
 VENTAS DE LA CAJA
 {{ ventas_n }} venta{{ ventas_n|pluralize }} por ₡{{ ventas_total|crc }}
 {% for nombre, n, t in ventas_por_medio %}- {{ nombre }}: ₡{{ t|crc }} ({{ n }})
-{% endfor %}{% if anuladas_n %}Anuladas: {{ anuladas_n }} por ₡{{ anuladas_total|crc }}
+{% endfor %}{% if envios.n %}Envíos cobrados (no son venta): ₡{{ envios.total|crc }}{% for nombre, t in envios.por_medio %} · {{ nombre }} ₡{{ t|crc }}{% endfor %}
+{% endif %}{% if anuladas_n %}Anuladas: {{ anuladas_n }} por ₡{{ anuladas_total|crc }}
 {% endif %}{% for c in cambios_medio %}Cobrada con otro medio: {{ c.factura.numero }} {{ c.get_anterior_display }} → {{ c.get_nuevo_display }} ₡{{ c.monto|crc }} ({{ c.motivo }})
 {% endfor %}{% for r in retiros %}Retiro para depositar {{ r.referencia }}: ₡{{ r.monto|crc }} ({{ r.usuario.username|default:"—" }}, {{ r.get_estado_display|lower }})
 {% endfor %}{% if devoluciones %}

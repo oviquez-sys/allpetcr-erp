@@ -50,6 +50,7 @@ def resumen_cierre(sesion: SesionCaja) -> dict:
         devoluciones=Sum("monto", filter=Q(tipo=MovimientoCaja.Tipo.ANULACION)),
         retiros=Sum("monto", filter=Q(tipo=MovimientoCaja.Tipo.RETIRO)),
         correcciones=Sum("monto", filter=Q(tipo=MovimientoCaja.Tipo.CORRECCION)),
+        envios=Sum("monto", filter=Q(tipo=MovimientoCaja.Tipo.ENVIO)),
     )
     movs = {k: v or CERO for k, v in movs.items()}
 
@@ -85,7 +86,11 @@ def resumen_cierre(sesion: SesionCaja) -> dict:
             ("Devoluciones en efectivo", movs["devoluciones"]),
             ("Cambios de medio de pago", movs["correcciones"]),
             ("Retiros para depositar", movs["retiros"]),
+            ("Envíos (cobrados − pagados al mensajero)", movs["envios"]),
         ],
+        # Envíos (26/11/2026): lo que los clientes pagaron por el Uber junto
+        # con la compra. No es venta; se ve aparte para que cuadre el SINPE.
+        "envios": _envios(emitidas),
         # 02/11/2026: lo que se sacó para depositar y las ventas que se
         # cobraron con otro medio, con nombre y apellido en el papel.
         "retiros": list(sesion.retiros.select_related("usuario").order_by("creado_en")),
@@ -107,6 +112,21 @@ def resumen_cierre(sesion: SesionCaja) -> dict:
         "apertura_vs_anterior": (sesion.monto_apertura - anterior.monto_contado)
         if anterior and anterior.monto_contado is not None else None,
         "desglose": sesion.desglose(),
+    }
+
+
+def _envios(emitidas) -> dict:
+    from ventas.models import FacturaVenta
+
+    con = emitidas.filter(envio__gt=0)
+    por_medio = {f["envio_medio"]: f["t"] for f in con.order_by().values("envio_medio").annotate(t=Sum("envio"))}
+    por_pago = {f["envio_pago"]: f["t"] for f in con.order_by().values("envio_pago").annotate(t=Sum("envio"))}
+    nombres_pago = dict(FacturaVenta.PagoEnvio.choices)
+    return {
+        "n": con.count(),
+        "total": sum(por_medio.values(), CERO),
+        "por_medio": [(n, por_medio[c]) for c, n in MEDIOS if por_medio.get(c)],
+        "por_pago": [(nombres_pago[c], t) for c, t in por_pago.items() if t],
     }
 
 

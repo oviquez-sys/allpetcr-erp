@@ -852,6 +852,32 @@ Qué reponer (05/11) y Agotados (02/10), con criterios distintos de «pocas».
   hay); de más a menos plata parada; Excel propio. Pruebas:
   `compras/test_entregas.py`, `inventario/test_reponer.py`.
 
+## Envío pagado junto con la compra (26/11/2026)
+
+Oscar: «el cliente nos paga el producto + el Uber en el mismo SINPE; todos los
+días tenemos diferencias al cierre». Docstring de `ventas/envios.py` = reglas.
+- Decisiones de Oscar: se cobra LO MISMO que el Uber (la tienda solo pasa la
+  plata) → NO es venta: `FacturaVenta.envio` / `envio_medio` / `envio_pago`
+  (migración ventas 0014), fuera de `total`, sin IVA, sin sorteo, sin reportes
+  de ventas (confirmar con el contador). Al mensajero se le paga de varias
+  formas: `PagoEnvio` TIE (tarjeta/app de la tienda → Bancos), CAJ (efectivo
+  de la gaveta) o SOC (tarjeta personal de un socio → 2404 «Por reembolsar a
+  socios»). Si el cliente le paga directo al mensajero, no se anota.
+- `registrar_venta(envio={"monto","pago"})`: mismo medio de la venta; en MIX
+  el envío sale del SINPE, si no tarjeta, si no efectivo (`repartir_mixto`;
+  si la venta queda de un medio, pasa a ese medio). Vuelto sobre venta +
+  envío. No se fía ni va en un cambio.
+- Cierre: `esperado_por_medio` suma envíos TAR/SIN; efectivo por
+  MovimientoCaja tipo ENV (+ cobrado en efectivo, − pagado de la gaveta;
+  migración caja 0006). `resumen_cierre["envios"]` en pantalla, tiquete y correo.
+- Asiento «Envío FV-…»: medio → 2403 «Envíos por pagar al mensajero» → pago
+  (2403 siempre en cero). Anular deshace todo; devolución no toca el envío;
+  `cambiar_medio` no se permite con envío (anular y repetir).
+- POS: «🛵 Agregar envío» bajo el total (diálogo `dlgEnvio`), «Total a
+  cobrar» = venta + envío, viaja en las ventas en espera; la última venta dice
+  «Sacá ₡X de la gaveta para el mensajero» si es CAJ (y la gaveta se abre).
+  Tiquete: «Envío (mensajero)» y «TOTAL PAGADO». Pruebas: `ventas/test_envios.py`.
+
 ## Cambios y devoluciones desde la caja (24/11/2026)
 
 Caso real: pechera XL comprada por SINPE, cambiada por una XXL pagando la

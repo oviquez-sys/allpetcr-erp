@@ -550,6 +550,7 @@ def vender(request):
                 medio_pago=datos.get("medio_pago", ""),
                 cliente=cliente,
                 usuario=request.user,
+                envio=datos.get("envio") or None,   # el Uber pagado junto con la compra (26/11/2026)
                 **comun,
             )
     except FacturaVenta.DoesNotExist:
@@ -634,7 +635,10 @@ def cambio_buscar(request):
 def _entra_efectivo(factura):
     """¿Esta venta mete plata a la gaveta? (19/10/2026, pedido de Oscar: que
     se abra sola SOLO con efectivo). Efectivo, o un pago mixto con una parte
-    en efectivo. Tarjeta, SINPE y fiado no la abren."""
+    en efectivo. Tarjeta, SINPE y fiado no la abren. El envío (26/11/2026)
+    también: si se cobró en efectivo o se le paga al mensajero de la gaveta."""
+    if factura.envio > 0 and (factura.envio_medio == "EFE" or factura.envio_pago == "CAJ"):
+        return True
     if factura.medio_pago == FacturaVenta.MedioPago.EFECTIVO:
         return factura.total > 0
     if factura.medio_pago == FacturaVenta.MedioPago.MIXTO:
@@ -651,6 +655,9 @@ def _respuesta_venta(factura, *, impreso=False, error_impresion="", trabajo=None
         "id": factura.pk,
         "numero": factura.numero,
         "total": float(factura.total),
+        "envio": float(factura.envio),
+        "envio_pago": factura.envio_pago,
+        "envio_medio": factura.envio_medio,
         "vuelto": float(factura.vuelto) if factura.vuelto is not None else None,
         "recibido": float(factura.monto_recibido) if factura.monto_recibido is not None else None,
         "correo_cliente": factura.cliente.email if factura.cliente_id else "",
@@ -658,7 +665,7 @@ def _respuesta_venta(factura, *, impreso=False, error_impresion="", trabajo=None
         "reimprimir_url": reverse("impresion:tiquete", args=[factura.pk]),
         "enviar_url": reverse("ventas:factura_enviar", args=[factura.pk]),
         "cambiar_medio_url": reverse("ventas:cambiar_medio", args=[factura.pk])
-        if factura.medio_pago in ("EFE", "TAR", "SIN") else "",
+        if factura.medio_pago in ("EFE", "TAR", "SIN") and not factura.envio else "",
         "impreso": impreso,
         # Por la cola del agente: lo único seguro es que quedó encolado. El POS
         # pregunta a `trabajo_url` si salió de verdad (TIQ-02).

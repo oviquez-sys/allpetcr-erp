@@ -152,6 +152,26 @@ class FacturaVenta(models.Model):
     monto_recibido = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     vuelto = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
 
+    # Envío que pagó el cliente junto con la compra (26/11/2026, pedido de
+    # Oscar): «nos paga el producto + el Uber en el mismo SINPE» y el cierre
+    # salía con sobrante todos los días. NO es venta: es la plata del
+    # mensajero que pasa por la tienda (no entra a `total`, no lleva IVA, no
+    # cuenta para el sorteo ni para los reportes de ventas). Ver ventas/envios.py.
+    class PagoEnvio(models.TextChoices):
+        TIENDA = "TIE", "Tarjeta o app de la tienda"
+        CAJA = "CAJ", "Efectivo de la caja"
+        SOCIO = "SOC", "Tarjeta o plata personal de un socio"
+
+    envio = models.DecimalField("envío cobrado", max_digits=12, decimal_places=2, default=0)
+    envio_medio = models.CharField("medio con que pagó el envío", max_length=3, blank=True)
+    envio_pago = models.CharField("cómo se le pagó al mensajero", max_length=3,
+                                  choices=PagoEnvio.choices, blank=True)
+
+    @property
+    def total_pagado(self):
+        """Lo que el cliente pagó en total: la venta más el envío."""
+        return self.total + self.envio
+
     @property
     def descuento_sin_redondeo(self):
         """Los descuentos de verdad (por producto o cupón), sin el redondeo."""

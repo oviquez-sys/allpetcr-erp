@@ -80,14 +80,24 @@ def esperado_por_medio(sesion, hasta=None) -> dict:
     que se toman los de la empresa cobrados mientras esta caja estuvo abierta
     (hay UNA caja compartida por tienda, CAJ-03).
 
+    Los envíos (26/11/2026): el Uber que el cliente pagó junto con la compra
+    también entró por ese medio.
+
     Lo que NO entra: el reembolso por datáfono de una devolución. Se hace
     aparte en el datáfono y no siempre cae el mismo día; si pasa, se explica
     en la diferencia."""
     from ventas.models import Abono, FacturaVenta
     from ventas.pagos import por_medio
 
-    medios = por_medio(sesion.ventas.filter(estado=FacturaVenta.Estado.EMITIDA))
+    emitidas = sesion.ventas.filter(estado=FacturaVenta.Estado.EMITIDA)
+    medios = por_medio(emitidas)
     resultado = {m: (medios.get(m, {}).get("t") or Decimal("0")) for m in ("TAR", "SIN")}
+    # El envío que el cliente pagó junto con la compra (26/11/2026, ventas/
+    # envios.py): no es venta, pero entró por ese medio. Sin sumarlo, cada
+    # «producto + Uber en el mismo SINPE» salía como sobrante.
+    for fila in (emitidas.filter(envio__gt=0, envio_medio__in=["TAR", "SIN"])
+                 .order_by().values("envio_medio").annotate(t=Sum("envio"))):
+        resultado[fila["envio_medio"]] += fila["t"] or Decimal("0")
     abonos = (Abono.objects.filter(documento__factura__empresa_id=sesion.sucursal.empresa_id,
                                    medio__in=["TAR", "SIN"], fecha__gte=sesion.abierta_en,
                                    fecha__lte=hasta or sesion.cerrada_en or timezone.now())
