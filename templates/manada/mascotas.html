@@ -33,7 +33,7 @@
       <a class="mas" href="{% url 'manada:ficha' m.cliente_id %}" data-e="{{ m.especie }}"
          data-c="{% if m.fecha_nacimiento_aprox and m.fecha_nacimiento_aprox.month == mes %}1{% endif %}"
          data-b="{{ m.nombre|lower }} {{ m.raza|lower }} {{ m.cliente.nombre|lower }}">
-        <span class="ft">{% if m.foto %}<img src="{{ m.foto.url }}" alt="{{ m.nombre }}" loading="lazy">{% elif m.especie == "PER" %}🐕{% elif m.especie == "GAT" %}🐈{% else %}🐾{% endif %}</span>
+        <span class="ft">{% if m.foto %}<img src="{{ m.foto.url }}" alt="{{ m.nombre }}" loading="lazy">{% elif m.especie == "PER" %}🐕{% elif m.especie == "GAT" %}🐈{% elif m.especie == "CON" %}🐇{% elif m.especie == "ROE" %}🐹{% else %}🐾{% endif %}</span>
         <span><b>{{ m.nombre }}</b>{% if m.fecha_nacimiento_aprox and m.fecha_nacimiento_aprox.month == mes %} 🎂{% endif %}
           <small>{{ m.get_especie_display }}{% if m.raza %} · {{ m.raza }}{% endif %}{% if m.edad_texto %} · {{ m.edad_texto }}{% endif %}{% if m.peso_kg %} · {{ m.peso_kg|floatformat:"-1" }} kg{% endif %}</small>
           <small>Dueño: {{ m.cliente.nombre }}</small></span>

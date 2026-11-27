@@ -309,6 +309,17 @@ class Mascotas(ConRegalia):
         with self.assertRaisesMessage(ValidationError, "ya se usó"):
             registrar_mascotas(token=self.r.perfil.token_mascotas, mascotas=[{"nombre": "X", "especie": "PER"}])
 
+    def test_conejos_y_roedores_tambien_entran(self):
+        # 26/11/2026: también hay clientes con conejos y hámsters.
+        registrar_mascotas(token=self.r.perfil.token_mascotas, mascotas=[
+            {"nombre": "Copito", "especie": "CON"},
+            {"nombre": "Bolita", "especie": "ROE", "raza": "Hámster sirio"},
+            {"nombre": "Pepe", "especie": "OTR", "raza": "Tortuga"},
+        ])
+        self.assertEqual(Mascota.objects.get(nombre="Copito").get_especie_display(), "Conejo")
+        self.assertEqual(Mascota.objects.get(nombre="Bolita").get_especie_display(), "Hámster u otro roedor")
+        self.assertEqual(Mascota.objects.filter(cliente=self.r.cliente).count(), 3)
+
     def test_foto_se_achica_y_pierde_los_datos_de_la_camara(self):
         import base64, io
         from PIL import Image
@@ -345,7 +356,7 @@ class Mascotas(ConRegalia):
         for malas, texto in [
             ([], "al menos una"),
             ([{"nombre": "", "especie": "PER"}], "Falta el nombre"),
-            ([{"nombre": "Cookie", "especie": "PEZ"}], "perro, gato u otro"),
+            ([{"nombre": "Cookie", "especie": "PEZ"}], "qué animal es Cookie"),
             ([{"nombre": "Cookie", "especie": "PER", "peso_kg": "mucho"}], "número"),
             ([{"nombre": "Cookie", "especie": "PER", "edad_meses": 14}], "meses"),
             ([{"nombre": str(i), "especie": "PER"} for i in range(6)], "hasta 5"),

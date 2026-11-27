@@ -129,6 +129,11 @@ class Mascota(models.Model):
     class Especie(models.TextChoices):
         PERRO = "PER", "Perro"
         GATO = "GAT", "Gato"
+        # Conejos y roedores desde el 26/11/2026 (pedido de Oscar): la tienda
+        # también tiene clientes con esas mascotas. «Otro» queda para aves,
+        # tortugas, peces y lo demás.
+        CONEJO = "CON", "Conejo"
+        ROEDOR = "ROE", "Hámster u otro roedor"
         OTRO = "OTR", "Otro"
 
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name="mascotas")

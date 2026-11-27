@@ -331,7 +331,7 @@ def registrar_mascotas(*, token, mascotas) -> PerfilManada:
             raise ValidationError(f"Falta el nombre de la mascota {i}.")
         especie = m.get("especie")
         if especie not in Mascota.Especie.values:
-            raise ValidationError(f"Elegí si {nombre} es perro, gato u otro.")
+            raise ValidationError(f"Elegí qué animal es {nombre}.")
         peso = m.get("peso_kg")
         if peso in (None, ""):
             peso = None
